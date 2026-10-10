@@ -195,38 +195,42 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Parents (when a child)",
-              "Special occasion",
-              "Celebrate together"
+              "Parents (first time)",
+              "Young / Family meal together",
+              "Felt really happy"
             ],
             "b2": [
-              "Parents (when young)",
-              "Special occasion / Celebrate as family",
-              "Happy & excited"
+              "Parents (first time)",
+              "Hotpot restaurant",
+              "Excited (food & lively atmosphere)"
             ]
           },
           "b1": [
             {
-              "en": "Let me see, my parents took me to a restaurant for the first time when I was a child.",
-              "vi": "Để tôi xem nào, bố mẹ đã đưa tôi đến nhà hàng lần đầu tiên khi tôi còn là một đứa trẻ."
+              "en": "My parents took me to a restaurant for the first time.",
+              "vi": "Bố mẹ tôi đã đưa tôi đến nhà hàng lần đầu tiên."
             },
             {
-              "en": "It was a special occasion, so we went out to celebrate together.",
-              "vi": "Đó là một dịp đặc biệt, nên chúng tôi đã ra ngoài để cùng nhau ăn mừng."
+              "en": "I was quite young at that time, and they wanted to have a meal together as a family.",
+              "vi": "Lúc đó tôi còn khá nhỏ, và họ muốn cả gia đình cùng nhau ăn một bữa cơm."
+            },
+            {
+              "en": "I felt really happy.",
+              "vi": "Tôi cảm thấy thực sự rất vui vẻ."
             }
           ],
           "b2": [
             {
-              "en": "I would say my parents took me to a restaurant for the first time when I was young.",
-              "vi": "Tôi muốn nói rằng bố mẹ đã đưa tôi đến nhà hàng lần đầu tiên khi tôi còn nhỏ."
+              "en": "Let me see, it was my parents who took me to a restaurant for the first time.",
+              "vi": "Để tôi xem nào, chính bố mẹ là người đã đưa tôi đến nhà hàng lần đầu tiên."
             },
             {
-              "en": "It was a special occasion, so we went out to celebrate as a family.",
-              "vi": "Đó là một dịp đặc biệt, nên chúng tôi đã ra ngoài để ăn mừng cùng gia đình."
+              "en": "If I remember correctly, it was a hotpot restaurant.",
+              "vi": "Nếu tôi nhớ không nhầm thì đó là một nhà hàng lẩu."
             },
             {
-              "en": "At that time, I felt really happy and excited.",
-              "vi": "Vào lúc đó, tôi cảm thấy thực sự hạnh phúc và hào hứng."
+              "en": "At that time, I felt so excited because everything felt new to me, whether it was the food or the lively atmosphere.",
+              "vi": "Vào lúc đó, tôi cảm thấy vô cùng hào hứng vì mọi thứ đều mới mẻ đối với tôi, dù là món ăn hay bầu không khí náo nhiệt."
             }
           ]
         },
@@ -237,38 +241,47 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Very excited",
-              "Something new",
-              "Enjoyed food & atmosphere"
+              "Happy & excited",
+              "Delicious food & family time",
+              "Great experience"
             ],
             "b2": [
-              "Excited & happy",
-              "Precious memory",
-              "Impressed by variety of dishes"
+              "Happy & excited",
+              "Try different dishes",
+              "Family time in different setting",
+              "Memorable experience"
             ]
           },
           "b1": [
             {
-              "en": "I felt very excited because it was something new for me.",
-              "vi": "Tôi cảm thấy rất hào hứng vì đó là một điều mới mẻ đối với tôi."
+              "en": "I felt really happy and excited.",
+              "vi": "Tôi cảm thấy thực sự hạnh phúc và hào hứng."
             },
             {
-              "en": "I also enjoyed the food and the atmosphere there.",
-              "vi": "Tôi cũng rất thích đồ ăn và bầu không khí ở đó."
+              "en": "The food was delicious, and I enjoyed spending time with my family.",
+              "vi": "Đồ ăn rất ngon, và tôi rất thích dành thời gian bên gia đình."
+            },
+            {
+              "en": "It was a great experience.",
+              "vi": "Đó là một trải nghiệm tuyệt vời."
             }
           ],
           "b2": [
             {
-              "en": "At that time, I felt really excited and happy because it was my first time eating at a restaurant.",
-              "vi": "Vào lúc đó, tôi cảm thấy thực sự hào hứng và hạnh phúc vì đó là lần đầu tiên tôi ăn ở nhà hàng."
+              "en": "To be honest, I felt really happy and excited.",
+              "vi": "Thành thật mà nói, tôi cảm thấy thực sự hạnh phúc và hào hứng."
             },
             {
-              "en": "It was a really precious memory of mine.",
-              "vi": "Đó là một kỷ niệm thực sự quý giá của tôi."
+              "en": "The food was delicious, and I’ve got the chance to try different dishes that I didn't usually eat at home.",
+              "vi": "Đồ ăn rất ngon, và tôi đã có cơ hội thử nhiều món ăn khác nhau mà tôi không thường ăn ở nhà."
             },
             {
-              "en": "For example, I remember being impressed by the variety of dishes.",
-              "vi": "Ví dụ, tôi nhớ mình đã bị ấn tượng bởi sự đa dạng của các món ăn."
+              "en": "But what I liked most was spending time with my family in a different setting.",
+              "vi": "Nhưng điều tôi thích nhất là được dành thời gian bên gia đình trong một không gian mới lạ."
+            },
+            {
+              "en": "It was a very memorable experience.",
+              "vi": "Đó là một trải nghiệm rất đáng nhớ."
             }
           ]
         },
@@ -279,34 +292,47 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Yes, of course",
-              "Try new food",
-              "Relax & quality time with friends"
+              "Yes, definitely",
+              "Try new food & discover places",
+              "Go with friends or family"
             ],
             "b2": [
-              "Yes, definitely",
-              "Explore food & gain experiences",
-              "Unwind & expand social circle"
+              "Yeah, definitely",
+              "Discover dishes & cuisines",
+              "Chat & enjoy food with friends",
+              "Example (noodle restaurant)"
             ]
           },
           "b1": [
             {
-              "en": "Yes of course, I like trying new restaurants because I can try new food.",
-              "vi": "Vâng tất nhiên rồi, tôi thích thử những nhà hàng mới vì tôi có thể thử món ăn mới."
+              "en": "Yes, definitely!",
+              "vi": "Vâng, chắc chắn rồi!"
             },
             {
-              "en": "It also helps me relax and enjoy quality time với my friends.",
-              "vi": "Nó cũng giúp tôi thư giãn và tận hưởng thời gian chất lượng với bạn bè."
+              "en": "I like trying new food, and it's fun to discover new places.",
+              "vi": "Tôi thích thử đồ ăn mới, và việc khám phá những địa điểm mới rất thú vị."
+            },
+            {
+              "en": "I usually go with my friends or family.",
+              "vi": "Tôi thường đi cùng bạn bè hoặc gia đình."
             }
           ],
           "b2": [
             {
-              "en": "Yes definitely, I really enjoy trying new restaurants because it allows me to explore different types of food and gain new experiences.",
-              "vi": "Vâng chắc chắn rồi, tôi thực sự thích thử những nhà hàng mới vì nó cho phép tôi khám phá nhiều loại thức ăn khác nhau và có được những trải nghiệm mới."
+              "en": "Yeah, definitely!",
+              "vi": "Vâng, chắc chắn rồi!"
             },
             {
-              "en": "It’s also a great way to unwind and expand my social circle when I go with friends.",
-              "vi": "Đó cũng là một cách tuyệt vời để xả hơi và mở rộng mối quan hệ xã hội khi tôi đi cùng bạn bè."
+              "en": "I enjoy trying new restaurants because I can discover different dishes and cuisines.",
+              "vi": "Tôi rất thích thử các nhà hàng mới vì tôi có thể khám phá nhiều món ăn và nền ẩm thực khác nhau."
+            },
+            {
+              "en": "I usually go with my friends, and we can chat and enjoy the food at the same time.",
+              "vi": "Tôi thường đi cùng bạn bè, và chúng tôi có thể vừa trò chuyện vừa thưởng thức đồ ăn cùng một lúc."
+            },
+            {
+              "en": "Actually, last week, my friends and I went to a noodle restaurant, which I’ve rarely been to and ordered spicy noodles.",
+              "vi": "Thực ra tuần trước, tôi và bạn bè đã đến một quán mì mà tôi hiếm khi tới và gọi món mì cay."
             }
           ]
         }
@@ -324,38 +350,37 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Small local restaurant",
-              "Often (weekend with friends)",
-              "Delicious food & relax"
+              "Jollibee (fast-food restaurant)",
+              "Crispy & delicious fried chicken"
             ],
             "b2": [
-              "Local place near house",
-              "Often (weekend with friends)",
-              "Unwind & comfortable"
+              "Jollibee (popular fast-food chain)",
+              "Fried chicken (crispy outside, juicy inside)",
+              "Not very often / Enjoy with friends"
             ]
           },
           "b1": [
             {
-              "en": "My favorite restaurant is a small local restaurant near my house.",
-              "vi": "Nhà hàng yêu thích của tôi là một nhà hàng địa phương nhỏ gần nhà."
+              "en": "My favorite restaurant is Jollibee, which is a fast-food restaurant.",
+              "vi": "Nhà hàng yêu thích của tôi là Jollibee, một nhà hàng thức ăn nhanh."
             },
             {
-              "en": "I often go there at the weekend with my friends to enjoy delicious food and relax.",
-              "vi": "Tôi thường đến đó vào cuối tuần với bạn bè để thưởng thức đồ ăn ngon và thư giãn."
+              "en": "I really like the fried chicken there because it's crispy and delicious.",
+              "vi": "Tôi thực sự thích món gà rán ở đó vì nó giòn và ngon."
             }
           ],
           "b2": [
             {
-              "en": "I would say my favorite restaurant is a local place near my house.",
-              "vi": "Tôi muốn nói nhà hàng yêu thích của tôi là một quán ăn địa phương gần nhà."
+              "en": "I would say my favorite restaurant is Jollibee, which is a popular fast-food chain.",
+              "vi": "Tôi muốn nói rằng nhà hàng yêu thích của tôi là Jollibee, một chuỗi thức ăn nhanh nổi tiếng."
             },
             {
-              "en": "I often go there at the weekend to hang out with my friends and unwind after a long week.",
-              "vi": "Tôi thường đến đó vào cuối tuần để đi chơi với bạn bè và xả hơi sau một tuần dài."
+              "en": "I'm really into their fried chicken because it's crispy on the outside and juicy on the inside.",
+              "vi": "Tôi rất mê món gà rán của họ vì nó giòn rụm bên ngoài và mọng nước bên trong."
             },
             {
-              "en": "It’s a comfortable place where I can relax and enjoy good food.",
-              "vi": "Đó là một nơi thoải mái nơi tôi có thể thư giãn và thưởng thức đồ ăn ngon."
+              "en": "I don't eat there very often, but whenever I go, I usually enjoy delicious meals with my friends.",
+              "vi": "Tôi không ăn ở đó thường xuyên lắm, nhưng mỗi khi đến, tôi thường cùng bạn bè thưởng thức những bữa ăn ngon miệng."
             }
           ]
         },
@@ -366,37 +391,47 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Rice, noodles, street food",
-              "Simple but delicious"
+              "Different fast food (chicken, burgers, spaghetti)",
+              "Fries & soft drinks",
+              "Fried chicken is the best"
             ],
             "b2": [
-              "Wide variety (rice, noodles, street food)",
-              "Delicious & affordable",
-              "Popular among young people"
+              "Variety of fast food (chicken, burgers, spaghetti, rice)",
+              "Fries & soft drinks",
+              "Special sweet & sour sauce",
+              "Goes well with fried chicken"
             ]
           },
           "b1": [
             {
-              "en": "Let me see, they serve rice, noodles, and some street food.",
-              "vi": "Để tôi xem nào, họ phục vụ cơm, mì và một số thức ăn đường phố."
+              "en": "They serve different kinds of fast food, such as fried chicken, burgers, and spaghetti.",
+              "vi": "Họ phục vụ nhiều loại thức ăn nhanh khác nhau, chẳng hạn như gà rán, burger và mì Ý."
             },
             {
-              "en": "The food is simple but very delicious.",
-              "vi": "Đồ ăn đơn giản nhưng rất ngon."
+              "en": "They also have fries and soft drinks.",
+              "vi": "Họ cũng có khoai tây chiên và nước ngọt."
+            },
+            {
+              "en": "I think their fried chicken is the best.",
+              "vi": "Tôi nghĩ món gà rán của họ là ngon nhất."
             }
           ],
           "b2": [
             {
-              "en": "Let me see, they serve a wide variety of local dishes such as rice, noodles, and street food.",
-              "vi": "Để tôi xem nào, họ phục vụ đa dạng các món ăn địa phương như cơm, mì và thức ăn đường phố."
+              "en": "They offer a variety of fast food, including fried chicken, burgers, spaghetti, and rice meals.",
+              "vi": "Họ phục vụ nhiều loại đồ ăn nhanh đa dạng, bao gồm gà rán, burger, mì Ý và các phần cơm."
             },
             {
-              "en": "The food is not only delicious but also affordable.",
-              "vi": "Đồ ăn không chỉ ngon mà còn có giá cả phải chăng."
+              "en": "You can also order fries and soft drinks to go with your meal.",
+              "vi": "Bạn cũng có thể gọi khoai tây chiên và nước ngọt để dùng kèm bữa ăn."
             },
             {
-              "en": "No wonder why it is so popular among young people.",
-              "vi": "Thảo nào nó lại phổ biến đối với giới trẻ đến vậy."
+              "en": "However, what I like most about their food is their special sauce, which is sweet and sour at the same time.",
+              "vi": "Tuy nhiên, điều tôi thích nhất ở món ăn của họ là nước sốt đặc biệt, vừa ngọt lại vừa chua cùng lúc."
+            },
+            {
+              "en": "It goes very well with the fried chicken.",
+              "vi": "Nó rất hợp khi ăn kèm với gà rán."
             }
           ]
         },
@@ -407,42 +442,43 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Like most dishes",
-              "Tasty & easy to eat",
-              "Some dishes don't eat often"
+              "Not really",
+              "Love fried chicken / Not into burgers or rice",
+              "Different tastes"
             ],
             "b2": [
-              "Not exactly (like most)",
-              "Flavorful & well-prepared",
-              "Not my taste / Prefer light food"
+              "Not really",
+              "Fried chicken is favorite (crispy & flavorful)",
+              "Not into burgers or rice",
+              "Don't suit my taste"
             ]
           },
           "b1": [
             {
-              "en": "I would say I like most of the dishes because they are tasty and easy to eat.",
-              "vi": "Tôi muốn nói rằng tôi thích hầu hết các món ăn vì chúng ngon và dễ ăn."
+              "en": "Not really.",
+              "vi": "Không hẳn."
             },
             {
-              "en": "However, there are some dishes that I don’t eat very often.",
-              "vi": "Tuy nhiên, có một số món tôi không ăn thường xuyên lắm."
+              "en": "I love their fried chicken, but I'm not really into some of their other dishes like burgers or rice dishes.",
+              "vi": "Tôi rất thích gà rán của họ, nhưng tôi không thực sự hào hứng với một số món khác như burger hay các món cơm."
+            },
+            {
+              "en": "I think everyone has different tastes.",
+              "vi": "Tôi nghĩ mỗi người đều có khẩu vị khác nhau."
             }
           ],
           "b2": [
             {
-              "en": "Not exactly.",
+              "en": "Not really.",
               "vi": "Không hẳn."
             },
             {
-              "en": "I would say I like most of the dishes because they are flavorful and well-prepared.",
-              "vi": "Tôi muốn nói rằng tôi thích hầu hết các món ăn vì chúng đậm đà và được chuẩn bị chu đáo."
+              "en": "Their fried chicken is my favorite because it's crispy and flavorful, but there are some other dishes that I’m not really into like burgers or rice dishes.",
+              "vi": "Gà rán của họ là món yêu thích nhất của tôi vì nó giòn và đậm đà, nhưng có một số món khác mà tôi không thực sự thích như burger hay các món cơm."
             },
             {
-              "en": "However, I don’t enjoy all of them since some are not really my taste.",
-              "vi": "Tuy nhiên, tôi không thích tất cả vì một vài món không thực sự hợp khẩu vị của tôi."
-            },
-            {
-              "en": "For example, I prefer light food rather than very spicy dishes.",
-              "vi": "Ví dụ, tôi thích thức ăn thanh đạm hơn là những món quá cay."
+              "en": "I guess they just don’t suit my taste.",
+              "vi": "Tôi đoán là chúng chỉ không hợp khẩu vị của tôi thôi."
             }
           ]
         }
@@ -460,32 +496,37 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Once or twice a week",
-              "Weekend (free time)"
+              "Once in a while",
+              "No time to cook / Eat out with friends"
             ],
             "b2": [
-              "Once or twice a week (weekend)",
-              "Relax & spend time with friends"
+              "Once in a while (2-3 times a month)",
+              "Busy with studies / No time for home-cooked meals",
+              "Hang out with friends"
             ]
           },
           "b1": [
             {
-              "en": "Let me see, I go to restaurants once or twice a week.",
-              "vi": "Để tôi xem nào, tôi đi nhà hàng một hoặc hai lần một tuần."
+              "en": "I only go to restaurants once in a while.",
+              "vi": "Tôi chỉ thỉnh thoảng mới đi nhà hàng."
             },
             {
-              "en": "Usually, I go at the weekend when I have free time.",
-              "vi": "Thường thì, tôi đi vào cuối tuần khi tôi có thời gian rảnh."
+              "en": "I usually go there when I don’t have time to cook at home or when I want to eat out with my friends.",
+              "vi": "Tôi thường đến đó khi không có thời gian nấu nướng ở nhà hoặc khi muốn đi ăn ngoài cùng bạn bè."
             }
           ],
           "b2": [
             {
-              "en": "Let me see, I usually go to restaurants once or twice a week, especially at the weekend.",
-              "vi": "Để tôi xem nào, tôi thường đi nhà hàng một hoặc hai lần một tuần, đặc biệt là vào cuối tuần."
+              "en": "I would say I go to restaurants once in a while, probably 2 or 3 times a month.",
+              "vi": "Tôi có thể nói rằng tôi thỉnh thoảng mới đi nhà hàng, có lẽ khoảng 2 hoặc 3 lần một tháng."
             },
             {
-              "en": "I think it’s a good way to relax and spend time with my friends after a busy week.",
-              "vi": "Tôi nghĩ đó là một cách tốt để thư giãn và dành thời gian với bạn bè sau một tuần bận rộn."
+              "en": "I usually go there when I’m too busy with my studies and I don’t have much time to prepare home-cooked meals.",
+              "vi": "Tôi thường đến đó khi quá bận rộn với việc học và không có nhiều thời gian chuẩn bị các bữa cơm nhà nấu."
+            },
+            {
+              "en": "I also eat out at restaurants whenever I hang out with my friends.",
+              "vi": "Tôi cũng đi ăn ngoài ở nhà hàng bất cứ khi nào đi chơi cùng bạn bè."
             }
           ]
         },
@@ -497,37 +538,38 @@ var group7 = {
           "ideaMap": {
             "b1": [
               "Happy & relaxed",
-              "Forget about work",
-              "Enjoy the moment"
+              "Delicious food & time with friends/family",
+              "Relax & reduce stress"
             ],
             "b2": [
-              "Relaxed & happy",
-              "Unwind & forget work",
-              "Meaningful conversations"
+              "Relaxed & comfortable",
+              "No cooking or washing dishes",
+              "Enjoy food & chat",
+              "Unwind after a busy day"
             ]
           },
           "b1": [
             {
-              "en": "I feel happy and relaxed when I eat at a restaurant.",
-              "vi": "Tôi cảm thấy vui vẻ và thư giãn khi ăn ở nhà hàng."
+              "en": "I usually feel happy and relaxed because I can eat delicious food and spend time with my friends or family.",
+              "vi": "Tôi thường cảm thấy vui vẻ và thư thái vì có thể ăn món ăn ngon và dành thời gian bên bạn bè hoặc gia đình."
             },
             {
-              "en": "It helps me forget about work and enjoy the moment.",
-              "vi": "Nó giúp tôi quên đi công việc và tận hưởng khoảnh khắc hiện tại."
+              "en": "It’s also a great way to relax and reduce stress.",
+              "vi": "Đó cũng là một cách tuyệt vời để thư giãn và giảm căng thẳng."
             }
           ],
           "b2": [
             {
-              "en": "I feel relaxed and happy when I eat at a restaurant.",
-              "vi": "Tôi cảm thấy thư giãn và hạnh phúc khi ăn ở nhà hàng."
+              "en": "I usually feel relaxed and comfortable when I eat at a restaurant.",
+              "vi": "Tôi thường cảm thấy thư giãn và thoải mái khi đi ăn ở nhà hàng."
             },
             {
-              "en": "It helps me unwind and forget about work for a while.",
-              "vi": "Nó giúp tôi xả hơi và quên đi công việc trong chốc lát."
+              "en": "The main reason is that I don't have to cook or wash the dishes, so I can just enjoy the food and chat with the people I'm with.",
+              "vi": "Lý do chính là tôi không phải nấu nướng hay rửa bát, nên tôi chỉ việc thưởng thức đồ ăn và trò chuyện cùng mọi người."
             },
             {
-              "en": "For example, I love eating at a Japanese restaurant with my best friend because I can enjoy good food and have meaningful conversations with him.",
-              "vi": "Ví dụ, tôi thích ăn ở nhà hàng Nhật Bản với bạn thân vì tôi có thể thưởng thức đồ ăn ngon và có những cuộc trò chuyện ý nghĩa với cậu ấy."
+              "en": "Moreover, it's also a great way to unwind after a busy day.",
+              "vi": "Hơn nữa, đó cũng là một cách tuyệt vời để xả hơi sau một ngày bận rộn."
             }
           ]
         },
@@ -538,37 +580,42 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "At home",
-              "Healthier & comfortable"
+              "Eat at home (cheaper & comfortable)",
+              "Family & home-cooked meals",
+              "Sometimes restaurants for something new"
             ],
             "b2": [
-              "At home",
-              "Healthier & more comfortable",
-              "Better lifestyle / Sometimes eat out"
+              "Eat at home (affordable & comfortable)",
+              "Home-cooked food without spending much",
+              "Eat out once in a while (new food & catch up)"
             ]
           },
           "b1": [
             {
-              "en": "If I have to say, I prefer eating at home because it is healthier.",
-              "vi": "Nếu tôi phải nói thì, tôi thích ăn ở nhà hơn vì nó lành mạnh hơn."
+              "en": "I prefer eating at home because it's cheaper and more comfortable.",
+              "vi": "Tôi thích ăn ở nhà hơn vì nó rẻ hơn và thoải mái hơn."
             },
             {
-              "en": "I also feel more comfortable.",
-              "vi": "Tôi cũng cảm thấy thoải mái hơn."
+              "en": "I can eat with my family and enjoy home-cooked meals.",
+              "vi": "Tôi có thể ăn cùng gia đình và thưởng thức những bữa cơm nhà nấu."
+            },
+            {
+              "en": "However, I sometimes go to restaurants when I want to try something new.",
+              "vi": "Tuy nhiên, thỉnh thoảng tôi vẫn đến nhà hàng khi muốn thử món mới."
             }
           ],
           "b2": [
             {
-              "en": "Personally speaking, I prefer eating at home because it is healthier and more comfortable.",
-              "vi": "Cá nhân tôi mà nói, tôi thích ăn ở nhà hơn vì nó lành mạnh và thoải mái hơn."
+              "en": "Personally, I prefer eating at home because it's more affordable and I feel more comfortable there.",
+              "vi": "Cá nhân tôi thích ăn ở nhà hơn vì nó tiết kiệm hơn và tôi cảm thấy thoải mái hơn ở đó."
             },
             {
-              "en": "And I believe home-cooked meals help me stay healthy and build a better lifestyle.",
-              "vi": "Và tôi tin rằng những bữa cơm nhà nấu giúp tôi giữ gìn sức khoẻ và xây dựng một lối sống tốt hơn."
+              "en": "I can enjoy home-cooked food with my family without spending too much money.",
+              "vi": "Tôi có thể thưởng thức cơm nhà cùng gia đình mà không tốn quá nhiều tiền."
             },
             {
-              "en": "However, I still enjoy eating out to relax sometimes.",
-              "vi": "Tuy nhiên, thỉnh thoảng tôi vẫn thích đi ăn ngoài để thư giãn."
+              "en": "Having said that, I still enjoy eating out once in a while, especially when I want to try something new or catch up with friends.",
+              "vi": "Dù vậy, thỉnh thoảng tôi vẫn thích đi ăn ngoài, đặc biệt là khi muốn thử món gì mới mẻ hoặc gặp gỡ bạn bè."
             }
           ]
         }
@@ -586,34 +633,42 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "No",
-              "Want to try (learn skills)",
-              "Necessary skill"
+              "No, haven't",
+              "Want to try someday (learn to cook)",
+              "Think it would be fun"
             ],
             "b2": [
-              "No (too busy)",
-              "Would like to try",
-              "Learn new skills & valuable experiences"
+              "Not yet (give it a try)",
+              "Learn new recipes & improve cooking skills",
+              "More enjoyable with a friend"
             ]
           },
           "b1": [
             {
-              "en": "No, I haven’t been to a cooking class.",
-              "vi": "Chưa, tôi chưa từng tham gia lớp học nấu ăn."
+              "en": "No, I haven't.",
+              "vi": "Chưa, tôi chưa từng tham gia."
             },
             {
-              "en": "But I want to try it to learn cooking skills because I believe it’s a very necessary skill.",
-              "vi": "Nhưng tôi muốn thử nó để học kỹ năng nấu nướng vì tôi tin rằng đó là một kỹ năng rất cần thiết."
+              "en": "But I'd like to try one someday because I want to learn how to cook my own dishes.",
+              "vi": "Nhưng một ngày nào đó tôi muốn thử vì tôi muốn học cách tự nấu các món ăn của riêng mình."
+            },
+            {
+              "en": "I think it would be fun.",
+              "vi": "Tôi nghĩ nó sẽ rất vui."
             }
           ],
           "b2": [
             {
-              "en": "No. To be honest, I haven’t joined a cooking class yet because I’m too busy with my work, but I would like to try one.",
-              "vi": "Chưa. Thành thật mà nói, tôi chưa tham gia lớp học nấu ăn nào vì tôi quá bận rộn với công việc, nhưng tôi muốn thử một lớp."
+              "en": "Not yet, but I'd like to give it a try.",
+              "vi": "Chưa, nhưng tôi muốn thử một lần."
             },
             {
-              "en": "I think it’s a great way to learn new skills and gain valuable experiences.",
-              "vi": "Tôi nghĩ đó là một cách tuyệt vời để học những kỹ năng mới và có được những trải nghiệm quý giá."
+              "en": "I think it would be a good chance to learn some new recipes and improve my cooking skills.",
+              "vi": "Tôi nghĩ đó sẽ là một cơ hội tốt để học một số công thức mới và nâng cao kỹ năng nấu nướng của mình."
+            },
+            {
+              "en": "It would be even more enjoyable if I could go with a friend.",
+              "vi": "Sẽ còn thú vị hơn nữa nếu tôi có thể đi cùng một người bạn."
             }
           ]
         },
@@ -624,34 +679,33 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "With friends",
-              "More fun",
-              "Learn & help each other"
+              "Go with a friend (more fun)",
+              "Learn together & help each other"
             ],
             "b2": [
-              "With friends",
-              "Enjoyable & motivating",
-              "Become more disciplined"
+              "Join with a friend",
+              "Share ideas, learn recipes, prepare dishes",
+              "Cooking together makes it enjoyable"
             ]
           },
           "b1": [
             {
-              "en": "If I have to say, I prefer going with my friends because it is more fun.",
-              "vi": "Nếu tôi phải nói thì, tôi thích đi với bạn bè hơn vì nó vui hơn."
+              "en": "I prefer going with my friend because it's more fun.",
+              "vi": "Tôi thích đi cùng bạn mình hơn vì nó vui hơn."
             },
             {
-              "en": "I mean, we can learn together and help each other.",
-              "vi": "Ý tôi là, chúng tôi có thể cùng nhau học và giúp đỡ lẫn nhau."
+              "en": "I mean we can learn together and help each other when we have problems.",
+              "vi": "Ý tôi là chúng tôi có thể cùng nhau học và giúp đỡ lẫn nhau khi gặp khó khăn."
             }
           ],
           "b2": [
             {
-              "en": "If I have to say, I prefer joining a cooking class with my friends because it is more enjoyable and motivating.",
-              "vi": "Nếu tôi phải nói thì, tôi thích tham gia lớp học nấu ăn với bạn bè hơn vì nó thú vị và tạo động lực hơn."
+              "en": "I would say I prefer to join a cooking class with a friend because we could share ideas, learn new recipes, and help each other prepare the dishes.",
+              "vi": "Tôi có thể nói rằng tôi thích tham gia lớp học nấu ăn cùng một người bạn vì chúng tôi có thể chia sẻ ý tưởng, học công thức mới và giúp nhau chuẩn bị các món ăn."
             },
             {
-              "en": "I mean, I feel more motivated to learn and become more disciplined if I have someone to study with.",
-              "vi": "Ý tôi là, tôi cảm thấy có động lực học hơn và trở nên kỷ luật hơn nếu tôi có người học cùng."
+              "en": "Besides, cooking together would make the whole experience more enjoyable.",
+              "vi": "Bên cạnh đó, cùng nhau nấu nướng sẽ làm cho toàn bộ trải nghiệm trở nên thú vị hơn."
             }
           ]
         },
@@ -662,37 +716,47 @@ var group7 = {
           },
           "ideaMap": {
             "b1": [
-              "Stay healthy & save money",
-              "Necessary skill (take care of yourself)"
+              "Many benefits",
+              "Save money (eating at home is cheaper)",
+              "Relax after a busy day"
             ],
             "b2": [
-              "Stay healthy & build lifestyle",
-              "Learn skills & independent",
-              "Prepare own meals"
+              "Useful skill",
+              "Save money & fresh healthier meals",
+              "Unwind after a long day",
+              "Satisfying to make delicious dishes"
             ]
           },
           "b1": [
             {
-              "en": "In my opinion, cooking helps us stay healthy and save money.",
-              "vi": "Theo ý kiến của tôi, nấu ăn giúp chúng ta giữ gìn sức khoẻ và tiết kiệm tiền."
+              "en": "I think cooking has many benefits.",
+              "vi": "Tôi nghĩ nấu ăn mang lại nhiều lợi ích."
             },
             {
-              "en": "It’s also a very necessary skill since you can take good care of yourself.",
-              "vi": "Nó cũng là một kỹ năng rất cần thiết vì bạn có thể tự chăm sóc tốt cho bản thân."
+              "en": "It helps us save money because eating at home is usually cheaper than eating out.",
+              "vi": "Nó giúp chúng ta tiết kiệm tiền vì ăn ở nhà thường rẻ hơn ăn ngoài."
+            },
+            {
+              "en": "Also, cooking is a good way to relax after a busy day.",
+              "vi": "Ngoài ra, nấu ăn còn là một cách tốt để thư giãn sau một ngày bận rộn."
             }
           ],
           "b2": [
             {
-              "en": "From my perspective, cooking has many benefits because it helps us stay healthy and build a healthy lifestyle.",
-              "vi": "Từ góc nhìn của tôi, nấu ăn có nhiều lợi ích vì nó giúp chúng ta giữ gìn sức khoẻ và xây dựng lối sống lành mạnh."
+              "en": "I think cooking is a really useful skill.",
+              "vi": "Tôi nghĩ nấu ăn là một kỹ năng thực sự hữu ích."
             },
             {
-              "en": "It also allows us to learn new skills and become more independent.",
-              "vi": "Nó cũng cho phép chúng ta học những kỹ năng mới và trở nên độc lập hơn."
+              "en": "First, it helps us save money, and we can choose fresh ingredients to make healthier meals.",
+              "vi": "Thứ nhất, nó giúp chúng ta tiết kiệm tiền và có thể tự chọn nguyên liệu tươi để làm ra những bữa ăn lành mạnh hơn."
             },
             {
-              "en": "For example, if I’m good at cooking, I can prepare my own meals instead of eating fast food.",
-              "vi": "Ví dụ, nếu tôi giỏi nấu ăn, tôi có thể tự chuẩn bị bữa ăn thay vì ăn đồ ăn nhanh."
+              "en": "On top of that, cooking can help us unwind after a long day.",
+              "vi": "Trên hết, việc nấu nướng có thể giúp chúng ta xả hơi sau một ngày dài."
+            },
+            {
+              "en": "It's also satisfying when we make a delicious dish by ourselves.",
+              "vi": "Cảm giác cũng rất thỏa mãn khi chúng ta tự tay làm ra một món ăn ngon."
             }
           ]
         }

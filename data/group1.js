@@ -1112,19 +1112,9 @@ var group1 = {
               "example": "I believe <span class='text-rose-500 font-bold'>hard work always pays off</span>."
             },
             {
-              "en": "I guess <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
-              "vi": "Tôi đoán là / Tôi nghĩ là <span class='text-rose-500 font-bold'>ý kiến bản thân</span>.",
-              "example": "I guess <span class='text-rose-500 font-bold'>online learning will become more popular</span>."
-            },
-            {
               "en": "I would say <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
               "vi": "Tôi cho rằng / Tôi có thể nói là <span class='text-rose-500 font-bold'>ý kiến bản thân</span>.",
               "example": "I would say <span class='text-rose-500 font-bold'>this is the best movie I have ever watched</span>."
-            },
-            {
-              "en": "I suppose <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
-              "vi": "Tôi giả định là / Tôi đoán là <span class='text-rose-500 font-bold'>ý kiến bản thân</span>.",
-              "example": "I suppose <span class='text-rose-500 font-bold'>we need more time to finish this project</span>."
             },
             {
               "en": "In my opinion, <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
@@ -1135,21 +1125,6 @@ var group1 = {
               "en": "From my perspective, <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
               "vi": "Từ góc nhìn của tôi, <span class='text-rose-500 font-bold'>ý kiến bản thân</span>.",
               "example": "From my perspective, <span class='text-rose-500 font-bold'>spending time with family is the most important thing</span>."
-            },
-            {
-              "en": "From the way I see it, <span class='text-rose-500 font-bold'>ý kiến bản thân</span>",
-              "vi": "Theo cách tôi nhìn nhận vấn đề, <span class='text-rose-500 font-bold'>ý kiến bản thân</span>.",
-              "example": "From the way I see it, <span class='text-rose-500 font-bold'>reading books helps open our mind</span>."
-            },
-            {
-              "en": "I’m aware that <span class='text-rose-500 font-bold'>sự thật / điều gì đó</span>",
-              "vi": "Tôi nhận thức được / Tôi biết rằng <span class='text-rose-500 font-bold'>điều gì đó</span>.",
-              "example": "I'm aware that <span class='text-rose-500 font-bold'>doing exercise is a good habit for my health</span>."
-            },
-            {
-              "en": "S + be probably more aware of <span class='text-rose-500 font-bold'>vấn đề / điều gì đó</span>",
-              "vi": "Ai đó có lẽ nhận thức rõ hơn về <span class='text-rose-500 font-bold'>điều gì đó</span>.",
-              "example": "People are probably more aware of <span class='text-rose-500 font-bold'>how daily habits affect their health in the long run</span>."
             }
           ]
         },
@@ -1177,19 +1152,9 @@ var group1 = {
               "example": "I like learning English. Another reason is that <span class='text-rose-500 font-bold'>I want to travel abroad</span>."
             },
             {
-              "en": "That’s probably because <span class='text-rose-500 font-bold'>mệnh đề nguyên nhân</span>",
-              "vi": "Điều đó có lẽ là do / Bởi vì <span class='text-rose-500 font-bold'>nguyên nhân</span>.",
-              "example": "He looks tired. That's probably because <span class='text-rose-500 font-bold'>he worked late last night</span>."
-            },
-            {
               "en": "I mean <span class='text-rose-500 font-bold'>giải thích thêm</span>",
               "vi": "Ý của tôi là / Nghĩa là <span class='text-rose-500 font-bold'>giải thích rõ hơn</span>.",
               "example": "I don't like fast food. I mean <span class='text-rose-500 font-bold'>it is not good for my health</span>."
-            },
-            {
-              "en": "Partly because <span class='text-rose-500 font-bold'>mệnh đề nguyên nhân</span>",
-              "vi": "Một phần là vì <span class='text-rose-500 font-bold'>nguyên nhân</span>.",
-              "example": "I don't often get sick, partly because <span class='text-rose-500 font-bold'>I try to take care of myself and eat well</span>."
             }
           ]
         },
@@ -1232,14 +1197,9 @@ var group1 = {
               "example": "I prefer <span class='text-rose-500 font-bold'>drinking tea in the morning</span>."
             },
             {
-              "en": "I would love to <span class='text-rose-500 font-bold'>làm gì đó</span>",
-              "vi": "Tôi rất thích / rất muốn <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
-              "example": "I would love to <span class='text-rose-500 font-bold'>travel around the world</span>."
-            },
-            {
-              "en": "I like / love / enjoy <span class='text-rose-500 font-bold'>cái gì đó</span> the most",
-              "vi": "Tôi thích <span class='text-rose-500 font-bold'>cái gì đó</span> nhất.",
-              "example": "I love <span class='text-rose-500 font-bold'>summer</span> the most because of the sunny weather."
+              "en": "I’m really into <span class='text-rose-500 font-bold'>cái gì đó / làm gì đó</span>",
+              "vi": "Tôi thực sự rất thích / say mê <span class='text-rose-500 font-bold'>cái gì đó / làm việc gì đó</span>.",
+              "example": "I’m really into <span class='text-rose-500 font-bold'>listening to music</span> in my free time."
             },
             {
               "en": "I (really) like / love / enjoy <span class='text-rose-500 font-bold'>cái gì đó</span>",
@@ -1247,79 +1207,9 @@ var group1 = {
               "example": "I really enjoy <span class='text-rose-500 font-bold'>reading books</span> in my free time."
             },
             {
-              "en": "My favorite <span class='text-emerald-500 font-bold'>gì đó</span> would be <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "<span class='text-emerald-500 font-bold'>Cái gì đó</span> yêu thích nhất của tôi là <span class='text-rose-500 font-bold'>cái gì đó</span>.",
-              "example": "My favorite <span class='text-emerald-500 font-bold'>sport</span> would be <span class='text-rose-500 font-bold'>football</span>."
-            },
-            {
               "en": "What I like most about <span class='text-emerald-500 font-bold'>cái gì đó</span> is <span class='text-rose-500 font-bold'>cái gì đó</span>",
               "vi": "Điều tôi thích nhất về <span class='text-emerald-500 font-bold'>cái gì đó</span> là <span class='text-rose-500 font-bold'>cái gì đó</span>.",
               "example": "What I like most about <span class='text-emerald-500 font-bold'>my city</span> is <span class='text-rose-500 font-bold'>the street food</span>."
-            }
-          ]
-        },
-        {
-          "groupTitle": "CÁC CÁCH DIỄN ĐẠT KHÁC",
-          "items": [
-            {
-              "en": "In case <span class='text-rose-500 font-bold'>chuyện gì đó</span>",
-              "vi": "Phòng khi / Trong trường hợp <span class='text-rose-500 font-bold'>có chuyện gì đó</span>.",
-              "example": "I always carry an umbrella in case <span class='text-rose-500 font-bold'>it rains</span>."
-            },
-            {
-              "en": "I don’t have a detailed plan yet",
-              "vi": "Tôi chưa có một kế hoạch chi tiết nào cả.",
-              "example": "I don't have a detailed plan yet, but I want to study abroad."
-            },
-            {
-              "en": "Once <span class='text-emerald-500 font-bold'>mệnh đề 1</span>, <span class='text-rose-500 font-bold'>mệnh đề 2</span>",
-              "vi": "Một khi <span class='text-emerald-500 font-bold'>chuyện gì đó xảy ra</span>, thì <span class='text-rose-500 font-bold'>chuyện kia sẽ xảy ra</span>.",
-              "example": "Once <span class='text-emerald-500 font-bold'>I finish my homework</span>, <span class='text-rose-500 font-bold'>I will go out with my friends</span>."
-            },
-            {
-              "en": "It’s hard for me to <span class='text-rose-500 font-bold'>làm gì đó</span>",
-              "vi": "Rất khó để tôi <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
-              "example": "It's hard for me to <span class='text-rose-500 font-bold'>wake up early in winter</span>."
-            },
-            {
-              "en": "It’s easy for me to <span class='text-rose-500 font-bold'>làm gì đó</span>",
-              "vi": "Rất dễ để tôi <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
-              "example": "It's easy for me to <span class='text-rose-500 font-bold'>make new friends</span>."
-            },
-            {
-              "en": "I need to <span class='text-rose-500 font-bold'>làm gì đó</span>",
-              "vi": "Tôi cần phải <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
-              "example": "I need to <span class='text-rose-500 font-bold'>improve my English skills</span>."
-            },
-            {
-              "en": "Focus on <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "Tập trung vào <span class='text-rose-500 font-bold'>cái gì đó</span>.",
-              "example": "I want to focus on <span class='text-rose-500 font-bold'>my career</span> right now."
-            },
-            {
-              "en": "Concentrate on <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "Tập trung vào <span class='text-rose-500 font-bold'>cái gì đó</span>.",
-              "example": "It is hard to concentrate on <span class='text-rose-500 font-bold'>my studies</span> when it's noisy."
-            },
-            {
-              "en": "Different kinds of <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "Nhiều loại <span class='text-rose-500 font-bold'>gì đó</span> khác nhau.",
-              "example": "I like listening to different kinds of <span class='text-rose-500 font-bold'>music</span>."
-            },
-            {
-              "en": "Without worrying about <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "Mà không phải lo lắng về <span class='text-rose-500 font-bold'>việc gì đó / cái gì đó</span>.",
-              "example": "I want a stable job so I can live without worrying about <span class='text-rose-500 font-bold'>money</span>."
-            },
-            {
-              "en": "When it comes to <span class='text-rose-500 font-bold'>chủ đề / khía cạnh nào đó</span>",
-              "vi": "Khi nói đến / Khi đề cập đến <span class='text-rose-500 font-bold'>chủ đề / khía cạnh nào đó</span>.",
-              "example": "When it comes to <span class='text-rose-500 font-bold'>my diet and sleep</span>, I always try to maintain a balanced lifestyle."
-            },
-            {
-              "en": "Have easier access to <span class='text-rose-500 font-bold'>thông tin / dịch vụ nào đó</span>",
-              "vi": "Tiếp cận dễ dàng hơn với <span class='text-rose-500 font-bold'>thông tin / dịch vụ nào đó</span>.",
-              "example": "People nowadays have easier access to <span class='text-rose-500 font-bold'>health-related information</span> on social media."
             }
           ]
         },
@@ -1347,7 +1237,7 @@ var group1 = {
               "example": "I almost never <span class='text-rose-500 font-bold'>drink green tea</span>."
             },
             {
-              "en": "I only <span class='text-rose-500 font-bold'>làm gì đó</span> once in a while [from time to time]",
+              "en": "I only <span class='text-rose-500 font-bold'>làm gì đó</span> once in a while",
               "vi": "Tôi chỉ thỉnh thoảng mới <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
               "example": "I only <span class='text-rose-500 font-bold'>go to the cinema</span> once in a while when there is a good movie."
             }
@@ -1392,277 +1282,16 @@ var group1 = {
           "groupTitle": "MÔ TẢ THÓI QUEN / TÌNH TRẠNG",
           "items": [
             {
-              "en": "I’m usually very busy with my work",
-              "vi": "Tôi thường rất bận rộn với công việc.",
-              "example": "I don't have much free time because I’m usually very busy with my work."
-            },
-            {
-              "en": "I’m usually very busy with my studies at school [my schoolwork]",
-              "vi": "Tôi thường rất bận rộn với việc học ở trường.",
-              "example": "I don't have much free time because I’m usually very busy with my studies at school."
+              "en": "I'm usually very busy with <span class='text-rose-500 font-bold'>...</span>",
+              "vi": "Tôi thường rất bận rộn với <span class='text-rose-500 font-bold'>...</span>.",
+              "example": "I don't have much free time because I’m usually very busy with <span class='text-rose-500 font-bold'>my work / my studies</span>."
             },
             {
               "en": "<span class='text-emerald-500 font-bold'>Ai đó</span> has a habit of <span class='text-rose-500 font-bold'>làm gì đó</span>",
               "vi": "<span class='text-emerald-500 font-bold'>Ai đó</span> có thói quen <span class='text-rose-500 font-bold'>làm việc gì đó</span>.",
               "example": "<span class='text-emerald-500 font-bold'>My grandfather</span> has a habit of <span class='text-rose-500 font-bold'>drinking tea every morning</span>."
-            },
-            {
-              "en": "<span class='text-rose-500 font-bold'>Làm gì đó</span> depending on my mood",
-              "vi": "<span class='text-rose-500 font-bold'>Làm việc gì đó</span> tùy thuộc vào tâm trạng của tôi.",
-              "example": "<span class='text-rose-500 font-bold'>I listen to different types of music</span> depending on my mood."
-            },
-            {
-              "en": "<span class='text-rose-500 font-bold'>Làm gì đó</span> in a hurry",
-              "vi": "<span class='text-rose-500 font-bold'>Làm việc gì đó</span> một cách vội vã, gấp gáp.",
-              "example": "<span class='text-rose-500 font-bold'>I often eat breakfast</span> in a hurry before going to work."
             }
           ]
-        },
-        {
-          "groupTitle": "TRẢI NGHIỆM / CẢM GIÁC",
-          "items": [
-            {
-              "en": "I find it <span class='text-rose-500 font-bold'>tính từ miêu tả</span>",
-              "vi": "Tôi thấy nó <span class='text-rose-500 font-bold'>như thế nào đó</span>.",
-              "example": "I don't drink green tea because I find it <span class='text-rose-500 font-bold'>too bitter</span>."
-            },
-            {
-              "en": "I saw <span class='text-emerald-500 font-bold'>ai đó</span> <span class='text-rose-500 font-bold'>làm gì đó (V-ing)</span>",
-              "vi": "Tôi đã thấy <span class='text-emerald-500 font-bold'>ai đó</span> <span class='text-rose-500 font-bold'>đang làm việc gì đó</span>.",
-              "example": "I saw <span class='text-emerald-500 font-bold'>my grandfather</span> <span class='text-rose-500 font-bold'>drinking tea</span>."
-            },
-            {
-              "en": "<span class='text-emerald-500 font-bold'>Làm gì đó</span> out of curiosity",
-              "vi": "<span class='text-emerald-500 font-bold'>Làm việc gì đó</span> vì tò mò.",
-              "example": "<span class='text-emerald-500 font-bold'>I decided to try some</span> out of curiosity."
-            },
-            {
-              "en": "Since then, I haven’t really felt like <span class='text-rose-500 font-bold'>làm gì đó (V-ing)</span>",
-              "vi": "Kể từ đó, tôi không thực sự muốn <span class='text-rose-500 font-bold'>làm việc gì đó</span> nữa.",
-              "example": "Since then, I haven’t really felt like <span class='text-rose-500 font-bold'>drinking it again</span>."
-            },
-            {
-              "en": "End up feeling <span class='text-rose-500 font-bold'>tính từ chỉ cảm giác</span>",
-              "vi": "Rốt cuộc lại cảm thấy <span class='text-rose-500 font-bold'>như thế nào đó</span>.",
-              "example": "I don’t want to order something new and end up feeling <span class='text-rose-500 font-bold'>disappointed</span> if I don’t like it."
-            }
-          ]
-        },
-        {
-          "groupTitle": "ĐÁNH GIÁ / NHẬN ĐỊNH CHUNG",
-          "items": [
-            {
-              "en": "S is very suitable for <span class='text-rose-500 font-bold'>nhóm người nào đó</span>",
-              "vi": "Cái gì đó rất phù hợp cho <span class='text-rose-500 font-bold'>nhóm người nào đó</span>.",
-              "example": "This peaceful place is very suitable for <span class='text-rose-500 font-bold'>older people</span>."
-            },
-            {
-              "en": "There is a wide variety of <span class='text-rose-500 font-bold'>cái gì đó</span>",
-              "vi": "Có rất nhiều / đa dạng loại <span class='text-rose-500 font-bold'>cái gì đó</span>.",
-              "example": "In my city, there is a wide variety of <span class='text-rose-500 font-bold'>street food</span> to choose from."
-            },
-            {
-              "en": "One of the most <span class='text-rose-500 font-bold'>cái gì đó</span> is ____",
-              "vi": "Một trong những <span class='text-rose-500 font-bold'>cái gì đó</span> nhất là...",
-              "example": "One of the most <span class='text-rose-500 font-bold'>popular hobbies in my country</span> is playing football."
-            },
-            {
-              "en": "It’s considered <span class='text-rose-500 font-bold'>như là cái gì đó</span>",
-              "vi": "Nó được xem <span class='text-rose-500 font-bold'>như là cái gì đó</span>.",
-              "example": "Pho is considered <span class='text-rose-500 font-bold'>the most famous traditional food in Vietnam</span>."
-            }
-          ]
-        }
-      ],
-      "vocabulary": [
-        {
-          "word": "At that time,",
-          "ipa": "/ət ðæt taɪm/",
-          "pos": "phrase",
-          "vi": "Vào thời điểm đó / Lúc đó,",
-          "example": "At that time, I was just a student and didn't have much money."
-        },
-        {
-          "word": "Because of this,",
-          "ipa": "/bɪˈkɒz əv ðɪs/",
-          "pos": "phrase",
-          "vi": "Chính vì điều này / Do đó,",
-          "example": "I like peace and quiet. Because of this, I often stay at home on weekends."
-        },
-        {
-          "word": "not too expensive = affordable",
-          "ipa": "/nɒt tuː ɪkˈspensɪv = əˈfɔːdəbl/",
-          "pos": "adj",
-          "vi": "không quá đắt = giá cả phải chăng",
-          "example": "The food here is delicious and very affordable."
-        },
-        {
-          "word": "have classes",
-          "ipa": "/hæv ˈklɑːsɪz/",
-          "pos": "v",
-          "vi": "có tiết học / đi học",
-          "example": "I cannot go out tomorrow morning because I have classes."
-        },
-        {
-          "word": "take my time",
-          "ipa": "/teɪk maɪ taɪm/",
-          "pos": "phrase",
-          "vi": "thong thả, không vội vã",
-          "example": "On Sundays, I like to take my time and enjoy a cup of coffee."
-        },
-        {
-          "word": "slow down",
-          "ipa": "/sloʊ daʊn/",
-          "pos": "v",
-          "vi": "sống chậm lại, giảm tốc độ",
-          "example": "When I feel stressed, I try to slow down and take a deep breath."
-        },
-        {
-          "word": "try something new",
-          "ipa": "/traɪ ˈsʌmθɪŋ nuː/",
-          "pos": "phrase",
-          "vi": "thử một điều gì đó mới mẻ",
-          "example": "I always like to try something new, like learning a new language."
-        },
-        {
-          "word": "a sense of satisfaction",
-          "ipa": "/ə sens əv ˌsætɪsˈfækʃn/",
-          "pos": "n",
-          "vi": "cảm giác thỏa mãn, hài lòng",
-          "example": "Finishing a difficult task gives me a sense of satisfaction."
-        },
-        {
-          "word": "talk together",
-          "ipa": "/tɔːk təˈɡeðər/",
-          "pos": "phrase",
-          "vi": "nói chuyện cùng nhau",
-          "example": "We often sit at a coffee shop and talk together."
-        },
-        {
-          "word": "do everything together",
-          "ipa": "/duː ˈevriθɪŋ təˈɡeðər/",
-          "pos": "phrase",
-          "vi": "làm mọi việc cùng nhau",
-          "example": "My best friend and I do everything together."
-        },
-        {
-          "word": "precious memories",
-          "ipa": "/ˈpreʃəs ˈmeməriz/",
-          "pos": "n",
-          "vi": "những kỷ niệm quý giá",
-          "example": "That trip gave us many precious memories."
-        },
-        {
-          "word": "the whole experience",
-          "ipa": "/ðə hoʊl ɪkˈspɪriəns/",
-          "pos": "n",
-          "vi": "toàn bộ trải nghiệm",
-          "example": "The weather made the whole experience much better."
-        },
-        {
-          "word": "have someone to talk to",
-          "ipa": "/hæv ˈsʌmwʌn tə tɔːk tuː/",
-          "pos": "phrase",
-          "vi": "có ai đó để nói chuyện",
-          "example": "It's always nice to have someone to talk to when you're stressed."
-        },
-        {
-          "word": "share exciting moments with",
-          "ipa": "/ʃer ɪkˈsaɪtɪŋ ˈmoʊmənts wɪθ/",
-          "pos": "phrase",
-          "vi": "chia sẻ những khoảnh khắc thú vị với",
-          "example": "I like to share exciting moments with my family."
-        },
-        {
-          "word": "in a comfortable / convenient / natural way",
-          "ipa": "/ɪn ə ˈkʌmftəbl / kənˈviːniənt / ˈnætʃrəl weɪ/",
-          "pos": "phrase",
-          "vi": "theo một cách thoải mái / tiện lợi / tự nhiên",
-          "example": "We can chat in a comfortable way without any pressure."
-        },
-        {
-          "word": "outdoor activities",
-          "ipa": "/ˈaʊtdɔːr ækˈtɪvətiz/",
-          "pos": "n",
-          "vi": "các hoạt động ngoài trời",
-          "example": "I enjoy outdoor activities like hiking and cycling."
-        },
-        {
-          "word": "study pressure",
-          "ipa": "/ˈstʌdi ˈpreʃər/",
-          "pos": "n",
-          "vi": "áp lực học tập",
-          "example": "Many students suffer from study pressure."
-        },
-        {
-          "word": "temporarily",
-          "ipa": "/ˌtempəˈrerəli/",
-          "pos": "adv",
-          "vi": "một cách tạm thời",
-          "example": "I want to temporarily forget about my work."
-        },
-        {
-          "word": "take a long break",
-          "ipa": "/teɪk ə lɔːŋ breɪk/",
-          "pos": "phrase",
-          "vi": "nghỉ giải lao dài",
-          "example": "After the exams, I will take a long break."
-        },
-        {
-          "word": "already",
-          "ipa": "/ɔːlˈredi/",
-          "pos": "adv",
-          "vi": "đã... rồi",
-          "example": "I have already finished my homework."
-        },
-        {
-          "word": "almost every day",
-          "ipa": "/ˈɔːlmoʊst ˈevri deɪ/",
-          "pos": "phrase",
-          "vi": "gần như mỗi ngày",
-          "example": "I drink coffee almost every day."
-        },
-        {
-          "word": "I would say it depends",
-          "ipa": "/aɪ wʊd seɪ ɪt dɪˈpendz/",
-          "pos": "phrase",
-          "vi": "tôi sẽ nói rằng điều đó còn tùy",
-          "example": "I would say it depends on my mood."
-        },
-        {
-          "word": "go for a walk",
-          "ipa": "/ɡoʊ fər ə wɔːk/",
-          "pos": "phrase",
-          "vi": "đi dạo",
-          "example": "I often go for a walk in the park near my house."
-        },
-        {
-          "word": "hang out with my friends",
-          "ipa": "/hæŋ aʊt wɪθ maɪ frendz/",
-          "pos": "phrase",
-          "vi": "đi chơi với bạn bè",
-          "example": "On weekends, I usually hang out with my friends."
-        },
-        {
-          "word": "frequently = regularly",
-          "ipa": "/ˈfriːkwəntli = ˈreɡjələrli/",
-          "pos": "adv",
-          "vi": "thường xuyên",
-          "example": "I do exercise frequently to stay healthy and maintain a positive mindset."
-        },
-        {
-          "word": "productively",
-          "ipa": "/prəˈdʌktɪvli/",
-          "pos": "adv",
-          "vi": "một cách hiệu quả / có năng suất",
-          "example": "Keeping my mind sharp helps me work and study more productively."
-        },
-        {
-          "word": "in the long run",
-          "ipa": "/ɪn ðə lɔːŋ rʌn/",
-          "pos": "phrase",
-          "vi": "về lâu dài / trong dài hạn",
-          "example": "Maintaining good daily habits will benefit your health in the long run."
         }
       ]
     }

@@ -1,5 +1,8 @@
+// Ghi chú: File này chứa mã React của ứng dụng.
+// Để mở trực tiếp bằng cách click đúp index.html (giao thức file://) mà không bị lỗi CORS của trình duyệt,
+// mã này được đồng bộ vào index.html qua lệnh: node scripts/build.js
 
- const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
  // TỔNG HỢP DANH SÁCH
  const vstepGroupsData = [group1, group2, group3, group4, group5, group6, group7, group8];
@@ -12,50 +15,15 @@
   adj: { label: 'adj', color: 'bg-amber-50 text-amber-600 border-amber-200' },
   adv: { label: 'adv', color: 'bg-purple-50 text-purple-600 border-purple-200' },
   phrase: { label: 'cụm từ', color: 'bg-rose-50 text-rose-600 border-rose-200' }
- };
+  };
 
- const getNodeBgColor = (color) => {
-  if (color === 'pink') return 'bg-pink-500';
-  if (color === 'orange') return 'bg-orange-500';
-  return 'bg-slate-800';
- };
-
- const getVerticalLineClass = (index, total) => {
-  if (total <= 1) return '';
-  if (index === 0) return 'top-1/2 bottom-0';
-  if (index === total - 1) return 'top-0 bottom-1/2';
-  return 'top-0 bottom-0';
- };
-
- const renderBranchList = (children, align, renderNode) => {
-  if (!children || children.length === 0) return null;
-  const isLeft = align === 'left';
-  return (
-   <div className={`flex flex-col relative ${isLeft ? 'pr-24 items-end' : 'pl-24 items-start'}`}>
-    <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-1/2 w-12 border-t-2 border-slate-300`}></div>
-    {children.map((child, i) => {
-     const isSingle = children.length === 1;
-     const verticalLineClass = getVerticalLineClass(i, children.length);
-     return (
-      <div key={i} className={`relative flex items-center py-2 ${isLeft ? 'flex-row-reverse' : ''}`}>
-       {!isSingle && <div className={`absolute ${isLeft ? 'right-12' : 'left-12'} w-[2px] bg-slate-300 ${verticalLineClass}`}></div>}
-       <div className={`absolute ${isLeft ? 'right-12' : 'left-12'} top-1/2 w-12 border-t-2 border-slate-300`}></div>
-       {renderNode(child)}
-      </div>
-     );
-    })}
-   </div>
-  );
- };
-
- // --- HỆ THỐNG ICONS ---
+  // --- HỆ THỐNG ICONS ---
  const iconRenderers = {
  Volume2: (props) => <svg {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>,
  ChevronRight: (props) => <svg {...props}><path d="m9 18 6-6-6-6"/></svg>,
  ChevronDown: (props) => <svg {...props}><path d="m6 9 6 6 6-6"/></svg>,
  BookOpen: (props) => <svg {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
  List: (props) => <svg {...props}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>,
- MessageCircle: (props) => <svg {...props}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
  Info: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
  ArrowRight: (props) => <svg {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
  Lightbulb: (props) => <svg {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
@@ -68,7 +36,11 @@
  Award: (props) => <svg {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
  HelpCircle: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
  FileText: (props) => <svg {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
- Activity: (props) => <svg {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+ Activity: (props) => <svg {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+ RotateCcw: (props) => <svg {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
+ Sparkles: (props) => <svg {...props}><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>,
+ LinkIcon: (props) => <svg {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+ CheckCircle2: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
  };
  const Icon = ({ name, size = 24, className = "" }) => {
   const svgProps = { xmlns:"http://www.w3.org/2000/svg", width: size, height: size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2", strokeLinecap:"round", strokeLinejoin:"round", className };
@@ -80,7 +52,6 @@
  const ChevronDown = (props) => <Icon name="ChevronDown" {...props} />;
  const BookOpen = (props) => <Icon name="BookOpen" {...props} />;
  const List = (props) => <Icon name="List" {...props} />;
- const MessageCircle = (props) => <Icon name="MessageCircle" {...props} />;
  const Info = (props) => <Icon name="Info" {...props} />;
  const ArrowRight = (props) => <Icon name="ArrowRight" {...props} />;
  const Lightbulb = (props) => <Icon name="Lightbulb" {...props} />;
@@ -94,6 +65,10 @@
  const HelpCircle = (props) => <Icon name="HelpCircle" {...props} />;
  const FileText = (props) => <Icon name="FileText" {...props} />;
  const Activity = (props) => <Icon name="Activity" {...props} />;
+ const RotateCcw = (props) => <Icon name="RotateCcw" {...props} />;
+ const Sparkles = (props) => <Icon name="Sparkles" {...props} />;
+ const LinkIcon = (props) => <Icon name="LinkIcon" {...props} />;
+ const CheckCircle2 = (props) => <Icon name="CheckCircle2" {...props} />;
 
  // --- HỆ THỐNG ĐỌC GIỌNG NÓI ---
  const speakText = (text) => {
@@ -155,7 +130,7 @@
  >
  <Volume2 size={16} />
  </button>
- <p className="text-slate-700 text-sm italic leading-relaxed" dangerouslySetInnerHTML={{ __html: `"${example}"` }}></p>
+ <p className="text-slate-700 text-sm italic leading-relaxed font-light" dangerouslySetInnerHTML={{ __html: `"${example}"` }}></p>
  </div>
  {subItems && subItems.length > 0 && (
  <div className="mt-3 flex flex-wrap gap-2">
@@ -166,7 +141,7 @@
  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors border ${activeSubItem === idx ? 'bg-indigo-100 text-indigo-700 border-indigo-200 ' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 '}`}
  >
  {item.en}
- {activeSubItem === idx && <span className="ml-2 text-red-500 font-bold">{item.vi}</span>}
+ {activeSubItem === idx && <span className="ml-2 text-red-500 font-light">{item.vi}</span>}
  </button>
  ))}
  </div>
@@ -174,245 +149,6 @@
  </div>
  );
  });
-
- const BranchNode = ({ topic, color, children, align = 'right' }) => {
- const bgColor = getNodeBgColor(color);
- return (
- <div className={`flex items-center ${align === 'left' ? 'flex-row-reverse' : ''}`}>
- <div className={`px-4 py-2 rounded-xl text-white text-sm font-medium whitespace-nowrap shadow-sm relative z-10 ${bgColor} border border-slate-700/10`}>
- {topic}
- </div>
- {children && children.length > 0 && renderBranchList(children, align, (child) => <BranchNode {...child} align={align} />)}
- </div>
- );
- };
-
- const NodeRight = (props) => <BranchNode {...props} align="right" />;
- const NodeLeft = (props) => <BranchNode {...props} align="left" />;
-
- const ZoomPanContainer = ({ children }) => {
- const containerRef = React.useRef(null);
- const contentRef = React.useRef(null);
- 
- const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
- const transformRef = React.useRef({ scale: 1, x: 0, y: 0 });
-
- const updateTransform = (newTransform) => {
- transformRef.current = newTransform;
- setTransform(newTransform);
- };
-
- const isDragging = React.useRef(false);
- const dragStart = React.useRef({ x: 0, y: 0 });
-
- useEffect(() => {
- const fitContent = () => {
- if (containerRef.current && contentRef.current) {
- const containerW = containerRef.current.clientWidth;
- const containerH = containerRef.current.clientHeight;
- const contentW = contentRef.current.offsetWidth;
- const contentH = contentRef.current.offsetHeight;
- 
- if (contentW > 0) {
- const scaleX = (containerW - 40) / contentW;
- // Default to a minimum readable scale (0.5), unless it's a very tiny screen
- let initialScale = Math.min(1.2, scaleX);
- initialScale = Math.max(0.5, initialScale);
- 
- const scaledW = contentW * initialScale;
- const scaledH = contentH * initialScale;
- 
- updateTransform({
- scale: initialScale,
- x: (containerW - scaledW) / 2,
- y: (containerH - scaledH) / 2
- });
- }
- }
- };
- 
- const timer = setTimeout(fitContent, 100);
- window.addEventListener('resize', fitContent);
- return () => {
- clearTimeout(timer);
- window.removeEventListener('resize', fitContent);
- };
- }, [children]);
-
- useEffect(() => {
- const container = containerRef.current;
- if (!container) return;
-
- const handleWheel = (e) => {
- e.preventDefault();
- const zoomSensitivity = 0.002;
- const delta = -e.deltaY * zoomSensitivity;
- 
- const current = transformRef.current;
- let newScale = current.scale + delta;
- newScale = Math.min(Math.max(0.2, newScale), 3);
- 
- const rect = container.getBoundingClientRect();
- const mouseX = e.clientX - rect.left;
- const mouseY = e.clientY - rect.top;
- 
- const contentX = (mouseX - current.x) / current.scale;
- const contentY = (mouseY - current.y) / current.scale;
- 
- const newX = mouseX - contentX * newScale;
- const newY = mouseY - contentY * newScale;
- 
- updateTransform({ scale: newScale, x: newX, y: newY });
- };
-
- container.addEventListener('wheel', handleWheel, { passive: false });
- return () => container.removeEventListener('wheel', handleWheel);
- }, []);
-
- const handlePointerDown = (e) => {
- if (e.button !== 0) return;
- isDragging.current = true;
- const current = transformRef.current;
- dragStart.current = { x: e.clientX - current.x, y: e.clientY - current.y };
- 
- if (containerRef.current) {
- containerRef.current.setPointerCapture(e.pointerId);
- }
- };
-
- const handlePointerMove = (e) => {
- if (!isDragging.current) return;
- const current = transformRef.current;
- updateTransform({
- ...current,
- x: e.clientX - dragStart.current.x,
- y: e.clientY - dragStart.current.y
- });
- };
-
- const handlePointerUp = (e) => {
- isDragging.current = false;
- if (containerRef.current?.hasPointerCapture?.(e.pointerId)) {
-  containerRef.current.releasePointerCapture(e.pointerId);
- }
- };
-
- const zoomIn = () => {
- const current = transformRef.current;
- const newScale = Math.min(current.scale + 0.2, 3);
- if (!containerRef.current) return;
- const containerW = containerRef.current.clientWidth;
- const containerH = containerRef.current.clientHeight;
- const mouseX = containerW / 2;
- const mouseY = containerH / 2;
- const contentX = (mouseX - current.x) / current.scale;
- const contentY = (mouseY - current.y) / current.scale;
- updateTransform({ scale: newScale, x: mouseX - contentX * newScale, y: mouseY - contentY * newScale });
- };
-
- const zoomOut = () => {
- const current = transformRef.current;
- const newScale = Math.max(current.scale - 0.2, 0.2);
- if (!containerRef.current) return;
- const containerW = containerRef.current.clientWidth;
- const containerH = containerRef.current.clientHeight;
- const mouseX = containerW / 2;
- const mouseY = containerH / 2;
- const contentX = (mouseX - current.x) / current.scale;
- const contentY = (mouseY - current.y) / current.scale;
- updateTransform({ scale: newScale, x: mouseX - contentX * newScale, y: mouseY - contentY * newScale });
- };
-
- return (
- <div className="relative w-full border border-slate-200 rounded-2xl bg-[#fafafa] overflow-hidden shadow-inner" style={{ height: '700px' }}>
- <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-white p-1.5 rounded-xl shadow-md border border-slate-200 ">
- <button onClick={zoomIn} className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-indigo-600 rounded-lg font-bold text-xl transition-colors" title="Phóng to (Zoom In)">+</button>
- <div className="w-full h-px bg-slate-100 "></div>
- <button onClick={zoomOut} className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-indigo-600 rounded-lg font-bold text-xl transition-colors" title="Thu nhỏ (Zoom Out)">-</button>
- </div>
- 
- <div 
- ref={containerRef}
- className={`w-full h-full touch-none select-none ${transform.scale > 0 ? 'cursor-grab active:cursor-grabbing' : ''}`}
- onPointerDown={handlePointerDown}
- onPointerMove={handlePointerMove}
- onPointerUp={handlePointerUp}
- onPointerCancel={handlePointerUp}
- >
- <div 
- ref={contentRef}
- className="absolute origin-top-left will-change-transform"
- style={{ 
- transform:`translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
- width: 'max-content'
- }}
- >
- {children}
- </div>
- </div>
- </div>
- );
- };
-
- const Mindmap = ({ data }) => {
- if (!data) return null;
- return (
- <ZoomPanContainer>
- <div className="flex flex-row items-center justify-center min-w-max p-12">
- {/* Left Branches */}
- <div className="flex flex-col relative items-end pr-24">
- <div className="absolute right-0 top-1/2 w-12 border-t-2 border-slate-300"></div>
- {data.leftBranches.map((c, i) => {
- const isFirst = i === 0;
- const isLast = i === data.leftBranches.length - 1;
- const isSingle = data.leftBranches.length === 1;
- let verticalLineClass = "";
- if (!isSingle) {
- if (isFirst) verticalLineClass ="top-1/2 bottom-0";
- else if (isLast) verticalLineClass ="top-0 bottom-1/2";
- else verticalLineClass ="top-0 bottom-0";
- }
- return (
- <div key={i} className="relative flex items-center py-3 flex-row-reverse">
- {!isSingle && <div className={`absolute right-12 w-[2px] bg-slate-300 ${verticalLineClass}`}></div>}
- <div className="absolute right-12 top-1/2 w-12 border-t-2 border-slate-300"></div>
- <NodeLeft {...c} />
- </div>
- )
- })}
- </div>
-
- {/* Center */}
- <div className="bg-slate-900 text-white py-3.5 px-8 rounded-2xl font-bold text-center text-lg shadow-xl relative z-20 whitespace-nowrap mx-0 ring-4 ring-slate-100">
- {data.central}
- </div>
-
- {/* Right Branches */}
- <div className="flex flex-col relative items-start pl-24">
- <div className="absolute left-0 top-1/2 w-12 border-t-2 border-slate-300"></div>
- {data.rightBranches.map((c, i) => {
- const isFirst = i === 0;
- const isLast = i === data.rightBranches.length - 1;
- const isSingle = data.rightBranches.length === 1;
- let verticalLineClass = "";
- if (!isSingle) {
- if (isFirst) verticalLineClass ="top-1/2 bottom-0";
- else if (isLast) verticalLineClass ="top-0 bottom-1/2";
- else verticalLineClass ="top-0 bottom-0";
- }
- return (
- <div key={i} className="relative flex items-center py-3">
- {!isSingle && <div className={`absolute left-12 w-[2px] bg-slate-300 ${verticalLineClass}`}></div>}
- <div className="absolute left-12 top-1/2 w-12 border-t-2 border-slate-300"></div>
- <NodeRight {...c} />
- </div>
- )
- })}
- </div>
- </div>
- </ZoomPanContainer>
- );
- };
 
  const QuestionBlock = React.memo(({ question, idx }) => {
  const [activeTab, setActiveTab] = useState('b1');
@@ -424,16 +160,25 @@
  const audioRef = React.useRef(null);
  const [isPlaying, setIsPlaying] = useState(false);
 
+ // Nếu tab đang chọn (ví dụ C1) không tồn tại trong câu hỏi này thì fallback về 'b1'
+ const effectiveTab = (question && question[activeTab] && Array.isArray(question[activeTab])) ? activeTab : 'b1';
+
  // Tự động dừng âm thanh khi chuyển Tab (B1/B2/C1)
  useEffect(() => {
  if (audioRef.current) {
  audioRef.current.pause();
  setIsPlaying(false);
  }
- }, [activeTab]);
+ }, [effectiveTab]);
+
+ useEffect(() => {
+ if (!question || !question[activeTab] || !Array.isArray(question[activeTab])) {
+ setActiveTab('b1');
+ }
+ }, [question, activeTab]);
 
  const handlePlayAudio = () => {
- const audioUrl = question.audioFiles ? question.audioFiles[activeTab] : null;
+ const audioUrl = question && question.audioFiles ? question.audioFiles[effectiveTab] : null;
  if (!audioUrl) return;
 
  if (isPlaying) {
@@ -460,14 +205,14 @@
  }
  };
 
- const currentAnswer = question[activeTab];
+ const currentAnswer = (question && question[effectiveTab]) || (question && question.b1) || [];
 
  const currentIdeaMap = React.useMemo(() => {
- if (question.ideaMap && question.ideaMap[activeTab]) {
- return question.ideaMap[activeTab];
+ if (question && question.ideaMap && question.ideaMap[effectiveTab]) {
+ return question.ideaMap[effectiveTab];
  }
  return [];
- }, [question.ideaMap, activeTab]);
+ }, [question, effectiveTab]);
 
  return (
  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
@@ -483,7 +228,7 @@
  <div>
  <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight">{question.q.en}</h3>
  {showQuestionVi && (
- <p className="text-indigo-600 text-base sm:text-lg font-medium mt-1 animate-fade-in">{question.q.vi}</p>
+ <p className="text-indigo-600 text-base sm:text-lg font-light mt-1 animate-fade-in">{question.q.vi}</p>
  )}
  </div>
  </div>
@@ -492,12 +237,12 @@
  {currentIdeaMap && currentIdeaMap.length > 0 && (
  <div className="px-4 sm:px-5 py-4 border-b border-slate-100 bg-slate-50 ">
  <h4 className="text-xs font-bold text-violet-600 uppercase tracking-wider mb-2 flex items-center gap-1">
- <List size={14} className="text-violet-500" /> IDEA MAP <span className={activeTab === 'b1' ? 'text-blue-600' : activeTab === 'b2' ? 'text-green-600' : 'text-purple-600'}>({activeTab.toUpperCase()})</span>
+ <List size={14} className="text-violet-500" /> IDEA MAP <span className={effectiveTab === 'b1' ? 'text-blue-600' : effectiveTab === 'b2' ? 'text-green-600' : 'text-purple-600'}>({effectiveTab.toUpperCase()})</span>
  </h4>
  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
  {currentIdeaMap.map((idea, i) => (
  <React.Fragment key={i}>
- <span className="bg-white border border-slate-200 text-slate-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium shadow-sm">
+ <span className="bg-white border border-slate-200 text-slate-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-light shadow-sm">
  {idea}
  </span>
  {i < currentIdeaMap.length - 1 && <ArrowRight size={12} className="text-slate-400 sm:w-3.5 sm:h-3.5" />}
@@ -512,23 +257,23 @@
  <div className="flex items-end gap-2 sm:gap-4 overflow-x-auto">
  <div className="flex border-r border-slate-200 pr-2">
  <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${activeTab === 'b1' ? 'text-blue-600 ' : 'text-slate-400'}`}
+ className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'b1' ? 'text-blue-600 ' : 'text-slate-400'}`}
  onClick={() => setActiveTab('b1')}
  >
- Level B1 {activeTab === 'b1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-md"></span>}
+ Level B1 {effectiveTab === 'b1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-md"></span>}
  </button>
  <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${activeTab === 'b2' ? 'text-green-600' : 'text-slate-400'}`}
+ className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'b2' ? 'text-green-600' : 'text-slate-400'}`}
  onClick={() => setActiveTab('b2')}
  >
- Level B2 {activeTab === 'b2' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-t-md"></span>}
+ Level B2 {effectiveTab === 'b2' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-t-md"></span>}
  </button>
- {question.c1 && (
+ {question && question.c1 && (
  <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${activeTab === 'c1' ? 'text-purple-600' : 'text-slate-400'}`}
+ className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'c1' ? 'text-purple-600' : 'text-slate-400'}`}
  onClick={() => setActiveTab('c1')}
  >
- Level C1 {activeTab === 'c1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600 rounded-t-md"></span>}
+ Level C1 {effectiveTab === 'c1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600 rounded-t-md"></span>}
  </button>
  )}
  </div>
@@ -541,7 +286,7 @@
  </div>
 
  {/* Nút nghe file MP3 thực tế */}
- {question.audioFiles && question.audioFiles[activeTab] && (
+ {question && question.audioFiles && question.audioFiles[effectiveTab] && (
  <button
  onClick={handlePlayAudio}
  className={`flex items-center gap-2 px-3 py-1 mb-2 rounded-full text-xs font-bold transition-all shadow-sm whitespace-nowrap flex-shrink-0 ${
@@ -559,8 +304,8 @@
  </p>
  </div>
 
- <div className="text-slate-700 leading-relaxed text-justify transition-all" style={{ fontSize: `${fontSize}px` }}>
- {currentAnswer.map((sentence, i) => {
+ <div className="text-slate-700 leading-relaxed text-justify transition-all font-light" style={{ fontSize: `${fontSize}px` }}>
+ {Array.isArray(currentAnswer) && currentAnswer.map((sentence, i) => {
  const isSelected = translatedSentence?.en === sentence.en;
  return (
  <span key={i} className="inline">
@@ -571,7 +316,7 @@
  {sentence.en}
  </span>
  {isSelected && (
- <span className="inline animate-fade-in font-normal text-amber-700 ml-1.5 mr-0.5">
+ <span className="inline animate-fade-in font-light text-amber-700 ml-1.5 mr-0.5">
  {sentence.vi}
  </span>
  )}
@@ -585,7 +330,476 @@
  );
  });
 
- // --- COMPONENT LÝ THUYẾT CHUNG ---
+ 
+  // --- VIDEO MINH HOẠ CHUYỂN ĐỘNG MỞ RỘNG Ý (ANIMATED MOTION VIDEO) ---
+  const VisualAnswerFlow = () => {
+    const [activeMode, setActiveMode] = useState('chain'); // 'chain' | 'dual'
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0); // 0 đến 18.0s
+    const [autoSpeak, setAutoSpeak] = useState(false);
+    const spokenScenesRef = useRef({});
+
+    const totalDuration = 18.0;
+
+    // Quản lý đồng hồ thời gian video
+    useEffect(() => {
+      let interval = null;
+      if (isPlaying) {
+        interval = setInterval(() => {
+          setCurrentTime((prev) => {
+            if (prev >= totalDuration) {
+              setIsPlaying(false);
+              return totalDuration;
+            }
+            return parseFloat((prev + 0.1).toFixed(1));
+          });
+        }, 100);
+      }
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [isPlaying, totalDuration]);
+
+    // Tự động đọc giọng nói nếu bật autoSpeak
+    useEffect(() => {
+      if (!autoSpeak || !isPlaying) return;
+
+      if (activeMode === 'chain') {
+        if (currentTime >= 0.4 && currentTime < 0.7 && !spokenScenesRef.current['chain_1']) {
+          spokenScenesRef.current['chain_1'] = true;
+          speakText("I prefer watching films at home");
+        }
+        if (currentTime >= 3.5 && currentTime < 3.8 && !spokenScenesRef.current['chain_2']) {
+          spokenScenesRef.current['chain_2'] = true;
+          speakText("because it is more comfortable.");
+        }
+        if (currentTime >= 8.0 && currentTime < 8.3 && !spokenScenesRef.current['chain_3']) {
+          spokenScenesRef.current['chain_3'] = true;
+          speakText("I mean, I can pause the movie whenever I want.");
+        }
+        if (currentTime >= 13.0 && currentTime < 13.3 && !spokenScenesRef.current['chain_4']) {
+          spokenScenesRef.current['chain_4'] = true;
+          speakText("And I usually watch films with my family on weekends.");
+        }
+      } else {
+        if (currentTime >= 0.4 && currentTime < 0.7 && !spokenScenesRef.current['dual_1']) {
+          spokenScenesRef.current['dual_1'] = true;
+          speakText("I prefer watching films at home because it is affordable. It helps me save money.");
+        }
+        if (currentTime >= 6.0 && currentTime < 6.3 && !spokenScenesRef.current['dual_2']) {
+          spokenScenesRef.current['dual_2'] = true;
+          speakText("Besides, it gives me complete freedom and privacy.");
+        }
+        if (currentTime >= 11.0 && currentTime < 11.3 && !spokenScenesRef.current['dual_3']) {
+          spokenScenesRef.current['dual_3'] = true;
+          speakText("I can wear my pajamas and lie comfortably on the couch.");
+        }
+      }
+    }, [currentTime, autoSpeak, isPlaying, activeMode]);
+
+    const handlePlayPause = () => {
+      if (currentTime >= totalDuration) {
+        setCurrentTime(0);
+        spokenScenesRef.current = {};
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(!isPlaying);
+      }
+    };
+
+    const handleReplay = () => {
+      setCurrentTime(0);
+      spokenScenesRef.current = {};
+      setIsPlaying(true);
+    };
+
+    const handleSeek = (time) => {
+      setCurrentTime(time);
+      if (time === 0) spokenScenesRef.current = {};
+    };
+
+    const handleModeSwitch = (mode) => {
+      setActiveMode(mode);
+      setCurrentTime(0);
+      spokenScenesRef.current = {};
+      setIsPlaying(false);
+    };
+
+    const formatTime = (secs) => {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    // Điều kiện hiển thị theo thời gian (Mode 1: Chuỗi Móc Xích)
+    const showChain1 = currentTime >= 0.2;
+    const showChain2 = currentTime >= 3.5;
+    const hook1Active = currentTime >= 6.5; // Bốc từ khóa "comfortable"
+    const showChain3 = currentTime >= 8.0;
+    const hook2Active = currentTime >= 11.5; // Bốc từ khóa "pause the movie"
+    const showChain4 = currentTime >= 13.0;
+    const showChainComplete = currentTime >= 16.5;
+
+    // Điều kiện hiển thị (Mode 2: Hai Luồng Ý Tưởng)
+    const showDual1 = currentTime >= 0.2;
+    const showDualBridge = currentTime >= 5.5; // Cầu nối chuyển ý
+    const showDual2 = currentTime >= 9.0;
+    const showDualExpand = currentTime >= 12.0;
+    const showDualComplete = currentTime >= 16.0;
+
+    return (
+      <section className="space-y-4 mt-8">
+        {/* TIÊU ĐỀ SECTION */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-amber-400 shadow-sm">
+              <Play size={22} className="ml-0.5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-orange-600">Video minh họa chuyển động</span>
+                <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">18 Giây</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-950">
+                Cơ Chế Bốc Từ Khóa Mở Rộng Ý
+              </h3>
+            </div>
+          </div>
+
+          {/* CHỌN MÔ HÌNH: MÓC XÍCH vs 2 IDEAS */}
+          <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button
+              type="button"
+              onClick={() => handleModeSwitch('chain')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                activeMode === 'chain'
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <LinkIcon size={14} />
+              <span>Mô hình 1: Chuỗi Móc Xích</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModeSwitch('dual')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                activeMode === 'dual'
+                  ? 'bg-white text-teal-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>Mô hình 2: Hai Ý Tưởng (2 Ideas)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* KHUNG VIDEO ANIMATION PLAYER */}
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-950 text-white shadow-2xl border border-slate-800">
+          {/* HEADER TRONG KHUNG VIDEO */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/60 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="flex gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+              </span>
+              <span className="text-slate-300 font-light ml-2 hidden sm:inline">
+                Câu hỏi: "Do you prefer watching films at home or in the cinema?"
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                autoSpeak ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title="Tự động đọc giọng nói khi chạy video"
+            >
+              <Volume2 size={13} />
+              <span>Âm thanh đọc: {autoSpeak ? 'Bật' : 'Tắt'}</span>
+            </button>
+          </div>
+
+          {/* SÂN KHẤU DIỄN HOẠT (STAGE) */}
+          <div className="p-6 sm:p-8 min-h-[380px] flex flex-col justify-center">
+            {activeMode === 'chain' ? (
+              <div className="space-y-4">
+                {/* CÂU 1: TRẢ LỜI TRỰC TIẾP */}
+                <div className={`transition-all duration-500 ${showChain1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+                      Câu 1 • Trả lời trực tiếp
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-white mt-1.5 leading-snug">
+                    "I prefer watching films at home..."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 Tôi thích xem phim ở nhà hơn...
+                  </p>
+                </div>
+
+                {/* CÂU 2: LÝ DO */}
+                <div className={`transition-all duration-500 ${showChain2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold">
+                      Câu 2 • Giải thích lý do
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-slate-100 mt-1.5 leading-snug">
+                    "...because it is more{' '}
+                    <span
+                      className={`transition-all duration-300 ${
+                        hook1Active
+                          ? 'inline-block bg-amber-400 text-slate-950 font-bold px-2.5 py-0.5 rounded-lg shadow-lg shadow-amber-400/50 scale-110 ring-4 ring-amber-300 animate-pulse'
+                          : 'text-amber-300 font-medium underline'
+                      }`}
+                    >
+                      comfortable
+                    </span>
+                    ."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 ...bởi vì nó thoải mái hơn rất nhiều.
+                  </p>
+                </div>
+
+                {/* BỐC CHI TIẾT 1 TỪ "COMFORTABLE" */}
+                {hook1Active && (
+                  <div className="pl-4 sm:pl-6 my-1 animate-fade-in flex items-center gap-3">
+                    <div className="w-1.5 h-7 bg-gradient-to-b from-amber-400 to-purple-400 rounded-full animate-pulse"></div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs sm:text-sm font-bold shadow-sm">
+                      <span className="flex items-center gap-1">
+                        <LinkIcon size={13} className="text-amber-400" />
+                        Bốc từ khóa <strong>"comfortable"</strong>
+                      </span>
+                      <span className="text-slate-500">➔</span>
+                      <span className="text-slate-200">Não tự hỏi: <em>Thoải mái ở điểm gì?</em></span>
+                    </div>
+                  </div>
+                )}
+
+                {/* CÂU 3: MỞ RỘNG TỪ "COMFORTABLE" */}
+                <div className={`transition-all duration-500 ${showChain3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold">
+                      Câu 3 • Mở rộng từ "comfortable"
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-purple-100 mt-1.5 leading-snug">
+                    "I mean, I can{' '}
+                    <span
+                      className={`transition-all duration-300 ${
+                        hook2Active
+                          ? 'inline-block bg-amber-400 text-slate-950 font-bold px-2.5 py-0.5 rounded-lg shadow-lg shadow-amber-400/50 scale-110 ring-4 ring-amber-300 animate-pulse'
+                          : 'text-amber-300 font-medium underline'
+                      }`}
+                    >
+                      pause the movie
+                    </span>{' '}
+                    whenever I want."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 Ý tôi là, tôi có thể tạm dừng phim bất cứ lúc nào tôi muốn.
+                  </p>
+                </div>
+
+                {/* BỐC CHI TIẾT 2 TỪ "PAUSE THE MOVIE" */}
+                {hook2Active && (
+                  <div className="pl-4 sm:pl-6 my-1 animate-fade-in flex items-center gap-3">
+                    <div className="w-1.5 h-7 bg-gradient-to-b from-purple-400 to-rose-400 rounded-full animate-pulse"></div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-400/10 border border-purple-400/30 text-purple-300 text-xs sm:text-sm font-bold shadow-sm">
+                      <span className="flex items-center gap-1">
+                        <LinkIcon size={13} className="text-purple-400" />
+                        Bốc chi tiết <strong>"pause the movie"</strong>
+                      </span>
+                      <span className="text-slate-500">➔</span>
+                      <span className="text-slate-200">Não tự hỏi: <em>Thường xem với ai, lúc nào?</em></span>
+                    </div>
+                  </div>
+                )}
+
+                {/* CÂU 4: MỞ RỘNG TIẾP SANG ĐỜI THỰC */}
+                <div className={`transition-all duration-500 ${showChain4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold">
+                      Câu 4 • Mở rộng tiếp sang đời thực
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-rose-100 mt-1.5 leading-snug">
+                    "And I usually watch films with my family on weekends."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 Và tôi thường xem cùng gia đình vào dịp cuối tuần.
+                  </p>
+                </div>
+
+                {/* HOÀN THÀNH */}
+                {showChainComplete && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 animate-fade-in flex items-center justify-between">
+                    <div className="text-xs sm:text-sm text-emerald-300 font-bold flex items-center gap-2">
+                      <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+                      <span>Hoàn thành bài nói 4 câu: Mỗi câu sau đều sinh ra từ từ khóa của câu trước!</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleReplay}
+                      className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm"
+                    >
+                      <RotateCcw size={13} /> Xem lại
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* MODE 2: HAI LUỒNG Ý TƯỞNG (DUAL IDEAS) */
+              <div className="space-y-4">
+                {/* Ý TƯỞNG 1 */}
+                <div className={`transition-all duration-500 ${showDual1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-400 border border-teal-500/30 text-xs font-bold">
+                      Ý tưởng 1 • Tiết kiệm (Affordable)
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-white mt-1.5 leading-snug">
+                    "I prefer watching films at home because it is{' '}
+                    <span className="text-amber-300 underline font-medium">affordable</span>; staying home helps me save money."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 Tôi thích xem ở nhà vì tiết kiệm; ở nhà giúp tôi tiết kiệm tiền vé.
+                  </p>
+                </div>
+
+                {/* CẦU NỐI CHUYỂN Ý */}
+                {showDualBridge && (
+                  <div className="my-2 animate-fade-in">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-400/40 text-orange-300 text-xs sm:text-sm font-bold shadow-sm">
+                      <Sparkles size={16} className="text-amber-400 animate-pulse" />
+                      <span>⚡ Cầu nối chuyển ý: Dùng liên từ <strong>"Besides, ..."</strong> để đổi kênh sang Ý 2 mượt mà!</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ý TƯỞNG 2 */}
+                <div className={`transition-all duration-500 ${showDual2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold">
+                      Ý tưởng 2 • Tự do & Riêng tư (Freedom)
+                    </span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-light text-indigo-100 mt-1.5 leading-snug">
+                    "Besides, it gives me complete{' '}
+                    <span className="text-amber-300 underline font-medium">freedom and privacy</span>."
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                    👉 Ngoài ra, nó còn cho tôi sự tự do và riêng tư tuyệt đối.
+                  </p>
+                </div>
+
+                {/* MỞ RỘNG Ý TƯỞNG 2 */}
+                {showDualExpand && (
+                  <div className="animate-fade-in pl-4 sm:pl-6 border-l-2 border-indigo-500/40">
+                    <p className="text-base sm:text-xl font-light text-slate-200 leading-snug">
+                      "I can simply wear my pajamas, lie on the couch, and watch peacefully."
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
+                      👉 Tôi có thể mặc đồ ngủ, nằm ườn trên sofa và xem phim bình yên.
+                    </p>
+                  </div>
+                )}
+
+                {/* HOÀN THÀNH DUAL */}
+                {showDualComplete && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-teal-500/15 border border-teal-500/40 animate-fade-in flex items-center justify-between">
+                    <div className="text-xs sm:text-sm text-teal-300 font-bold flex items-center gap-2">
+                      <CheckCircle2 size={18} className="text-teal-400 flex-shrink-0" />
+                      <span>Hoàn thành mô hình 2 Ideas: Rõ ràng, đa chiều, giàu liên từ chuẩn B2 - C1!</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleReplay}
+                      className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-teal-500 text-slate-950 hover:bg-teal-400 transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm"
+                    >
+                      <RotateCcw size={13} /> Xem lại
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* THANH ĐIỀU KHIỂN VIDEO (CONTROLS BAR) */}
+          <div className="px-5 py-4 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-4">
+            {/* NÚT PLAY / PAUSE VÀ REPLAY */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePlayPause}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-md active:scale-95"
+                title={isPlaying ? 'Tạm dừng' : 'Phát video'}
+              >
+                {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleReplay}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+                title="Xem lại từ đầu"
+              >
+                <RotateCcw size={15} />
+              </button>
+            </div>
+
+            {/* SEEKBAR TIẾN TRÌNH */}
+            <div className="flex-1 w-full flex items-center gap-3">
+              <div
+                className="relative flex-1 h-2 bg-slate-800 rounded-full cursor-pointer group"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const clickX = e.clientX - rect.left;
+                  const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+                  handleSeek(parseFloat((ratio * totalDuration).toFixed(1)));
+                }}
+              >
+                {/* THANH TIẾN TRÌNH ĐÃ CHẠY */}
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 rounded-full relative transition-all duration-100"
+                  style={{ width: `${(currentTime / totalDuration) * 100}%` }}
+                >
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                </div>
+
+                {/* CÁC ĐIỂM MỐC CHAPTER TRÊN THANH */}
+                <div className="absolute inset-0 flex justify-between pointer-events-none px-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Câu 1"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Câu 2"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Bốc từ khóa 1"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Bốc từ khóa 2"></span>
+                </div>
+              </div>
+
+              {/* ĐỒNG HỒ THỜI GIAN */}
+              <span className="text-xs font-mono font-bold text-slate-400 whitespace-nowrap">
+                {formatTime(currentTime)} / {formatTime(totalDuration)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* HỘP GHI CHÚ TỐI GIẢN (1 DÒNG ĐẮT GIÁ) */}
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 flex items-center gap-2.5 text-xs sm:text-sm font-light text-amber-950">
+          <Lightbulb size={18} className="text-amber-600 flex-shrink-0" />
+          <span>
+            <strong>Bí quyết thực chiến:</strong> Đừng cố nghĩ một chủ đề mới toanh làm não bị nghẽn! Hãy nhặt đúng 1 từ vừa nói ở câu trước, tự hỏi <em>"như thế nào / ví dụ là gì"</em> rồi nói tiếp câu sau.
+          </span>
+        </div>
+      </section>
+    );
+  };
+
+  // --- COMPONENT LÝ THUYẾT CHUNG ---
  const GeneralTheory = React.memo(() => {
  const tones = {
  indigo: {
@@ -845,15 +1059,6 @@
  }
  ];
 
- const criteria = [
- { title:"Đúng trọng tâm", detail:"Câu đầu tiên phải trả lời chính xác điều đề hỏi." },
- { title:"Có phát triển ý", detail:"Sau câu trả lời chính cần có lý do, ví dụ hoặc chi tiết liên quan." },
- { title:"Phát âm rõ", detail:"Ưu tiên nói dễ nghe, nhấn từ khóa, không nuốt âm cuối quá nhiều." },
- { title:"Câu có liên kết", detail:"Dùng because, besides, for example, usually, personally để nối ý." },
- { title:"Nói liên tục", detail:"Giữ nhịp đều; nếu bí ý thì dùng câu ngắn thay vì dừng quá lâu." },
- { title:"Ngữ pháp ổn định", detail:"Dùng cấu trúc quen thuộc chắc tay trước khi thử câu phức tạp." }
- ];
-
  const SectionTitle = ({ eyebrow, title, subtitle, icon }) => (
  <div className="mb-5 flex items-start gap-3">
  <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
@@ -862,7 +1067,7 @@
  <div className="min-w-0 flex-1">
  <p className="text-sm font-extrabold uppercase text-orange-600">{eyebrow}</p>
  <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{title}</h3>
- {subtitle && <p className="mt-2 w-full max-w-none text-base font-medium leading-relaxed text-slate-600 ">{subtitle}</p>}
+ {subtitle && <p className="mt-2 w-full max-w-none text-base font-light leading-relaxed text-slate-600 ">{subtitle}</p>}
  </div>
  </div>
  );
@@ -879,9 +1084,9 @@
  onClick={() => setOpenQuestion(openQuestion === q.en ? null : q.en)}
  className={`group w-full px-5 py-3.5 text-left transition-colors hover:bg-slate-50 ${columns ? 'border-b border-slate-100 lg:border-r lg:[&:nth-child(even)]:border-r-0' : ''}`}
  >
- <p className="font-normal leading-snug text-slate-900 group-hover:text-slate-950">{q.en}</p>
+ <p className="font-light leading-snug text-slate-900 group-hover:text-slate-950">{q.en}</p>
  {openQuestion === q.en && (
- <p className={`mt-2 rounded-md border px-3 py-2 text-sm font-semibold leading-relaxed ${color.soft} ${color.softText} ${color.border}`}>
+ <p className={`mt-2 rounded-md border px-3 py-2 text-sm font-light leading-relaxed ${color.soft} ${color.softText} ${color.border}`}>
  {q.vi}
  </p>
  )}
@@ -976,7 +1181,7 @@
  <h2 className="mt-5 max-w-none text-3xl font-black leading-tight text-slate-950">
  Lý thuyết chung Speaking Part 1
  </h2>
- <p className="mt-4 max-w-none text-lg font-medium leading-relaxed text-slate-600 ">
+ <p className="mt-4 max-w-none text-lg font-light leading-relaxed text-slate-600 ">
  Một bản đồ học nhanh cho phần hỏi đáp cá nhân: biết dạng câu hỏi, chọn cách trả lời, rồi mở rộng đủ ý trong thời gian ngắn.
  </p>
 
@@ -990,7 +1195,7 @@
  </span>
  <div>
  <p className="text-base font-black">{step.title}</p>
- <p className="text-sm font-semibold text-slate-500">{step.headline}</p>
+ <p className="text-sm font-light text-slate-500">{step.headline}</p>
  </div>
  </div>
  ))}
@@ -1007,7 +1212,7 @@
  <span className="text-sm font-extrabold uppercase">{fact.label}</span>
  </div>
  <p className="mt-3 whitespace-nowrap text-2xl font-black leading-tight text-slate-950">{fact.value}</p>
- <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-600 ">{fact.detail}</p>
+ <p className="mt-1 text-sm font-light leading-relaxed text-slate-600 ">{fact.detail}</p>
  </div>
  ))}
  </div>
@@ -1032,7 +1237,7 @@
  {idx < workflow.length - 1 && <ArrowRight size={20} className="hidden text-slate-300 xl:block" />}
  </div>
  <h4 className="text-lg font-black text-slate-950">{item.title}</h4>
- <p className="mt-2 text-base font-medium leading-relaxed text-slate-600 ">{item.detail}</p>
+ <p className="mt-2 text-base font-light leading-relaxed text-slate-600 ">{item.detail}</p>
  </div>
  ))}
  </div>
@@ -1054,12 +1259,12 @@
  <div className="lg:sticky lg:top-8">
  <p className="text-sm font-black uppercase text-indigo-700 ">Dạng 01</p>
  <h4 className="mt-2 text-2xl font-black text-slate-950">Yes - No</h4>
- <p className="mt-3 text-base font-medium leading-relaxed text-slate-600 ">
+ <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
  Câu hỏi bắt đầu bằng trợ động từ, động từ tobe hoặc động từ khiếm khuyết. Câu trả lời nên có Yes/No rõ ràng trước.
  </p>
  <div className="mt-5 rounded-lg bg-indigo-50 p-4">
  <p className="font-black text-indigo-800">Khung trả lời</p>
- <div className="mt-2 space-y-1 text-justify text-base font-semibold leading-relaxed text-indigo-800">
+ <div className="mt-2 space-y-1 text-justify text-base font-light leading-relaxed text-indigo-800">
  <p><span className="font-black text-slate-950">Bước 1:</span> Trả lời Yes hoặc No đồng thời nói rõ quan điểm cá nhân</p>
  <p><span className="font-black text-slate-950">Bước 2:</span> cho lý do</p>
  <p><span className="font-black text-slate-950">Bước 3:</span> mở rộng câu trả lời</p>
@@ -1093,12 +1298,12 @@
  <div className="lg:sticky lg:top-8">
  <p className="text-sm font-black uppercase text-amber-700">Dạng 02</p>
  <h4 className="mt-2 text-2xl font-black text-slate-950">Chọn một trong hai</h4>
- <p className="mt-3 text-base font-medium leading-relaxed text-slate-600 ">
+ <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
  Tín hiệu rõ nhất là từ <strong className="font-black text-slate-950">or</strong>. Bạn chỉ cần chọn một phía rồi giải thích vì sao.
  </p>
  <div className="mt-5 rounded-lg bg-amber-50 p-4">
  <p className="font-black text-amber-900">Khung trả lời</p>
- <div className="mt-2 space-y-1 text-justify text-base font-semibold leading-relaxed text-amber-900">
+ <div className="mt-2 space-y-1 text-justify text-base font-light leading-relaxed text-amber-900">
  <p><span className="font-black text-slate-950">Bước 1:</span> đưa ra lựa chọn</p>
  <p><span className="font-black text-slate-950">Bước 2:</span> cho lý do</p>
  <p><span className="font-black text-slate-950">Bước 3:</span> mở rộng câu trả lời</p>
@@ -1129,7 +1334,7 @@
  <div className="lg:sticky lg:top-8">
  <p className="text-sm font-black uppercase text-rose-700">Dạng 03</p>
  <h4 className="mt-2 text-2xl font-black text-slate-950">Thông tin chi tiết</h4>
- <p className="mt-3 text-base font-medium leading-relaxed text-slate-600 ">
+ <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
  Câu hỏi bắt đầu bằng <strong className="font-black uppercase text-red-600 ">Wh-word</strong>. Từ hỏi quyết định loại thông tin cần trả lời.
  </p>
  <div className="mt-5 grid grid-cols-3 gap-1.5">
@@ -1153,102 +1358,9 @@
  </div>
  </section>
 
- <section>
- <SectionTitle
- eyebrow="Cách trả lời"
- title="Công thức A-R-E cho mọi câu hỏi"
- subtitle="Dùng A-R-E để câu trả lời có xương sống rõ: trả lời, giải thích, rồi mở rộng. Người học yếu có thể dừng ở A + R; người học khá nên thêm E."
- icon={<Lightbulb size={21} />}
- />
- <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="grid grid-cols-1 divide-y divide-slate-200 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
- {answerFormula.map((step) => (
- <div key={step.letter} className="p-6">
- <div className="mb-5 flex items-center gap-3">
- <span className={`flex h-12 w-12 items-center justify-center rounded-lg text-2xl font-black ${tones[step.tone].step}`}>
- {step.letter}
- </span>
- <div>
- <p className={`text-sm font-black uppercase ${tones[step.tone].softText}`}>{step.level}</p>
- <h4 className="text-xl font-black text-slate-950">{step.title}</h4>
- </div>
- </div>
- <p className="text-lg font-black text-slate-900 ">{step.headline}</p>
- <div className="mt-4 space-y-3">
- {step.points.map((point, idx) => (
- <div key={idx} className={`rounded-lg border p-3 text-base font-semibold leading-relaxed ${tones[step.tone].soft} ${tones[step.tone].softText} ${tones[step.tone].border}`}>
- {point}
- </div>
- ))}
- </div>
- </div>
- ))}
- </div>
+ <VisualAnswerFlow />
 
- <div className="border-t border-slate-200 bg-slate-950 p-6 text-white">
- <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
- <div>
- <p className="text-sm font-black uppercase text-orange-300">Ví dụ nhanh</p>
- <p className="mt-2 text-lg font-black">Do you prefer watching films at home or in the cinema?</p>
- </div>
- <div className="lg:col-span-2">
- <p className="text-base font-semibold leading-relaxed text-slate-200">
- I prefer watching films at home because it is more comfortable and affordable. I can pause the movie whenever I want, and I usually watch films with my family on weekends.
- </p>
- <div className="mt-4 flex flex-wrap gap-2">
- <Chip tone="emerald">A: I prefer watching films at home</Chip>
- <Chip tone="sky">R: because it is more comfortable</Chip>
- <Chip tone="purple">E: with my family on weekends</Chip>
- </div>
- </div>
- </div>
- </div>
- </div>
- </section>
-
- <section>
- <SectionTitle
- eyebrow="Điểm số"
- title="Checklist trước khi luyện nói"
- subtitle="Mỗi câu trả lời Part 1 nên đi qua checklist này. Nếu thiếu một mục, ưu tiên sửa mục đó trước khi học thêm cấu trúc mới."
- icon={<Award size={21} />}
- />
- <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
- <div className="rounded-lg bg-slate-950 p-6 text-white shadow-sm">
- <p className="text-sm font-black uppercase text-orange-300">Mục tiêu thực tế</p>
- <h4 className="mt-3 text-2xl font-black leading-tight">Ngắn, rõ, có phát triển ý.</h4>
- <p className="mt-4 text-base font-medium leading-relaxed text-slate-300">
- Một câu trả lời tốt thường dài khoảng 3-4 câu: câu trả lời chính, lý do, ví dụ hoặc chi tiết cá nhân. Không cần cố nói thật dài nếu ý bị loãng.
- </p>
- </div>
- <div className="lg:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
- <div className="divide-y divide-slate-100">
- {criteria.slice(0, 3).map((item, idx) => (
- <div key={item.title} className="flex gap-4 p-5">
- <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-sm font-black text-white">{idx + 1}</span>
- <div>
- <h5 className="text-lg font-black text-slate-950">{item.title}</h5>
- <p className="mt-1 text-base font-medium leading-relaxed text-slate-600 ">{item.detail}</p>
- </div>
- </div>
- ))}
- </div>
- <div className="divide-y divide-slate-100">
- {criteria.slice(3).map((item, idx) => (
- <div key={item.title} className="flex gap-4 p-5">
- <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-sm font-black text-white">{idx + 4}</span>
- <div>
- <h5 className="text-lg font-black text-slate-950">{item.title}</h5>
- <p className="mt-1 text-base font-medium leading-relaxed text-slate-600 ">{item.detail}</p>
- </div>
- </div>
- ))}
- </div>
- </div>
- </div>
- </div>
- </section>
+ 
 
  </div>
  );
@@ -1271,11 +1383,11 @@
  return (
  <span 
  onClick={() => setShowVi(!showVi)} 
- className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg cursor-pointer transition-colors text-sm font-medium border border-slate-200 select-none shadow-sm active:scale-95"
+ className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg cursor-pointer transition-colors text-sm font-light border border-slate-200 select-none shadow-sm active:scale-95"
  title="Nhấn để xem nghĩa tiếng Việt"
  >
  <span>{word}</span>
- {showVi && <span className="text-xs text-rose-600 font-black ml-1 animate-fade-in">{vi}</span>}
+ {showVi && <span className="text-xs text-rose-600 font-light ml-1 animate-fade-in">{vi}</span>}
  </span>
  );
  };
@@ -1291,25 +1403,25 @@
  <span className="font-bold text-slate-900">1. I feel</span> <span className="font-bold text-slate-400 mx-1">+</span>
  <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
  </div>
- <p className="text-sm text-slate-600 mb-2">Dùng tính từ miêu tả cảm xúc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic">"I feel <span className="font-bold text-rose-500">relaxed</span>."</div>
+ <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả cảm xúc</p>
+ <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"I feel <span className="font-bold text-rose-500">relaxed</span>."</div>
  </div>
  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
  <div className="mb-2 text-base leading-relaxed">
  <span className="font-bold text-slate-900">2. It makes me feel</span> <span className="font-bold text-slate-400 mx-1">+</span>
  <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
  </div>
- <p className="text-sm text-slate-600 mb-2">Dùng tính từ miêu tả cảm xúc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic">"It makes me feel <span className="font-bold text-rose-500">happy</span>."</div>
+ <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả cảm xúc</p>
+ <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"It makes me feel <span className="font-bold text-rose-500">happy</span>."</div>
  </div>
  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
  <div className="mb-2 text-base leading-relaxed">
  <span className="font-bold text-slate-900">3. It's / I find it</span> <span className="font-bold text-slate-400 mx-1">+</span>
  <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
  </div>
- <p className="text-sm text-slate-600 mb-2">Dùng tính từ miêu tả sự vật, sự việc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic mb-2">"It's <span className="font-bold text-rose-500">beautiful</span>."</div>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic">"I find it <span className="font-bold text-rose-500">beautiful</span>."</div>
+ <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả sự vật, sự việc</p>
+ <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic mb-2 font-light">"It's <span className="font-bold text-rose-500">beautiful</span>."</div>
+ <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"I find it <span className="font-bold text-rose-500">beautiful</span>."</div>
  </div>
  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
  <div className="mb-2 text-base leading-relaxed">
@@ -1320,8 +1432,8 @@
  <span className="font-bold text-slate-900 mx-1">to</span>
  <span className="px-2 py-0.5 bg-rose-500 text-white rounded-md text-sm font-bold mx-1 shadow-sm">làm gì đó</span>
  </div>
- <p className="text-sm text-slate-600 mb-2">Miêu tả tính chất của việc gì đối với ai đó</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic">"It's <span className="font-bold text-rose-500">easy</span> for me to learn English."</div>
+ <p className="text-sm text-slate-600 mb-2 font-light">Miêu tả tính chất của việc gì đối với ai đó</p>
+ <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"It's <span className="font-bold text-rose-500">easy</span> for me to learn English."</div>
  </div>
  </div>
 
@@ -1329,32 +1441,32 @@
  <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-emerald-100 shadow-sm">
  <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 1</span>
  <div>
- <p className="text-sm text-slate-700 ">Có thể thêm trạng từ chỉ mức độ trước tính từ: <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">very, really, quite, a bit, extremely</span></p>
- <p className="text-sm text-emerald-700 mt-1.5 italic">VD:"It's <span className="font-bold">really</span> beautiful."</p>
+ <p className="text-sm text-slate-700 font-light">Có thể thêm trạng từ chỉ mức độ trước tính từ: <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">very, really, quite, a bit, extremely</span></p>
+ <p className="text-sm text-emerald-700 mt-1.5 italic font-light">VD:"It's <span className="font-bold">really</span> beautiful."</p>
  </div>
  </div>
  <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-amber-100 shadow-sm">
  <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 2</span>
  <div>
- <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1">
+ <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1 font-light">
  <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">more + tính từ</span>
  <span className="text-slate-400 text-xs">hoặc</span>
  <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">tính từ + er</span>
  <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-50 text-amber-500 rounded-full mx-0.5 shadow-sm text-xs border border-amber-200">➔</span>
  <span>Mang nghĩa <span className="font-bold text-amber-700">"... hơn"</span></span>
  </div>
- <p className="text-sm text-amber-700 italic">VD:"It's <span className="font-bold">more</span> comfortable." /"It's <span className="font-bold">easier</span>."</p>
+ <p className="text-sm text-amber-700 italic font-light">VD:"It's <span className="font-bold">more</span> comfortable." /"It's <span className="font-bold">easier</span>."</p>
  </div>
  </div>
  <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
  <span className="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 3</span>
  <div>
- <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1">
+ <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1 font-light">
  <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">the most + tính từ</span>
  <span className="inline-flex items-center justify-center w-5 h-5 bg-rose-50 text-rose-500 rounded-full mx-0.5 shadow-sm text-xs border border-rose-200">➔</span>
  <span>Mang nghĩa <span className="font-bold text-rose-700">"... nhất"</span></span>
  </div>
- <p className="text-sm text-rose-700 italic">VD:"It's <span className="font-bold">the most</span> memorable experience."</p>
+ <p className="text-sm text-rose-700 italic font-light">VD:"It's <span className="font-bold">the most</span> memorable experience."</p>
  </div>
  </div>
  </div>
@@ -1369,19 +1481,23 @@
  <li className="flex flex-col gap-2">
  <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tích cực</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="happy" vi="vui vẻ" /><Adj word="excited" vi="hào hứng" /><Adj word="relaxed" vi="thư giãn" />
- <Adj word="peaceful" vi="yên bình" /><Adj word="calm" vi="bình tĩnh" /><Adj word="comfortable" vi="thoải mái" />
- <Adj word="motivated" vi="có động lực" /><Adj word="refreshed" vi="sảng khoái" /><Adj word="positive" vi="tích cực" />
- <Adj word="confident" vi="tự tin" /><Adj word="safe" vi="an toàn" />
+ <Adj word="happy" vi="vui vẻ" /><Adj word="relaxed" vi="thư giãn" /><Adj word="excited" vi="hào hứng" />
+ <Adj word="comfortable" vi="thoải mái" /><Adj word="confident" vi="tự tin" /><Adj word="calm" vi="bình tĩnh" />
+ <Adj word="refreshed" vi="sảng khoái" /><Adj word="energetic" vi="tràn đầy năng lượng" /><Adj word="motivated" vi="có động lực" />
+ <Adj word="peaceful" vi="yên bình" /><Adj word="proud" vi="tự hào" /><Adj word="satisfied" vi="hài lòng" />
+ <Adj word="cheerful" vi="vui tươi" /><Adj word="positive" vi="tích cực" /><Adj word="safe" vi="an toàn" />
+ <Adj word="grateful" vi="biết ơn" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
  <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tiêu cực - Mệt mỏi</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="sad" vi="buồn" /><Adj word="angry" vi="tức giận" /><Adj word="tired" vi="mệt mỏi" />
- <Adj word="exhausted" vi="kiệt sức" /><Adj word="stressed" vi="căng thẳng" /><Adj word="lonely" vi="cô đơn" />
- <Adj word="awkward" vi="ngại ngùng" /><Adj word="uncomfortable" vi="không thoải mái" /><Adj word="nervous" vi="lo lắng" />
- <Adj word="overwhelmed" vi="ngợp" /><Adj word="sick" vi="ốm" /><Adj word="ill" vi="bệnh" />
+ <Adj word="tired" vi="mệt mỏi" /><Adj word="exhausted" vi="kiệt sức" /><Adj word="stressed" vi="căng thẳng" />
+ <Adj word="bored" vi="buồn chán" /><Adj word="sad" vi="buồn bã" /><Adj word="nervous" vi="lo lắng" />
+ <Adj word="anxious" vi="lo âu" /><Adj word="frustrated" vi="bực bội" /><Adj word="disappointed" vi="thất vọng" />
+ <Adj word="lonely" vi="cô đơn" /><Adj word="overwhelmed" vi="quá tải, ngợp" /><Adj word="uncomfortable" vi="khó chịu" />
+ <Adj word="awkward" vi="ngại ngùng" /><Adj word="insecure" vi="tự ti, bất an" /><Adj word="sleepy" vi="buồn ngủ" />
+ <Adj word="angry" vi="tức giận" />
  </div>
  </li>
  </ul>
@@ -1391,24 +1507,30 @@
  <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">2. Tính từ miêu tả Đồ ăn & Thức uống</h3>
  <ul className="space-y-4">
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Mùi vị</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Độ ngon & Mùi vị</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="delicious" vi="ngon miệng" /><Adj word="tasty" vi="ngon" /><Adj word="flavorful" vi="đậm đà" />
- <Adj word="sweet" vi="ngọt" /><Adj word="bitter" vi="đắng" /><Adj word="spicy" vi="cay" /><Adj word="juicy" vi="mọng nước" />
+ <Adj word="delicious" vi="rất ngon" /><Adj word="tasty" vi="ngon miệng" />
+ <Adj word="flavorful" vi="đậm đà, thơm ngon" /><Adj word="rich" vi="đậm đà, béo ngậy" />
+ <Adj word="sweet" vi="ngọt" /><Adj word="spicy" vi="cay" /><Adj word="sour" vi="chua" />
+ <Adj word="salty" vi="mặn" /><Adj word="bitter" vi="đắng" /><Adj word="bland" vi="nhạt nhẽo" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tình trạng</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tính chất & Kết cấu</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="fresh" vi="tươi" /><Adj word="cooked" vi="đã nấu" /><Adj word="fried" vi="chiên" />
- <Adj word="grilled" vi="nướng" /><Adj word="braised" vi="kho" /><Adj word="ripe" vi="chín" /><Adj word="instant" vi="ăn liền" />
+ <Adj word="crispy" vi="giòn rụm" /><Adj word="crunchy" vi="giòn sần sật" /><Adj word="tender" vi="mềm, mềm thơm" />
+ <Adj word="juicy" vi="mọng nước" /><Adj word="soft" vi="mềm mịn" /><Adj word="creamy" vi="béo ngậy, sánh mịn" />
+ <Adj word="chewy" vi="dai dai, dẻo" /><Adj word="fresh" vi="tươi mới" />
+ <Adj word="tough" vi="dai, khó nhai" /><Adj word="dry" vi="khô khốc" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
  <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Đánh giá chung</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="healthy" vi="lành mạnh" /><Adj word="nutritious" vi="bổ dưỡng" /><Adj word="affordable" vi="vừa túi tiền" />
- <Adj word="cheap" vi="rẻ" /><Adj word="expensive" vi="đắt" /><Adj word="light" vi="nhẹ bụng" /><Adj word="fast" vi="nhanh" />
+ <Adj word="healthy" vi="lành mạnh" /><Adj word="nutritious" vi="bổ dưỡng" /><Adj word="refreshing" vi="thanh mát, sảng khoái" />
+ <Adj word="filling" vi="no bụng, chắc bụng" /><Adj word="light" vi="nhẹ bụng, thanh đạm" /><Adj word="greasy" vi="nhiều dầu mỡ, ngấy" />
+ <Adj word="affordable" vi="vừa túi tiền" /><Adj word="expensive" vi="đắt đỏ" /><Adj word="convenient" vi="tiện lợi" />
+ <Adj word="authentic" vi="chuẩn vị, chính gốc" />
  </div>
  </li>
  </ul>
@@ -1420,18 +1542,24 @@
  <li className="flex flex-col gap-2">
  <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Địa điểm</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="crowded" vi="đông đúc" /><Adj word="quiet" vi="yên tĩnh" /><Adj word="noisy" vi="ồn ào" />
- <Adj word="beautiful" vi="đẹp" /><Adj word="modern" vi="hiện đại" /><Adj word="clean" vi="sạch sẽ" />
- <Adj word="local" vi="địa phương" /><Adj word="public" vi="công cộng" /><Adj word="green" vi="nhiều cây" />
- <Adj word="large" vi="rộng lớn" /><Adj word="small" vi="nhỏ" />
+ <Adj word="peaceful" vi="yên bình" /><Adj word="quiet" vi="yên tĩnh" /><Adj word="comfortable" vi="tiện nghi, thoải mái" />
+ <Adj word="pleasant" vi="dễ chịu, thư thái" /><Adj word="relaxing" vi="thư thái, thư giãn" /><Adj word="cozy" vi="ấm cúng" />
+ <Adj word="spacious" vi="rộng rãi" /><Adj word="cramped" vi="chật chội" /><Adj word="beautiful" vi="đẹp đẽ" />
+ <Adj word="lively" vi="náo nhiệt" /><Adj word="vibrant" vi="sôi động, rực rỡ" /><Adj word="bustling" vi="nhộn nhịp, tấp nập" />
+ <Adj word="crowded" vi="đông đúc" /><Adj word="noisy" vi="ồn ào" /><Adj word="modern" vi="hiện đại" />
+ <Adj word="clean" vi="sạch sẽ" /><Adj word="polluted" vi="ô nhiễm" /><Adj word="convenient" vi="thuận tiện" />
+ <Adj word="safe" vi="an toàn" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
  <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Thời tiết</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="hot" vi="nóng" /><Adj word="cold" vi="lạnh" /><Adj word="warm" vi="ấm áp" />
- <Adj word="cool" vi="mát mẻ" /><Adj word="dry" vi="khô" /><Adj word="rainy" vi="mưa nhiều" />
- <Adj word="wet" vi="ướt" /><Adj word="clear" vi="trong xanh" /><Adj word="pleasant" vi="dễ chịu" />
+ <Adj word="pleasant" vi="dễ chịu, ôn hòa" /><Adj word="comfortable" vi="dễ chịu, thoải mái" /><Adj word="refreshing" vi="sảng khoái, trong lành" />
+ <Adj word="warm" vi="ấm áp" /><Adj word="cool" vi="mát mẻ" /><Adj word="hot" vi="nóng" />
+ <Adj word="scorching" vi="nóng như thiêu" /><Adj word="cold" vi="lạnh" /><Adj word="chilly" vi="se lạnh" />
+ <Adj word="freezing" vi="lạnh cóng" /><Adj word="humid" vi="oi bức, ẩm" /><Adj word="dry" vi="khô ráo" />
+ <Adj word="sunny" vi="nhiều nắng" /><Adj word="windy" vi="nhiều gió" /><Adj word="gloomy" vi="u ám" />
+ <Adj word="unpredictable" vi="thất thường" /><Adj word="harsh" vi="khắc nghiệt" />
  </div>
  </li>
  </ul>
@@ -1441,29 +1569,36 @@
  <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">4. Tính từ miêu tả Trải nghiệm & Sự việc</h3>
  <ul className="space-y-4">
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Đánh giá</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tích cực & Thú vị</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="fun" vi="vui" /><Adj word="interesting" vi="thú vị" /><Adj word="exciting" vi="hào hứng" />
- <Adj word="enjoyable" vi="thích thú" /><Adj word="memorable" vi="đáng nhớ" /><Adj word="special" vi="đặc biệt" />
- <Adj word="precious" vi="quý giá" /><Adj word="meaningful" vi="ý nghĩa" />
+ <Adj word="fun" vi="vui vẻ" /><Adj word="interesting" vi="thú vị" /><Adj word="exciting" vi="hào hứng" />
+ <Adj word="enjoyable" vi="thích thú" /><Adj word="relaxing" vi="thư giãn" /><Adj word="rewarding" vi="bổ ích, đáng giá" />
+ <Adj word="meaningful" vi="ý nghĩa" /><Adj word="memorable" vi="đáng nhớ" /><Adj word="special" vi="đặc biệt" />
+ <Adj word="inspiring" vi="truyền cảm hứng" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Mức độ khó khăn - Tiện lợi</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Thử thách & Độ khó</strong> 
  <div className="flex flex-wrap gap-2">
  <Adj word="easy" vi="dễ dàng" /><Adj word="simple" vi="đơn giản" /><Adj word="hard" vi="khó" />
- <Adj word="tough" vi="khó khăn" /><Adj word="complicated" vi="phức tạp" /><Adj word="convenient" vi="tiện lợi" />
- <Adj word="inconvenient" vi="bất tiện" /><Adj word="practical" vi="thiết thực" /><Adj word="useful" vi="hữu ích" />
- <Adj word="effective" vi="hiệu quả" /><Adj word="quick" vi="nhanh" /><Adj word="helpful" vi="có ích" />
+ <Adj word="difficult" vi="khó khăn" /><Adj word="challenging" vi="đầy thử thách" /><Adj word="complicated" vi="phức tạp" />
+ <Adj word="demanding" vi="đòi hỏi cao" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Mức độ phổ biến - Quan trọng</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Mệt mỏi & Tiêu cực</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="important" vi="quan trọng" /><Adj word="necessary" vi="cần thiết" /><Adj word="essential" vi="thiết yếu" />
- <Adj word="popular" vi="phổ biến" /><Adj word="famous" vi="nổi tiếng" /><Adj word="common" vi="thông dụng" />
- <Adj word="familiar" vi="quen thuộc" /><Adj word="daily" vi="hằng ngày" /><Adj word="weekly" vi="hằng tuần" />
- <Adj word="sudden" vi="bất ngờ" />
+ <Adj word="boring" vi="nhàm chán" /><Adj word="tiring" vi="mệt mỏi" /><Adj word="exhausting" vi="kiệt sức" />
+ <Adj word="stressful" vi="căng thẳng" /><Adj word="frustrating" vi="bực bội, nản lòng" /><Adj word="annoying" vi="phiền phức" />
+ <Adj word="time-consuming" vi="tốn thời gian" />
+ </div>
+ </li>
+ <li className="flex flex-col gap-2">
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Giá trị & Tiện ích</strong> 
+ <div className="flex flex-wrap gap-2">
+ <Adj word="useful" vi="hữu ích" /><Adj word="helpful" vi="có ích" /><Adj word="practical" vi="thiết thực" />
+ <Adj word="effective" vi="hiệu quả" /><Adj word="convenient" vi="thuận tiện" /><Adj word="inconvenient" vi="bất tiện" />
+ <Adj word="important" vi="quan trọng" /><Adj word="necessary" vi="cần thiết" />
  </div>
  </li>
  </ul>
@@ -1473,18 +1608,24 @@
  <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">5. Tính từ miêu tả Con người</h3>
  <ul className="space-y-4">
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Thể chất</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Ngoại hình</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="healthy" vi="khỏe mạnh" /><Adj word="fit" vi="cân đối" /><Adj word="strong" vi="khỏe" />
- <Adj word="energetic" vi="tràn đầy năng lượng" /><Adj word="active" vi="năng động" /><Adj word="young" vi="trẻ" /><Adj word="old" vi="già" />
+ <Adj word="tall" vi="cao ráo" /><Adj word="short" vi="thấp, lùn" /><Adj word="slim" vi="thon gọn, mảnh mai" />
+ <Adj word="fit" vi="cân đối, săn chắc" /><Adj word="chubby" vi="mũm mĩm, tròn trịa" /><Adj word="strong" vi="khỏe khoắn, vạm vỡ" />
+ <Adj word="good-looking" vi="sáng sủa, ưa nhìn" /><Adj word="attractive" vi="cuốn hút" /><Adj word="handsome" vi="đẹp trai" />
+ <Adj word="pretty" vi="xinh xắn" /><Adj word="cute" vi="dễ thương" /><Adj word="neat" vi="gọn gàng, chỉn chu" />
+ <Adj word="young" vi="trẻ trung" /><Adj word="old" vi="lớn tuổi, già" />
  </div>
  </li>
  <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tính cách & Lối sống</strong> 
+ <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tính cách</strong> 
  <div className="flex flex-wrap gap-2">
- <Adj word="friendly" vi="thân thiện" /><Adj word="kind" vi="tử tế" /><Adj word="talkative" vi="nói nhiều" />
- <Adj word="busy" vi="bận rộn" /><Adj word="hectic" vi="tất bật" /><Adj word="disciplined" vi="kỷ luật" />
- <Adj word="independent" vi="tự lập" /><Adj word="close" vi="thân thiết" /><Adj word="supportive" vi="hay giúp đỡ" />
+ <Adj word="friendly" vi="thân thiện" /><Adj word="kind" vi="tốt bụng" /><Adj word="funny" vi="hài hước, vui tính" />
+ <Adj word="easy-going" vi="dễ tính, hòa đồng" /><Adj word="hard-working" vi="chăm chỉ" /><Adj word="patient" vi="kiên nhẫn" />
+ <Adj word="outgoing" vi="cởi mở, hướng ngoại" /><Adj word="shy" vi="nhút nhát" /><Adj word="quiet" vi="trầm tính, ít nói" />
+ <Adj word="supportive" vi="hay giúp đỡ, ủng hộ" /><Adj word="generous" vi="hào phóng" /><Adj word="reliable" vi="đáng tin cậy" />
+ <Adj word="polite" vi="lịch sự" /><Adj word="honest" vi="thật thà, trung thực" /><Adj word="smart" vi="thông minh, nhanh nhạy" />
+ <Adj word="confident" vi="tự tin" />
  </div>
  </li>
  </ul>
@@ -1629,11 +1770,11 @@
  className="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center gap-2 md:gap-4 cursor-pointer hover:shadow transition-shadow"
  onClick={() => setActiveStruct(activeStruct === idx ? null : idx)}
  >
- <span className="font-medium text-slate-800 text-base sm:text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.en }}></span>
+ <span className="font-light text-slate-800 text-base sm:text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.en }}></span>
  {activeStruct === idx && (
  <>
  <span className="text-slate-400 hidden md:inline font-bold">=</span>
- <span className="font-medium text-slate-800 text-base sm:text-lg leading-relaxed animate-fade-in" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
+ <span className="font-light text-slate-800 text-base sm:text-lg leading-relaxed animate-fade-in" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
  </>
  )}
  </div>
@@ -1670,14 +1811,14 @@
  <button 
  key={`mental-${idx}`}
  onClick={() => setActiveItem(activeItem ===`mental-${idx}` ? null :`mental-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
+ className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
  activeItem ===`mental-${idx}` 
  ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
  }`}
  >
  <span className="shrink-0">{item.en}</span>
- {activeItem ===`mental-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in">{item.vi}</span>}
+ {activeItem ===`mental-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
  </button>
  ))}
  </div>
@@ -1690,14 +1831,14 @@
  <button 
  key={`knowledge-${idx}`}
  onClick={() => setActiveItem(activeItem ===`knowledge-${idx}` ? null :`knowledge-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
+ className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
  activeItem ===`knowledge-${idx}` 
  ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
  }`}
  >
  <span className="shrink-0">{item.en}</span>
- {activeItem ===`knowledge-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in">{item.vi}</span>}
+ {activeItem ===`knowledge-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
  </button>
  ))}
  </div>
@@ -1710,14 +1851,14 @@
  <button 
  key={`health-${idx}`}
  onClick={() => setActiveItem(activeItem ===`health-${idx}` ? null :`health-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
+ className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
  activeItem ===`health-${idx}` 
  ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
  }`}
  >
  <span className="shrink-0">{item.en}</span>
- {activeItem ===`health-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in">{item.vi}</span>}
+ {activeItem ===`health-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
  </button>
  ))}
  </div>
@@ -1737,10 +1878,10 @@
  )}
  </div>
  <div className="mt-2 flex flex-col gap-3.5 flex-1">
- <span className="text-indigo-600 text-sm sm:text-base font-bold block leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
+ <span className="text-indigo-600 text-sm sm:text-base font-light block leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
  <div className="bg-slate-50 p-3.5 rounded-lg flex items-start gap-2.5 mt-auto border border-slate-100 ">
  <button onClick={(e) => { e.stopPropagation(); speakText(struct.example.replace(/<[^>]*>?/gm, '')); }} className="mt-0.5 text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0" title="Nghe phát âm câu ví dụ"><Volume2 size={16} /></button>
- <p className="text-slate-700 text-sm italic leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.example }}></p>
+ <p className="text-slate-700 text-sm italic leading-relaxed font-light" dangerouslySetInnerHTML={{ __html: struct.example }}></p>
  </div>
  </div>
  </div>
@@ -1841,13 +1982,13 @@
  return (
  <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
  <div className="md:hidden bg-black text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
- <h1 className="text-lg font-black tracking-tight flex items-center gap-2 whitespace-nowrap">
+ <h1 className="text-lg font-black tracking-tight flex items-center gap-2 min-w-0">
  <Mic size={20} className="flex-shrink-0" />
- <span className="truncate">VSTEP SPEAKING PART 01</span>
+ <span className="truncate">SPEAKING PART 01</span>
  </h1>
  <button 
  onClick={() => setIsMobileMenuOpen(true)}
- className="p-1 hover:bg-slate-800 rounded transition-colors"
+ className="p-1 hover:bg-slate-800 rounded transition-colors flex-shrink-0 ml-2"
  >
  <Menu size={24} />
  </button>
@@ -1858,13 +1999,13 @@
  )}
  
  <div className={`fixed inset-y-0 left-0 z-50 w-[85%] max-w-[320px] bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:w-80 md:flex-shrink-0 md:h-screen md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
- <div className="p-4 sm:p-5 border-b border-slate-700 bg-black text-white flex justify-between items-center">
- <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 whitespace-nowrap">
+ <div className="p-4 sm:p-5 border-b border-slate-700 bg-black text-white flex justify-between items-center overflow-hidden">
+ <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 min-w-0">
  <Mic size={24} className="flex-shrink-0" />
- <span className="truncate hidden md:inline">VSTEP SPEAKING PART 01</span>
+ <span className="truncate hidden md:inline">SPEAKING PART 01</span>
  <span className="truncate md:hidden">Menu Bài Học</span>
  </h1>
- <button className="md:hidden p-1 hover:bg-slate-800 rounded" onClick={() => setIsMobileMenuOpen(false)}>
+ <button className="md:hidden p-1 hover:bg-slate-800 rounded flex-shrink-0 ml-2" onClick={() => setIsMobileMenuOpen(false)}>
  <X size={24} />
  </button>
  </div>
@@ -1956,16 +2097,6 @@
  Cách diễn đạt
  </button>
  <button
- onClick={() => setActiveSharedTab('vocabulary')}
- className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all ${
- activeSharedTab === 'vocabulary' 
- ? 'bg-blue-600 text-white shadow-md' 
- : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '
- }`}
- >
- Từ vựng
- </button>
- <button
  onClick={() => setActiveSharedTab('adjectives')}
  className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all ${
  activeSharedTab === 'adjectives' 
@@ -2021,12 +2152,6 @@
   </section>
   )}
 
- {activeSharedTab === 'vocabulary' && sharedVocabData.vocabulary && sharedVocabData.vocabulary.length > 0 && (
- <section className="mb-6 sm:mb-8 animate-fade-in">
- {renderVocabList(sharedVocabData.vocabulary)}
- </section>
- )}
-
  {activeSharedTab === 'adjectives' && (
  <AdjectivesTab />
  )}
@@ -2041,7 +2166,7 @@
  <div className="animate-fade-in">
  <header className="mb-5 sm:mb-6">
  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 leading-tight">{currentGroup.title}</h2>
- <p className="text-slate-500 text-sm sm:text-lg leading-relaxed">{currentGroup.description}</p>
+ <p className="text-slate-500 text-sm sm:text-lg leading-relaxed font-light">{currentGroup.description}</p>
  </header>
 
  {currentGroup.groupVocabulary && (
@@ -2067,7 +2192,7 @@
  <header className="mb-6 sm:mb-8 flex items-center gap-3">
  <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-2xl hidden sm:block"><Mic size={28} /></div>
  <div>
- <span className="text-xs sm:text-sm font-bold text-indigo-500 uppercase tracking-wider">{currentGroup.title}</span>
+ <span className="text-xs sm:text-sm font-bold text-indigo-500 uppercase tracking-wider">{currentGroup?.title}</span>
  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight mt-1">{currentSubtopic.title}</h2>
  </div>
  </header>
@@ -2102,7 +2227,7 @@
  <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4 border-b border-slate-200 pb-2">Câu hỏi & Trả lời mẫu</h3>
  <div className="space-y-4 sm:space-y-6">
  {currentSubtopic.questions.map((q, idx) => (
- <QuestionBlock key={idx} question={q} idx={idx} />
+ <QuestionBlock key={`${currentSubtopic.id}_q_${idx}`} question={q} idx={idx} />
  ))}
  </div>
  </section>
@@ -2115,6 +2240,43 @@
  );
  }
 
+ class ErrorBoundary extends React.Component {
+ constructor(props) {
+ super(props);
+ this.state = { hasError: false, error: null };
+ }
+ static getDerivedStateFromError(error) {
+ return { hasError: true, error };
+ }
+ componentDidCatch(error, errorInfo) {
+ console.error("ErrorBoundary caught:", error, errorInfo);
+ }
+ render() {
+ if (this.state.hasError) {
+ return (
+ <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+ <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-lg border border-red-200">
+ <h2 className="text-xl font-bold text-red-600 mb-2">Đã xảy ra sự cố khi tải nội dung này</h2>
+ <p className="text-slate-600 text-sm mb-4">Vui lòng bấm nút bên dưới để tải lại trang.</p>
+ <button 
+ onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+ className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+ >
+ Tải lại trang
+ </button>
+ </div>
+ </div>
+ );
+ }
+ return this.props.children;
+ }
+ }
+
  const root = ReactDOM.createRoot(document.getElementById('root'));
- root.render(<App />);
+ root.render(
+ <ErrorBoundary>
+ <App />
+ </ErrorBoundary>
+ );
+
  
