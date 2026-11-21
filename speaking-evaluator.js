@@ -25,7 +25,8 @@
     "food", "photos", "pictures", "memories", "relax", "relaxing", "experience", "budget",
     "affordable", "itinerary", "luggage", "suitcase", "camera", "charger", "flight", "bus",
     "train", "festival", "scenery", "sightseeing", "memorable", "unforgettable", "north",
-    "south", "region", "countryside", "nature", "air", "fresh", "sunscreen", "medicine"
+    "south", "region", "countryside", "nature", "air", "fresh", "sunscreen", "medicine",
+    "mood", "affect", "affects", "daily", "activity", "activities", "rain", "rains", "noon", "evening", "outdoors"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -40,7 +41,8 @@
     "on the other hand", "as a result", "therefore", "overall", "definitely",
     "first of all", "secondly", "however", "in particular",
     "to be honest", "i'd say", "i would say", "well", "what's more",
-    "on top of that", "that said", "i'm planning to"
+    "on top of that", "that said", "i'm planning to",
+    "i usually go for", "my go-to", "i tend to", "yes, i really do"
   ];
   const B2_LEXIS_PHRASES = [
     "memorable", "unforgettable", "affordable", "convenient", "flexible", "destination",

@@ -1293,5 +1293,317 @@ window.SPEAKING_TOPICS = [
         }
       }
     ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 05: WEATHER
+  // ==========================================================================
+  {
+    id: "topic-weather",
+    number: "05",
+    title: "Weather",
+    titleVi: "Thời tiết & Ảnh hưởng đến tâm trạng, sinh hoạt",
+    description:
+      "Luyện 3 câu hỏi về thời tiết ở quê hương, kiểu thời tiết bạn thích nhất và tác động của thời tiết tới tâm trạng cũng như sinh hoạt hằng ngày.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "weather_q1",
+        num: 1,
+        prompt: "What is the weather like in your hometown?",
+        analysis: {
+          questionType: "Câu hỏi mô tả thời tiết ('What is the weather like...'). Áp dụng công thức A-R-E (Answer → Example → Feeling).",
+          tense: "Hiện tại đơn ('The weather in my hometown is...' / 'Well, the weather...').",
+          length: "3 câu ngắn gọn (~33–39 từ), dùng các tính từ thời tiết quen thuộc."
+        },
+        pitfalls: [
+          "Dùng nhầm động từ 'like' trong 'What is the weather like?' thành 'The weather is like hot' (đúng: 'The weather is hot').",
+          "Quên chủ ngữ 'it' khi miêu tả trời nóng/mưa (sai: 'Is sunny'; đúng: 'It is sunny').",
+          "Không nối thêm chi tiết ví dụ giữa ban ngày và buổi tối hoặc giữa các mùa."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Trả lời thẳng đặc trưng thời tiết)",
+                text: "The weather in my hometown is usually hot and sunny."
+              },
+              {
+                label: "E (Ví dụ sáng/trưa và tối - For example)",
+                text: "For example, it is very warm at noon, and it gets cooler in the evening."
+              },
+              {
+                label: "Cảm xúc (Chốt câu)",
+                text: "The cool air at night makes me feel good."
+              }
+            ],
+            modelAnswer:
+              "The weather in my hometown is usually <strong>hot and sunny</strong>. For example, it is very warm at noon, and it gets <strong>cooler in the evening</strong>. The cool air at night makes me <strong>feel good</strong>.",
+            vocab: [
+              {
+                word: "hot and sunny",
+                ipa: "/hɒt ænd ˈsʌni/",
+                pos: "adj. phr.",
+                meaning: "nóng và nhiều nắng",
+                example: "The weather in my hometown is usually <strong>hot and sunny</strong>."
+              },
+              {
+                word: "cooler in the evening",
+                ipa: "/ˈkuːlər ɪn ði ˈiːvnɪŋ/",
+                pos: "phr.",
+                meaning: "mát mẻ hơn vào buổi tối",
+                example: "It is warm at noon, and it gets <strong>cooler in the evening</strong>."
+              },
+              {
+                word: "feel good",
+                ipa: "/fiːl ɡʊd/",
+                pos: "v. phr.",
+                meaning: "cảm thấy dễ chịu, thoải mái",
+                example: "The cool air at night makes me <strong>feel good</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu tự nhiên - Well)",
+                text: "Well, the weather in my hometown is mostly hot and humid all year round."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Buổi chiều nhiều nắng và có mưa rào bất chợt (sudden showers) vào mùa mưa."
+              },
+              {
+                label: "Cảm xúc (Mệnh đề when + cool and pleasant)",
+                text: "Yêu thích buổi tối khi không khí mát mẻ và dễ chịu."
+              }
+            ],
+            modelAnswer:
+              "<strong>Well</strong>, the weather in my hometown is mostly <strong>hot and humid</strong> all year round. For example, afternoons are quite sunny, and we often get <strong>sudden showers</strong> in the rainy months. I love evenings when the air feels <strong>cool and pleasant</strong>.",
+            vocab: [
+              {
+                word: "hot and humid",
+                ipa: "/hɒt ænd ˈhjuːmɪd/",
+                pos: "adj. phr.",
+                meaning: "nóng và ẩm",
+                example: "The weather in my hometown is mostly <strong>hot and humid</strong>."
+              },
+              {
+                word: "sudden showers",
+                ipa: "/ˈsʌdn ˈʃaʊərz/",
+                pos: "n. phr.",
+                meaning: "những cơn mưa rào bất chợt",
+                example: "We often get <strong>sudden showers</strong> in the rainy months."
+              },
+              {
+                word: "cool and pleasant",
+                ipa: "/kuːl ænd ˈpleznt/",
+                pos: "adj. phr.",
+                meaning: "mát mẻ và dễ chịu",
+                example: "Evenings feel really <strong>cool and pleasant</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "weather_q2",
+        num: 2,
+        prompt: "What kind of weather do you like most? Why?",
+        analysis: {
+          questionType: "Câu hỏi sở thích kèm lý do (Dạng 3: 'What kind of... Why?'). Áp dụng 'I like... because...' (B1) hoặc 'Honestly, I usually go for...' (B2) + A-R-E.",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~34–38 từ), trả lời thẳng kiểu thời tiết, lý do, ví dụ và cảm xúc."
+        },
+        pitfalls: [
+          "Quên trả lời phần 'Why?' ngay trong câu đầu bằng 'because...'.",
+          "Lặp lại nhiều lần từ 'very good' hoặc 'very nice'.",
+          "Quên giới từ hoặc mạo từ trong cụm 'in the park', 'at outdoor cafes'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Thời tiết thích nhất + Lý do)",
+                text: "I like cool and sunny weather the most because it is easy to go outside."
+              },
+              {
+                label: "E (Ví dụ hoạt động - For example)",
+                text: "For example, I can walk in the park or drink coffee with my friends."
+              },
+              {
+                label: "Cảm xúc (Chốt câu)",
+                text: "It always makes me feel very happy."
+              }
+            ],
+            modelAnswer:
+              "I like <strong>cool and sunny weather</strong> the most because it is easy to <strong>go outside</strong>. For example, I can walk in the park or drink coffee with my friends. It always makes me <strong>feel very happy</strong>.",
+            vocab: [
+              {
+                word: "cool and sunny weather",
+                ipa: "/kuːl ænd ˈsʌni ˈweðər/",
+                pos: "n. phr.",
+                meaning: "thời tiết mát mẻ và có nắng",
+                example: "I like <strong>cool and sunny weather</strong> the most."
+              },
+              {
+                word: "go outside",
+                ipa: "/ɡoʊ ˈaʊtsaɪd/",
+                pos: "v. phr.",
+                meaning: "đi ra ngoài trời",
+                example: "It is very easy to <strong>go outside</strong> when the sky is cool."
+              },
+              {
+                word: "feel very happy",
+                ipa: "/fiːl ˈveri ˈhæpi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy rất vui vẻ",
+                example: "Nice weather always makes me <strong>feel very happy</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu Dạng 3 - Honestly, I usually go for...)",
+                text: "Chọn thời tiết mát mẻ vì rất hợp với các hoạt động ngoài trời (outdoor activities)."
+              },
+              {
+                label: "E (Ví dụ - For example)",
+                text: "Tụ tập với bạn bè (hang out with my friends) ở quán cà phê ngoài trời mà không thấy mệt."
+              },
+              {
+                label: "Cảm xúc (feel at ease + unwind)",
+                text: "Cảm thấy nhẹ nhõm, thoải mái và dễ thư giãn."
+              }
+            ],
+            modelAnswer:
+              "<strong>Honestly, I usually go for</strong> cool weather because it is perfect for <strong>outdoor activities</strong>. For example, I often <strong>hang out with my friends</strong> at outdoor cafes without feeling tired. It always makes me <strong>feel at ease</strong> and helps me <strong>unwind</strong>.",
+            vocab: [
+              {
+                word: "outdoor activities",
+                ipa: "/ˈaʊtdɔːr ækˈtɪvətiz/",
+                pos: "n. phr.",
+                meaning: "các hoạt động ngoài trời",
+                example: "Cool weather is perfect for <strong>outdoor activities</strong>."
+              },
+              {
+                word: "hang out with my friends",
+                ipa: "/hæŋ aʊt wɪð maɪ frendz/",
+                pos: "v. phr.",
+                meaning: "đi chơi, tụ tập cùng bạn bè",
+                example: "I often <strong>hang out with my friends</strong> at outdoor cafes."
+              },
+              {
+                word: "feel at ease",
+                ipa: "/fiːl æt iːz/",
+                pos: "v. phr.",
+                meaning: "cảm thấy thoải mái, dễ chịu",
+                example: "It always makes me <strong>feel at ease</strong> and helps me unwind."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "weather_q3",
+        num: 3,
+        prompt: "Does the weather affect your mood or your daily activities?",
+        analysis: {
+          questionType: "Câu hỏi Yes/No về sự ảnh hưởng ('Does the weather affect...'). Áp dụng A-R-E (Yes → Contrast Example → Feeling/Result).",
+          tense: "Hiện tại đơn. Chú ý chia '-s' ở động từ 'affects' khi chủ ngữ là 'the weather'.",
+          length: "3 câu ngắn gọn (~33–38 từ), nêu rõ ảnh hưởng ở cả tâm trạng và hoạt động."
+        },
+        pitfalls: [
+          "Quên thêm '-s' sau chủ ngữ số ít 'the weather' (đúng: 'the weather affects my mood').",
+          "Dùng nhầm giới từ 'on sunny days' / 'on rainy days' (không dùng 'in sunny days').",
+          "Chỉ trả lời 'Yes, it does' mà không nói rõ nắng thì làm gì, mưa thì làm gì."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Trả lời thẳng mức độ ảnh hưởng)",
+                text: "Yes, it does. The weather affects my mood a lot."
+              },
+              {
+                label: "E (Ví dụ so sánh ngày nắng - ngày mưa)",
+                text: "For example, on sunny days I go out with friends, but on rainy days I just stay home."
+              },
+              {
+                label: "Cảm xúc (Chốt câu)",
+                text: "Sunny weather makes me feel happy."
+              }
+            ],
+            modelAnswer:
+              "Yes, it does. The weather <strong>affects my mood</strong> a lot. For example, on <strong>sunny days</strong> I go out with friends, but on rainy days I just <strong>stay home</strong>. Sunny weather makes me feel happy.",
+            vocab: [
+              {
+                word: "affect my mood",
+                ipa: "/əˈfekt maɪ muːd/",
+                pos: "v. phr.",
+                meaning: "ảnh hưởng đến tâm trạng của tôi",
+                example: "The weather <strong>affects my mood</strong> and plans a lot."
+              },
+              {
+                word: "sunny days",
+                ipa: "/ˈsʌni deɪz/",
+                pos: "n. phr.",
+                meaning: "những ngày nắng đẹp",
+                example: "On <strong>sunny days</strong>, I go out with my friends."
+              },
+              {
+                word: "stay home",
+                ipa: "/steɪ hoʊm/",
+                pos: "v. phr.",
+                meaning: "ở nhà",
+                example: "On rainy days, I just <strong>stay home</strong> and rest."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu khẳng định - Definitely)",
+                text: "Definitely, the weather affects both my mood and my daily plans."
+              },
+              {
+                label: "E (Ví dụ đối lập: cheers me up vs inconvenient)",
+                text: "Ngày nắng đẹp làm phấn chấn lên (cheers me up), còn mưa lớn làm việc đi lại bất tiện (inconvenient)."
+              },
+              {
+                label: "Kết quả / Cảm xúc (clear my mind)",
+                text: "Thời tiết đẹp giúp đầu óc minh mẫn và làm việc tốt hơn."
+              }
+            ],
+            modelAnswer:
+              "<strong>Definitely</strong>, the weather affects both my mood and my daily plans. For example, a bright sunny day always <strong>cheers me up</strong>, while heavy rain makes going out quite <strong>inconvenient</strong>. Nice weather really helps me <strong>clear my mind</strong> and work better.",
+            vocab: [
+              {
+                word: "cheers me up",
+                ipa: "/tʃɪrz miː ʌp/",
+                pos: "phr. v.",
+                meaning: "làm tôi vui vẻ, phấn chấn hơn",
+                example: "A bright sunny day always <strong>cheers me up</strong>."
+              },
+              {
+                word: "inconvenient",
+                ipa: "/ˌɪnkənˈviːniənt/",
+                pos: "adj.",
+                meaning: "bất tiện, gây trở ngại",
+                example: "Heavy rain makes going out quite <strong>inconvenient</strong>."
+              },
+              {
+                word: "clear my mind",
+                ipa: "/klɪər maɪ maɪnd/",
+                pos: "v. phr.",
+                meaning: "giúp đầu óc nhẹ nhõm, tỉnh táo",
+                example: "Nice weather helps me <strong>clear my mind</strong> and focus better."
+              }
+            ]
+          }
+        }
+      }
+    ]
   }
 ];
