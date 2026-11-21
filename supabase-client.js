@@ -130,6 +130,18 @@
     } catch (e) {}
   }
 
+  async function deleteRecordings(audioPaths) {
+    const client = getClient();
+    if (!client || !Array.isArray(audioPaths)) return;
+    const unique = Array.from(new Set(audioPaths.filter(Boolean)));
+    const BATCH = 100;
+    for (let i = 0; i < unique.length; i += BATCH) {
+      try {
+        await client.storage.from(AUDIO_BUCKET).remove(unique.slice(i, i + BATCH));
+      } catch (e) {}
+    }
+  }
+
   async function getSignedAudioUrls(paths) {
     const client = getClient();
     const map = {};
@@ -164,6 +176,7 @@
     renderGoogleIconSvg,
     uploadRecording,
     deleteRecording,
+    deleteRecordings,
     getSignedAudioUrls
   };
 })();

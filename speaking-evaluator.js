@@ -182,12 +182,23 @@
     saving: "save",
     booking: "book",
     preparing: "prepare",
+    affecting: "affect",
+    studying: "study",
     relaxing: "relax"
   };
 
   function toIng(word) {
     const low = String(word || "").toLowerCase();
     return VERB_ING_MAP[low] || (low.endsWith("e") ? low.slice(0, -1) + "ing" : low + "ing");
+  }
+
+  function toThirdSg(verb) {
+    const vLow = String(verb || "").toLowerCase();
+    if (vLow === "have") return "has";
+    if (vLow === "go") return "goes";
+    if (vLow === "do") return "does";
+    if (/(?:s|sh|ch|x|z|o)$/.test(vLow)) return vLow + "es";
+    return vLow + "s";
   }
 
   function detectMainErrors(transcript, question) {
@@ -208,7 +219,7 @@
       /\b(yesterday|last\s+(?:year|summer|month|week|trip)|two\s+years?\s+ago|\d+\s+years?\s+ago|was|were|went|visited|stayed|had\s+a\s+great\s+time)\b/i.test(lower);
 
     function addIssue(key, wrong, fix, reason, replaceTarget, rewriteText) {
-      if (seenKeys.has(key) || issues.length >= 5) return;
+      if (seenKeys.has(key) || issues.length >= 6) return;
       seenKeys.add(key);
       issues.push({
         wrong,
@@ -361,7 +372,75 @@
       }
     }
 
-    // 4. Lỗi chia động từ liền sau (V-ing / to V / modal + V / giới từ + V-ing)
+    // 4. Lỗi chia động từ & cấu trúc động từ ("very like", "makes me to feel", "is help", "no like", modal + V-ing/to V)
+    const veryVerbMatch = raw.match(/\b(i|we|they|you)\s+very\s+(like|love|enjoy|prefer|want)\b/i);
+    if (veryVerbMatch) {
+      const fixedVery = `${veryVerbMatch[1]} really ${veryVerbMatch[2].toLowerCase()}`;
+      addIssue(
+        "very_verb",
+        veryVerbMatch[0],
+        fixedVery,
+        `Không dùng "very" đứng trước động từ thường; hãy dùng "really ${veryVerbMatch[2].toLowerCase()}" hoặc "... very much".`,
+        veryVerbMatch[0],
+        fixedVery
+      );
+    }
+
+    const makeHelpObjRegex = /\b(make|makes|made|help|helps|helped)\s+(me|us|him|her|them|you|people|tourists)\s+(?:to\s+(feel|relax|unwind|enjoy|save|stay|work|focus|travel|go|forget|clear)|(feeling))\b/gi;
+    let mh;
+    while ((mh = makeHelpObjRegex.exec(raw)) !== null) {
+      const verbFix = mh[4] ? "feel" : mh[3].toLowerCase();
+      const fixedMakeHelp = `${mh[1]} ${mh[2]} ${verbFix}`;
+      addIssue(
+        "make_help_obj_" + mh[1].toLowerCase(),
+        mh[0],
+        fixedMakeHelp,
+        `Sau cấu trúc "${mh[1]} + tân ngữ" dùng động từ nguyên mẫu không "to" và không "-ing" ("${fixedMakeHelp}").`,
+        mh[0],
+        fixedMakeHelp
+      );
+    }
+
+    const isLikeWeatherMatch = raw.match(/\b(is)\s+like\s+(hot|cold|cool|warm|sunny|rainy|humid|windy|wet|dry|nice|good|bad|pleasant|beautiful|terrible|cloudy)\b/i);
+    if (isLikeWeatherMatch) {
+      const fixedWeatherLike = `${isLikeWeatherMatch[1]} ${isLikeWeatherMatch[2].toLowerCase()}`;
+      addIssue(
+        "weather_is_like_adj",
+        isLikeWeatherMatch[0],
+        fixedWeatherLike,
+        `Khi trả lời về thời tiết không dùng "like" trước tính từ; hãy nói "${fixedWeatherLike}".`,
+        isLikeWeatherMatch[0],
+        fixedWeatherLike
+      );
+    }
+
+    const isBaseVerbMatch = raw.match(/\b(it|this|that|the\s+weather|my\s+hometown|my\s+city|traveling)\s+is\s+(help|rain|affect|make|feel|depend|cheer|get|give|keep|bring|cost|need)\b/i);
+    if (isBaseVerbMatch) {
+      const fixedIsVerb = `${isBaseVerbMatch[1]} ${toThirdSg(isBaseVerbMatch[2])}`;
+      addIssue(
+        "is_before_base_verb",
+        isBaseVerbMatch[0],
+        fixedIsVerb,
+        `Không dùng "is" trước động từ thường ở Hiện tại đơn; bỏ "is" và chia "-s" thành "${fixedIsVerb}".`,
+        isBaseVerbMatch[0],
+        fixedIsVerb
+      );
+    }
+
+    const noVerbMatch = raw.match(/\b(i|we|they|you|he|she|it)\s+no\s+(like|prefer|love|enjoy|want|need|have|know|go|travel|stay|feel|get|rain|affect)\b/i);
+    if (noVerbMatch) {
+      const auxNeg = /^(he|she|it)$/i.test(noVerbMatch[1]) ? "doesn't" : "don't";
+      const fixedNoVerb = `${noVerbMatch[1]} ${auxNeg} ${noVerbMatch[2].toLowerCase()}`;
+      addIssue(
+        "no_before_verb",
+        noVerbMatch[0],
+        fixedNoVerb,
+        `Phủ định với động từ thường phải dùng "${auxNeg} + V nguyên mẫu" ("${fixedNoVerb}"), không dùng "no + V".`,
+        noVerbMatch[0],
+        fixedNoVerb
+      );
+    }
+
     const gerundRegex = /\b(prefer|enjoy|avoid|finish|suggest|mind|like|love|hate|keep)\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|talk|share|spend|plan|book|wait|cook|shop)\b/gi;
     let gm;
     while ((gm = gerundRegex.exec(raw)) !== null) {
@@ -396,7 +475,7 @@
       );
     }
 
-    const modalErrMatch = raw.match(/\b(can|could|will|would|should|must|may|might)\s+(?:to\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|relax|share|talk|save|book|prepare|spend)|(traveling|travelling|going|visiting|staying|eating|trying|taking|exploring|packing|swimming|camping|walking|flying|relaxing|sharing|talking|saving|booking|preparing|spending))\b/i);
+    const modalErrMatch = raw.match(/\b(can't|cannot|couldn't|won't|wouldn't|shouldn't|don't|doesn't|didn't|can|could|will|would|should|must|may|might)\s+(?:to\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|relax|share|talk|save|book|prepare|spend|affect|study)|(traveling|travelling|going|visiting|staying|eating|trying|taking|exploring|packing|swimming|camping|walking|flying|relaxing|sharing|talking|saving|booking|preparing|spending|affecting|studying))\b/i);
     if (modalErrMatch) {
       const modal = modalErrMatch[1];
       const baseV = (modalErrMatch[2] || ING_TO_BASE_MAP[modalErrMatch[3].toLowerCase()] || modalErrMatch[3]).toLowerCase();
@@ -405,7 +484,7 @@
         "modal_form",
         modalErrMatch[0],
         fixedModal,
-        `Sau động từ khuyết thiếu "${modal.toLowerCase()}" chỉ dùng động từ nguyên mẫu ("${fixedModal}").`,
+        `Sau trợ động từ / khuyết thiếu "${modal.toLowerCase()}" chỉ dùng động từ nguyên mẫu ("${fixedModal}").`,
         modalErrMatch[0],
         fixedModal
       );
@@ -427,7 +506,38 @@
       );
     }
 
-    // 5. Lỗi tách câu / mệnh đề cụt / nối dồn và thiếu to be
+    // 5. Lỗi tách câu / liên từ kép ("because...so", "although...but") / mệnh đề cụt và thiếu to be
+    const althButMatch = raw.match(/\b(although|though|even\s+though)\b([^.,!?]{3,48}?)\bbut\s+(i|we|they|you|it|he|she|there|the|my|our|many|people|tourists|visitors)\b/i);
+    if (althButMatch && !/\b(for\s+example|however)\b/i.test(althButMatch[2])) {
+      const clauseMid = althButMatch[2].replace(/\s+$/, "");
+      const fixedAlth = `${althButMatch[1]}${clauseMid}, ${althButMatch[3]}`;
+      addIssue(
+        "double_conj_although_but",
+        althButMatch[0],
+        fixedAlth,
+        `Trong tiếng Anh không dùng cả "${althButMatch[1].toLowerCase()} ... but ..." trong cùng một câu; hãy bỏ "but".`,
+        althButMatch[0],
+        fixedAlth
+      );
+    }
+
+    const becSoMatch = raw.match(/\b(because|since)\b([^.,!?]{3,48}?)\bso\s+(i|we|they|you|it|he|she|there|the|my|our|many|people|tourists|visitors)\b/i);
+    if (becSoMatch && !/\b(for\s+example|however|then)\b/i.test(becSoMatch[2])) {
+      const beforeBec = raw.slice(0, becSoMatch.index).trim().toLowerCase();
+      if (!beforeBec || /(?:^|\.\s*|^(?:well|honestly|actually)\s*,?\s*|\bthink)$/.test(beforeBec)) {
+        const clauseMid = becSoMatch[2].replace(/\s+$/, "");
+        const fixedBecSo = `${becSoMatch[1]}${clauseMid}, ${becSoMatch[3]}`;
+        addIssue(
+          "double_conj_because_so",
+          becSoMatch[0],
+          fixedBecSo,
+          `Không dùng cả "${becSoMatch[1].toLowerCase()} ... so ..." trong cùng một câu; chỉ giữ "${becSoMatch[1].toLowerCase()}" hoặc chỉ giữ "so".`,
+          becSoMatch[0],
+          fixedBecSo
+        );
+      }
+    }
+
     const inTripMatch = raw.match(/\bin\s+the\s+(trip|vacation|holiday)\b/i);
     if (inTripMatch) {
       const fixedPrepTrip = `during the ${inTripMatch[1].toLowerCase()}`;
@@ -469,8 +579,8 @@
       );
     }
 
-    // 6. Lỗi thừa to be trước động từ thường ("I am like / I am prefer / I am go")
-    const extraBeMatch = raw.match(/\b(i\s+am|we\s+are|they\s+are|he\s+is|she\s+is)\s+(usually\s+|often\s+|always\s+)?(like|prefer|love|enjoy|want|need|go|travel|prepare|visit|stay|live)\b/i);
+    // 6. Lỗi thừa to be trước động từ thường ("I am like / I am feel / I am go")
+    const extraBeMatch = raw.match(/\b(i\s+am|we\s+are|they\s+are|he\s+is|she\s+is|it\s+is)\s+(usually\s+|often\s+|always\s+)?(like|prefer|love|enjoy|want|need|go|travel|prepare|visit|stay|live|feel)\b/i);
     if (extraBeMatch) {
       const fixedSubj = extraBeMatch[1].replace(/\s+(am|is|are)$/i, "");
       const adv = extraBeMatch[2] ? extraBeMatch[2].trim() + " " : "";
@@ -485,17 +595,86 @@
       );
     }
 
-    // 7. Lỗi thiếu động từ to be trước tính từ ("it very fun" / "it fun", ngoại trừ cụm "make/keep/find it very + adj")
-    const missingBeRegex = /\b(it|this|that|they|we|weather|summer|winter|spring|autumn|traveling|trip)\s+(very|really|so|quite|too)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|important|necessary|amazing)\b/gi;
+    // 6b. Lỗi chia sai to be / trợ động từ ("I is", "the weather are", "it don't", "in my hometown have...")
+    const wrongBeAgreement =
+      raw.match(/\b(i)\s+(is|are)\b/i) ||
+      raw.match(/\b(he|she|it|the\s+weather|my\s+hometown|my\s+city|my\s+country)\s+(are|am)\b/i) ||
+      raw.match(/\b(we|they|you|tourists|visitors|friends)\s+(is|am)\b/i);
+    if (wrongBeAgreement) {
+      const beforeBe = raw.slice(Math.max(0, wrongBeAgreement.index - 8), wrongBeAgreement.index).toLowerCase();
+      if (!/\band\s+$/.test(beforeBe)) {
+        const subjLow = wrongBeAgreement[1].toLowerCase();
+        const rightBe = subjLow === "i" ? "am" : /^(we|they|you|tourists|visitors|friends)$/.test(subjLow) ? "are" : "is";
+        const subjDisplay = subjLow === "i" ? "I" : wrongBeAgreement[1];
+        const fixedBeAgr = `${subjDisplay} ${rightBe}`;
+        addIssue(
+          "sv_be_agreement",
+          wrongBeAgreement[0],
+          fixedBeAgr,
+          `Chủ ngữ "${subjDisplay}" phải đi với to be "${rightBe}" ("${fixedBeAgr}").`,
+          wrongBeAgreement[0],
+          fixedBeAgr
+        );
+      }
+    }
+
+    const wrongDoAgreement =
+      raw.match(/\b(it|he|she|the\s+weather|my\s+hometown|my\s+city)\s+don't\b/i) ||
+      raw.match(/\b(i|we|they|you|tourists|visitors|friends)\s+doesn't\b/i);
+    if (wrongDoAgreement) {
+      const subjLow = wrongDoAgreement[1].toLowerCase();
+      const rightDo = /^(it|he|she|the\s+weather|my\s+hometown|my\s+city)$/.test(subjLow) ? "doesn't" : "don't";
+      const subjDisplay = subjLow === "i" ? "I" : wrongDoAgreement[1];
+      const fixedDoAgr = `${subjDisplay} ${rightDo}`;
+      addIssue(
+        "sv_do_agreement",
+        wrongDoAgreement[0],
+        fixedDoAgr,
+        `Chủ ngữ "${subjDisplay}" phải dùng trợ động từ "${rightDo}" ("${fixedDoAgr}").`,
+        wrongDoAgreement[0],
+        fixedDoAgr
+      );
+    }
+
+    const hometownHaveMatch =
+      raw.match(/\b(in\s+(?:my\s+)?(?:hometown|city|country|area|region|vietnam))\s+(have|has)\s+(two|three|four|five|many|several|some|two\s+main)\b/i) ||
+      raw.match(/(?:^|[.,!?]\s*)(have|has)\s+(two|three|four|five|two\s+main|four\s+main)\s+(seasons?)\b/i);
+    if (hometownHaveMatch) {
+      if (hometownHaveMatch.length >= 4 && /^in\s+/i.test(hometownHaveMatch[1])) {
+        const fixedThereHT = `${hometownHaveMatch[1]}, there are ${hometownHaveMatch[3].toLowerCase()}`;
+        addIssue(
+          "hometown_have_there_are",
+          hometownHaveMatch[0],
+          fixedThereHT,
+          `Khi nói "Ở nơi nào đó có...", dùng cấu trúc "there are ..." thay vì "in ... have/has".`,
+          hometownHaveMatch[0],
+          fixedThereHT
+        );
+      } else {
+        const fixedThereBare = `there are ${hometownHaveMatch[2].toLowerCase()} ${hometownHaveMatch[3].toLowerCase()}`;
+        addIssue(
+          "bare_have_there_are",
+          `${hometownHaveMatch[1]} ${hometownHaveMatch[2]} ${hometownHaveMatch[3]}`,
+          fixedThereBare,
+          `Mở đầu giới thiệu số mùa bằng "there are ${hometownHaveMatch[2].toLowerCase()} ..." thay vì "${hometownHaveMatch[1].toLowerCase()} ...".`,
+          `${hometownHaveMatch[1]} ${hometownHaveMatch[2]} ${hometownHaveMatch[3]}`,
+          fixedThereBare
+        );
+      }
+    }
+
+    // 7. Lỗi thiếu động từ to be trước tính từ ("it very fun" / "I very happy" / "the weather hot", ngoại trừ cụm "make/keep/find it very + adj")
+    const missingBeRegex = /\b(i|it|this|that|they|we|the\s+weather|weather|my\s+hometown|my\s+city|my\s+country|summer|winter|spring|autumn|traveling|trip)\s+(very|really|so|quite|too)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|important|necessary|amazing|happy|tired|busy|humid)\b/gi;
     let bm;
     while ((bm = missingBeRegex.exec(raw)) !== null) {
       const beforeChunk = raw.slice(Math.max(0, bm.index - 18), bm.index).toLowerCase();
-      if (/\b(make|makes|made|keep|keeps|kept|find|found|feel|feels|consider|call)\s+$/.test(beforeChunk)) {
+      if (/\b(make|makes|made|keep|keeps|kept|find|found|feel|feels|consider|call|look|looks|sound|sounds|seem|seems|get|gets|become|becomes)\s+$/.test(beforeChunk)) {
         continue;
       }
       const subj = bm[1].toLowerCase();
-      const beWord = subj === "they" || subj === "we" ? "are" : "is";
-      const fixedMissingBe = `${bm[1]} ${beWord} ${bm[2]} ${bm[3]}`;
+      const beWord = subj === "i" ? "am" : subj === "they" || subj === "we" ? "are" : "is";
+      const subjOut = subj === "i" ? "I" : bm[1];
+      const fixedMissingBe = `${subjOut} ${beWord} ${bm[2]} ${bm[3]}`;
       addIssue(
         "missing_be",
         bm[0],
@@ -507,30 +686,130 @@
       break;
     }
 
-    if (!seenKeys.has("missing_be")) {
-      const missingBeShortRegex = /\b(it|they|we)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|amazing|boring|crowded|humid)\b/gi;
-      let bms;
-      while ((bms = missingBeShortRegex.exec(raw)) !== null) {
-        const beforeChunk = raw.slice(Math.max(0, bms.index - 18), bms.index).toLowerCase();
-        if (/\b(make|makes|made|keep|keeps|kept|find|found|feel|feels|consider|call|sound|sounds|seem|seems|look|looks)\s+$/.test(beforeChunk)) {
-          continue;
-        }
-        const subj = bms[1].toLowerCase();
-        const beWord = subj === "they" || subj === "we" ? "are" : "is";
-        const fixedShortBe = `${bms[1]} ${beWord} ${bms[2]}`;
+    const missingBeShortRegex = /\b(i|it|they|we|the\s+weather|my\s+hometown|my\s+city|my\s+country)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|amazing|boring|crowded|humid|happy|tired|busy)\b/gi;
+    let bms;
+    while ((bms = missingBeShortRegex.exec(raw)) !== null) {
+      const beforeChunk = raw.slice(Math.max(0, bms.index - 18), bms.index).toLowerCase();
+      if (/\b(make|makes|made|keep|keeps|kept|find|found|feel|feels|consider|call|sound|sounds|seem|seems|look|looks|get|gets)\s+$/.test(beforeChunk)) {
+        continue;
+      }
+      const subj = bms[1].toLowerCase();
+      const beWord = subj === "i" ? "am" : subj === "they" || subj === "we" ? "are" : "is";
+      const subjOut = subj === "i" ? "I" : bms[1];
+      const fixedShortBe = `${subjOut} ${beWord} ${bms[2]}`;
+      addIssue(
+        "missing_be_short_" + subj.replace(/\s+/g, "_"),
+        bms[0],
+        fixedShortBe,
+        `Thiếu động từ to be ("${beWord}") trước tính từ "${bms[2]}".`,
+        bms[0],
+        fixedShortBe
+      );
+      break;
+    }
+
+    // 8. Lỗi giới từ, lượng từ và chọn từ sai ("visit to Da Lat", "go to a trip", "busy for", "in sunny days", "fewer rain", "effect")
+    const visitToMatch = raw.match(/\b(visit|visiting|visited)\s+to\s+((?:my|our|the|a|an)\s+[a-z]+|(?:da\s+lat|da\s+nang|ha\s+noi|hanoi|ho\s+chi\s+minh\s+city|ho\s+chi\s+minh|saigon|nha\s+trang|phu\s+quoc|sapa|hue|vietnam|thailand|japan|korea|new\s+places|famous\s+places|night\s+markets|local\s+markets))\b/i);
+    if (visitToMatch) {
+      const beforeVisit = raw.slice(Math.max(0, visitToMatch.index - 10), visitToMatch.index).toLowerCase();
+      if (!/\b(a|the|my|our|this|that)\s+$/.test(beforeVisit)) {
+        const fixedVisit = `${visitToMatch[1]} ${visitToMatch[2]}`;
         addIssue(
-          "missing_be_short",
-          bms[0],
-          fixedShortBe,
-          `Thiếu động từ to be ("${beWord}") trước tính từ "${bms[2]}".`,
-          bms[0],
-          fixedShortBe
+          "visit_to_place",
+          visitToMatch[0],
+          fixedVisit,
+          `Sau động từ "${visitToMatch[1].toLowerCase()}" không dùng giới từ "to" ("${fixedVisit}").`,
+          visitToMatch[0],
+          fixedVisit
         );
-        break;
       }
     }
 
-    // 8. Lỗi giới từ thường gặp ("go to travel", "go to home", "by foot", "in the beach")
+    const goToTripMatch = raw.match(/\b(go|going|went)\s+to\s+(a\s+)?(trips?)\b/i);
+    if (goToTripMatch) {
+      const nounTrip = goToTripMatch[3].toLowerCase();
+      const art = goToTripMatch[2] || (nounTrip === "trip" ? "a " : "");
+      const fixedGoTrip = `${goToTripMatch[1]} on ${art}${nounTrip}`;
+      addIssue(
+        "go_on_trip_prep",
+        goToTripMatch[0],
+        fixedGoTrip,
+        `Phải dùng giới từ "on" với "trip" ("${fixedGoTrip}"), không dùng "to".`,
+        goToTripMatch[0],
+        fixedGoTrip
+      );
+    }
+
+    const busyPrepMatch = raw.match(/\b(busy)\s+(for|in|about)\s+(school|my\s+studies|studies|work|my\s+work|exams|projects|homework)\b/i);
+    if (busyPrepMatch) {
+      const fixedBusy = `${busyPrepMatch[1]} with ${busyPrepMatch[3]}`;
+      addIssue(
+        "busy_prep",
+        busyPrepMatch[0],
+        fixedBusy,
+        `Tính từ "busy" đi với giới từ "with" ("${fixedBusy}"), không dùng "${busyPrepMatch[2].toLowerCase()}".`,
+        busyPrepMatch[0],
+        fixedBusy
+      );
+    }
+
+    const suitableWithMatch = raw.match(/\bsuitable\s+with\b/i);
+    if (suitableWithMatch) {
+      addIssue("suitable_prep", suitableWithMatch[0], "suitable for", 'Tính từ "suitable" phải đi với giới từ "for" ("suitable for...").', suitableWithMatch[0], "suitable for");
+    }
+
+    const inDayMatch = raw.match(/\bin\s+(sunny|rainy|hot|cold|cool|warm|busy|nice|good|bad|weekend)\s+(days?|mornings?|afternoons?|evenings?)\b/i);
+    if (inDayMatch) {
+      const fixedOnDay = `on ${inDayMatch[1]} ${inDayMatch[2]}`;
+      addIssue(
+        "in_adj_day",
+        inDayMatch[0],
+        fixedOnDay,
+        `Trước "${inDayMatch[1]} ${inDayMatch[2]}" cần dùng giới từ "on" ("${fixedOnDay}"), không dùng "in".`,
+        inDayMatch[0],
+        fixedOnDay
+      );
+    }
+
+    const inWeekendsMatch = raw.match(/\bin\s+(the\s+)?(weekends?)\b/i);
+    if (inWeekendsMatch) {
+      const fixedWeekend = `on ${inWeekendsMatch[1] || ""}${inWeekendsMatch[2].toLowerCase()}`;
+      addIssue("in_weekend", inWeekendsMatch[0], fixedWeekend, `Với cuối tuần hãy dùng giới từ "on" ("${fixedWeekend}").`, inWeekendsMatch[0], fixedWeekend);
+    }
+
+    const onPartDayMatch = raw.match(/\bon\s+the\s+(morning|afternoon|evening)\b/i);
+    if (onPartDayMatch) {
+      const fixedPartDay = `in the ${onPartDayMatch[1].toLowerCase()}`;
+      addIssue("on_the_part_day", onPartDayMatch[0], fixedPartDay, `Với buổi trong ngày hãy dùng cụm "in the ${onPartDayMatch[1].toLowerCase()}".`, onPartDayMatch[0], fixedPartDay);
+    }
+
+    const fewerUncountMatch = raw.match(/\bfewer\s+(rain|money|time|luggage|baggage|food|water|traffic|sunscreen|information)\b/i);
+    if (fewerUncountMatch) {
+      const fixedLess = `less ${fewerUncountMatch[1].toLowerCase()}`;
+      addIssue(
+        "fewer_uncountable",
+        fewerUncountMatch[0],
+        fixedLess,
+        `Danh từ không đếm được "${fewerUncountMatch[1].toLowerCase()}" phải đi với "less", không dùng "fewer".`,
+        fewerUncountMatch[0],
+        fixedLess
+      );
+    }
+
+    const effectVerbMatch = raw.match(/\b(the\s+weather|weather|it|this|that|rain|climate)\s+effect(s?)\b/i);
+    if (effectVerbMatch) {
+      const sfx = effectVerbMatch[2] || (/^(the\s+weather|weather|it|this|that|rain|climate)$/i.test(effectVerbMatch[1]) ? "s" : "");
+      const fixedAffect = `${effectVerbMatch[1]} affect${sfx}`;
+      addIssue(
+        "effect_vs_affect",
+        effectVerbMatch[0],
+        fixedAffect,
+        `"effect" là danh từ; khi cần động từ "ảnh hưởng đến" hãy dùng "affect" ("${fixedAffect}").`,
+        effectVerbMatch[0],
+        fixedAffect
+      );
+    }
+
     const prepErr = raw.match(/\b(go|going|went)\s+to\s+(travel|traveling|travelling|camping|swimming|shopping|sightseeing|home|abroad)\b/i);
     if (prepErr) {
       const fixedGo = `${prepErr[1]} ${prepErr[2].toLowerCase()}`;
@@ -568,20 +847,31 @@
       );
     }
 
-    // 10. Lỗi chia động từ ngôi thứ 3 số ít ("it help", "it make", "which help")
-    const thirdSgMatch = raw.match(/\b(it|this|that|which)\s+(help|make|give|bring|take|need|cost|have)\b/i);
-    if (thirdSgMatch) {
-      const vLow = thirdSgMatch[2].toLowerCase();
-      const fixed3 = vLow === "have" ? "has" : vLow + "s";
-      const fixed3Sg = `${thirdSgMatch[1]} ${fixed3}`;
+    // 10. Lỗi chia động từ ngôi thứ 3 số ít ("it help", "the weather affect", "my hometown have")
+    const thirdSgRegex = /\b(the\s+weather|my\s+hometown|my\s+city|my\s+country|my\s+family|it|this|that|which|he|she)\s+(help|make|give|bring|take|need|cost|have|affect|rain|get|feel|keep|cheer|depend|like|love|want|go|do)\b/gi;
+    let tsg;
+    while ((tsg = thirdSgRegex.exec(raw)) !== null) {
+      const beforeTsg = raw.slice(Math.max(0, tsg.index - 24), tsg.index).toLowerCase();
+      if (/\b(can|could|will|would|should|must|may|might|does|doesn't|do|don't|did|didn't|to|make|makes|made|help|helps|helped|let|lets)\s+$/.test(beforeTsg)) {
+        continue;
+      }
+      if (tsg[1].toLowerCase() === "which" && /\b[a-z]+s\s+$/.test(beforeTsg)) {
+        continue;
+      }
+      if (seenKeys.has("bare_have_there_are") || seenKeys.has("hometown_have_there_are")) {
+        continue;
+      }
+      const fixed3 = toThirdSg(tsg[2]);
+      const fixed3Sg = `${tsg[1]} ${fixed3}`;
       addIssue(
         "third_sg",
-        thirdSgMatch[0],
+        tsg[0],
         fixed3Sg,
-        `Chủ ngữ số ít "${thirdSgMatch[1]}" cần thêm "-s" vào động từ ("${fixed3}").`,
-        thirdSgMatch[0],
+        `Chủ ngữ số ít "${tsg[1]}" cần chia động từ thêm "-s/-es" ("${fixed3Sg}").`,
+        tsg[0],
         fixed3Sg
       );
+      break;
     }
 
     // 11. Lỗi "because of + mệnh đề"

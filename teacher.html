@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261121h" />
+  <link rel="stylesheet" href="./styles.css?v=20261121i" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261121h"></script>
-  <script src="./supabase-client.js?v=20261121h"></script>
-  <script src="./travel-data.js?v=20261121h"></script>
-  <script src="./speaking-evaluator.js?v=20261121h"></script>
+  <script src="./supabase-config.js?v=20261121i"></script>
+  <script src="./supabase-client.js?v=20261121i"></script>
+  <script src="./travel-data.js?v=20261121i"></script>
+  <script src="./speaking-evaluator.js?v=20261121i"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -33,6 +33,8 @@
         authenticated: false,
         unauthorizedEmail: "",
         teacherEmail: "",
+        teacherUserId: "",
+        deletingUserId: "",
         authError: "",
         dbError: "",
         activeTab: "submissions", // "submissions" | "students"
@@ -79,6 +81,7 @@
 
         tState.authenticated = true;
         tState.teacherEmail = user.email || "";
+        tState.teacherUserId = user.id || "";
         await refreshCloudDashboardData();
       }
 
@@ -231,6 +234,55 @@
           }, 2200);
         } else {
           alert("Lỗi lưu nhận xét: " + error.message);
+        }
+      }
+
+      async function deleteStudentAccount(studentId, studentName, studentEmail) {
+        const client = CLOUD.getClient();
+        if (!client || !studentId || tState.deletingUserId) return;
+        if (studentId === tState.teacherUserId) {
+          alert("Không thể tự xoá tài khoản Giáo viên đang đăng nhập.");
+          return;
+        }
+        const label = studentName ? `${studentName} (${studentEmail || ""})` : studentEmail || studentId;
+        if (!confirm(`Bạn có chắc muốn XOÁ VĨNH VIỄN tài khoản "${label}"?\n\nToàn bộ bài nộp, bản ghi âm và từ vựng của tài khoản này sẽ bị xoá khỏi hệ thống.`)) {
+          return;
+        }
+
+        tState.deletingUserId = studentId;
+        renderTeacherApp();
+
+        try {
+          const { data: attRows } = await client
+            .from("speaking_attempts")
+            .select("audio_path")
+            .eq("user_id", studentId);
+          const audioPaths = Array.isArray(attRows) ? attRows.map(r => r.audio_path).filter(Boolean) : [];
+          if (audioPaths.length > 0) {
+            await CLOUD.deleteRecordings(audioPaths);
+          }
+
+          const { error } = await client.rpc("teacher_delete_student", { target_user_id: studentId });
+          if (error) {
+            tState.deletingUserId = "";
+            renderTeacherApp();
+            alert(
+              "Không xoá được tài khoản: " +
+                error.message +
+                "\n\nLưu ý: Bạn cần chạy lại file supabase-setup.sql mới nhất trong Supabase SQL Editor để kích hoạt hàm teacher_delete_student."
+            );
+            return;
+          }
+
+          if (tState.filterStudent && studentEmail && tState.filterStudent === studentEmail) {
+            tState.filterStudent = "all";
+          }
+          tState.deletingUserId = "";
+          await refreshCloudDashboardData();
+        } catch (err) {
+          tState.deletingUserId = "";
+          renderTeacherApp();
+          alert("Lỗi khi xoá tài khoản: " + (err && err.message ? err.message : "Không xác định"));
         }
       }
 
@@ -590,9 +642,23 @@
                       <td style="font-size:12.5px;color:#52525B;">${escapeHtml(st.createdAt || "—")}</td>
                       <td style="font-size:12.5px;color:#52525B;">${escapeHtml(st.lastActiveAt || "—")}</td>
                       <td>
-                        <button type="button" class="top-pill-btn" data-view-student-subs="${escapeHtml(st.email)}">
-                          Xem bài làm →
-                        </button>
+                        <div class="teacher-row-actions">
+                          <button type="button" class="top-pill-btn" data-view-student-subs="${escapeHtml(st.email)}">
+                            Xem bài làm →
+                          </button>
+                          ${
+                            st.id !== tState.teacherUserId
+                              ? `<button
+                                  type="button"
+                                  class="btn-danger-outline"
+                                  data-delete-student="${escapeHtml(st.id)}"
+                                  data-delete-student-name="${escapeHtml(st.name)}"
+                                  data-delete-student-email="${escapeHtml(st.email)}"
+                                  ${tState.deletingUserId === st.id ? "disabled" : ""}
+                                >${tState.deletingUserId === st.id ? "Đang xoá..." : "Xoá"}</button>`
+                              : ""
+                          }
+                        </div>
                       </td>
                     </tr>
                   `)
@@ -776,6 +842,8 @@
             tState.authenticated = false;
             tState.unauthorizedEmail = "";
             tState.teacherEmail = "";
+            tState.teacherUserId = "";
+            tState.deletingUserId = "";
             renderTeacherApp();
           };
         }
@@ -804,6 +872,16 @@
             tState.searchNameQuery = "";
             tState.activeTab = "submissions";
             renderTeacherApp();
+          };
+        });
+
+        document.querySelectorAll("[data-delete-student]").forEach(btn => {
+          btn.onclick = () => {
+            deleteStudentAccount(
+              btn.getAttribute("data-delete-student"),
+              btn.getAttribute("data-delete-student-name"),
+              btn.getAttribute("data-delete-student-email")
+            );
           };
         });
 
@@ -892,6 +970,8 @@
             tState.authenticated = false;
             tState.unauthorizedEmail = "";
             tState.teacherEmail = "";
+            tState.teacherUserId = "";
+            tState.deletingUserId = "";
             renderTeacherApp();
           }
         });

@@ -1,7 +1,8 @@
 // ==========================================================================
-// SPEAKING PART 1 — 4 STANDALONE TOPICS (TRAVELLING, TRIPS, TRAVEL PLANS, SEASONS)
+// SPEAKING PART 1 — 5 STANDALONE TOPICS (TRAVELLING, TRIPS, TRAVEL PLANS, SEASONS, WEATHER)
 // Áp dụng công thức A-R-E (Answer + Reason -> Example -> Feeling/Result)
-// Thiết kế ngắn gọn, dễ đọc cho học sinh yếu (B1: ~28–36 từ | B2: ~35–43 từ)
+// Thiết kế ngắn gọn, dễ đọc cho học sinh yếu (B1: ~29–36 từ | B2: ~34–40 từ)
+// Mục V: 8 từ/cụm từ mở rộng có đầy đủ IPA & ví dụ cho mỗi Level
 // ==========================================================================
 
 window.SPEAKING_TOPICS = [
@@ -70,6 +71,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy rất vui",
                 example: "It makes me <strong>feel very happy</strong>."
+              },
+              {
+                word: "travel alone",
+                ipa: "/ˈtrævl əˈloʊn/",
+                pos: "v. phr.",
+                meaning: "đi du lịch một mình",
+                example: "Some people like to <strong>travel alone</strong> to be free."
+              },
+              {
+                word: "travel with family",
+                ipa: "/ˈtrævl wɪð ˈfæməli/",
+                pos: "v. phr.",
+                meaning: "đi du lịch cùng gia đình",
+                example: "I also enjoy <strong>traveling with family</strong> on holidays."
+              },
+              {
+                word: "save money",
+                ipa: "/seɪv ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm tiền",
+                example: "Going in a group helps us <strong>save money</strong> on hotels."
+              },
+              {
+                word: "share good memories",
+                ipa: "/ʃer ɡʊd ˈmeməriz/",
+                pos: "v. phr.",
+                meaning: "chia sẻ những kỷ niệm đẹp",
+                example: "Traveling together helps us <strong>share good memories</strong>."
+              },
+              {
+                word: "talk together",
+                ipa: "/tɔːk təˈɡeðər/",
+                pos: "v. phr.",
+                meaning: "trò chuyện cùng nhau",
+                example: "During a trip, we can <strong>talk together</strong> all night."
               }
             ]
           },
@@ -118,6 +154,34 @@ window.SPEAKING_TOPICS = [
                 pos: "v.",
                 meaning: "thư giãn, xả hơi",
                 example: "Going with friends helps me really <strong>unwind</strong>."
+              },
+              {
+                word: "close friends",
+                ipa: "/kloʊs frendz/",
+                pos: "n. phr.",
+                meaning: "những người bạn thân",
+                example: "I love traveling with <strong>close friends</strong> who share my hobbies."
+              },
+              {
+                word: "traveling solo",
+                ipa: "/ˈtrævəlɪŋ ˈsoʊloʊ/",
+                pos: "n. phr.",
+                meaning: "việc đi du lịch một mình",
+                example: "<strong>Traveling solo</strong> gives me freedom, but it can feel lonely."
+              },
+              {
+                word: "companionship",
+                ipa: "/kəmˈpænjənʃɪp/",
+                pos: "n.",
+                meaning: "sự đồng hành, bầu bạn",
+                example: "Good <strong>companionship</strong> makes a long trip much nicer."
+              },
+              {
+                word: "share expenses",
+                ipa: "/ʃer ɪkˈspensɪz/",
+                pos: "v. phr.",
+                meaning: "chia sẻ chi phí chuyến đi",
+                example: "Friends can <strong>share expenses</strong> for rooms and taxis."
               }
             ]
           }
@@ -176,6 +240,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n.",
                 meaning: "sạc dự phòng",
                 example: "I bring a <strong>power bank</strong> so my phone stays full."
+              },
+              {
+                word: "book a room",
+                ipa: "/bʊk ə ruːm/",
+                pos: "v. phr.",
+                meaning: "đặt phòng trước",
+                example: "I always <strong>book a room</strong> before I leave."
+              },
+              {
+                word: "bring money",
+                ipa: "/brɪŋ ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "mang theo tiền",
+                example: "I always <strong>bring money</strong> for food and tickets."
+              },
+              {
+                word: "walking shoes",
+                ipa: "/ˈwɔːkɪŋ ʃuːz/",
+                pos: "n. phr.",
+                meaning: "giày đi bộ thoải mái",
+                example: "I pack a pair of <strong>walking shoes</strong> for long walks."
+              },
+              {
+                word: "bottle of water",
+                ipa: "/ˈbɒtl əv ˈwɔːtər/",
+                pos: "n. phr.",
+                meaning: "chai nước uống",
+                example: "I put a <strong>bottle of water</strong> in my small bag."
+              },
+              {
+                word: "feel ready",
+                ipa: "/fiːl ˈredi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy sẵn sàng",
+                example: "Packing early helps me <strong>feel ready</strong>."
               }
             ]
           },
@@ -224,6 +323,34 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "cảm giác yên tâm",
                 example: "Having everything ready gives me real <strong>peace of mind</strong>."
+              },
+              {
+                word: "short checklist",
+                ipa: "/ʃɔːrt ˈtʃeklɪst/",
+                pos: "n. phr.",
+                meaning: "danh sách kiểm tra đồ ngắn gọn",
+                example: "I always make a <strong>short checklist</strong> before packing."
+              },
+              {
+                word: "essential items",
+                ipa: "/ɪˈsenʃl ˈaɪtəmz/",
+                pos: "n. phr.",
+                meaning: "các vật dụng thiết yếu",
+                example: "I put my <strong>essential items</strong> inside a small pouch."
+              },
+              {
+                word: "basic medicine",
+                ipa: "/ˈbeɪsɪk ˈmedɪsn/",
+                pos: "n. phr.",
+                meaning: "thuốc men cơ bản",
+                example: "I carry <strong>basic medicine</strong> for headaches or colds."
+              },
+              {
+                word: "portable charger",
+                ipa: "/ˈpɔːrtəbl ˈtʃɑːrdʒər/",
+                pos: "n. phr.",
+                meaning: "sạc dự phòng cầm tay",
+                example: "A <strong>portable charger</strong> is useful for taking lots of photos."
               }
             ]
           }
@@ -282,6 +409,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "đồ ăn đường phố",
                 example: "Visitors love trying local <strong>street food</strong>."
+              },
+              {
+                word: "the rainy season",
+                ipa: "/ðə ˈreɪni ˈsiːzn/",
+                pos: "n. phr.",
+                meaning: "mùa mưa",
+                example: "It is hard to travel outside in <strong>the rainy season</strong>."
+              },
+              {
+                word: "clear sky",
+                ipa: "/klɪər skaɪ/",
+                pos: "n. phr.",
+                meaning: "bầu trời quang đãng",
+                example: "There is a <strong>clear sky</strong> almost every morning."
+              },
+              {
+                word: "go sightseeing",
+                ipa: "/ɡoʊ ˈsaɪtsiːɪŋ/",
+                pos: "v. phr.",
+                meaning: "đi ngắm cảnh",
+                example: "Tourists can <strong>go sightseeing</strong> around the town."
+              },
+              {
+                word: "friendly people",
+                ipa: "/ˈfrendli ˈpiːpl/",
+                pos: "n. phr.",
+                meaning: "người dân thân thiện",
+                example: "Visitors also meet many <strong>friendly people</strong> here."
+              },
+              {
+                word: "take a boat trip",
+                ipa: "/teɪk ə boʊt trɪp/",
+                pos: "v. phr.",
+                meaning: "đi thuyền tham quan",
+                example: "Guests can <strong>take a boat trip</strong> on the river."
               }
             ]
           },
@@ -323,6 +485,41 @@ window.SPEAKING_TOPICS = [
                 pos: "adj.",
                 meaning: "thuận tiện, dễ dàng",
                 example: "No heavy rain makes traveling very <strong>convenient</strong>."
+              },
+              {
+                word: "ideal time",
+                ipa: "/aɪˈdiːəl taɪm/",
+                pos: "n. phr.",
+                meaning: "thời điểm lý tưởng",
+                example: "Spring is an <strong>ideal time</strong> to visit my hometown."
+              },
+              {
+                word: "local dishes",
+                ipa: "/ˈloʊkl ˈdɪʃɪz/",
+                pos: "n. phr.",
+                meaning: "các món ăn đặc sản địa phương",
+                example: "Visitors always enjoy fresh <strong>local dishes</strong> here."
+              },
+              {
+                word: "sudden showers",
+                ipa: "/ˈsʌdn ˈʃaʊərz/",
+                pos: "n. phr.",
+                meaning: "những cơn mưa rào bất chợt",
+                example: "There are very few <strong>sudden showers</strong> in winter."
+              },
+              {
+                word: "explore the city",
+                ipa: "/ɪkˈsplɔːr ðə ˈsɪti/",
+                pos: "v. phr.",
+                meaning: "khám phá thành phố",
+                example: "Tourists can easily <strong>explore the city</strong> on foot."
+              },
+              {
+                word: "outdoor markets",
+                ipa: "/ˈaʊtdɔːr ˈmɑːrkɪts/",
+                pos: "n. phr.",
+                meaning: "các khu chợ ngoài trời",
+                example: "Many <strong>outdoor markets</strong> stay lively at night."
               }
             ]
           }
@@ -396,6 +593,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy thư giãn",
                 example: "Every short trip makes me <strong>feel relaxed</strong>."
+              },
+              {
+                word: "visit new places",
+                ipa: "/ˈvɪzɪt nuː ˈpleɪsɪz/",
+                pos: "v. phr.",
+                meaning: "thăm những địa điểm mới",
+                example: "I love to <strong>visit new places</strong> on holidays."
+              },
+              {
+                word: "try local food",
+                ipa: "/traɪ ˈloʊkl fuːd/",
+                pos: "v. phr.",
+                meaning: "thử đồ ăn địa phương",
+                example: "I always <strong>try local food</strong> when I travel."
+              },
+              {
+                word: "spend time with family",
+                ipa: "/spend taɪm wɪð ˈfæməli/",
+                pos: "v. phr.",
+                meaning: "dành thời gian cho gia đình",
+                example: "Trips let me <strong>spend time with family</strong>."
+              },
+              {
+                word: "forget about school",
+                ipa: "/fərˈɡet əˈbaʊt skuːl/",
+                pos: "v. phr.",
+                meaning: "quên đi áp lực bài vở",
+                example: "Going out helps me <strong>forget about school</strong> for a day."
+              },
+              {
+                word: "have a good time",
+                ipa: "/hæv ə ɡʊd taɪm/",
+                pos: "v. phr.",
+                meaning: "có khoảng thời gian vui vẻ",
+                example: "We always <strong>have a good time</strong> together."
               }
             ]
           },
@@ -437,6 +669,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v.",
                 meaning: "thư giãn, giải tỏa áp lực",
                 example: "Going to the beach really helps me <strong>unwind</strong>."
+              },
+              {
+                word: "take a break",
+                ipa: "/teɪk ə breɪk/",
+                pos: "v. phr.",
+                meaning: "nghỉ xả hơi một chút",
+                example: "Going away helps me <strong>take a break</strong> from work."
+              },
+              {
+                word: "short weekend trip",
+                ipa: "/ʃɔːrt ˈwiːkend trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi ngắn ngày cuối tuần",
+                example: "I enjoy a <strong>short weekend trip</strong> near the sea."
+              },
+              {
+                word: "recharge my battery",
+                ipa: "/ˌriːˈtʃɑːrdʒ maɪ ˈbætəri/",
+                pos: "v. phr.",
+                meaning: "nạp lại năng lượng",
+                example: "Traveling helps me <strong>recharge my battery</strong> quickly."
+              },
+              {
+                word: "fresh atmosphere",
+                ipa: "/freʃ ˈætməsfɪr/",
+                pos: "n. phr.",
+                meaning: "bầu không khí trong lành, mới mẻ",
+                example: "I love the <strong>fresh atmosphere</strong> of coastal towns."
+              },
+              {
+                word: "broaden my horizons",
+                ipa: "/ˈbrɔːdn maɪ həˈraɪznz/",
+                pos: "v. phr.",
+                meaning: "mở mang tầm mắt",
+                example: "Visiting new cities helps <strong>broaden my horizons</strong>."
               }
             ]
           }
@@ -495,6 +762,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "dự định đi thăm",
                 example: "Later, I <strong>plan to visit</strong> Da Lat with my friends."
+              },
+              {
+                word: "next holiday",
+                ipa: "/nekst ˈhɒlədeɪ/",
+                pos: "n. phr.",
+                meaning: "kỳ nghỉ tiếp theo",
+                example: "I will travel during my <strong>next holiday</strong>."
+              },
+              {
+                word: "save enough money",
+                ipa: "/seɪv ɪˈnʌf ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm đủ tiền",
+                example: "I need to <strong>save enough money</strong> for my trip."
+              },
+              {
+                word: "go with friends",
+                ipa: "/ɡoʊ wɪð frendz/",
+                pos: "v. phr.",
+                meaning: "đi cùng bạn bè",
+                example: "I want to <strong>go with friends</strong> after exams."
+              },
+              {
+                word: "stay for two days",
+                ipa: "/steɪ fɔːr tuː deɪz/",
+                pos: "v. phr.",
+                meaning: "ở lại hai ngày",
+                example: "We plan to <strong>stay for two days</strong> in a hotel."
+              },
+              {
+                word: "book bus tickets",
+                ipa: "/bʊk bʌs ˈtɪkɪts/",
+                pos: "v. phr.",
+                meaning: "đặt vé xe khách",
+                example: "Later, I will <strong>book bus tickets</strong> online."
               }
             ]
           },
@@ -543,6 +845,34 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "giúp đầu óc nhẹ nhõm, thư thái",
                 example: "A beach trip will help me <strong>clear my mind</strong>."
+              },
+              {
+                word: "tight deadlines",
+                ipa: "/taɪt ˈdedlaɪnz/",
+                pos: "n. phr.",
+                meaning: "những hạn chót công việc gấp",
+                example: "I have <strong>tight deadlines</strong> at work this month."
+              },
+              {
+                word: "coastal city",
+                ipa: "/ˈkoʊstl ˈsɪti/",
+                pos: "n. phr.",
+                meaning: "thành phố biển",
+                example: "Da Nang is a clean and lively <strong>coastal city</strong>."
+              },
+              {
+                word: "take a short getaway",
+                ipa: "/teɪk ə ʃɔːrt ˈɡetəweɪ/",
+                pos: "v. phr.",
+                meaning: "làm chuyến đi nghỉ ngắn ngày",
+                example: "I want to <strong>take a short getaway</strong> next month."
+              },
+              {
+                word: "as soon as",
+                ipa: "/æz suːn æz/",
+                pos: "conj.",
+                meaning: "ngay sau khi",
+                example: "I will travel <strong>as soon as</strong> my exams finish."
               }
             ]
           }
@@ -601,6 +931,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "thị trấn yên tĩnh",
                 example: "For example, I often visit a <strong>quiet town</strong> near my home."
+              },
+              {
+                word: "beach trip",
+                ipa: "/biːtʃ trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi biển",
+                example: "A <strong>beach trip</strong> is great in hot weather."
+              },
+              {
+                word: "mountain trip",
+                ipa: "/ˈmaʊntɪn trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi lên núi",
+                example: "I also like a <strong>mountain trip</strong> for cool air."
+              },
+              {
+                word: "food tour",
+                ipa: "/fuːd tʊr/",
+                pos: "n. phr.",
+                meaning: "chuyến đi khám phá ẩm thực",
+                example: "My friends love doing a local <strong>food tour</strong>."
+              },
+              {
+                word: "family trip",
+                ipa: "/ˈfæməli trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến du lịch gia đình",
+                example: "We go on a <strong>family trip</strong> once a year."
+              },
+              {
+                word: "cheap and easy",
+                ipa: "/tʃiːp ænd ˈiːzi/",
+                pos: "adj. phr.",
+                meaning: "rẻ và dễ chuẩn bị",
+                example: "Going near home is <strong>cheap and easy</strong>."
               }
             ]
           },
@@ -649,6 +1014,34 @@ window.SPEAKING_TOPICS = [
                 pos: "adj. phr.",
                 meaning: "bình yên và tràn đầy năng lượng trở lại",
                 example: "Short trips leave me feeling <strong>calm and recharged</strong>."
+              },
+              {
+                word: "affordable",
+                ipa: "/əˈfɔːrdəbl/",
+                pos: "adj.",
+                meaning: "giá cả phải chăng",
+                example: "Weekend getaways are very <strong>affordable</strong> for students."
+              },
+              {
+                word: "day trip",
+                ipa: "/deɪ trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi trong ngày",
+                example: "Sometimes a <strong>day trip</strong> is enough to relax."
+              },
+              {
+                word: "cultural trip",
+                ipa: "/ˈkʌltʃərəl trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi tìm hiểu văn hóa",
+                example: "Visiting old museums makes a nice <strong>cultural trip</strong>."
+              },
+              {
+                word: "get back to nature",
+                ipa: "/ɡet bæk tuː ˈneɪtʃər/",
+                pos: "v. phr.",
+                meaning: "hòa mình về với thiên nhiên",
+                example: "I go camping to <strong>get back to nature</strong>."
               }
             ]
           }
@@ -722,6 +1115,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "đi một chuyến du lịch ngắn",
                 example: "If I finish early, I will <strong>go on a short trip</strong>."
+              },
+              {
+                word: "next month",
+                ipa: "/nekst mʌnθ/",
+                pos: "n. phr.",
+                meaning: "tháng tới",
+                example: "I am quite busy <strong>next month</strong>."
+              },
+              {
+                word: "not sure yet",
+                ipa: "/nɒt ʃʊr jet/",
+                pos: "phr.",
+                meaning: "vẫn chưa chắc chắn",
+                example: "I am <strong>not sure yet</strong> about my weekend plan."
+              },
+              {
+                word: "have free time",
+                ipa: "/hæv friː taɪm/",
+                pos: "v. phr.",
+                meaning: "có thời gian rảnh",
+                example: "When I <strong>have free time</strong>, I will visit Vung Tau."
+              },
+              {
+                word: "busy with work",
+                ipa: "/ˈbɪzi wɪð wɜːrk/",
+                pos: "adj. phr.",
+                meaning: "bận rộn với công việc",
+                example: "My parents are very <strong>busy with work</strong>."
+              },
+              {
+                word: "travel by bus",
+                ipa: "/ˈtrævl baɪ bʌs/",
+                pos: "v. phr.",
+                meaning: "đi du lịch bằng xe buýt/xe khách",
+                example: "If I go, I will <strong>travel by bus</strong>."
               }
             ]
           },
@@ -763,6 +1191,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v.",
                 meaning: "nạp lại năng lượng",
                 example: "Taking a short break will help me <strong>recharge</strong>."
+              },
+              {
+                word: "finish a project",
+                ipa: "/ˈfɪnɪʃ ə ˈprɒdʒekt/",
+                pos: "v. phr.",
+                meaning: "hoàn thành một dự án",
+                example: "I have to <strong>finish a project</strong> before going away."
+              },
+              {
+                word: "spontaneous trip",
+                ipa: "/spɒnˈteɪniəs trɪp/",
+                pos: "n. phr.",
+                meaning: "chuyến đi ngẫu hứng không hẹn trước",
+                example: "I might take a <strong>spontaneous trip</strong> if I have time."
+              },
+              {
+                word: "check my schedule",
+                ipa: "/tʃek maɪ ˈskedʒuːl/",
+                pos: "v. phr.",
+                meaning: "kiểm tra lại lịch trình",
+                example: "I need to <strong>check my schedule</strong> first."
+              },
+              {
+                word: "take a few days off",
+                ipa: "/teɪk ə fjuː deɪz ɒf/",
+                pos: "v. phr.",
+                meaning: "xin nghỉ vài ngày",
+                example: "Next month I hope to <strong>take a few days off</strong>."
+              },
+              {
+                word: "look forward to",
+                ipa: "/lʊk ˈfɔːrwərd tuː/",
+                pos: "phr. v.",
+                meaning: "mong chờ (+ V-ing)",
+                example: "I really <strong>look forward to</strong> visiting Da Lat."
               }
             ]
           }
@@ -821,6 +1284,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy yên bình",
                 example: "Sitting in a nice cafe makes me <strong>feel peaceful</strong>."
+              },
+              {
+                word: "fresh air",
+                ipa: "/freʃ er/",
+                pos: "n. phr.",
+                meaning: "không khí trong lành",
+                example: "I love the <strong>fresh air</strong> in the mountains."
+              },
+              {
+                word: "flower gardens",
+                ipa: "/ˈflaʊər ˈɡɑːrdnz/",
+                pos: "n. phr.",
+                meaning: "những vườn hoa",
+                example: "Tourists take many photos in <strong>flower gardens</strong>."
+              },
+              {
+                word: "beautiful beaches",
+                ipa: "/ˈbjuːtɪfl ˈbiːtʃɪz/",
+                pos: "n. phr.",
+                meaning: "những bãi biển đẹp",
+                example: "Phu Quoc has very <strong>beautiful beaches</strong>."
+              },
+              {
+                word: "clean streets",
+                ipa: "/kliːn striːts/",
+                pos: "n. phr.",
+                meaning: "những con đường sạch đẹp",
+                example: "That city is famous for its <strong>clean streets</strong>."
+              },
+              {
+                word: "tasty food",
+                ipa: "/ˈteɪsti fuːd/",
+                pos: "n. phr.",
+                meaning: "đồ ăn ngon",
+                example: "I also want to enjoy <strong>tasty food</strong> at night."
               }
             ]
           },
@@ -869,6 +1367,34 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "nơi lý tưởng",
                 example: "Da Lat is an <strong>ideal place</strong> to unwind."
+              },
+              {
+                word: "get away from",
+                ipa: "/ɡet əˈweɪ frɒm/",
+                pos: "phr. v.",
+                meaning: "tạm rời xa (ồn ào, khói bụi)",
+                example: "I go there to <strong>get away from</strong> city noise."
+              },
+              {
+                word: "cool climate",
+                ipa: "/kuːl ˈklaɪmət/",
+                pos: "n. phr.",
+                meaning: "khí hậu mát mẻ",
+                example: "Its <strong>cool climate</strong> is great all year round."
+              },
+              {
+                word: "scenic views",
+                ipa: "/ˈsiːnɪk vjuːz/",
+                pos: "n. phr.",
+                meaning: "phong cảnh hữu tình",
+                example: "The hills offer amazing <strong>scenic views</strong>."
+              },
+              {
+                word: "breathtaking scenery",
+                ipa: "/ˈbreθteɪkɪŋ ˈsiːnəri/",
+                pos: "n. phr.",
+                meaning: "cảnh đẹp ngoạn mục",
+                example: "Ha Long Bay has <strong>breathtaking scenery</strong>."
               }
             ]
           }
@@ -927,6 +1453,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "cục sạc điện thoại",
                 example: "Do not forget your <strong>phone charger</strong> before a trip."
+              },
+              {
+                word: "cash and bank card",
+                ipa: "/kæʃ ænd bæŋk kɑːrd/",
+                pos: "n. phr.",
+                meaning: "tiền mặt và thẻ ngân hàng",
+                example: "I carry both <strong>cash and a bank card</strong>."
+              },
+              {
+                word: "bus ticket",
+                ipa: "/bʌs ˈtɪkɪt/",
+                pos: "n. phr.",
+                meaning: "vé xe khách",
+                example: "I check my <strong>bus ticket</strong> on my phone."
+              },
+              {
+                word: "raincoat",
+                ipa: "/ˈreɪnkoʊt/",
+                pos: "n.",
+                meaning: "áo mưa",
+                example: "I bring a light <strong>raincoat</strong> in my backpack."
+              },
+              {
+                word: "sunglasses",
+                ipa: "/ˈsʌnɡlæsɪz/",
+                pos: "n.",
+                meaning: "kính râm",
+                example: "Do not forget <strong>sunglasses</strong> on sunny trips."
+              },
+              {
+                word: "small backpack",
+                ipa: "/smɔːl ˈbækpæk/",
+                pos: "n. phr.",
+                meaning: "ba lô nhỏ gọn",
+                example: "I put my things in a <strong>small backpack</strong>."
               }
             ]
           },
@@ -968,6 +1529,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "hành lý nặng (luggage không đếm được)",
                 example: "Packing smartly helps me avoid <strong>heavy luggage</strong>."
+              },
+              {
+                word: "book accommodation",
+                ipa: "/bʊk əˌkɒməˈdeɪʃn/",
+                pos: "v. phr.",
+                meaning: "đặt chỗ ở / khách sạn",
+                example: "It is safer to <strong>book accommodation</strong> early."
+              },
+              {
+                word: "travel itinerary",
+                ipa: "/ˈtrævl aɪˈtɪnəreri/",
+                pos: "n. phr.",
+                meaning: "lịch trình chuyến đi",
+                example: "I write down a simple <strong>travel itinerary</strong>."
+              },
+              {
+                word: "pack light",
+                ipa: "/pæk laɪt/",
+                pos: "v. phr.",
+                meaning: "đóng gói hành lý gọn nhẹ",
+                example: "I prefer to <strong>pack light</strong> so moving is easier."
+              },
+              {
+                word: "first-aid kit",
+                ipa: "/fɜːrst eɪd kɪt/",
+                pos: "n. phr.",
+                meaning: "bộ dụng cụ sơ cứu nhỏ",
+                example: "A small <strong>first-aid kit</strong> is useful for long trips."
+              },
+              {
+                word: "check travel reviews",
+                ipa: "/tʃek ˈtrævl rɪˈvjuːz/",
+                pos: "v. phr.",
+                meaning: "xem đánh giá du lịch",
+                example: "I always <strong>check travel reviews</strong> before booking."
               }
             ]
           }
@@ -1041,6 +1637,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "mưa rất nhiều",
                 example: "It <strong>rains a lot</strong> in the rainy months."
+              },
+              {
+                word: "four seasons",
+                ipa: "/fɔːr ˈsiːznz/",
+                pos: "n. phr.",
+                meaning: "bốn mùa (ở miền Bắc)",
+                example: "Northern Vietnam has <strong>four seasons</strong> in a year."
+              },
+              {
+                word: "spring",
+                ipa: "/sprɪŋ/",
+                pos: "n.",
+                meaning: "mùa xuân",
+                example: "Flowers bloom everywhere in <strong>spring</strong>."
+              },
+              {
+                word: "summer",
+                ipa: "/ˈsʌmər/",
+                pos: "n.",
+                meaning: "mùa hè",
+                example: "<strong>Summer</strong> is quite hot and sunny."
+              },
+              {
+                word: "autumn",
+                ipa: "/ˈɔːtəm/",
+                pos: "n.",
+                meaning: "mùa thu",
+                example: "<strong>Autumn</strong> feels cool and nice."
+              },
+              {
+                word: "winter",
+                ipa: "/ˈwɪntər/",
+                pos: "n.",
+                meaning: "mùa đông",
+                example: "<strong>Winter</strong> is cold in the north."
               }
             ]
           },
@@ -1089,6 +1720,34 @@ window.SPEAKING_TOPICS = [
                 pos: "adj.",
                 meaning: "bất tiện",
                 example: "Wet streets are quite <strong>inconvenient</strong> for riders."
+              },
+              {
+                word: "tropical climate",
+                ipa: "/ˈtrɒpɪkl ˈklaɪmət/",
+                pos: "n. phr.",
+                meaning: "khí hậu nhiệt đới",
+                example: "My country has a warm <strong>tropical climate</strong>."
+              },
+              {
+                word: "northern region",
+                ipa: "/ˈnɔːrðərn ˈriːdʒən/",
+                pos: "n. phr.",
+                meaning: "khu vực miền Bắc",
+                example: "The <strong>northern region</strong> experiences four distinct seasons."
+              },
+              {
+                word: "heavy downpours",
+                ipa: "/ˈhevi ˈdaʊnpɔːrz/",
+                pos: "n. phr.",
+                meaning: "những trận mưa như trút nước",
+                example: "We often get <strong>heavy downpours</strong> in August."
+              },
+              {
+                word: "mild temperature",
+                ipa: "/maɪld ˈtemprətʃər/",
+                pos: "n. phr.",
+                meaning: "nhiệt độ ôn hòa, dễ chịu",
+                example: "December brings a <strong>mild temperature</strong> at night."
               }
             ]
           }
@@ -1147,6 +1806,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy vui vẻ",
                 example: "Walking with friends makes me <strong>feel happy</strong>."
+              },
+              {
+                word: "cool breeze",
+                ipa: "/kuːl briːz/",
+                pos: "n. phr.",
+                meaning: "làn gió mát",
+                example: "I enjoy the <strong>cool breeze</strong> in the evening."
+              },
+              {
+                word: "wear nice clothes",
+                ipa: "/wer naɪs kloʊðz/",
+                pos: "v. phr.",
+                meaning: "mặc quần áo đẹp",
+                example: "In cool weather, I can <strong>wear nice clothes</strong>."
+              },
+              {
+                word: "play sports",
+                ipa: "/pleɪ spɔːrts/",
+                pos: "v. phr.",
+                meaning: "chơi thể thao",
+                example: "My friends and I <strong>play sports</strong> on Sunday."
+              },
+              {
+                word: "bright sunshine",
+                ipa: "/braɪt ˈsʌnʃaɪn/",
+                pos: "n. phr.",
+                meaning: "ánh nắng tươi sáng",
+                example: "I love the <strong>bright sunshine</strong> in the morning."
+              },
+              {
+                word: "sleep well",
+                ipa: "/sliːp wel/",
+                pos: "v. phr.",
+                meaning: "ngủ ngon giấc",
+                example: "When it is cool at night, I <strong>sleep well</strong>."
               }
             ]
           },
@@ -1188,6 +1882,41 @@ window.SPEAKING_TOPICS = [
                 pos: "adj. phr.",
                 meaning: "bình yên và tràn đầy năng lượng",
                 example: "It leaves me feeling <strong>calm and recharged</strong>."
+              },
+              {
+                word: "refreshing air",
+                ipa: "/rɪˈfreʃɪŋ er/",
+                pos: "n. phr.",
+                meaning: "bầu không khí sảng khoái",
+                example: "Early morning walks offer <strong>refreshing air</strong>."
+              },
+              {
+                word: "rarely rains",
+                ipa: "/ˈrerli reɪnz/",
+                pos: "v. phr.",
+                meaning: "hiếm khi mưa",
+                example: "It <strong>rarely rains</strong> from December to March."
+              },
+              {
+                word: "outdoor dining",
+                ipa: "/ˈaʊtdɔːr ˈdaɪnɪŋ/",
+                pos: "n. phr.",
+                meaning: "ăn uống ngoài trời",
+                example: "Dry evenings are great for <strong>outdoor dining</strong>."
+              },
+              {
+                word: "mild weather",
+                ipa: "/maɪld ˈweðər/",
+                pos: "n. phr.",
+                meaning: "thời tiết ôn hòa, dịu nhẹ",
+                example: "Everyone enjoys <strong>mild weather</strong> after summer."
+              },
+              {
+                word: "enjoyable atmosphere",
+                ipa: "/ɪnˈdʒɔɪəbl ˈætməsfɪr/",
+                pos: "n. phr.",
+                meaning: "không khí dễ chịu, vui vẻ",
+                example: "The city has a very <strong>enjoyable atmosphere</strong> then."
               }
             ]
           }
@@ -1246,6 +1975,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "ẩm thực đường phố",
                 example: "They can eat delicious <strong>street food</strong>."
+              },
+              {
+                word: "sunny weather",
+                ipa: "/ˈsʌni ˈweðər/",
+                pos: "n. phr.",
+                meaning: "thời tiết nắng đẹp",
+                example: "Tourists love <strong>sunny weather</strong> when visiting Vietnam."
+              },
+              {
+                word: "swim in the sea",
+                ipa: "/swɪm ɪn ðə siː/",
+                pos: "v. phr.",
+                meaning: "bơi lội ở biển",
+                example: "Guests can <strong>swim in the sea</strong> every morning."
+              },
+              {
+                word: "visit local markets",
+                ipa: "/ˈvɪzɪt ˈloʊkl ˈmɑːrkɪts/",
+                pos: "v. phr.",
+                meaning: "thăm các khu chợ địa phương",
+                example: "They like to <strong>visit local markets</strong> for souvenirs."
+              },
+              {
+                word: "festivals",
+                ipa: "/ˈfestɪvlz/",
+                pos: "n.",
+                meaning: "các lễ hội truyền thống",
+                example: "Spring has many colorful <strong>festivals</strong>."
+              },
+              {
+                word: "warm climate",
+                ipa: "/wɔːrm ˈklaɪmət/",
+                pos: "n. phr.",
+                meaning: "khí hậu ấm áp",
+                example: "Visitors come for the <strong>warm climate</strong> in winter."
               }
             ]
           },
@@ -1287,6 +2051,41 @@ window.SPEAKING_TOPICS = [
                 pos: "n. phr.",
                 meaning: "những cơn mưa rào bất chợt",
                 example: "Without <strong>sudden showers</strong>, sightseeing feels relaxing."
+              },
+              {
+                word: "ideal weather",
+                ipa: "/aɪˈdiːəl ˈweðər/",
+                pos: "n. phr.",
+                meaning: "thời tiết lý tưởng",
+                example: "Spring offers <strong>ideal weather</strong> for sightseeing."
+              },
+              {
+                word: "water sports",
+                ipa: "/ˈwɔːtər spɔːrts/",
+                pos: "n. phr.",
+                meaning: "các môn thể thao dưới nước",
+                example: "Visitors can try fun <strong>water sports</strong> on the coast."
+              },
+              {
+                word: "local specialties",
+                ipa: "/ˈloʊkl ˈspeʃəltiz/",
+                pos: "n. phr.",
+                meaning: "đặc sản địa phương",
+                example: "Don't miss tasting <strong>local specialties</strong> at night."
+              },
+              {
+                word: "vibrant nightlife",
+                ipa: "/ˈvaɪbrənt ˈnaɪtlaɪf/",
+                pos: "n. phr.",
+                meaning: "cuộc sống về đêm sôi động",
+                example: "Big cities have a very <strong>vibrant nightlife</strong>."
+              },
+              {
+                word: "crowded beaches",
+                ipa: "/ˈkraʊdɪd ˈbiːtʃɪz/",
+                pos: "n. phr.",
+                meaning: "các bãi biển đông đúc",
+                example: "Be ready for <strong>crowded beaches</strong> during holidays."
               }
             ]
           }
@@ -1360,6 +2159,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy dễ chịu, thoải mái",
                 example: "The cool air at night makes me <strong>feel good</strong>."
+              },
+              {
+                word: "warm at noon",
+                ipa: "/wɔːrm æt nuːn/",
+                pos: "phr.",
+                meaning: "ấm / nóng vào buổi trưa",
+                example: "It is quite <strong>warm at noon</strong> in summer."
+              },
+              {
+                word: "windy",
+                ipa: "/ˈwɪndi/",
+                pos: "adj.",
+                meaning: "có nhiều gió",
+                example: "By the river, it is often <strong>windy</strong>."
+              },
+              {
+                word: "cloudy",
+                ipa: "/ˈklaʊdi/",
+                pos: "adj.",
+                meaning: "nhiều mây, âm u",
+                example: "Before it rains, the sky looks very <strong>cloudy</strong>."
+              },
+              {
+                word: "light rain",
+                ipa: "/laɪt reɪn/",
+                pos: "n. phr.",
+                meaning: "mưa nhẹ, mưa phùn",
+                example: "Sometimes we get a <strong>light rain</strong> in the afternoon."
+              },
+              {
+                word: "cold in winter",
+                ipa: "/koʊld ɪn ˈwɪntər/",
+                pos: "phr.",
+                meaning: "lạnh vào mùa đông",
+                example: "Northern towns get very <strong>cold in winter</strong>."
               }
             ]
           },
@@ -1401,6 +2235,41 @@ window.SPEAKING_TOPICS = [
                 pos: "adj. phr.",
                 meaning: "mát mẻ và dễ chịu",
                 example: "Evenings feel really <strong>cool and pleasant</strong>."
+              },
+              {
+                word: "unpredictable",
+                ipa: "/ˌʌnprɪˈdɪktəbl/",
+                pos: "adj.",
+                meaning: "khó đoán, thay đổi thất thường",
+                example: "Rainy season weather can be quite <strong>unpredictable</strong>."
+              },
+              {
+                word: "scorching hot",
+                ipa: "/ˈskɔːrtʃɪŋ hɒt/",
+                pos: "adj. phr.",
+                meaning: "nóng như đổ lửa",
+                example: "In April, the sun is <strong>scorching hot</strong> at midday."
+              },
+              {
+                word: "chilly at night",
+                ipa: "/ˈtʃɪli æt naɪt/",
+                pos: "phr.",
+                meaning: "se lạnh vào ban đêm",
+                example: "Mountain towns get a bit <strong>chilly at night</strong>."
+              },
+              {
+                word: "gentle breeze",
+                ipa: "/ˈdʒentl briːz/",
+                pos: "n. phr.",
+                meaning: "cơn gió nhẹ dịu mát",
+                example: "A <strong>gentle breeze</strong> makes evening walks enjoyable."
+              },
+              {
+                word: "tropical weather",
+                ipa: "/ˈtrɒpɪkl ˈweðər/",
+                pos: "n. phr.",
+                meaning: "thời tiết nhiệt đới",
+                example: "My hometown has warm <strong>tropical weather</strong> all year."
               }
             ]
           }
@@ -1459,6 +2328,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy rất vui vẻ",
                 example: "Nice weather always makes me <strong>feel very happy</strong>."
+              },
+              {
+                word: "cool wind",
+                ipa: "/kuːl wɪnd/",
+                pos: "n. phr.",
+                meaning: "gió mát",
+                example: "I love walking when there is a <strong>cool wind</strong>."
+              },
+              {
+                word: "cold days",
+                ipa: "/koʊld deɪz/",
+                pos: "n. phr.",
+                meaning: "những ngày trời lạnh",
+                example: "On <strong>cold days</strong>, I like eating hot soup."
+              },
+              {
+                word: "ride a motorbike",
+                ipa: "/raɪd ə ˈmoʊtərbaɪk/",
+                pos: "v. phr.",
+                meaning: "chạy xe máy",
+                example: "It is nice to <strong>ride a motorbike</strong> without rain."
+              },
+              {
+                word: "not too hot",
+                ipa: "/nɒt tuː hɒt/",
+                pos: "phr.",
+                meaning: "không quá nóng bức",
+                example: "I love days that are <strong>not too hot</strong>."
+              },
+              {
+                word: "eat hot pot",
+                ipa: "/iːt hɒt pɒt/",
+                pos: "v. phr.",
+                meaning: "ăn lẩu",
+                example: "Friends love to <strong>eat hot pot</strong> in cool weather."
               }
             ]
           },
@@ -1500,6 +2404,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "cảm thấy thoải mái, dễ chịu",
                 example: "It always makes me <strong>feel at ease</strong> and helps me unwind."
+              },
+              {
+                word: "mild temperature",
+                ipa: "/maɪld ˈtemprətʃər/",
+                pos: "n. phr.",
+                meaning: "nhiệt độ dịu mát, vừa phải",
+                example: "I really prefer a <strong>mild temperature</strong> around 22 degrees."
+              },
+              {
+                word: "refreshing breeze",
+                ipa: "/rɪˈfreʃɪŋ briːz/",
+                pos: "n. phr.",
+                meaning: "làn gió mát sảng khoái",
+                example: "A <strong>refreshing breeze</strong> helps me forget the heat."
+              },
+              {
+                word: "comfortable atmosphere",
+                ipa: "/ˈkʌmftəbl ˈætməsfɪr/",
+                pos: "n. phr.",
+                meaning: "bầu không khí dễ chịu",
+                example: "Autumn creates a <strong>comfortable atmosphere</strong> outdoors."
+              },
+              {
+                word: "stay active",
+                ipa: "/steɪ ˈæktɪv/",
+                pos: "v. phr.",
+                meaning: "duy trì vận động năng nổ",
+                example: "Nice weather helps me <strong>stay active</strong> after school."
+              },
+              {
+                word: "boost my energy",
+                ipa: "/buːst maɪ ˈenərdʒi/",
+                pos: "v. phr.",
+                meaning: "tăng cường năng lượng",
+                example: "Morning sunlight always <strong>boosts my energy</strong>."
               }
             ]
           }
@@ -1558,6 +2497,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "ở nhà",
                 example: "On rainy days, I just <strong>stay home</strong> and rest."
+              },
+              {
+                word: "rainy days",
+                ipa: "/ˈreɪni deɪz/",
+                pos: "n. phr.",
+                meaning: "những ngày trời mưa",
+                example: "On <strong>rainy days</strong>, I prefer to sleep longer."
+              },
+              {
+                word: "feel lazy",
+                ipa: "/fiːl ˈleɪzi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy lười biếng, uể oải",
+                example: "Cold rain makes me <strong>feel lazy</strong> at home."
+              },
+              {
+                word: "feel active",
+                ipa: "/fiːl ˈæktɪv/",
+                pos: "v. phr.",
+                meaning: "cảm thấy năng động, hào hứng",
+                example: "Bright mornings help me <strong>feel active</strong>."
+              },
+              {
+                word: "cancel plans",
+                ipa: "/ˈkænsl plænz/",
+                pos: "v. phr.",
+                meaning: "hủy bỏ kế hoạch",
+                example: "Sometimes heavy rain makes me <strong>cancel plans</strong>."
+              },
+              {
+                word: "traffic jam",
+                ipa: "/ˈtræfɪk dʒæm/",
+                pos: "n. phr.",
+                meaning: "kẹt xe, tắc đường",
+                example: "Rain often causes a bad <strong>traffic jam</strong>."
               }
             ]
           },
@@ -1599,6 +2573,41 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "giúp đầu óc nhẹ nhõm, tỉnh táo",
                 example: "Nice weather helps me <strong>clear my mind</strong> and focus better."
+              },
+              {
+                word: "daily routine",
+                ipa: "/ˈdeɪli ruːˈtiːn/",
+                pos: "n. phr.",
+                meaning: "thói quen sinh hoạt hằng ngày",
+                example: "Sudden storms easily change my <strong>daily routine</strong>."
+              },
+              {
+                word: "boost my productivity",
+                ipa: "/buːst maɪ ˌprɒdʌkˈtɪvəti/",
+                pos: "v. phr.",
+                meaning: "nâng cao hiệu suất học tập/làm việc",
+                example: "Cool sunny mornings <strong>boost my productivity</strong>."
+              },
+              {
+                word: "feel sluggish",
+                ipa: "/fiːl ˈslʌɡɪʃ/",
+                pos: "v. phr.",
+                meaning: "cảm thấy uể oải, chậm chạp",
+                example: "Extreme heat often makes me <strong>feel sluggish</strong>."
+              },
+              {
+                word: "ruin my plans",
+                ipa: "/ˈruːɪn maɪ plænz/",
+                pos: "v. phr.",
+                meaning: "làm hỏng kế hoạch của tôi",
+                example: "Heavy showers can <strong>ruin my plans</strong> for the weekend."
+              },
+              {
+                word: "stay indoors",
+                ipa: "/steɪ ˌɪnˈdɔːrz/",
+                pos: "v. phr.",
+                meaning: "ở trong nhà",
+                example: "I prefer to <strong>stay indoors</strong> and read when it storms."
               }
             ]
           }
