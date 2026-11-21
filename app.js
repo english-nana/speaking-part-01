@@ -1,65 +1,30 @@
 // ==========================================================================
-// SPEAKING PART 1 — STUDENT APPLICATION ENGINE (index.html)
-// Clean student-only interface:
-// - Student Login / Register (no visibility into other accounts or teacher portal)
-// - Personal Vocabulary Bank ("Kho từ vựng của tôi") across all topics
-// - Click-to-Hear Vocabulary with IPA in Section V
-// - Idea Notes ("Ghi chú ý tưởng") per question
-// - Multi-Take Audio Recording + Live Speech-to-Text + Choose Take to Submit
+// SPEAKING PART 1 — STUDENT APPLICATION ENGINE (SUPABASE CLOUD)
 // ==========================================================================
 
 (function () {
-  const LS_KEY = "speaking_part1_student_ls_v4";
-  const SESSION_KEY = "speaking_part1_current_user_v4";
-  const IDB_NAME = "speaking_part1_permanent_idb";
-  const IDB_STORE = "app_database";
   const TOPICS = window.SPEAKING_TOPICS || [];
-  const CLOUD = window.SpeakingCloud || { isEnabled: () => false };
+  const CLOUD = window.SpeakingCloud;
+  const escapeHtml = CLOUD.escapeHtml;
+  const formatDuration = CLOUD.formatDuration;
 
-  const defaultVocabDeck = [
-    {
-      word: "prefer",
-      ipa: "/prɪˈfɜːr/",
-      pos: "v.",
-      meaning: "thích hơn",
-      example: "I prefer traveling with my friends because it is very fun and safe.",
-      topic: "Travelling"
-    },
-    {
-      word: "local food",
-      ipa: "/ˈloʊkl fuːd/",
-      pos: "n. phr.",
-      meaning: "đồ ăn địa phương",
-      example: "We can also try local food at the market.",
-      topic: "Travelling"
-    }
-  ];
+  let currentAccount = null;
 
-  let db = {
-    accounts: {}
-  };
-
-  let state = {
-    view: "home", // "home" | "practice" | "auth"
+  const state = {
+    view: "auth", // "auth" | "home" | "practice"
     authMode: "login", // "login" | "register"
     authError: "",
     authInfo: "",
     authLoading: false,
     cloudSyncStatus: "",
-    googleModalOpen: false,
-    googleModalError: "",
-    currentUserEmail: "",
-    currentUserId: "",
     isTeacher: false,
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
     selectedLevel: "b1", // "b1" | "b2"
-    // Recording runtime state
     isRecording: false,
     recordingSeconds: 0,
     liveTranscript: "",
     submitSuccessMsg: "",
-    // Student Vocabulary Modal
     vocabModalOpen: false,
     vocabSearchQuery: ""
   };
@@ -69,21 +34,27 @@
   let recordingTimer = null;
   let speechRecognizer = null;
   let finalTranscriptBuffer = "";
-  let interimTranscriptBuffer = "";
   let noteSaveDebounceTimer = null;
 
   // ==========================================================================
-  // SUPABASE CLOUD SYNC LAYER (ACTIVE WHEN supabase-config.js IS CONFIGURED)
+  // SUPABASE CLOUD SYNC LAYER
   // ==========================================================================
-  function isCloudMode() {
-    return Boolean(CLOUD && CLOUD.isEnabled && CLOUD.isEnabled());
+  function getTopicIdForQuestion(qId) {
+    const found = TOPICS.find(t => (t.questions || []).some(q => q.id === qId));
+    return found ? found.id : state.currentTopicId || "topic-travelling";
   }
 
-  function getTopicIdForQuestion(qId) {
-    for (const t of TOPICS) {
-      if ((t.questions || []).some(q => q.id === qId)) return t.id;
+  function ensureQuestionData(questionsData, qId) {
+    if (!questionsData[qId]) {
+      questionsData[qId] = {
+        ideaNote: "",
+        selectedTakeId: null,
+        submittedTakeId: null,
+        submittedAt: null,
+        attempts: []
+      };
     }
-    return state.currentTopicId || "topic-travelling";
+    return questionsData[qId];
   }
 
   async function loadCloudStudentData(sessionUser) {
@@ -106,7 +77,6 @@
     state.cloudSyncStatus = "Đang đồng bộ dữ liệu đám mây...";
     renderApp();
 
-    // 1. Ensure profile exists and refresh last_active_at
     try {
       await client.from("profiles").upsert(
         {
@@ -121,13 +91,13 @@
       );
     } catch (e) {}
 
-    // 2. Fetch vocab, idea notes, attempts, and server-side teacher role in parallel
     const [vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
       client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       client.from("question_notes").select("*").eq("user_id", uid),
       client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
       client.rpc("is_teacher")
     ]);
+
     state.isTeacher = Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
 
     const savedVocab = Array.isArray(vocabRes.data)
@@ -145,36 +115,16 @@
 
     if (Array.isArray(notesRes.data)) {
       notesRes.data.forEach(row => {
-        if (!questionsData[row.question_id]) {
-          questionsData[row.question_id] = {
-            ideaNote: "",
-            selectedTakeId: null,
-            submittedTakeId: null,
-            submittedAt: null,
-            attempts: []
-          };
-        }
-        questionsData[row.question_id].ideaNote = row.idea_note || "";
+        ensureQuestionData(questionsData, row.question_id).ideaNote = row.idea_note || "";
       });
     }
 
     const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
-    const audioPaths = attemptRows.map(r => r.audio_path).filter(Boolean);
-    const signedUrlMap = await CLOUD.getSignedAudioUrls(audioPaths);
+    const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(r => r.audio_path).filter(Boolean));
 
     attemptRows.forEach(row => {
-      const qId = row.question_id;
-      if (!questionsData[qId]) {
-        questionsData[qId] = {
-          ideaNote: "",
-          selectedTakeId: null,
-          submittedTakeId: null,
-          submittedAt: null,
-          attempts: []
-        };
-      }
-      const qd = questionsData[qId];
-      const attObj = {
+      const qd = ensureQuestionData(questionsData, row.question_id);
+      qd.attempts.push({
         id: row.id,
         num: row.take_number || qd.attempts.length + 1,
         createdAt: CLOUD.formatDateTime(row.created_at),
@@ -184,8 +134,7 @@
         transcript: row.transcript || "",
         teacherFeedback: row.teacher_feedback || "",
         teacherScore: row.teacher_score || ""
-      };
-      qd.attempts.push(attObj);
+      });
       if (row.is_submitted) {
         qd.submittedTakeId = row.id;
         qd.submittedAt = CLOUD.formatDateTime(row.submitted_at || row.created_at);
@@ -199,19 +148,14 @@
       }
     });
 
-    db.accounts[email] = {
+    currentAccount = {
       id: uid,
       name: displayName,
       email: email,
-      authProvider: provider,
-      picture: avatarUrl,
-      createdAt: CLOUD.formatDateTime(sessionUser.created_at),
       savedVocab: savedVocab,
       questionsData: questionsData
     };
 
-    state.currentUserEmail = email;
-    state.currentUserId = uid;
     state.authError = "";
     state.authInfo = "";
     state.authLoading = false;
@@ -221,12 +165,12 @@
   }
 
   async function cloudSaveIdeaNote(qId, noteText) {
-    if (!isCloudMode() || !state.currentUserId) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
     try {
       await client.from("question_notes").upsert(
         {
-          user_id: state.currentUserId,
+          user_id: currentAccount.id,
           question_id: qId,
           idea_note: noteText,
           updated_at: new Date().toISOString()
@@ -237,12 +181,12 @@
   }
 
   async function cloudAddVocab(item) {
-    if (!isCloudMode() || !state.currentUserId) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
     try {
       await client.from("student_vocab").upsert(
         {
-          user_id: state.currentUserId,
+          user_id: currentAccount.id,
           word: item.word,
           ipa: item.ipa || "",
           pos: item.pos || "",
@@ -256,26 +200,26 @@
   }
 
   async function cloudRemoveVocab(word) {
-    if (!isCloudMode() || !state.currentUserId) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
     try {
       await client
         .from("student_vocab")
         .delete()
-        .eq("user_id", state.currentUserId)
+        .eq("user_id", currentAccount.id)
         .eq("word_lower", String(word || "").trim().toLowerCase());
     } catch (e) {}
   }
 
   async function cloudCreateAttempt(qId, takeObj, audioBlob) {
-    if (!isCloudMode() || !state.currentUserId) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
     state.cloudSyncStatus = "☁️ Đang lưu bản ghi âm lên đám mây...";
     renderApp();
 
     let audioPath = "";
     if (audioBlob && audioBlob.size > 0) {
-      const upRes = await CLOUD.uploadRecording(state.currentUserId, qId, takeObj.id, audioBlob);
+      const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, audioBlob);
       if (!upRes.error && upRes.path) {
         audioPath = upRes.path;
         takeObj.audioPath = audioPath;
@@ -285,7 +229,7 @@
     try {
       await client.from("speaking_attempts").insert({
         id: takeObj.id,
-        user_id: state.currentUserId,
+        user_id: currentAccount.id,
         topic_id: getTopicIdForQuestion(qId),
         question_id: qId,
         take_number: takeObj.num,
@@ -297,7 +241,7 @@
       await client
         .from("profiles")
         .update({ last_active_at: new Date().toISOString() })
-        .eq("id", state.currentUserId);
+        .eq("id", currentAccount.id);
       state.cloudSyncStatus = "";
     } catch (e) {
       state.cloudSyncStatus = "⚠️ Lỗi đồng bộ bản ghi âm. Vui lòng thử lại.";
@@ -306,10 +250,10 @@
   }
 
   async function cloudDeleteAttempt(takeObj) {
-    if (!isCloudMode() || !state.currentUserId || !takeObj) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount || !takeObj) return;
     try {
-      await client.from("speaking_attempts").delete().eq("id", takeObj.id).eq("user_id", state.currentUserId);
+      await client.from("speaking_attempts").delete().eq("id", takeObj.id).eq("user_id", currentAccount.id);
       if (takeObj.audioPath) {
         await CLOUD.deleteRecording(takeObj.audioPath);
       }
@@ -317,348 +261,32 @@
   }
 
   async function cloudSubmitAttempt(qId, chosenTakeId) {
-    if (!isCloudMode() || !state.currentUserId) return;
     const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
     const nowIso = new Date().toISOString();
     try {
       await client
         .from("speaking_attempts")
         .update({ is_submitted: false, submitted_at: null })
-        .eq("user_id", state.currentUserId)
+        .eq("user_id", currentAccount.id)
         .eq("question_id", qId);
 
       await client
         .from("speaking_attempts")
         .update({ is_submitted: true, submitted_at: nowIso })
         .eq("id", chosenTakeId)
-        .eq("user_id", state.currentUserId);
+        .eq("user_id", currentAccount.id);
 
       await client
         .from("profiles")
         .update({ last_active_at: nowIso })
-        .eq("id", state.currentUserId);
+        .eq("id", currentAccount.id);
     } catch (e) {}
   }
 
   // ==========================================================================
-  // PERMANENT STORAGE (LOCALSTORAGE + INDEXEDDB + /api/db SERVER DISK)
+  // HELPERS & STATE ACCESSORS
   // ==========================================================================
-  function mergeAccounts(targetAccounts, incomingAccounts) {
-    if (!incomingAccounts || typeof incomingAccounts !== "object") return;
-    Object.keys(incomingAccounts).forEach(email => {
-      const inc = incomingAccounts[email];
-      if (!targetAccounts[email]) {
-        targetAccounts[email] = inc;
-      } else {
-        const cur = targetAccounts[email];
-        const vocabMap = new Map();
-        (cur.savedVocab || []).concat(inc.savedVocab || []).forEach(v => {
-          if (v && v.word) vocabMap.set(v.word.toLowerCase(), v);
-        });
-        cur.savedVocab = Array.from(vocabMap.values());
-
-        cur.questionsData = cur.questionsData || {};
-        const incQD = inc.questionsData || {};
-        Object.keys(incQD).forEach(qId => {
-          if (!cur.questionsData[qId]) {
-            cur.questionsData[qId] = incQD[qId];
-          } else {
-            const cq = cur.questionsData[qId];
-            const iq = incQD[qId];
-            if (!cq.ideaNote && iq.ideaNote) cq.ideaNote = iq.ideaNote;
-            if (!cq.submittedTakeId && iq.submittedTakeId) {
-              cq.submittedTakeId = iq.submittedTakeId;
-              cq.submittedAt = iq.submittedAt;
-            }
-            const attMap = new Map();
-            (cq.attempts || []).concat(iq.attempts || []).forEach(a => {
-              if (a && a.id) attMap.set(a.id, a);
-            });
-            cq.attempts = Array.from(attMap.values());
-            if (!cq.selectedTakeId && cq.attempts.length > 0) {
-              cq.selectedTakeId = cq.attempts[cq.attempts.length - 1].id;
-            }
-          }
-        });
-      }
-    });
-  }
-
-  function loadFromLocalStorage() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.accounts) {
-          mergeAccounts(db.accounts, parsed.accounts);
-        }
-      }
-      const savedUser = localStorage.getItem(SESSION_KEY);
-      if (savedUser && savedUser !== "__LOGGED_OUT__" && db.accounts[savedUser]) {
-        state.currentUserEmail = savedUser;
-      } else if (savedUser === "__LOGGED_OUT__") {
-        state.currentUserEmail = "";
-        state.view = "auth";
-      }
-    } catch (e) {}
-  }
-
-  function openIndexedDB() {
-    return new Promise(resolve => {
-      if (!("indexedDB" in window)) return resolve(null);
-      try {
-        const req = window.indexedDB.open(IDB_NAME, 1);
-        req.onupgradeneeded = e => {
-          const idb = e.target.result;
-          if (!idb.objectStoreNames.contains(IDB_STORE)) {
-            idb.createObjectStore(IDB_STORE);
-          }
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = () => resolve(null);
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  }
-
-  async function loadFromIndexedDB() {
-    const idb = await openIndexedDB();
-    if (!idb) return;
-    return new Promise(resolve => {
-      try {
-        const tx = idb.transaction(IDB_STORE, "readonly");
-        const store = tx.objectStore(IDB_STORE);
-        const req = store.get("main_db");
-        req.onsuccess = () => {
-          if (req.result && req.result.accounts) {
-            mergeAccounts(db.accounts, req.result.accounts);
-          }
-          resolve();
-        };
-        req.onerror = () => resolve();
-      } catch (e) {
-        resolve();
-      }
-    });
-  }
-
-  async function saveToIndexedDB() {
-    const idb = await openIndexedDB();
-    if (!idb) return;
-    try {
-      const tx = idb.transaction(IDB_STORE, "readwrite");
-      const store = tx.objectStore(IDB_STORE);
-      store.put(db, "main_db");
-    } catch (e) {}
-  }
-
-  async function syncAccountToServerDisk() {
-    const acc = getCurrentAccount();
-    if (!acc) return;
-    try {
-      await fetch("/api/db", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accounts: {
-            [acc.email]: acc
-          }
-        })
-      });
-    } catch (e) {}
-  }
-
-  async function verifyLoginOnServer(email, password) {
-    try {
-      const res = await fetch("/api/student-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.ok && data.account) {
-          mergeAccounts(db.accounts, { [email]: data.account });
-          return { ok: true, account: db.accounts[email] };
-        }
-        return { ok: false, error: data.error || "" };
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  async function completeGoogleSignIn(googleEmail, googleName, googlePicture) {
-    let email = String(googleEmail || "").trim().toLowerCase();
-    if (!email) return;
-    if (!email.includes("@")) {
-      email = email + "@gmail.com";
-    }
-    const displayName =
-      String(googleName || "").trim() ||
-      email
-        .split("@")[0]
-        .replace(/[._-]+/g, " ")
-        .replace(/\b\w/g, c => c.toUpperCase());
-
-    // 1. Sync with backend /api/google-login if running on local server
-    try {
-      const res = await fetch("/api/google-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,
-          name: displayName,
-          picture: googlePicture || "",
-          createdAt: getNowTimestamp(),
-          defaultVocab: defaultVocabDeck
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.ok && data.account) {
-          mergeAccounts(db.accounts, { [email]: data.account });
-        }
-      }
-    } catch (e) {}
-
-    // 2. Ensure account exists in local db as well
-    if (!db.accounts[email]) {
-      db.accounts[email] = {
-        name: displayName,
-        email: email,
-        password: "",
-        authProvider: "google",
-        picture: googlePicture || "",
-        createdAt: getNowTimestamp(),
-        savedVocab: JSON.parse(JSON.stringify(defaultVocabDeck)),
-        questionsData: {}
-      };
-    } else {
-      db.accounts[email].authProvider = "google";
-      if (googleName && googleName.trim()) {
-        db.accounts[email].name = googleName.trim();
-      }
-    }
-
-    state.currentUserEmail = email;
-    state.authError = "";
-    state.googleModalOpen = false;
-    state.googleModalError = "";
-    state.view = "home";
-    persistAllData();
-    renderApp();
-  }
-
-  function decodeGoogleJwt(jwtToken) {
-    try {
-      const base64Url = jwtToken.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  async function triggerGoogleLoginFlow() {
-    // 1. Real Supabase Google OAuth (Production GitHub Pages mode)
-    if (isCloudMode()) {
-      state.authError = "";
-      state.authInfo = "";
-      state.authLoading = true;
-      renderApp();
-      const { error } = await CLOUD.signInWithGoogle();
-      if (error) {
-        state.authLoading = false;
-        state.authError = "Không thể mở đăng nhập Google: " + (error.message || "Lỗi kết nối");
-        renderApp();
-      }
-      return;
-    }
-
-    // 2. Standalone GIS OAuth if configured manually
-    const clientId = window.GOOGLE_OAUTH_CLIENT_ID || "";
-    if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: response => {
-            const payload = decodeGoogleJwt(response.credential);
-            if (payload && payload.email) {
-              completeGoogleSignIn(payload.email, payload.name, payload.picture);
-            }
-          }
-        });
-        window.google.accounts.id.prompt();
-        return;
-      } catch (e) {}
-    }
-
-    // 3. Built-in Google Sign-In Dialog (Local mode)
-    state.googleModalOpen = true;
-    state.googleModalError = "";
-    renderApp();
-    setTimeout(() => {
-      const inp = document.getElementById("inp-google-email");
-      if (inp) inp.focus();
-    }, 30);
-  }
-
-  function persistAllData() {
-    if (isCloudMode()) {
-      // Cloud mode persists directly via Supabase APIs
-      return;
-    }
-    try {
-      localStorage.setItem(SESSION_KEY, state.currentUserEmail || "__LOGGED_OUT__");
-      localStorage.setItem(LS_KEY, JSON.stringify(db));
-    } catch (e) {
-      try {
-        const lightDb = JSON.parse(JSON.stringify(db));
-        Object.values(lightDb.accounts || {}).forEach(acc => {
-          Object.values(acc.questionsData || {}).forEach(qd => {
-            (qd.attempts || []).forEach(att => {
-              if (att.savedAudioFile) delete att.audioDataUrl;
-            });
-          });
-        });
-        localStorage.setItem(LS_KEY, JSON.stringify(lightDb));
-      } catch (err) {}
-    }
-
-    saveToIndexedDB();
-    syncAccountToServerDisk();
-  }
-
-  // ==========================================================================
-  // HELPERS & ACCOUNT ACCESSORS
-  // ==========================================================================
-  function escapeHtml(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function formatDuration(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s < 10 ? "0" : ""}${s}`;
-  }
-
-  function getNowTimestamp() {
-    const d = new Date();
-    const pad = n => (n < 10 ? "0" + n : "" + n);
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
   function getInitials(name) {
     const parts = String(name || "HV")
       .trim()
@@ -669,27 +297,12 @@
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
-  function getCurrentAccount() {
-    if (state.currentUserEmail && db.accounts[state.currentUserEmail]) {
-      return db.accounts[state.currentUserEmail];
-    }
-    return null;
-  }
-
   function getQuestionData(qId) {
-    const acc = getCurrentAccount();
-    if (!acc) return { ideaNote: "", selectedTakeId: null, submittedTakeId: null, attempts: [] };
-    if (!acc.questionsData) acc.questionsData = {};
-    if (!acc.questionsData[qId]) {
-      acc.questionsData[qId] = {
-        ideaNote: "",
-        selectedTakeId: null,
-        submittedTakeId: null,
-        submittedAt: null,
-        attempts: []
-      };
+    if (!currentAccount) {
+      return { ideaNote: "", selectedTakeId: null, submittedTakeId: null, attempts: [] };
     }
-    return acc.questionsData[qId];
+    if (!currentAccount.questionsData) currentAccount.questionsData = {};
+    return ensureQuestionData(currentAccount.questionsData, qId);
   }
 
   function getCurrentTopic() {
@@ -704,9 +317,9 @@
   }
 
   // ==========================================================================
-  // TEXT-TO-SPEECH (FOR VOCABULARY WORDS & MODEL ANSWERS)
+  // TEXT-TO-SPEECH (VOCABULARY PRONUNCIATION & MODEL ANSWERS)
   // ==========================================================================
-  window.speakEnglishText = function (rawText) {
+  function speakEnglishText(rawText) {
     const cleanText = String(rawText || "").replace(/<[^>]*>?/gm, "").trim();
     if (!cleanText) return;
 
@@ -733,24 +346,11 @@
       window.currentTtsAudio = audio;
       audio.play().catch(() => {});
     } catch (e) {}
-  };
-
-  // ==========================================================================
-  // MULTI-TAKE AUDIO RECORDING + SPEECH-TO-TEXT + PERMANENT BASE64 ENCODING
-  // ==========================================================================
-  function blobToBase64(blob) {
-    return new Promise(resolve => {
-      try {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result || null);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      } catch (e) {
-        resolve(null);
-      }
-    });
   }
 
+  // ==========================================================================
+  // MULTI-TAKE AUDIO RECORDING + LIVE SPEECH-TO-TEXT
+  // ==========================================================================
   function startRecording(qId) {
     if (state.isRecording) {
       stopRecording(qId);
@@ -762,7 +362,6 @@
     state.liveTranscript = "";
     state.submitSuccessMsg = "";
     finalTranscriptBuffer = "";
-    interimTranscriptBuffer = "";
     audioChunks = [];
 
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -774,16 +373,16 @@
         speechRecognizer.interimResults = true;
 
         speechRecognizer.onresult = event => {
-          interimTranscriptBuffer = "";
+          let interim = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const piece = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
               finalTranscriptBuffer += piece + " ";
             } else {
-              interimTranscriptBuffer += piece;
+              interim += piece;
             }
           }
-          state.liveTranscript = (finalTranscriptBuffer + interimTranscriptBuffer).trim();
+          state.liveTranscript = (finalTranscriptBuffer + interim).trim();
           const liveEl = document.getElementById("live-transcript-preview");
           if (liveEl) {
             liveEl.textContent =
@@ -830,17 +429,12 @@
           mediaRecorder.ondataavailable = e => {
             if (e.data && e.data.size > 0) audioChunks.push(e.data);
           };
-          mediaRecorder.onstop = async () => {
+          mediaRecorder.onstop = () => {
             stream.getTracks().forEach(t => t.stop());
             const mimeType = mediaRecorder.mimeType || "audio/webm";
             const blob = new Blob(audioChunks, { type: mimeType });
-            if (isCloudMode()) {
-              const previewUrl = URL.createObjectURL(blob);
-              finalizeNewTake(qId, previewUrl, blob);
-            } else {
-              const base64Url = await blobToBase64(blob);
-              finalizeNewTake(qId, base64Url, blob);
-            }
+            const previewUrl = URL.createObjectURL(blob);
+            finalizeNewTake(qId, previewUrl, blob);
           };
           mediaRecorder.start();
           renderApp();
@@ -877,7 +471,7 @@
       } catch (e) {}
     }
 
-    finalizeNewTake(qId, null);
+    finalizeNewTake(qId, null, null);
   }
 
   function finalizeNewTake(qId, audioUrl, rawBlob) {
@@ -890,7 +484,7 @@
     const newTake = {
       id: takeId,
       num: nextNum,
-      createdAt: getNowTimestamp(),
+      createdAt: CLOUD.formatDateTime(new Date().toISOString()),
       durationSec: dur,
       audioDataUrl: audioUrl,
       audioPath: "",
@@ -902,30 +496,13 @@
     qData.attempts.push(newTake);
     qData.selectedTakeId = takeId;
 
-    if (isCloudMode()) {
-      renderApp();
-      cloudCreateAttempt(qId, newTake, rawBlob || null);
-    } else {
-      persistAllData();
-      renderApp();
-    }
+    renderApp();
+    cloudCreateAttempt(qId, newTake, rawBlob || null);
   }
 
   // ==========================================================================
-  // VIEW 1: STUDENT ACCOUNT LOGIN / REGISTER (PRIVATE, NO OTHER ACCOUNTS SHOWN)
+  // VIEW 1: STUDENT ACCOUNT LOGIN / REGISTER
   // ==========================================================================
-  function renderGoogleIconSvg(size) {
-    const s = size || 18;
-    return `
-      <svg width="${s}" height="${s}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-    `;
-  }
-
   function renderAuthView() {
     const isReg = state.authMode === "register";
 
@@ -949,9 +526,8 @@
             }
           </p>
 
-          <!-- GOOGLE SIGN-IN BUTTON -->
           <button type="button" class="google-auth-btn" id="btn-google-login" ${state.authLoading ? "disabled" : ""}>
-            ${renderGoogleIconSvg(19)}
+            ${CLOUD.renderGoogleIconSvg(19)}
             <span>${state.authLoading ? "Đang kết nối tới Google..." : "Tiếp tục với Google"}</span>
           </button>
 
@@ -988,8 +564,8 @@
             }
 
             <div class="form-field">
-              <label class="form-label" for="inp-auth-email">Email hoặc Tên đăng nhập</label>
-              <input type="text" id="inp-auth-email" class="form-input" placeholder="Nhập email hoặc tên đăng nhập..." required />
+              <label class="form-label" for="inp-auth-email">Email</label>
+              <input type="email" id="inp-auth-email" class="form-input" placeholder="Nhập email của bạn..." required />
             </div>
 
             <div class="form-field">
@@ -997,7 +573,7 @@
               <input type="password" id="inp-auth-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
             </div>
 
-            <button type="submit" class="form-submit-btn">
+            <button type="submit" class="form-submit-btn" ${state.authLoading ? "disabled" : ""}>
               ${isReg ? "Tạo tài khoản & Vào học →" : "Đăng nhập →"}
             </button>
           </form>
@@ -1007,23 +583,22 @@
   }
 
   // ==========================================================================
-  // VIEW 2: HOME VIEW — 4 STANDALONE TOPIC CARDS (STUDENT ONLY)
+  // VIEW 2: HOME VIEW — 4 STANDALONE TOPIC CARDS
   // ==========================================================================
   function renderHomeView() {
-    const acc = getCurrentAccount();
-    if (!acc) return renderAuthView();
+    if (!currentAccount) return renderAuthView();
 
-    const vocabCount = (acc.savedVocab || []).length;
+    const vocabCount = (currentAccount.savedVocab || []).length;
 
     return `
       <div class="home-shell">
         <header class="home-topbar">
-          <div class="home-brand-title" id="btn-home-title">SPEAKING PART 1</div>
+          <div class="home-brand-title">SPEAKING PART 1</div>
 
           <div class="topbar-actions">
             ${
               state.isTeacher
-                ? `<a href="./teacher.html" class="top-pill-btn" style="background:#DCFCE7;color:#166534;text-decoration:none;">👨‍🏫 Quản lý &amp; Xem bài học viên</a>`
+                ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 Quản lý &amp; Xem bài học viên</a>`
                 : ""
             }
             <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
@@ -1031,8 +606,8 @@
             </button>
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
-              <span class="user-initials">${escapeHtml(getInitials(acc.name))}</span>
-              <span>${escapeHtml(acc.name)}</span>
+              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
+              <span>${escapeHtml(currentAccount.name)}</span>
               <span style="font-size:11px;color:#71717A;">· Đăng xuất</span>
             </button>
           </div>
@@ -1052,7 +627,7 @@
           <div class="topics-grid">
             ${TOPICS.map(topic => {
               const submittedCount = topic.questions.filter(q => {
-                const qd = acc.questionsData && acc.questionsData[q.id];
+                const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
                 return qd && qd.submittedTakeId;
               }).length;
               const isAllDone = submittedCount === topic.questions.length;
@@ -1097,11 +672,10 @@
   }
 
   // ==========================================================================
-  // VIEW 3: PRACTICE ROOM — 50/50 SPLIT-SCREEN (STUDENT ONLY)
+  // VIEW 3: PRACTICE ROOM — 50/50 SPLIT-SCREEN
   // ==========================================================================
   function renderPracticeView() {
-    const acc = getCurrentAccount();
-    if (!acc) return renderAuthView();
+    if (!currentAccount) return renderAuthView();
 
     const topic = getCurrentTopic();
     const question = getCurrentQuestion();
@@ -1120,15 +694,14 @@
     const submittedTakeObj = attempts.find(a => a.id === submittedTakeId) || null;
 
     const submittedInTopicCount = topic.questions.filter(q => {
-      const qd = acc.questionsData && acc.questionsData[q.id];
+      const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
       return qd && qd.submittedTakeId;
     }).length;
 
-    const vocabCount = (acc.savedVocab || []).length;
+    const vocabCount = (currentAccount.savedVocab || []).length;
 
     return `
       <div class="practice-shell">
-        <!-- TOP HEADER -->
         <header class="practice-header">
           <div class="practice-header-left">
             <button type="button" class="back-topics-btn" id="btn-back-home">
@@ -1142,7 +715,7 @@
           <div class="topbar-actions">
             ${
               state.isTeacher
-                ? `<a href="./teacher.html" class="top-pill-btn" style="background:#DCFCE7;color:#166534;text-decoration:none;">👨‍🏫 Trang Giáo viên</a>`
+                ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 Trang Giáo viên</a>`
                 : ""
             }
             <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
@@ -1150,13 +723,12 @@
             </button>
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
-              <span class="user-initials">${escapeHtml(getInitials(acc.name))}</span>
-              <span>${escapeHtml(acc.name)}</span>
+              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
+              <span>${escapeHtml(currentAccount.name)}</span>
             </button>
           </div>
         </header>
 
-        <!-- MAIN 50/50 SPLIT WORKSPACE -->
         <main class="practice-workspace">
           <!-- LEFT PANE: QUESTION + IDEA NOTES + MULTI-TAKE RECORDER & SUBMIT -->
           <section class="left-pane" aria-label="Câu hỏi và ghi âm">
@@ -1170,12 +742,10 @@
                 The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.
               </p>
 
-              <!-- 1. QUESTION PROMPT CARD -->
               <div class="question-prompt-card">
                 <p class="question-prompt-text">${escapeHtml(question.prompt)}</p>
               </div>
 
-              <!-- 2. IDEA NOTES BOX ("GHI CHÚ Ý TƯỞNG CỦA HỌC VIÊN") -->
               <div class="idea-notes-card">
                 <div class="idea-notes-header">
                   <label class="idea-notes-title" for="idea-note-input">
@@ -1193,7 +763,6 @@
                 >${escapeHtml(qData.ideaNote || "")}</textarea>
               </div>
 
-              <!-- 3. MULTI-TAKE AUDIO RECORDER & SUBMISSION SELECTION CARD -->
               <div class="recorder-box-card">
                 <div class="recorder-controls-row">
                   <button
@@ -1234,7 +803,6 @@
                   Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
                 </p>
 
-                <!-- LIVE TRANSCRIPT WHILE RECORDING -->
                 ${
                   state.isRecording
                     ? `
@@ -1252,7 +820,6 @@
                     : ""
                 }
 
-                <!-- LIST OF RECORDED TAKES FOR THIS QUESTION -->
                 ${
                   !state.isRecording && attempts.length > 0
                     ? `
@@ -1292,13 +859,7 @@
                               </div>
                             </div>
 
-                            ${
-                              att.audioDataUrl
-                                ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>`
-                                : att.savedAudioFile
-                                  ? `<audio controls src="${att.savedAudioFile}" class="student-audio-player"></audio>`
-                                  : ""
-                            }
+                            ${att.audioDataUrl ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>` : ""}
 
                             <div class="transcript-result-box">
                               <div class="transcript-box-header">
@@ -1328,7 +889,6 @@
                       })
                       .join("")}
 
-                    <!-- SUBMIT SELECTED RECORDING BUTTON BAR -->
                     <div class="submit-take-bar">
                       <div>
                         ${
@@ -1369,7 +929,6 @@
                 }
               </div>
 
-              <!-- INLINE STEPPER -->
               <div class="stepper-row">
                 <button
                   type="button"
@@ -1403,20 +962,11 @@
                 </div>
 
                 <div class="level-switch-group" role="group" aria-label="Chọn Level B1 hoặc B2">
-                  <button
-                    type="button"
-                    class="level-switch-btn ${lvl === "b1" ? "active" : ""}"
-                    data-level="b1"
-                  >Level B1</button>
-                  <button
-                    type="button"
-                    class="level-switch-btn ${lvl === "b2" ? "active" : ""}"
-                    data-level="b2"
-                  >Level B2</button>
+                  <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-level="b1">Level B1</button>
+                  <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-level="b2">Level B2</button>
                 </div>
               </div>
 
-              <!-- I. PHÂN TÍCH CÂU HỎI -->
               <section class="guide-section">
                 <div class="guide-section-header">
                   <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
@@ -1428,31 +978,21 @@
                 </ul>
               </section>
 
-              <!-- II. CÁCH TRẢ LỜI -->
               <section class="guide-section">
                 <div class="guide-section-header">
                   <h2 class="guide-section-title">II. Cách trả lời</h2>
                 </div>
                 <ol class="guide-numbered">
                   ${levelData.strategy
-                    .map(
-                      item => `
-                      <li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>
-                    `
-                    )
+                    .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>`)
                     .join("")}
                 </ol>
               </section>
 
-              <!-- III. CÂU TRẢ LỜI MẪU -->
               <section class="guide-section">
                 <div class="guide-section-header">
                   <h2 class="guide-section-title">III. Câu trả lời mẫu</h2>
-                  <button
-                    type="button"
-                    class="listen-sample-btn"
-                    id="btn-listen-sample"
-                  >
+                  <button type="button" class="listen-sample-btn" id="btn-listen-sample">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                     <span>Nghe câu trả lời mẫu</span>
                   </button>
@@ -1462,7 +1002,6 @@
                 </blockquote>
               </section>
 
-              <!-- IV. LỖI CẦN TRÁNH -->
               <section class="guide-section">
                 <div class="guide-section-header">
                   <h2 class="guide-section-title">IV. Lỗi cần tránh</h2>
@@ -1472,7 +1011,6 @@
                 </ol>
               </section>
 
-              <!-- V. TỪ VỰNG NÊN DÙNG (CÓ IPA + BẤM VÀO TỪ ĐỂ NGHE + LƯU VÀO KHO TỪ VỰNG) -->
               <section class="guide-section">
                 <div class="guide-section-header">
                   <h2 class="guide-section-title">V. Từ vựng nên dùng</h2>
@@ -1491,7 +1029,7 @@
                     <tbody>
                       ${levelData.vocab
                         .map(row => {
-                          const isSaved = (acc.savedVocab || []).some(
+                          const isSaved = (currentAccount.savedVocab || []).some(
                             v => v.word.toLowerCase() === row.word.toLowerCase()
                           );
                           return `
@@ -1539,14 +1077,13 @@
           </aside>
         </main>
 
-        <!-- BOTTOM QUESTION NAVIGATION BAR -->
         <nav class="practice-bottom-nav" aria-label="Danh sách câu hỏi">
           <div class="bottom-q-pills">
             <span class="bottom-part-text">Part 1</span>
             ${topic.questions
               .map((qItem, idx) => {
                 const isActive = idx === qIdx;
-                const qd = acc.questionsData && acc.questionsData[qItem.id];
+                const qd = currentAccount.questionsData && currentAccount.questionsData[qItem.id];
                 const isSubmitted = !!(qd && qd.submittedTakeId);
                 return `
                   <button
@@ -1569,183 +1106,126 @@
   // STUDENT VOCABULARY BANK MODAL ("KHO TỪ VỰNG CỦA TÔI")
   // ==========================================================================
   function renderModals() {
-    let html = "";
-    const acc = getCurrentAccount();
+    if (!state.vocabModalOpen || !currentAccount) return "";
 
-    if (state.googleModalOpen) {
-      html += `
-        <div class="modal-backdrop" id="google-modal-backdrop">
-          <div class="google-modal-card" onclick="event.stopPropagation()">
-            <div class="google-modal-header">
-              ${renderGoogleIconSvg(34)}
-              <h2 class="google-modal-title">Đăng nhập bằng Google</h2>
-              <p class="google-modal-sub">Tiếp tục tới <strong>Luyện Speaking Part 1</strong></p>
+    const allWords = currentAccount.savedVocab || [];
+    const q = state.vocabSearchQuery.trim().toLowerCase();
+    const filtered = q
+      ? allWords.filter(
+          v =>
+            v.word.toLowerCase().includes(q) ||
+            (v.meaning && v.meaning.toLowerCase().includes(q)) ||
+            (v.topic && v.topic.toLowerCase().includes(q))
+        )
+      : allWords;
+
+    return `
+      <div class="modal-backdrop" id="vocab-modal-backdrop">
+        <div class="modal-panel" onclick="event.stopPropagation()">
+          <div class="modal-header" style="background:#FFFBEB;">
+            <div>
+              <h2 style="font-size:17px;font-weight:900;color:#18181B;">
+                📚 Kho từ vựng của tôi (${allWords.length} từ)
+              </h2>
+              <p style="font-size:12.5px;color:#52525B;margin-top:2px;">
+                Bấm vào bất kỳ từ vựng nào để nghe phát âm. Từ vựng được lưu riêng trong tài khoản của bạn qua từng chủ đề.
+              </p>
+            </div>
+            <button type="button" class="close-modal-btn" id="btn-close-vocab-modal">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <form id="add-custom-vocab-form" onsubmit="return false;" style="background:#FAFAFA;border:1.5px solid #E4E4E7;border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+              <div style="font-size:12px;font-weight:800;color:#18181B;text-transform:uppercase;margin-bottom:8px;">
+                + Tự thêm từ vựng mới vào kho của bạn
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                <input type="text" id="custom-vocab-word" class="form-input" style="height:34px;font-size:13px;" placeholder="Từ / cụm từ (VD: itinerary)" required />
+                <input type="text" id="custom-vocab-ipa" class="form-input" style="height:34px;font-size:13px;" placeholder="IPA (VD: /aɪˈtɪnəreri/)" />
+                <input type="text" id="custom-vocab-pos" class="form-input" style="height:34px;font-size:13px;" placeholder="Loại từ (n., v., adj.)" />
+                <input type="text" id="custom-vocab-meaning" class="form-input" style="height:34px;font-size:13px;" placeholder="Nghĩa tiếng Việt *" required />
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <input type="text" id="custom-vocab-example" class="form-input" style="height:34px;font-size:13px;flex:1;" placeholder="Câu ví dụ (tùy chọn)..." />
+                <button type="submit" class="top-pill-btn dark" style="height:34px;">+ Lưu từ mới</button>
+              </div>
+            </form>
+
+            <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <input
+                type="text"
+                id="vocab-search-input"
+                class="form-input"
+                style="height:36px;max-width:340px;font-size:13px;"
+                placeholder="Tìm từ vựng theo tiếng Anh, nghĩa hoặc chủ đề..."
+                value="${escapeHtml(state.vocabSearchQuery)}"
+              />
+              <span style="font-size:12px;color:#71717A;font-weight:600;">Hiển thị ${filtered.length}/${allWords.length} từ</span>
             </div>
 
             ${
-              state.googleModalError
-                ? `<div style="padding:8px 12px;border:1px solid #DC2626;background:#FEF2F2;color:#B91C1C;border-radius:6px;font-size:12.5px;font-weight:600;margin-bottom:12px;">${escapeHtml(state.googleModalError)}</div>`
-                : ""
+              filtered.length === 0
+                ? `<p style="font-size:14px;color:#71717A;padding:20px 0;">Chưa có từ vựng nào khớp. Hãy bấm nút <strong>+ Lưu vào kho từ</strong> ở bảng Từ vựng nên dùng khi học từng đề!</p>`
+                : `
+                <div class="vocab-table-wrap">
+                  <table class="vocab-table">
+                    <thead>
+                      <tr>
+                        <th>Từ / cụm từ (Bấm để nghe)</th>
+                        <th>Loại từ</th>
+                        <th>Nghĩa</th>
+                        <th>Ví dụ & Chủ đề</th>
+                        <th style="width:50px;">Xóa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${filtered
+                        .map(item => `
+                          <tr>
+                            <td class="td-word">
+                              <button
+                                type="button"
+                                class="vocab-word-click-btn"
+                                data-speak-word="${escapeHtml(item.word)}"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                <span>${escapeHtml(item.word)}</span>
+                              </button>
+                              ${
+                                item.ipa
+                                  ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(item.word)}">${escapeHtml(item.ipa)}</span>`
+                                  : ""
+                              }
+                            </td>
+                            <td class="td-pos">${escapeHtml(item.pos || "")}</td>
+                            <td class="td-meaning"><strong>${escapeHtml(item.meaning || "")}</strong></td>
+                            <td class="td-example">
+                              <div>${escapeHtml(item.example || "")}</div>
+                              ${
+                                item.topic
+                                  ? `<span style="display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;background:#F4F4F5;border-radius:4px;color:#52525B;">Đề: ${escapeHtml(item.topic)}</span>`
+                                  : ""
+                              }
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                class="take-delete-btn"
+                                data-remove-saved-vocab="${escapeHtml(item.word)}"
+                              >Xóa</button>
+                            </td>
+                          </tr>
+                        `)
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
+              `
             }
-
-            <form id="google-signin-form" onsubmit="return false;">
-              <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#5F6368;margin-bottom:5px;" for="inp-google-email">
-                  Email tài khoản Google (@gmail.com) *
-                </label>
-                <input
-                  type="email"
-                  id="inp-google-email"
-                  class="google-input-field"
-                  placeholder="vidu@gmail.com"
-                  required
-                />
-              </div>
-
-              <div style="margin-bottom:18px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#5F6368;margin-bottom:5px;" for="inp-google-name">
-                  Họ và tên hiển thị của bạn
-                </label>
-                <input
-                  type="text"
-                  id="inp-google-name"
-                  class="google-input-field"
-                  placeholder="Ví dụ: Nguyễn Minh Tùng"
-                />
-              </div>
-
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:6px;">
-                <button type="button" class="google-cancel-btn" id="btn-google-cancel">Hủy</button>
-                <button type="submit" class="google-continue-btn">Tiếp tục →</button>
-              </div>
-            </form>
           </div>
         </div>
-      `;
-    }
-
-    if (state.vocabModalOpen && acc) {
-      const allWords = acc.savedVocab || [];
-      const q = state.vocabSearchQuery.trim().toLowerCase();
-      const filtered = q
-        ? allWords.filter(
-            v =>
-              v.word.toLowerCase().includes(q) ||
-              (v.meaning && v.meaning.toLowerCase().includes(q)) ||
-              (v.topic && v.topic.toLowerCase().includes(q))
-          )
-        : allWords;
-
-      html += `
-        <div class="modal-backdrop" id="vocab-modal-backdrop">
-          <div class="modal-panel" onclick="event.stopPropagation()">
-            <div class="modal-header" style="background:#FFFBEB;">
-              <div>
-                <h2 style="font-size:17px;font-weight:900;color:#18181B;">
-                  📚 Kho từ vựng của tôi (${allWords.length} từ)
-                </h2>
-                <p style="font-size:12.5px;color:#52525B;margin-top:2px;">
-                  Bấm vào bất kỳ từ vựng nào để nghe phát âm. Từ vựng được lưu riêng trong tài khoản của bạn qua từng chủ đề.
-                </p>
-              </div>
-              <button type="button" class="close-modal-btn" id="btn-close-vocab-modal">✕</button>
-            </div>
-
-            <div class="modal-body">
-              <form id="add-custom-vocab-form" onsubmit="return false;" style="background:#FAFAFA;border:1.5px solid #E4E4E7;border-radius:8px;padding:12px 14px;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:800;color:#18181B;text-transform:uppercase;margin-bottom:8px;">
-                  + Tự thêm từ vựng mới vào kho của bạn
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
-                  <input type="text" id="custom-vocab-word" class="form-input" style="height:34px;font-size:13px;" placeholder="Từ / cụm từ (VD: itinerary)" required />
-                  <input type="text" id="custom-vocab-ipa" class="form-input" style="height:34px;font-size:13px;" placeholder="IPA (VD: /aɪˈtɪnəreri/)" />
-                  <input type="text" id="custom-vocab-pos" class="form-input" style="height:34px;font-size:13px;" placeholder="Loại từ (n., v., adj.)" />
-                  <input type="text" id="custom-vocab-meaning" class="form-input" style="height:34px;font-size:13px;" placeholder="Nghĩa tiếng Việt *" required />
-                </div>
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                  <input type="text" id="custom-vocab-example" class="form-input" style="height:34px;font-size:13px;flex:1;" placeholder="Câu ví dụ (tùy chọn)..." />
-                  <button type="submit" class="top-pill-btn dark" style="height:34px;">+ Lưu từ mới</button>
-                </div>
-              </form>
-
-              <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                <input
-                  type="text"
-                  id="vocab-search-input"
-                  class="form-input"
-                  style="height:36px;max-width:340px;font-size:13px;"
-                  placeholder="Tìm từ vựng theo tiếng Anh, nghĩa hoặc chủ đề..."
-                  value="${escapeHtml(state.vocabSearchQuery)}"
-                />
-                <span style="font-size:12px;color:#71717A;font-weight:600;">Hiển thị ${filtered.length}/${allWords.length} từ</span>
-              </div>
-
-              ${
-                filtered.length === 0
-                  ? `<p style="font-size:14px;color:#71717A;padding:20px 0;">Chưa có từ vựng nào khớp. Hãy bấm nút <strong>+ Lưu vào kho từ</strong> ở bảng Từ vựng nên dùng khi học từng đề!</p>`
-                  : `
-                  <div class="vocab-table-wrap">
-                    <table class="vocab-table">
-                      <thead>
-                        <tr>
-                          <th>Từ / cụm từ (Bấm để nghe)</th>
-                          <th>Loại từ</th>
-                          <th>Nghĩa</th>
-                          <th>Ví dụ & Chủ đề</th>
-                          <th style="width:50px;">Xóa</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${filtered
-                          .map(item => `
-                            <tr>
-                              <td class="td-word">
-                                <button
-                                  type="button"
-                                  class="vocab-word-click-btn"
-                                  data-speak-word="${escapeHtml(item.word)}"
-                                >
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                                  <span>${escapeHtml(item.word)}</span>
-                                </button>
-                                ${
-                                  item.ipa
-                                    ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(item.word)}">${escapeHtml(item.ipa)}</span>`
-                                    : ""
-                                }
-                              </td>
-                              <td class="td-pos">${escapeHtml(item.pos || "")}</td>
-                              <td class="td-meaning"><strong>${escapeHtml(item.meaning || "")}</strong></td>
-                              <td class="td-example">
-                                <div>${escapeHtml(item.example || "")}</div>
-                                ${
-                                  item.topic
-                                    ? `<span style="display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;background:#F4F4F5;border-radius:4px;color:#52525B;">Đề: ${escapeHtml(item.topic)}</span>`
-                                    : ""
-                                }
-                              </td>
-                              <td>
-                                <button
-                                  type="button"
-                                  class="take-delete-btn"
-                                  data-remove-saved-vocab="${escapeHtml(item.word)}"
-                                >Xóa</button>
-                              </td>
-                            </tr>
-                          `)
-                          .join("")}
-                      </tbody>
-                    </table>
-                  </div>
-                `
-              }
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    return html;
+      </div>
+    `;
   }
 
   // ==========================================================================
@@ -1761,7 +1241,7 @@
     const savedRightScroll = rightPane ? rightPane.scrollTop : 0;
 
     let mainHtml = "";
-    if (state.view === "auth" || !getCurrentAccount()) {
+    if (state.view === "auth" || !currentAccount) {
       mainHtml = renderAuthView();
     } else if (state.view === "home") {
       mainHtml = renderHomeView();
@@ -1780,9 +1260,7 @@
   }
 
   function openTopic(topicId) {
-    if (state.isRecording) {
-      stopRecording(getCurrentQuestion().id);
-    }
+    if (state.isRecording) stopRecording(getCurrentQuestion().id);
     state.currentTopicId = topicId;
     state.currentQuestionIndex = 0;
     state.submitSuccessMsg = "";
@@ -1793,9 +1271,7 @@
   function switchQuestion(newIndex) {
     const topic = getCurrentTopic();
     if (newIndex < 0 || newIndex >= topic.questions.length) return;
-    if (state.isRecording) {
-      stopRecording(getCurrentQuestion().id);
-    }
+    if (state.isRecording) stopRecording(getCurrentQuestion().id);
     state.currentQuestionIndex = newIndex;
     state.submitSuccessMsg = "";
     renderApp();
@@ -1806,7 +1282,6 @@
   }
 
   function bindEvents() {
-    // 1. Auth View Events
     const btnTabLogin = document.getElementById("btn-tab-login");
     if (btnTabLogin) {
       btnTabLogin.onclick = () => {
@@ -1815,6 +1290,7 @@
         renderApp();
       };
     }
+
     const btnTabReg = document.getElementById("btn-tab-register");
     if (btnTabReg) {
       btnTabReg.onclick = () => {
@@ -1824,39 +1300,19 @@
       };
     }
 
-    // Google Sign-In Button & Modal Events
     const btnGoogleLogin = document.getElementById("btn-google-login");
     if (btnGoogleLogin) {
-      btnGoogleLogin.onclick = () => {
-        triggerGoogleLoginFlow();
-      };
-    }
-
-    ["google-modal-backdrop", "btn-google-cancel"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.onclick = () => {
-          state.googleModalOpen = false;
-          state.googleModalError = "";
+      btnGoogleLogin.onclick = async () => {
+        state.authError = "";
+        state.authInfo = "";
+        state.authLoading = true;
+        renderApp();
+        const { error } = await CLOUD.signInWithGoogle();
+        if (error) {
+          state.authLoading = false;
+          state.authError = "Không thể mở đăng nhập Google: " + (error.message || "Lỗi kết nối");
           renderApp();
-        };
-      }
-    });
-
-    const googleForm = document.getElementById("google-signin-form");
-    if (googleForm) {
-      googleForm.onsubmit = async e => {
-        e.preventDefault();
-        const emailEl = document.getElementById("inp-google-email");
-        const nameEl = document.getElementById("inp-google-name");
-        const gEmail = (emailEl ? emailEl.value : "").trim().toLowerCase();
-        const gName = (nameEl ? nameEl.value : "").trim();
-        if (!gEmail) {
-          state.googleModalError = "Vui lòng nhập địa chỉ email Google của bạn.";
-          renderApp();
-          return;
         }
-        await completeGoogleSignIn(gEmail, gName, "");
       };
     }
 
@@ -1864,6 +1320,12 @@
     if (authForm) {
       authForm.onsubmit = async e => {
         e.preventDefault();
+        const client = CLOUD.getClient();
+        if (!client) {
+          state.authError = "Chưa cấu hình kết nối Supabase.";
+          renderApp();
+          return;
+        }
         const nameEl = document.getElementById("inp-auth-name");
         const emailEl = document.getElementById("inp-auth-email");
         const passEl = document.getElementById("inp-auth-pass");
@@ -1878,147 +1340,77 @@
           return;
         }
 
-        // === SUPABASE CLOUD AUTH MODE ===
-        if (isCloudMode()) {
-          const client = CLOUD.getClient();
-          state.authLoading = true;
-          state.authError = "";
-          state.authInfo = "";
-          renderApp();
+        state.authLoading = true;
+        state.authError = "";
+        state.authInfo = "";
+        renderApp();
 
-          if (state.authMode === "register") {
-            if (!name) {
-              state.authLoading = false;
-              state.authError = "Vui lòng nhập họ và tên của bạn.";
-              renderApp();
-              return;
-            }
-            if (password.length < 6) {
-              state.authLoading = false;
-              state.authError = "Mật khẩu cần tối thiểu 6 ký tự.";
-              renderApp();
-              return;
-            }
-            const { data, error } = await client.auth.signUp({
-              email: email,
-              password: password,
-              options: {
-                data: { full_name: name },
-                emailRedirectTo: CLOUD.getRedirectUrl()
-              }
-            });
-            state.authLoading = false;
-            if (error) {
-              state.authError = error.message || "Không thể tạo tài khoản. Vui lòng thử lại.";
-              renderApp();
-              return;
-            }
-            if (data && data.session && data.user) {
-              await loadCloudStudentData(data.user);
-            } else {
-              state.authInfo =
-                "Đăng ký thành công! Vui lòng mở hộp thư Email để xác nhận tài khoản, hoặc bấm 'Tiếp tục với Google' để vào học ngay.";
-              state.authMode = "login";
-              renderApp();
-            }
-          } else {
-            const { data, error } = await client.auth.signInWithPassword({
-              email: email,
-              password: password
-            });
-            state.authLoading = false;
-            if (error) {
-              state.authError = "Email hoặc mật khẩu chưa đúng (hoặc tài khoản chưa xác nhận email).";
-              renderApp();
-              return;
-            }
-            if (data && data.user) {
-              await loadCloudStudentData(data.user);
-            }
-          }
-          return;
-        }
-
-        // === LOCAL FALLBACK MODE ===
         if (state.authMode === "register") {
           if (!name) {
+            state.authLoading = false;
             state.authError = "Vui lòng nhập họ và tên của bạn.";
             renderApp();
             return;
           }
-          if (db.accounts[email]) {
-            state.authError = "Tài khoản này đã tồn tại. Vui lòng chuyển sang tab Đăng nhập.";
+          if (password.length < 6) {
+            state.authLoading = false;
+            state.authError = "Mật khẩu cần tối thiểu 6 ký tự.";
             renderApp();
             return;
           }
-          db.accounts[email] = {
-            name: name,
+          const { data, error } = await client.auth.signUp({
             email: email,
             password: password,
-            createdAt: getNowTimestamp(),
-            savedVocab: JSON.parse(JSON.stringify(defaultVocabDeck)),
-            questionsData: {}
-          };
-          state.currentUserEmail = email;
-          state.authError = "";
-          state.view = "home";
-          persistAllData();
-          renderApp();
+            options: {
+              data: { full_name: name },
+              emailRedirectTo: CLOUD.getRedirectUrl()
+            }
+          });
+          state.authLoading = false;
+          if (error) {
+            state.authError = error.message || "Không thể tạo tài khoản. Vui lòng thử lại.";
+            renderApp();
+            return;
+          }
+          if (data && data.session && data.user) {
+            await loadCloudStudentData(data.user);
+          } else {
+            state.authInfo =
+              "Đăng ký thành công! Vui lòng mở hộp thư Email để xác nhận tài khoản, hoặc bấm 'Tiếp tục với Google' để vào học ngay.";
+            state.authMode = "login";
+            renderApp();
+          }
         } else {
-          // Check server disk first if available, else local db
-          const srv = await verifyLoginOnServer(email, password);
-          if (srv && srv.ok) {
-            state.currentUserEmail = email;
-            state.authError = "";
-            state.view = "home";
-            persistAllData();
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+          state.authLoading = false;
+          if (error) {
+            state.authError = "Email hoặc mật khẩu chưa đúng (hoặc tài khoản chưa xác nhận email).";
             renderApp();
             return;
           }
-
-          const acc = db.accounts[email];
-          if (!acc) {
-            state.authError =
-              (srv && srv.error) ||
-              "Chưa tìm thấy tài khoản này. Bạn hãy bấm sang tab 'Tạo tài khoản mới' nhé!";
-            renderApp();
-            return;
+          if (data && data.user) {
+            await loadCloudStudentData(data.user);
           }
-          if (acc.password && acc.password !== password) {
-            state.authError = "Mật khẩu chưa chính xác. Vui lòng thử lại.";
-            renderApp();
-            return;
-          }
-          state.currentUserEmail = email;
-          state.authError = "";
-          state.view = "home";
-          persistAllData();
-          renderApp();
         }
       };
     }
 
-    // 2. Topbar Utility Actions
     const btnLogout = document.getElementById("btn-logout-account");
     if (btnLogout) {
       btnLogout.onclick = async () => {
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
-        if (isCloudMode()) {
-          const client = CLOUD.getClient();
+        const client = CLOUD.getClient();
+        if (client) {
           try {
             await client.auth.signOut();
           } catch (e) {}
         }
-        state.currentUserEmail = "";
-        state.currentUserId = "";
+        currentAccount = null;
         state.isTeacher = false;
         state.view = "auth";
         state.authMode = "login";
         state.authError = "";
         state.authInfo = "";
-        try {
-          localStorage.setItem(SESSION_KEY, "__LOGGED_OUT__");
-        } catch (e) {}
         renderApp();
       };
     }
@@ -2031,11 +1423,8 @@
       };
     }
 
-    // 3. Home View Topic Cards
     document.querySelectorAll("[data-open-topic]").forEach(card => {
-      card.onclick = () => {
-        openTopic(card.getAttribute("data-open-topic"));
-      };
+      card.onclick = () => openTopic(card.getAttribute("data-open-topic"));
     });
 
     const btnBackHome = document.getElementById("btn-back-home");
@@ -2047,7 +1436,6 @@
       };
     }
 
-    // 4. Practice View Events
     if (state.view === "practice") {
       const topic = getCurrentTopic();
       const question = getCurrentQuestion();
@@ -2059,34 +1447,27 @@
         ideaInput.oninput = e => {
           qData.ideaNote = e.target.value;
           const badge = document.getElementById("idea-saved-indicator");
-          if (badge) badge.textContent = isCloudMode() ? "☁️ Đang lưu..." : "✓ Đã lưu ghi chú";
-          if (isCloudMode()) {
-            if (noteSaveDebounceTimer) clearTimeout(noteSaveDebounceTimer);
-            const qIdSnap = question.id;
-            const valSnap = qData.ideaNote;
-            noteSaveDebounceTimer = setTimeout(async () => {
-              await cloudSaveIdeaNote(qIdSnap, valSnap);
-              const b = document.getElementById("idea-saved-indicator");
-              if (b) b.textContent = "✓ Đã lưu ghi chú";
-            }, 600);
-          } else {
-            persistAllData();
-          }
+          if (badge) badge.textContent = "☁️ Đang lưu...";
+          if (noteSaveDebounceTimer) clearTimeout(noteSaveDebounceTimer);
+          const qIdSnap = question.id;
+          const valSnap = qData.ideaNote;
+          noteSaveDebounceTimer = setTimeout(async () => {
+            await cloudSaveIdeaNote(qIdSnap, valSnap);
+            const b = document.getElementById("idea-saved-indicator");
+            if (b) b.textContent = "✓ Đã lưu ghi chú";
+          }, 600);
         };
       }
 
       const btnRec = document.getElementById("btn-record-toggle");
       if (btnRec) {
-        btnRec.onclick = () => {
-          startRecording(question.id);
-        };
+        btnRec.onclick = () => startRecording(question.id);
       }
 
       document.querySelectorAll("[data-select-take]").forEach(radio => {
         radio.onchange = () => {
           qData.selectedTakeId = radio.getAttribute("data-select-take");
           state.submitSuccessMsg = "";
-          persistAllData();
           renderApp();
         };
       });
@@ -2104,13 +1485,8 @@
             qData.submittedTakeId = null;
             qData.submittedAt = null;
           }
-          if (isCloudMode()) {
-            renderApp();
-            await cloudDeleteAttempt(delObj);
-          } else {
-            persistAllData();
-            renderApp();
-          }
+          renderApp();
+          await cloudDeleteAttempt(delObj);
         };
       });
 
@@ -2123,27 +1499,18 @@
           if (!chosenId) return;
           qData.selectedTakeId = chosenId;
           qData.submittedTakeId = chosenId;
-          qData.submittedAt = getNowTimestamp();
+          qData.submittedAt = CLOUD.formatDateTime(new Date().toISOString());
           const chosenIdx = attempts.findIndex(a => a.id === chosenId) + 1;
-          state.submitSuccessMsg = isCloudMode()
-            ? `✓ Đã nộp Bản ghi âm #${chosenIdx} lên hệ thống cho Giáo viên!`
-            : `✓ Đã nộp Bản ghi âm #${chosenIdx} thành công!`;
-          if (isCloudMode()) {
-            renderApp();
-            await cloudSubmitAttempt(question.id, chosenId);
-          } else {
-            persistAllData();
-            renderApp();
-          }
+          state.submitSuccessMsg = `✓ Đã nộp Bản ghi âm #${chosenIdx} lên hệ thống cho Giáo viên!`;
+          renderApp();
+          await cloudSubmitAttempt(question.id, chosenId);
         };
       }
 
       const btnPrevQ = document.getElementById("btn-prev-q");
       if (btnPrevQ) {
         btnPrevQ.onclick = () => {
-          if (state.currentQuestionIndex > 0) {
-            switchQuestion(state.currentQuestionIndex - 1);
-          }
+          if (state.currentQuestionIndex > 0) switchQuestion(state.currentQuestionIndex - 1);
         };
       }
 
@@ -2161,9 +1528,7 @@
       }
 
       document.querySelectorAll("[data-jump-q]").forEach(btn => {
-        btn.onclick = () => {
-          switchQuestion(parseInt(btn.getAttribute("data-jump-q"), 10));
-        };
+        btn.onclick = () => switchQuestion(parseInt(btn.getAttribute("data-jump-q"), 10));
       });
 
       document.querySelectorAll("[data-level]").forEach(btn => {
@@ -2175,33 +1540,29 @@
 
       const btnListenSample = document.getElementById("btn-listen-sample");
       if (btnListenSample) {
-        btnListenSample.onclick = () => {
-          window.speakEnglishText(levelData.modelAnswer);
-        };
+        btnListenSample.onclick = () => speakEnglishText(levelData.modelAnswer);
       }
     }
 
-    // 5. Click-to-Hear Vocabulary Words
     document.querySelectorAll("[data-speak-word]").forEach(el => {
       el.onclick = e => {
         e.stopPropagation();
-        window.speakEnglishText(el.getAttribute("data-speak-word"));
+        speakEnglishText(el.getAttribute("data-speak-word"));
       };
     });
 
     document.querySelectorAll("[data-toggle-save-vocab]").forEach(btn => {
-      btn.onclick = async e => {
+      btn.onclick = e => {
         e.stopPropagation();
-        const acc = getCurrentAccount();
-        if (!acc) return;
-        acc.savedVocab = acc.savedVocab || [];
+        if (!currentAccount) return;
+        currentAccount.savedVocab = currentAccount.savedVocab || [];
         const word = btn.getAttribute("data-toggle-save-vocab");
-        const existingIdx = acc.savedVocab.findIndex(
+        const existingIdx = currentAccount.savedVocab.findIndex(
           v => v.word.toLowerCase() === word.toLowerCase()
         );
         if (existingIdx >= 0) {
-          acc.savedVocab.splice(existingIdx, 1);
-          if (isCloudMode()) cloudRemoveVocab(word);
+          currentAccount.savedVocab.splice(existingIdx, 1);
+          cloudRemoveVocab(word);
         } else {
           const newItem = {
             word: word,
@@ -2211,15 +1572,13 @@
             example: btn.getAttribute("data-vocab-example") || "",
             topic: btn.getAttribute("data-vocab-topic") || ""
           };
-          acc.savedVocab.unshift(newItem);
-          if (isCloudMode()) cloudAddVocab(newItem);
+          currentAccount.savedVocab.unshift(newItem);
+          cloudAddVocab(newItem);
         }
-        persistAllData();
         renderApp();
       };
     });
 
-    // 6. Vocabulary Bank Modal Events
     ["vocab-modal-backdrop", "btn-close-vocab-modal"].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -2248,8 +1607,7 @@
     if (addCustomVocabForm) {
       addCustomVocabForm.onsubmit = e => {
         e.preventDefault();
-        const acc = getCurrentAccount();
-        if (!acc) return;
+        if (!currentAccount) return;
         const w = (document.getElementById("custom-vocab-word").value || "").trim();
         const ipa = (document.getElementById("custom-vocab-ipa").value || "").trim();
         const pos = (document.getElementById("custom-vocab-pos").value || "").trim();
@@ -2257,7 +1615,7 @@
         const example = (document.getElementById("custom-vocab-example").value || "").trim();
         if (!w || !meaning) return;
 
-        acc.savedVocab = acc.savedVocab || [];
+        currentAccount.savedVocab = currentAccount.savedVocab || [];
         const newItem = {
           word: w,
           ipa: ipa || `/${w.toLowerCase()}/`,
@@ -2266,60 +1624,53 @@
           example: example,
           topic: "Tự thêm"
         };
-        acc.savedVocab = acc.savedVocab.filter(v => v.word.toLowerCase() !== w.toLowerCase());
-        acc.savedVocab.unshift(newItem);
-        if (isCloudMode()) cloudAddVocab(newItem);
-        persistAllData();
+        currentAccount.savedVocab = currentAccount.savedVocab.filter(
+          v => v.word.toLowerCase() !== w.toLowerCase()
+        );
+        currentAccount.savedVocab.unshift(newItem);
+        cloudAddVocab(newItem);
         renderApp();
       };
     }
 
     document.querySelectorAll("[data-remove-saved-vocab]").forEach(btn => {
       btn.onclick = () => {
-        const acc = getCurrentAccount();
-        if (!acc || !acc.savedVocab) return;
+        if (!currentAccount || !currentAccount.savedVocab) return;
         const word = btn.getAttribute("data-remove-saved-vocab");
-        acc.savedVocab = acc.savedVocab.filter(
+        currentAccount.savedVocab = currentAccount.savedVocab.filter(
           v => v.word.toLowerCase() !== word.toLowerCase()
         );
-        if (isCloudMode()) cloudRemoveVocab(word);
-        persistAllData();
+        cloudRemoveVocab(word);
         renderApp();
       };
     });
   }
 
   window.addEventListener("DOMContentLoaded", async () => {
-    if (isCloudMode()) {
-      const client = CLOUD.getClient();
-      state.view = "auth";
+    const client = CLOUD.getClient();
+    if (!client) {
+      state.authError = "Chưa cấu hình kết nối Supabase.";
       renderApp();
-
-      const { data } = await client.auth.getSession();
-      if (data && data.session && data.session.user) {
-        await loadCloudStudentData(data.session.user);
-      } else {
-        renderApp();
-      }
-
-      client.auth.onAuthStateChange(async (event, session) => {
-        if (event === "SIGNED_IN" && session && session.user) {
-          if (state.currentUserId !== session.user.id) {
-            await loadCloudStudentData(session.user);
-          }
-        } else if (event === "SIGNED_OUT") {
-          state.currentUserEmail = "";
-          state.currentUserId = "";
-          state.view = "auth";
-          renderApp();
-        }
-      });
       return;
     }
 
-    // Local fallback mode
-    loadFromLocalStorage();
-    await loadFromIndexedDB();
     renderApp();
+    const { data } = await client.auth.getSession();
+    if (data && data.session && data.session.user) {
+      await loadCloudStudentData(data.session.user);
+    }
+
+    client.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session && session.user) {
+        if (!currentAccount || currentAccount.id !== session.user.id) {
+          await loadCloudStudentData(session.user);
+        }
+      } else if (event === "SIGNED_OUT") {
+        currentAccount = null;
+        state.isTeacher = false;
+        state.view = "auth";
+        renderApp();
+      }
+    });
   });
 })();

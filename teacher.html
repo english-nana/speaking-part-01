@@ -13,132 +13,6 @@
   />
   <link rel="stylesheet" href="./styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .teacher-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-    .teacher-stat-card {
-      background: #FFFFFF;
-      border: 2px solid #18181B;
-      box-shadow: 3px 3px 0px #18181B;
-      padding: 14px 16px;
-    }
-    .teacher-stat-label {
-      font-size: 11.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #52525B;
-      letter-spacing: 0.04em;
-    }
-    .teacher-stat-value {
-      font-size: 26px;
-      font-weight: 900;
-      color: #18181B;
-      margin-top: 4px;
-      font-family: var(--font-mono);
-    }
-    .teacher-tabs-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-    .teacher-tab-btn {
-      padding: 9px 16px;
-      border: 2px solid #18181B;
-      background: #FFFFFF;
-      font-weight: 800;
-      font-size: 13.5px;
-      cursor: pointer;
-      color: #18181B;
-      transition: transform 0.1s ease, background 0.1s ease;
-    }
-    .teacher-tab-btn.active {
-      background: var(--accent-yellow);
-      box-shadow: 3px 3px 0px #18181B;
-    }
-    .teacher-filter-bar {
-      border: 2px solid #18181B;
-      background: #FFFFFF;
-      padding: 14px 18px;
-      box-shadow: 3px 3px 0px #18181B;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .teacher-students-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #FFFFFF;
-      border: 2px solid #18181B;
-      box-shadow: 3px 3px 0px #18181B;
-      font-size: 13.5px;
-    }
-    .teacher-students-table th {
-      background: #F4F4F5;
-      text-align: left;
-      padding: 11px 14px;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      border-bottom: 2px solid #18181B;
-    }
-    .teacher-students-table td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #E4E4E7;
-      vertical-align: middle;
-    }
-    .provider-pill {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      border: 1px solid #D4D4D8;
-      background: #FAFAFA;
-      color: #3F3F46;
-    }
-    .provider-pill.google {
-      background: #EFF6FF;
-      border-color: #BFDBFE;
-      color: #1D4ED8;
-    }
-    .grade-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .save-grade-btn {
-      height: 36px;
-      padding: 0 14px;
-      border: 2px solid #18181B;
-      background: #18181B;
-      color: #FFFFFF;
-      font-weight: 700;
-      font-size: 12.5px;
-      cursor: pointer;
-    }
-    .save-grade-btn:hover {
-      background: #27272A;
-    }
-    .cloud-mode-pill {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 8px;
-      border: 1.5px solid #18181B;
-      background: #DCFCE7;
-      color: #166534;
-    }
-  </style>
 </head>
 <body>
   <div id="teacher-app"></div>
@@ -147,45 +21,25 @@
   <script src="./travel-data.js"></script>
   <script>
     (function () {
-      const TEACHER_SESSION_KEY = "speaking_part1_teacher_key_v1";
       const TOPICS = window.SPEAKING_TOPICS || [];
-      const CLOUD = window.SpeakingCloud || { isEnabled: () => false };
+      const CLOUD = window.SpeakingCloud;
+      const escapeHtml = CLOUD.escapeHtml;
+      const formatDuration = CLOUD.formatDuration;
 
-      function isCloudMode() {
-        return Boolean(CLOUD && CLOUD.isEnabled && CLOUD.isEnabled());
-      }
-
-      let tState = {
+      const tState = {
         loading: false,
         authenticated: false,
         unauthorizedEmail: "",
         teacherEmail: "",
-        teacherKey: sessionStorage.getItem(TEACHER_SESSION_KEY) || "",
         authError: "",
         activeTab: "submissions", // "submissions" | "students"
-        // Normalized structures used by both Cloud & Local modes
-        students: [], // { id, name, email, authProvider, createdAt, lastActiveAt, vocabCount }
-        submissions: [], // { attemptId, studentId, studentName, studentEmail, authProvider, qId, topicId, topicTitle, questionNum, prompt, ideaNote, isOfficiallySubmitted, submittedAt, createdAt, durationSec, takeNum, totalAttemptsCount, audioUrl, transcript, teacherFeedback, teacherScore }
-        rawLocalDb: { accounts: {} },
+        students: [],
+        submissions: [],
         filterStudent: "all",
         filterTopic: "all",
         filterStatus: "all", // "all" | "submitted" | "ungraded" | "graded"
         savedToastId: ""
       };
-
-      function escapeHtml(str) {
-        return String(str || "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;");
-      }
-
-      function formatDuration(sec) {
-        const m = Math.floor((sec || 0) / 60);
-        const s = (sec || 0) % 60;
-        return `${m}:${s < 10 ? "0" : ""}${s}`;
-      }
 
       function buildQuestionMetaMap() {
         const map = {};
@@ -195,18 +49,6 @@
           });
         });
         return map;
-      }
-
-      function renderGoogleIconSvg(size) {
-        const s = size || 18;
-        return `
-          <svg width="${s}" height="${s}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-        `;
       }
 
       // ======================================================================
@@ -221,7 +63,6 @@
         tState.unauthorizedEmail = "";
         renderTeacherApp();
 
-        // Check server-side teacher permission via SQL RPC function is_teacher()
         const { data: isTeacherFlag, error: rpcError } = await client.rpc("is_teacher");
         if (rpcError || !isTeacherFlag) {
           tState.loading = false;
@@ -270,10 +111,8 @@
           profileById[p.id] = p;
         });
 
-        // Batch-fetch private signed audio URLs (2-hour TTL)
         const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(a => a.audio_path).filter(Boolean));
 
-        // Group attempts by (user_id, question_id) so we pick the officially submitted take (or latest draft)
         const grouped = {};
         attemptRows.forEach(att => {
           const k = `${att.user_id}__${att.question_id}`;
@@ -307,10 +146,8 @@
 
           submissions.push({
             attemptId: chosen.id,
-            studentId: chosen.user_id,
             studentName: prof.full_name || prof.email || "Học viên",
             studentEmail: prof.email || "",
-            authProvider: prof.auth_provider || "email",
             qId: chosen.question_id,
             topicId: qMeta.topicId,
             topicTitle: qMeta.topicTitle,
@@ -330,7 +167,6 @@
           });
         });
 
-        // Sort newest submitted first
         submissions.sort((a, b) => {
           if (a.isOfficiallySubmitted !== b.isOfficiallySubmitted) {
             return a.isOfficiallySubmitted ? -1 : 1;
@@ -384,95 +220,6 @@
       }
 
       // ======================================================================
-      // LOCAL FALLBACK MODE (WHEN supabase-config.js IS EMPTY)
-      // ======================================================================
-      function hydrateLocalDb(rawDb) {
-        tState.rawLocalDb = rawDb || { accounts: {} };
-        const accountsList = Object.values(tState.rawLocalDb.accounts || {});
-        const qMetaMap = buildQuestionMetaMap();
-        const students = [];
-        const submissions = [];
-
-        accountsList.forEach(student => {
-          const qdMap = student.questionsData || {};
-          let subCount = 0;
-
-          Object.keys(qdMap).forEach(qId => {
-            const qd = qdMap[qId];
-            const qMeta = qMetaMap[qId] || { topicId: "other", topicTitle: "Chủ đề", prompt: qId, num: 1 };
-            const attempts = qd.attempts || [];
-            const subTake =
-              attempts.find(a => a.id === qd.submittedTakeId) ||
-              (attempts.length > 0 ? attempts[attempts.length - 1] : null);
-            if (qd.submittedTakeId) subCount++;
-
-            if (subTake || qd.ideaNote) {
-              submissions.push({
-                attemptId: subTake ? subTake.id : `${student.email}__${qId}`,
-                studentId: student.email,
-                studentName: student.name,
-                studentEmail: student.email,
-                authProvider: student.authProvider || "email",
-                qId: qId,
-                topicId: qMeta.topicId,
-                topicTitle: qMeta.topicTitle,
-                questionNum: qMeta.num,
-                prompt: qMeta.prompt,
-                ideaNote: qd.ideaNote || "",
-                isOfficiallySubmitted: Boolean(qd.submittedTakeId),
-                submittedAt: qd.submittedAt || (subTake ? subTake.createdAt : ""),
-                durationSec: subTake ? subTake.durationSec : 0,
-                takeNum: subTake ? subTake.num : 1,
-                totalAttemptsCount: attempts.length,
-                audioUrl: subTake ? subTake.audioDataUrl || subTake.savedAudioFile || "" : "",
-                transcript: subTake ? subTake.transcript || "" : "",
-                teacherFeedback: qd.teacherFeedback || "",
-                teacherScore: qd.teacherScore || ""
-              });
-            }
-          });
-
-          students.push({
-            id: student.email,
-            name: student.name,
-            email: student.email,
-            authProvider: student.authProvider || "email",
-            createdAt: student.createdAt || "",
-            lastActiveAt: "",
-            vocabCount: (student.savedVocab || []).length,
-            submittedCount: subCount
-          });
-        });
-
-        tState.students = students;
-        tState.submissions = submissions;
-      }
-
-      async function fetchLocalTeacherDb(key) {
-        try {
-          const res = await fetch(`/api/teacher/db?key=${encodeURIComponent(key)}`, { cache: "no-store" });
-          if (res.status === 403) {
-            return { ok: false, error: "Mật khẩu Giáo viên không chính xác." };
-          }
-          if (res.ok) {
-            const data = await res.json();
-            return { ok: true, data };
-          }
-        } catch (e) {}
-        return { ok: false, error: "Không kết nối được tới máy chủ nội bộ (server.py)." };
-      }
-
-      async function saveLocalTeacherDb() {
-        try {
-          await fetch("/api/db", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(tState.rawLocalDb)
-          });
-        } catch (e) {}
-      }
-
-      // ======================================================================
       // EXPORT CSV (EXCEL-READY WITH UTF-8 BOM)
       // ======================================================================
       function exportCsvReport(rows) {
@@ -518,6 +265,7 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
 
       // ======================================================================
@@ -547,69 +295,19 @@
       }
 
       function renderTeacherLogin() {
-        if (isCloudMode()) {
-          return `
-            <div class="auth-wrapper">
-              <div class="auth-card-box">
-                <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#DCFCE7;color:#166534;padding:3px 9px;border:1.5px solid #18181B;">
-                    TRANG GIÁO VIÊN · SUPABASE CLOUD
-                  </span>
-                </div>
-                <h1 style="font-size:22px;font-weight:900;color:#18181B;margin-bottom:6px;">
-                  Đăng nhập Quản trị Giáo viên
-                </h1>
-                <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
-                  Đăng nhập bằng chính tài khoản <strong>Gmail Giáo viên</strong> đã khai báo trong Supabase để quản lý học viên, nghe lại bài ghi âm và ghi nhận xét.
-                </p>
-
-                ${
-                  tState.authError
-                    ? `<div style="padding:8px 12px;border:1.5px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:12.5px;font-weight:700;margin-bottom:12px;">⚠️ ${escapeHtml(tState.authError)}</div>`
-                    : ""
-                }
-
-                <button type="button" class="google-auth-btn" id="btn-teacher-google-login" ${tState.loading ? "disabled" : ""}>
-                  ${renderGoogleIconSvg(19)}
-                  <span>${tState.loading ? "Đang xác thực quyền Giáo viên..." : "Đăng nhập Giáo viên bằng Google"}</span>
-                </button>
-
-                <div class="auth-or-divider">
-                  <span>Hoặc đăng nhập Email Giáo viên</span>
-                </div>
-
-                <form id="teacher-cloud-email-form" onsubmit="return false;">
-                  <div class="form-field">
-                    <label class="form-label" for="inp-teacher-email">Email Giáo viên</label>
-                    <input type="email" id="inp-teacher-email" class="form-input" placeholder="giaovien@gmail.com" required />
-                  </div>
-                  <div class="form-field">
-                    <label class="form-label" for="inp-teacher-pass">Mật khẩu</label>
-                    <input type="password" id="inp-teacher-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
-                  </div>
-                  <button type="submit" class="form-submit-btn" ${tState.loading ? "disabled" : ""}>
-                    Đăng nhập trang Giáo viên →
-                  </button>
-                </form>
-              </div>
-            </div>
-          `;
-        }
-
-        // Local fallback login
         return `
           <div class="auth-wrapper">
             <div class="auth-card-box">
-              <div style="margin-bottom:10px;">
-                <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#FEF3C7;color:#92400E;padding:3px 9px;border:1.5px solid #18181B;">
-                  CHẾ ĐỘ NỘI BỘ (CHƯA KẾT NỐI SUPABASE)
+              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#DCFCE7;color:#166534;padding:3px 9px;border:1.5px solid #18181B;">
+                  TRANG GIÁO VIÊN · SUPABASE CLOUD
                 </span>
               </div>
               <h1 style="font-size:22px;font-weight:900;color:#18181B;margin-bottom:6px;">
-                Quản lý & Xem Bài làm Học viên
+                Đăng nhập Quản trị Giáo viên
               </h1>
-              <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:14px;">
-                Hiện web đang chạy ở chế độ máy cá nhân (<code>server.py</code>). Khi bạn điền khóa vào <code>supabase-config.js</code> để đưa lên GitHub Pages, trang này sẽ tự động chuyển sang đăng nhập Google bảo mật theo quyền Giáo viên.
+              <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
+                Đăng nhập bằng chính tài khoản <strong>Gmail Giáo viên</strong> đã khai báo trong Supabase để quản lý học viên, nghe lại bài ghi âm và ghi nhận xét.
               </p>
 
               ${
@@ -618,13 +316,26 @@
                   : ""
               }
 
-              <form id="teacher-local-login-form" onsubmit="return false;">
+              <button type="button" class="google-auth-btn" id="btn-teacher-google-login" ${tState.loading ? "disabled" : ""}>
+                ${CLOUD.renderGoogleIconSvg(19)}
+                <span>${tState.loading ? "Đang xác thực quyền Giáo viên..." : "Đăng nhập Giáo viên bằng Google"}</span>
+              </button>
+
+              <div class="auth-or-divider">
+                <span>Hoặc đăng nhập Email Giáo viên</span>
+              </div>
+
+              <form id="teacher-cloud-email-form" onsubmit="return false;">
                 <div class="form-field">
-                  <label class="form-label" for="inp-teacher-key">Mật khẩu Giáo viên nội bộ</label>
-                  <input type="password" id="inp-teacher-key" class="form-input" placeholder="Mặc định: admin123" required autofocus />
+                  <label class="form-label" for="inp-teacher-email">Email Giáo viên</label>
+                  <input type="email" id="inp-teacher-email" class="form-input" placeholder="giaovien@gmail.com" required />
                 </div>
-                <button type="submit" class="form-submit-btn">
-                  Mở Hồ sơ Bài làm Học viên →
+                <div class="form-field">
+                  <label class="form-label" for="inp-teacher-pass">Mật khẩu</label>
+                  <input type="password" id="inp-teacher-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
+                </div>
+                <button type="submit" class="form-submit-btn" ${tState.loading ? "disabled" : ""}>
+                  Đăng nhập trang Giáo viên →
                 </button>
               </form>
             </div>
@@ -655,7 +366,7 @@
             <header class="home-topbar" style="background:#F0FDF4;">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <div class="home-brand-title">👨‍🏫 TRANG GIÁO VIÊN · SPEAKING PART 1</div>
-                <span class="cloud-mode-pill">${isCloudMode() ? "☁️ SUPABASE CLOUD" : "💻 LOCAL SERVER"}</span>
+                <span class="cloud-mode-pill">☁️ SUPABASE CLOUD</span>
               </div>
 
               <div class="topbar-actions">
@@ -671,7 +382,6 @@
             </header>
 
             <main class="home-container">
-              <!-- STATS CARDS -->
               <div class="teacher-stats-grid">
                 <div class="teacher-stat-card">
                   <div class="teacher-stat-label">Tổng số học viên</div>
@@ -691,7 +401,6 @@
                 </div>
               </div>
 
-              <!-- TABS -->
               <div class="teacher-tabs-bar">
                 <button type="button" class="teacher-tab-btn ${tState.activeTab === "submissions" ? "active" : ""}" data-teacher-tab="submissions">
                   🎙️ Bài làm & Ghi âm (${tState.submissions.length})
@@ -894,8 +603,6 @@
                           type="button"
                           class="save-grade-btn"
                           data-save-grade="${escapeHtml(sub.attemptId)}"
-                          data-grade-email="${escapeHtml(sub.studentEmail)}"
-                          data-grade-qid="${escapeHtml(sub.qId)}"
                         >
                           ${tState.savedToastId === sub.attemptId ? "✓ Đã lưu!" : "Lưu nhận xét"}
                         </button>
@@ -922,7 +629,6 @@
       }
 
       function bindTeacherEvents() {
-        // Cloud Google Sign-In
         const btnGoogle = document.getElementById("btn-teacher-google-login");
         if (btnGoogle) {
           btnGoogle.onclick = async () => {
@@ -938,14 +644,18 @@
           };
         }
 
-        // Cloud Email Sign-In
         const cloudEmailForm = document.getElementById("teacher-cloud-email-form");
         if (cloudEmailForm) {
           cloudEmailForm.onsubmit = async e => {
             e.preventDefault();
+            const client = CLOUD.getClient();
+            if (!client) {
+              tState.authError = "Chưa cấu hình kết nối Supabase.";
+              renderTeacherApp();
+              return;
+            }
             const email = (document.getElementById("inp-teacher-email").value || "").trim().toLowerCase();
             const password = (document.getElementById("inp-teacher-pass").value || "").trim();
-            const client = CLOUD.getClient();
             tState.loading = true;
             tState.authError = "";
             renderTeacherApp();
@@ -960,33 +670,11 @@
           };
         }
 
-        // Local Login Form
-        const localLoginForm = document.getElementById("teacher-local-login-form");
-        if (localLoginForm) {
-          localLoginForm.onsubmit = async e => {
-            e.preventDefault();
-            const key = (document.getElementById("inp-teacher-key").value || "").trim();
-            const res = await fetchLocalTeacherDb(key);
-            if (res.ok) {
-              tState.authenticated = true;
-              tState.teacherKey = key;
-              tState.authError = "";
-              sessionStorage.setItem(TEACHER_SESSION_KEY, key);
-              hydrateLocalDb(res.data);
-              renderTeacherApp();
-            } else {
-              tState.authError = res.error || "Mật khẩu không đúng.";
-              renderTeacherApp();
-            }
-          };
-        }
-
-        // Logout
         const btnLogout = document.getElementById("btn-teacher-logout");
         if (btnLogout) {
           btnLogout.onclick = async () => {
-            if (isCloudMode()) {
-              const client = CLOUD.getClient();
+            const client = CLOUD.getClient();
+            if (client) {
               try {
                 await client.auth.signOut();
               } catch (e) {}
@@ -994,37 +682,20 @@
             tState.authenticated = false;
             tState.unauthorizedEmail = "";
             tState.teacherEmail = "";
-            tState.teacherKey = "";
-            sessionStorage.removeItem(TEACHER_SESSION_KEY);
             renderTeacherApp();
           };
         }
 
-        // Refresh
         const btnRefresh = document.getElementById("btn-refresh-data");
         if (btnRefresh) {
-          btnRefresh.onclick = async () => {
-            if (isCloudMode()) {
-              await refreshCloudDashboardData();
-            } else {
-              const res = await fetchLocalTeacherDb(tState.teacherKey);
-              if (res.ok) {
-                hydrateLocalDb(res.data);
-                renderTeacherApp();
-              }
-            }
-          };
+          btnRefresh.onclick = () => refreshCloudDashboardData();
         }
 
-        // Export CSV
         const btnExportCsv = document.getElementById("btn-export-csv");
         if (btnExportCsv) {
-          btnExportCsv.onclick = () => {
-            exportCsvReport(getFilteredSubmissions());
-          };
+          btnExportCsv.onclick = () => exportCsvReport(getFilteredSubmissions());
         }
 
-        // Tabs
         document.querySelectorAll("[data-teacher-tab]").forEach(btn => {
           btn.onclick = () => {
             tState.activeTab = btn.getAttribute("data-teacher-tab");
@@ -1032,7 +703,6 @@
           };
         });
 
-        // Jump from Student row to Student's submissions
         document.querySelectorAll("[data-view-student-subs]").forEach(btn => {
           btn.onclick = () => {
             tState.filterStudent = btn.getAttribute("data-view-student-subs");
@@ -1041,7 +711,6 @@
           };
         });
 
-        // Filters
         const selStudent = document.getElementById("sel-filter-student");
         if (selStudent) {
           selStudent.onchange = e => {
@@ -1064,70 +733,44 @@
           };
         }
 
-        // Save Teacher Grade / Feedback
         document.querySelectorAll("[data-save-grade]").forEach(btn => {
           btn.onclick = async () => {
             const attemptId = btn.getAttribute("data-save-grade");
             const scoreInp = document.getElementById("inp-score-" + attemptId);
             const fbInp = document.getElementById("inp-fb-" + attemptId);
-            const scoreVal = scoreInp ? scoreInp.value.trim() : "";
-            const fbVal = fbInp ? fbInp.value.trim() : "";
-
-            if (isCloudMode()) {
-              await saveCloudGrade(attemptId, scoreVal, fbVal);
-            } else {
-              const email = btn.getAttribute("data-grade-email");
-              const qId = btn.getAttribute("data-grade-qid");
-              if (
-                tState.rawLocalDb.accounts[email] &&
-                tState.rawLocalDb.accounts[email].questionsData &&
-                tState.rawLocalDb.accounts[email].questionsData[qId]
-              ) {
-                tState.rawLocalDb.accounts[email].questionsData[qId].teacherScore = scoreVal;
-                tState.rawLocalDb.accounts[email].questionsData[qId].teacherFeedback = fbVal;
-                await saveLocalTeacherDb();
-                hydrateLocalDb(tState.rawLocalDb);
-                tState.savedToastId = attemptId;
-                renderTeacherApp();
-              }
-            }
+            await saveCloudGrade(
+              attemptId,
+              scoreInp ? scoreInp.value.trim() : "",
+              fbInp ? fbInp.value.trim() : ""
+            );
           };
         });
       }
 
-      // Bootstrap
       window.addEventListener("DOMContentLoaded", async () => {
-        if (isCloudMode()) {
-          const client = CLOUD.getClient();
+        const client = CLOUD.getClient();
+        if (!client) {
+          tState.authError = "Chưa cấu hình kết nối Supabase.";
           renderTeacherApp();
-
-          const { data } = await client.auth.getSession();
-          if (data && data.session && data.session.user) {
-            await verifyAndLoadCloudTeacher(data.session.user);
-          }
-
-          client.auth.onAuthStateChange(async (event, session) => {
-            if (event === "SIGNED_IN" && session && session.user && !tState.authenticated && !tState.unauthorizedEmail) {
-              await verifyAndLoadCloudTeacher(session.user);
-            } else if (event === "SIGNED_OUT") {
-              tState.authenticated = false;
-              tState.unauthorizedEmail = "";
-              tState.teacherEmail = "";
-              renderTeacherApp();
-            }
-          });
           return;
         }
 
-        // Local fallback bootstrap
-        if (tState.teacherKey) {
-          const res = await fetchLocalTeacherDb(tState.teacherKey);
-          if (res.ok) {
-            tState.authenticated = true;
-            hydrateLocalDb(res.data);
-          }
-        }
         renderTeacherApp();
+        const { data } = await client.auth.getSession();
+        if (data && data.session && data.session.user) {
+          await verifyAndLoadCloudTeacher(data.session.user);
+        }
+
+        client.auth.onAuthStateChange(async (event, session) => {
+          if (event === "SIGNED_IN" && session && session.user && !tState.authenticated && !tState.unauthorizedEmail) {
+            await verifyAndLoadCloudTeacher(session.user);
+          } else if (event === "SIGNED_OUT") {
+            tState.authenticated = false;
+            tState.unauthorizedEmail = "";
+            tState.teacherEmail = "";
+            renderTeacherApp();
+          }
+        });
       });
     })();
   </script>
