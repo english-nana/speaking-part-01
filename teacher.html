@@ -36,6 +36,8 @@
         activeTab: "submissions", // "submissions" | "students"
         students: [],
         submissions: [],
+        filterClass: "all", // "all" | "ONB204" | "CB221" | "unassigned"
+        searchNameQuery: "",
         filterStudent: "all",
         filterTopic: "all",
         filterStatus: "all", // "all" | "submitted" | "ungraded" | "graded"
@@ -118,8 +120,10 @@
         });
 
         const profileById = {};
+        const parsedById = {};
         profiles.forEach(p => {
           profileById[p.id] = p;
+          parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
         });
 
         const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(a => a.audio_path).filter(Boolean));
@@ -144,6 +148,7 @@
             email: "",
             auth_provider: "email"
           };
+          const parsedProf = parsedById[chosen.user_id] || CLOUD.parseFullNameAndClass(prof.full_name || "");
           const qMeta = qMetaMap[chosen.question_id] || {
             topicId: chosen.topic_id || "other",
             topicTitle: chosen.topic_id || "Chủ đề",
@@ -157,7 +162,8 @@
 
           submissions.push({
             attemptId: chosen.id,
-            studentName: prof.full_name || prof.email || "Học viên",
+            studentName: parsedProf.fullName || prof.email || "Học viên",
+            studentClass: parsedProf.className || "",
             studentEmail: prof.email || "",
             qId: chosen.question_id,
             topicId: qMeta.topicId,
@@ -185,16 +191,20 @@
           return (b.rawTime || 0) - (a.rawTime || 0);
         });
 
-        tState.students = profiles.map(p => ({
-          id: p.id,
-          name: p.full_name || p.email,
-          email: p.email,
-          authProvider: p.auth_provider || "email",
-          createdAt: CLOUD.formatDateTime(p.created_at),
-          lastActiveAt: CLOUD.formatDateTime(p.last_active_at),
-          vocabCount: vocabCountByUser[p.id] || 0,
-          submittedCount: submittedCountByUser[p.id] || 0
-        }));
+        tState.students = profiles.map(p => {
+          const parsedProf = parsedById[p.id] || CLOUD.parseFullNameAndClass(p.full_name || "");
+          return {
+            id: p.id,
+            name: parsedProf.fullName || p.email,
+            className: parsedProf.className || "",
+            email: p.email,
+            authProvider: p.auth_provider || "email",
+            createdAt: CLOUD.formatDateTime(p.created_at),
+            lastActiveAt: CLOUD.formatDateTime(p.last_active_at),
+            vocabCount: vocabCountByUser[p.id] || 0,
+            submittedCount: submittedCountByUser[p.id] || 0
+          };
+        });
 
         tState.submissions = submissions;
         tState.loading = false;
@@ -237,6 +247,7 @@
         const csvCell = v => `"${String(v || "").replace(/"/g, '""')}"`;
         const header = [
           "Học viên",
+          "Lớp",
           "Email",
           "Chủ đề",
           "Câu hỏi",
@@ -253,6 +264,7 @@
           lines.push(
             [
               sub.studentName,
+              sub.studentClass || "Chưa chọn",
               sub.studentEmail,
               sub.topicTitle,
               `Q${sub.questionNum}: ${sub.prompt}`,
@@ -354,8 +366,31 @@
         `;
       }
 
+      function matchesClassFilter(clsName) {
+        if (tState.filterClass === "all") return true;
+        if (tState.filterClass === "unassigned") return !clsName;
+        return clsName === tState.filterClass;
+      }
+
+      function matchesNameFilter(name, email) {
+        const q = tState.searchNameQuery.trim().toLowerCase();
+        if (!q) return true;
+        return (
+          String(name || "").toLowerCase().includes(q) ||
+          String(email || "").toLowerCase().includes(q)
+        );
+      }
+
+      function getFilteredStudents() {
+        return tState.students.filter(
+          st => matchesClassFilter(st.className) && matchesNameFilter(st.name, st.email)
+        );
+      }
+
       function getFilteredSubmissions() {
         return tState.submissions.filter(sub => {
+          if (!matchesClassFilter(sub.studentClass)) return false;
+          if (!matchesNameFilter(sub.studentName, sub.studentEmail)) return false;
           if (tState.filterStudent !== "all" && sub.studentEmail !== tState.filterStudent) return false;
           if (tState.filterTopic !== "all" && sub.topicId !== tState.filterTopic) return false;
           if (tState.filterStatus === "submitted" && !sub.isOfficiallySubmitted) return false;
@@ -363,6 +398,81 @@
           if (tState.filterStatus === "graded" && !sub.teacherFeedback && !sub.teacherScore) return false;
           return true;
         });
+      }
+
+      function renderClassBadge(className) {
+        return className
+          ? `<span class="class-badge-pill">Lớp ${escapeHtml(className)}</span>`
+          : `<span class="class-badge-pill unassigned">Chưa chọn lớp</span>`;
+      }
+
+      function renderSharedClassAndNameControls(countLabel) {
+        const classStudents = tState.students.filter(st => matchesClassFilter(st.className));
+        return `
+          <div class="teacher-filter-bar">
+            <div style="font-size:13.5px;font-weight:700;color:#18181B;">
+              ${countLabel}
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <input
+                type="text"
+                id="inp-filter-name"
+                class="form-input"
+                style="height:36px;width:220px;font-size:13px;"
+                placeholder="🔍 Tìm theo họ tên học viên..."
+                value="${escapeHtml(tState.searchNameQuery)}"
+              />
+
+              <select id="sel-filter-class" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:700;">
+                <option value="all" ${tState.filterClass === "all" ? "selected" : ""}>Tất cả các lớp</option>
+                ${CLOUD.CLASS_LIST.map(
+                  cls => `
+                  <option value="${cls}" ${tState.filterClass === cls ? "selected" : ""}>Lớp ${cls}</option>
+                `
+                ).join("")}
+                <option value="unassigned" ${tState.filterClass === "unassigned" ? "selected" : ""}>Chưa chọn lớp</option>
+              </select>
+
+              ${
+                tState.activeTab === "submissions"
+                  ? `
+                <select id="sel-filter-student" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
+                  <option value="all">Tất cả học viên (${classStudents.length})</option>
+                  ${classStudents
+                    .map(
+                      a => `
+                      <option value="${escapeHtml(a.email)}" ${tState.filterStudent === a.email ? "selected" : ""}>
+                        ${a.className ? `[${escapeHtml(a.className)}] ` : ""}${escapeHtml(a.name)}
+                      </option>
+                    `
+                    )
+                    .join("")}
+                </select>
+
+                <select id="sel-filter-topic" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
+                  <option value="all">Tất cả đề luyện tập</option>
+                  ${TOPICS.map(
+                    t => `
+                      <option value="${t.id}" ${tState.filterTopic === t.id ? "selected" : ""}>
+                        Đề ${t.number}: ${escapeHtml(t.title)}
+                      </option>
+                    `
+                  ).join("")}
+                </select>
+
+                <select id="sel-filter-status" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
+                  <option value="all" ${tState.filterStatus === "all" ? "selected" : ""}>Mọi trạng thái</option>
+                  <option value="submitted" ${tState.filterStatus === "submitted" ? "selected" : ""}>Chỉ bài đã nộp chính thức</option>
+                  <option value="ungraded" ${tState.filterStatus === "ungraded" ? "selected" : ""}>Chưa nhận xét</option>
+                  <option value="graded" ${tState.filterStatus === "graded" ? "selected" : ""}>Đã có nhận xét</option>
+                </select>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+        `;
       }
 
       function renderTeacherDashboard() {
@@ -437,20 +547,28 @@
       }
 
       function renderStudentsManagementTab(totalQuestionsAllTopics) {
-        if (tState.students.length === 0) {
+        const filteredStudents = getFilteredStudents();
+        const filterBarHtml = renderSharedClassAndNameControls(
+          `Đang hiển thị <strong>${filteredStudents.length}</strong> / ${tState.students.length} học viên`
+        );
+
+        if (filteredStudents.length === 0) {
           return `
+            ${filterBarHtml}
             <div style="padding:36px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;">
-              <p style="font-size:15.5px;font-weight:700;">Chưa có tài khoản học viên nào đăng ký.</p>
+              <p style="font-size:15.5px;font-weight:700;">Chưa có tài khoản học viên nào khớp bộ lọc.</p>
             </div>
           `;
         }
 
         return `
+          ${filterBarHtml}
           <div style="overflow-x:auto;">
             <table class="teacher-students-table">
               <thead>
                 <tr>
                   <th>Học viên</th>
+                  <th>Lớp</th>
                   <th>Đăng nhập qua</th>
                   <th>Tiến độ nộp bài</th>
                   <th>Kho từ vựng</th>
@@ -460,13 +578,14 @@
                 </tr>
               </thead>
               <tbody>
-                ${tState.students
+                ${filteredStudents
                   .map(st => `
                     <tr>
                       <td>
                         <div style="font-weight:800;color:#18181B;">${escapeHtml(st.name)}</div>
                         <div style="font-size:12px;color:#71717A;">${escapeHtml(st.email)}</div>
                       </td>
+                      <td>${renderClassBadge(st.className)}</td>
                       <td>
                         <span class="provider-pill ${st.authProvider === "google" ? "google" : ""}">
                           ${st.authProvider === "google" ? "Google" : "Email"}
@@ -494,44 +613,7 @@
 
       function renderSubmissionsTab(filteredSubs) {
         return `
-          <div class="teacher-filter-bar">
-            <div style="font-size:13.5px;font-weight:700;color:#18181B;">
-              Đang hiển thị <strong>${filteredSubs.length}</strong> bài làm
-            </div>
-
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select id="sel-filter-student" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
-                <option value="all">Tất cả học viên (${tState.students.length})</option>
-                ${tState.students
-                  .map(
-                    a => `
-                    <option value="${escapeHtml(a.email)}" ${tState.filterStudent === a.email ? "selected" : ""}>
-                      ${escapeHtml(a.name)} (${escapeHtml(a.email)})
-                    </option>
-                  `
-                  )
-                  .join("")}
-              </select>
-
-              <select id="sel-filter-topic" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
-                <option value="all">Tất cả đề luyện tập</option>
-                ${TOPICS.map(
-                  t => `
-                    <option value="${t.id}" ${tState.filterTopic === t.id ? "selected" : ""}>
-                      Đề ${t.number}: ${escapeHtml(t.title)}
-                    </option>
-                  `
-                ).join("")}
-              </select>
-
-              <select id="sel-filter-status" class="form-input" style="height:36px;width:auto;font-size:13px;font-weight:600;">
-                <option value="all" ${tState.filterStatus === "all" ? "selected" : ""}>Mọi trạng thái</option>
-                <option value="submitted" ${tState.filterStatus === "submitted" ? "selected" : ""}>Chỉ bài đã nộp chính thức</option>
-                <option value="ungraded" ${tState.filterStatus === "ungraded" ? "selected" : ""}>Chưa nhận xét</option>
-                <option value="graded" ${tState.filterStatus === "graded" ? "selected" : ""}>Đã có nhận xét</option>
-              </select>
-            </div>
-          </div>
+          ${renderSharedClassAndNameControls(`Đang hiển thị <strong>${filteredSubs.length}</strong> bài làm`)}
 
           ${
             filteredSubs.length === 0
@@ -546,12 +628,13 @@
                     sub => `
                     <div class="submission-review-card" style="border:2px solid #18181B;box-shadow:3px 3px 0px #18181B;">
                       <div class="submission-review-top">
-                        <div>
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
                           <span style="font-size:14.5px;font-weight:800;color:#18181B;">
                             👤 ${escapeHtml(sub.studentName)}
                           </span>
-                          <span style="font-size:12.5px;color:#71717A;margin-left:4px;">(${escapeHtml(sub.studentEmail)})</span>
-                          <span style="margin:0 6px;color:#D4D4D8;">|</span>
+                          ${renderClassBadge(sub.studentClass)}
+                          <span style="font-size:12.5px;color:#71717A;">(${escapeHtml(sub.studentEmail)})</span>
+                          <span style="color:#D4D4D8;">|</span>
                           <span style="font-size:12.5px;font-weight:700;color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:4px;">
                             ${escapeHtml(sub.topicTitle)} · Câu ${sub.questionNum}
                           </span>
@@ -722,10 +805,40 @@
         document.querySelectorAll("[data-view-student-subs]").forEach(btn => {
           btn.onclick = () => {
             tState.filterStudent = btn.getAttribute("data-view-student-subs");
+            tState.filterClass = "all";
+            tState.searchNameQuery = "";
             tState.activeTab = "submissions";
             renderTeacherApp();
           };
         });
+
+        const inpFilterName = document.getElementById("inp-filter-name");
+        if (inpFilterName) {
+          inpFilterName.oninput = e => {
+            tState.searchNameQuery = e.target.value;
+            const pos = e.target.selectionStart;
+            renderTeacherApp();
+            const nextInp = document.getElementById("inp-filter-name");
+            if (nextInp) {
+              nextInp.focus();
+              nextInp.setSelectionRange(pos, pos);
+            }
+          };
+        }
+
+        const selFilterClass = document.getElementById("sel-filter-class");
+        if (selFilterClass) {
+          selFilterClass.onchange = e => {
+            tState.filterClass = e.target.value;
+            if (tState.filterStudent !== "all") {
+              const stObj = tState.students.find(s => s.email === tState.filterStudent);
+              if (!stObj || !matchesClassFilter(stObj.className)) {
+                tState.filterStudent = "all";
+              }
+            }
+            renderTeacherApp();
+          };
+        }
 
         const selStudent = document.getElementById("sel-filter-student");
         if (selStudent) {

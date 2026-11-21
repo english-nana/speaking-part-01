@@ -1556,3 +1556,70 @@ button, input, select, textarea {
   background: #DCFCE7;
   color: #166534;
 }
+
+.class-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.class-option-btn {
+  height: 40px;
+  border: 2px solid #18181B;
+  border-radius: 5px;
+  background: #FFFFFF;
+  color: #3F3F46;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.class-option-btn:hover {
+  background: #FFFBEB;
+}
+
+.class-option-btn.active {
+  background: var(--accent-yellow);
+  color: #18181B;
+  font-weight: 800;
+  box-shadow: 2px 2px 0px #18181B;
+}
+
+.class-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #18181B;
+  background: var(--accent-yellow);
+  color: #18181B;
+}
+
+.class-badge-pill.unassigned {
+  background: #F4F4F5;
+  border-color: #D4D4D8;
+  color: #71717A;
+}
+
+.edit-profile-mini-btn {
+  height: 34px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid #D4D4D8;
+  background: #FFFFFF;
+  color: #52525B;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-profile-mini-btn:hover {
+  background: #F4F4F5;
+  color: #18181B;
+  border-color: #18181B;
+}

@@ -18,6 +18,12 @@
     authLoading: false,
     cloudSyncStatus: "",
     isTeacher: false,
+    needsProfileSetup: false,
+    profileFormName: "",
+    profileFormClass: CLOUD.CLASS_LIST[0],
+    profileFormError: "",
+    profileSaving: false,
+    regSelectedClass: CLOUD.CLASS_LIST[0],
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
     selectedLevel: "b1", // "b1" | "b2"
@@ -66,7 +72,7 @@
     const email = String(sessionUser.email || "").trim().toLowerCase();
     const meta = sessionUser.user_metadata || {};
     const appMeta = sessionUser.app_metadata || {};
-    const displayName =
+    const fallbackName =
       String(meta.full_name || meta.name || "").trim() ||
       email
         .split("@")[0]
@@ -78,21 +84,8 @@
     state.cloudSyncStatus = "Đang đồng bộ dữ liệu đám mây...";
     renderApp();
 
-    try {
-      await client.from("profiles").upsert(
-        {
-          id: uid,
-          email: email,
-          full_name: displayName,
-          avatar_url: avatarUrl,
-          auth_provider: provider,
-          last_active_at: new Date().toISOString()
-        },
-        { onConflict: "id" }
-      );
-    } catch (e) {}
-
-    const [vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
+    const [profileRes, vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
+      client.from("profiles").select("*").eq("id", uid).maybeSingle(),
       client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       client.from("question_notes").select("*").eq("user_id", uid),
       client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
@@ -100,6 +93,31 @@
     ]);
 
     state.isTeacher = Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
+
+    // Prefer existing full_name in profiles table so Google login metadata never overwrites student edits
+    const rawStoredName =
+      profileRes && profileRes.data && profileRes.data.full_name
+        ? profileRes.data.full_name
+        : fallbackName;
+    const parsed = CLOUD.parseFullNameAndClass(rawStoredName);
+    const metaClass = String(meta.class_name || "").trim().toUpperCase();
+    const resolvedClass = parsed.className || (CLOUD.CLASS_LIST.includes(metaClass) ? metaClass : "");
+    const resolvedName = parsed.fullName || fallbackName;
+    const storedFullName = CLOUD.formatStoredFullName(resolvedName, resolvedClass);
+
+    try {
+      await client.from("profiles").upsert(
+        {
+          id: uid,
+          email: email,
+          full_name: storedFullName,
+          avatar_url: avatarUrl,
+          auth_provider: provider,
+          last_active_at: new Date().toISOString()
+        },
+        { onConflict: "id" }
+      );
+    } catch (e) {}
 
     const savedVocab = Array.isArray(vocabRes.data)
       ? vocabRes.data.map(row => ({
@@ -151,12 +169,17 @@
 
     currentAccount = {
       id: uid,
-      name: displayName,
+      name: resolvedName,
+      className: resolvedClass,
       email: email,
       savedVocab: savedVocab,
       questionsData: questionsData
     };
 
+    state.needsProfileSetup = !resolvedClass;
+    state.profileFormName = resolvedName;
+    state.profileFormClass = resolvedClass || CLOUD.CLASS_LIST[0];
+    state.profileFormError = "";
     state.authError = "";
     state.authInfo = "";
     state.authLoading = false;
@@ -603,8 +626,23 @@
               isReg
                 ? `
               <div class="form-field">
-                <label class="form-label" for="inp-auth-name">Họ và tên của bạn</label>
+                <label class="form-label" for="inp-auth-name">Họ và tên đầy đủ</label>
                 <input type="text" id="inp-auth-name" class="form-input" placeholder="Ví dụ: Nguyễn Minh Tùng" required />
+              </div>
+
+              <div class="form-field">
+                <label class="form-label">Chọn lớp học của bạn *</label>
+                <div class="class-select-grid">
+                  ${CLOUD.CLASS_LIST.map(
+                    cls => `
+                    <button
+                      type="button"
+                      class="class-option-btn ${state.regSelectedClass === cls ? "active" : ""}"
+                      data-reg-class="${cls}"
+                    >Lớp ${cls}</button>
+                  `
+                  ).join("")}
+                </div>
               </div>
             `
                 : ""
@@ -623,6 +661,101 @@
             <button type="submit" class="form-submit-btn" ${state.authLoading ? "disabled" : ""}>
               ${isReg ? "Tạo tài khoản & Vào học →" : "Đăng nhập →"}
             </button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderProfileSetupView() {
+    const canCancel = Boolean(currentAccount && currentAccount.className);
+    return `
+      <div class="auth-wrapper">
+        <div class="auth-card-box">
+          <div style="margin-bottom:10px;">
+            <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:var(--accent-yellow);padding:3px 9px;border:1.5px solid #18181B;">
+              THÔNG TIN HỌC VIÊN · BẮT BUỘC
+            </span>
+          </div>
+
+          <h1 style="font-size:21px;font-weight:900;color:#18181B;margin-bottom:6px;">
+            ${canCancel ? "Cập nhật Họ tên & Lớp học" : "Hoàn tất thông tin học viên"}
+          </h1>
+          <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:16px;">
+            Vui lòng nhập đầy đủ <strong>Họ và tên</strong> và chọn đúng <strong>Lớp</strong> của bạn để Giáo viên nhận diện và chấm bài ghi âm chính xác.
+          </p>
+
+          ${
+            state.isTeacher
+              ? `
+            <div style="margin-bottom:14px;">
+              <a href="./teacher.html" class="top-pill-btn teacher-nav-pill" style="width:100%;justify-content:center;height:38px;">
+                👨‍🏫 Vào thẳng Trang Giáo viên →
+              </a>
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            state.profileFormError
+              ? `<div style="padding:8px 12px;border:1.5px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:12.5px;font-weight:700;margin-bottom:12px;">⚠️ ${escapeHtml(state.profileFormError)}</div>`
+              : ""
+          }
+
+          <form id="profile-setup-form" onsubmit="return false;">
+            <div class="form-field">
+              <label class="form-label" for="inp-setup-fullname">Họ và tên đầy đủ *</label>
+              <input
+                type="text"
+                id="inp-setup-fullname"
+                class="form-input"
+                placeholder="Ví dụ: Nguyễn Văn An"
+                value="${escapeHtml(state.profileFormName)}"
+                required
+              />
+            </div>
+
+            <div class="form-field" style="margin-bottom:16px;">
+              <label class="form-label">Chọn lớp của bạn *</label>
+              <div class="class-select-grid">
+                ${CLOUD.CLASS_LIST.map(
+                  cls => `
+                  <button
+                    type="button"
+                    class="class-option-btn ${state.profileFormClass === cls ? "active" : ""}"
+                    data-setup-class="${cls}"
+                  >Lớp ${cls}</button>
+                `
+                ).join("")}
+              </div>
+            </div>
+
+            <button type="submit" class="form-submit-btn" ${state.profileSaving ? "disabled" : ""}>
+              ${state.profileSaving ? "Đang lưu thông tin..." : "Lưu thông tin & Vào học →"}
+            </button>
+
+            ${
+              canCancel
+                ? `
+              <button
+                type="button"
+                id="btn-cancel-profile-setup"
+                style="width:100%;height:38px;margin-top:8px;border:1.5px solid #D4D4D8;background:#FFFFFF;font-weight:700;font-size:13px;cursor:pointer;"
+              >
+                Quay lại
+              </button>
+            `
+                : `
+              <button
+                type="button"
+                id="btn-logout-account"
+                style="width:100%;height:36px;margin-top:8px;border:none;background:transparent;color:#71717A;font-weight:600;font-size:12.5px;cursor:pointer;"
+              >
+                Đăng xuất tài khoản khác
+              </button>
+            `
+            }
           </form>
         </div>
       </div>
@@ -650,6 +783,10 @@
             }
             <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
               <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
+            </button>
+
+            <button type="button" class="edit-profile-mini-btn" id="btn-edit-profile" title="Đổi Họ tên hoặc Lớp">
+              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span> ` : ""}✎ Sửa tên/lớp
             </button>
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
@@ -771,6 +908,7 @@
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
               <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
+              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span>` : ""}
               <span>${escapeHtml(currentAccount.name)}</span>
             </button>
           </div>
@@ -1295,6 +1433,8 @@
     let mainHtml = "";
     if (state.view === "auth" || !currentAccount) {
       mainHtml = renderAuthView();
+    } else if (state.needsProfileSetup) {
+      mainHtml = renderProfileSetupView();
     } else if (state.view === "home") {
       mainHtml = renderHomeView();
     } else {
@@ -1370,6 +1510,103 @@
       };
     }
 
+    document.querySelectorAll("[data-reg-class]").forEach(btn => {
+      btn.onclick = () => {
+        state.regSelectedClass = btn.getAttribute("data-reg-class");
+        document.querySelectorAll("[data-reg-class]").forEach(b => {
+          b.classList.toggle("active", b === btn);
+        });
+      };
+    });
+
+    document.querySelectorAll("[data-setup-class]").forEach(btn => {
+      btn.onclick = () => {
+        state.profileFormClass = btn.getAttribute("data-setup-class");
+        document.querySelectorAll("[data-setup-class]").forEach(b => {
+          b.classList.toggle("active", b === btn);
+        });
+      };
+    });
+
+    const profileSetupForm = document.getElementById("profile-setup-form");
+    if (profileSetupForm) {
+      profileSetupForm.onsubmit = async e => {
+        e.preventDefault();
+        const client = CLOUD.getClient();
+        if (!client || !currentAccount) return;
+
+        const nameInp = document.getElementById("inp-setup-fullname");
+        const cleanName = (nameInp ? nameInp.value : state.profileFormName).trim();
+        const chosenClass = String(state.profileFormClass || "").trim().toUpperCase();
+
+        state.profileFormName = cleanName;
+        if (!cleanName) {
+          state.profileFormError = "Vui lòng nhập đầy đủ họ và tên của bạn.";
+          renderApp();
+          return;
+        }
+        if (!CLOUD.CLASS_LIST.includes(chosenClass)) {
+          state.profileFormError = "Vui lòng chọn lớp của bạn (ONB204 hoặc CB221).";
+          renderApp();
+          return;
+        }
+
+        const storedFullName = CLOUD.formatStoredFullName(cleanName, chosenClass);
+        state.profileSaving = true;
+        state.profileFormError = "";
+        renderApp();
+
+        const { error: profErr } = await client.from("profiles").upsert(
+          {
+            id: currentAccount.id,
+            email: currentAccount.email,
+            full_name: storedFullName,
+            last_active_at: new Date().toISOString()
+          },
+          { onConflict: "id" }
+        );
+
+        state.profileSaving = false;
+        if (profErr) {
+          state.profileFormError = "Không lưu được thông tin: " + profErr.message;
+          renderApp();
+          return;
+        }
+
+        try {
+          await client.auth.updateUser({
+            data: { full_name: storedFullName, class_name: chosenClass }
+          });
+        } catch (err) {}
+
+        currentAccount.name = cleanName;
+        currentAccount.className = chosenClass;
+        state.needsProfileSetup = false;
+        if (state.view === "auth") state.view = "home";
+        renderApp();
+      };
+    }
+
+    const btnCancelSetup = document.getElementById("btn-cancel-profile-setup");
+    if (btnCancelSetup) {
+      btnCancelSetup.onclick = () => {
+        state.needsProfileSetup = false;
+        state.profileFormError = "";
+        renderApp();
+      };
+    }
+
+    const btnEditProfile = document.getElementById("btn-edit-profile");
+    if (btnEditProfile && currentAccount) {
+      btnEditProfile.onclick = () => {
+        state.profileFormName = currentAccount.name || "";
+        state.profileFormClass = currentAccount.className || CLOUD.CLASS_LIST[0];
+        state.profileFormError = "";
+        state.needsProfileSetup = true;
+        renderApp();
+      };
+    }
+
     const authForm = document.getElementById("auth-form");
     if (authForm) {
       authForm.onsubmit = async e => {
@@ -1386,6 +1623,7 @@
         const name = (nameEl ? nameEl.value : "").trim();
         const email = (emailEl ? emailEl.value : "").trim().toLowerCase();
         const password = (passEl ? passEl.value : "").trim();
+        const chosenClass = state.regSelectedClass || CLOUD.CLASS_LIST[0];
 
         if (!email || !password) {
           state.authError = "Vui lòng nhập đầy đủ Email và Mật khẩu.";
@@ -1402,7 +1640,7 @@
         if (state.authMode === "register") {
           if (!name) {
             state.authLoading = false;
-            state.authError = "Vui lòng nhập họ và tên của bạn.";
+            state.authError = "Vui lòng nhập đầy đủ họ và tên của bạn.";
             renderApp();
             return;
           }
@@ -1416,7 +1654,10 @@
             email: email,
             password: password,
             options: {
-              data: { full_name: name },
+              data: {
+                full_name: CLOUD.formatStoredFullName(name, chosenClass),
+                class_name: chosenClass
+              },
               emailRedirectTo: CLOUD.getRedirectUrl()
             }
           });
@@ -1461,6 +1702,7 @@
         }
         currentAccount = null;
         state.isTeacher = false;
+        state.needsProfileSetup = false;
         state.view = "auth";
         state.authMode = "login";
         state.authError = "";
@@ -1738,6 +1980,7 @@
       } else if (event === "SIGNED_OUT") {
         currentAccount = null;
         state.isTeacher = false;
+        state.needsProfileSetup = false;
         state.view = "auth";
         renderApp();
       }

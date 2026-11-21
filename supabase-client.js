@@ -4,6 +4,7 @@
 
 (function () {
   const AUDIO_BUCKET = "speaking-recordings";
+  const CLASS_LIST = ["ONB204", "CB221"];
   let cachedClient = null;
 
   function getClient() {
@@ -61,6 +62,32 @@
     if (isNaN(d.getTime())) return String(isoOrText);
     const pad = n => (n < 10 ? "0" + n : "" + n);
     return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function parseFullNameAndClass(rawFullName) {
+    const raw = String(rawFullName || "").trim();
+    const match = raw.match(/^\[([A-Za-z0-9_-]+)\]\s*(.*)$/);
+    if (match) {
+      const candidateClass = match[1].toUpperCase();
+      if (CLASS_LIST.includes(candidateClass)) {
+        return {
+          className: candidateClass,
+          fullName: match[2].trim()
+        };
+      }
+    }
+    return {
+      className: "",
+      fullName: raw
+    };
+  }
+
+  function formatStoredFullName(fullName, className) {
+    const cleanName = String(fullName || "").trim();
+    const upperClass = String(className || "").trim().toUpperCase();
+    return upperClass && CLASS_LIST.includes(upperClass)
+      ? `[${upperClass}] ${cleanName}`
+      : cleanName;
   }
 
   function renderGoogleIconSvg(size) {
@@ -125,12 +152,15 @@
   }
 
   window.SpeakingCloud = {
+    CLASS_LIST,
     getClient,
     getRedirectUrl,
     signInWithGoogle,
     escapeHtml,
     formatDuration,
     formatDateTime,
+    parseFullNameAndClass,
+    formatStoredFullName,
     renderGoogleIconSvg,
     uploadRecording,
     deleteRecording,
