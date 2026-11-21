@@ -50,6 +50,7 @@
     googleModalError: "",
     currentUserEmail: "",
     currentUserId: "",
+    isTeacher: false,
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
     selectedLevel: "b1", // "b1" | "b2"
@@ -120,12 +121,14 @@
       );
     } catch (e) {}
 
-    // 2. Fetch vocab, idea notes, and attempts in parallel
-    const [vocabRes, notesRes, attemptsRes] = await Promise.all([
+    // 2. Fetch vocab, idea notes, attempts, and server-side teacher role in parallel
+    const [vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
       client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       client.from("question_notes").select("*").eq("user_id", uid),
-      client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true })
+      client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+      client.rpc("is_teacher")
     ]);
+    state.isTeacher = Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
 
     const savedVocab = Array.isArray(vocabRes.data)
       ? vocabRes.data.map(row => ({
@@ -1018,6 +1021,11 @@
           <div class="home-brand-title" id="btn-home-title">SPEAKING PART 1</div>
 
           <div class="topbar-actions">
+            ${
+              state.isTeacher
+                ? `<a href="./teacher.html" class="top-pill-btn" style="background:#DCFCE7;color:#166534;text-decoration:none;">👨‍🏫 Quản lý &amp; Xem bài học viên</a>`
+                : ""
+            }
             <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
               <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
             </button>
@@ -1132,6 +1140,11 @@
           </div>
 
           <div class="topbar-actions">
+            ${
+              state.isTeacher
+                ? `<a href="./teacher.html" class="top-pill-btn" style="background:#DCFCE7;color:#166534;text-decoration:none;">👨‍🏫 Trang Giáo viên</a>`
+                : ""
+            }
             <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
               <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
             </button>
@@ -1998,6 +2011,7 @@
         }
         state.currentUserEmail = "";
         state.currentUserId = "";
+        state.isTeacher = false;
         state.view = "auth";
         state.authMode = "login";
         state.authError = "";
