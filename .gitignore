@@ -1,2 +1,17 @@
-node_modules/
+# Hệ điều hành
 .DS_Store
+Thumbs.db
+
+# Dữ liệu lưu tạm nội bộ, file thiết lập riêng tư & tài nguyên nháp không đẩy lên GitHub công khai
+.github/
+submissions/
+Draft/
+old data/
+kien-thuc-co-ban/
+assets/
+supabase-setup.sql
+HUONG_DAN_CAI_DAT_SUPABASE_GITHUB.md
+*.command
+server.py
+__pycache__/
+*.pyc

@@ -1,2282 +1,2311 @@
-// Ghi chú: File này chứa mã React của ứng dụng.
-// Để mở trực tiếp bằng cách click đúp index.html (giao thức file://) mà không bị lỗi CORS của trình duyệt,
-// mã này được đồng bộ vào index.html qua lệnh: node scripts/build.js
+// ==========================================================================
+// SPEAKING PART 1 — STUDENT APPLICATION ENGINE (index.html)
+// Clean student-only interface:
+// - Student Login / Register (no visibility into other accounts or teacher portal)
+// - Personal Vocabulary Bank ("Kho từ vựng của tôi") across all topics
+// - Click-to-Hear Vocabulary with IPA in Section V
+// - Idea Notes ("Ghi chú ý tưởng") per question
+// - Multi-Take Audio Recording + Live Speech-to-Text + Choose Take to Submit
+// ==========================================================================
 
-const { useState, useEffect, useRef } = React;
+(function () {
+  const LS_KEY = "speaking_part1_student_ls_v4";
+  const SESSION_KEY = "speaking_part1_current_user_v4";
+  const IDB_NAME = "speaking_part1_permanent_idb";
+  const IDB_STORE = "app_database";
+  const TOPICS = window.SPEAKING_TOPICS || [];
+  const CLOUD = window.SpeakingCloud || { isEnabled: () => false };
 
- // TỔNG HỢP DANH SÁCH
- const vstepGroupsData = [group1, group2, group3, group4, group5, group6, group7, group8];
- const customOrder = ['group3', 'group4', 'group5', 'group6', 'group2', 'group1', 'group7', 'group8'];
- const sortedVstepGroups = [...vstepGroupsData].sort((a, b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id));
+  const defaultVocabDeck = [
+    {
+      word: "prefer",
+      ipa: "/prɪˈfɜːr/",
+      pos: "v.",
+      meaning: "thích hơn",
+      example: "I prefer traveling with my friends because it is very fun and safe.",
+      topic: "Travelling"
+    },
+    {
+      word: "local food",
+      ipa: "/ˈloʊkl fuːd/",
+      pos: "n. phr.",
+      meaning: "đồ ăn địa phương",
+      example: "We can also try local food at the market.",
+      topic: "Travelling"
+    }
+  ];
 
- const POSITIONS = {
-  n: { label: 'n', color: 'bg-blue-50 text-blue-600 border-blue-200' },
-  v: { label: 'v', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
-  adj: { label: 'adj', color: 'bg-amber-50 text-amber-600 border-amber-200' },
-  adv: { label: 'adv', color: 'bg-purple-50 text-purple-600 border-purple-200' },
-  phrase: { label: 'cụm từ', color: 'bg-rose-50 text-rose-600 border-rose-200' }
+  let db = {
+    accounts: {}
   };
 
-  // --- HỆ THỐNG ICONS ---
- const iconRenderers = {
- Volume2: (props) => <svg {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>,
- ChevronRight: (props) => <svg {...props}><path d="m9 18 6-6-6-6"/></svg>,
- ChevronDown: (props) => <svg {...props}><path d="m6 9 6 6 6-6"/></svg>,
- BookOpen: (props) => <svg {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
- List: (props) => <svg {...props}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>,
- Info: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
- ArrowRight: (props) => <svg {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
- Lightbulb: (props) => <svg {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
- Mic: (props) => <svg {...props}><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>,
- Menu: (props) => <svg {...props}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
- X: (props) => <svg {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
- Play: (props) => <svg {...props}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
- Pause: (props) => <svg {...props}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
- Clock: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
- Award: (props) => <svg {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
- HelpCircle: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
- FileText: (props) => <svg {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
- Activity: (props) => <svg {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
- RotateCcw: (props) => <svg {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
- Sparkles: (props) => <svg {...props}><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>,
- LinkIcon: (props) => <svg {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
- CheckCircle2: (props) => <svg {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
- };
- const Icon = ({ name, size = 24, className = "" }) => {
-  const svgProps = { xmlns:"http://www.w3.org/2000/svg", width: size, height: size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2", strokeLinecap:"round", strokeLinejoin:"round", className };
-  return iconRenderers[name]?.(svgProps) || null;
- };
-
- const Volume2 = (props) => <Icon name="Volume2" {...props} />;
- const ChevronRight = (props) => <Icon name="ChevronRight" {...props} />;
- const ChevronDown = (props) => <Icon name="ChevronDown" {...props} />;
- const BookOpen = (props) => <Icon name="BookOpen" {...props} />;
- const List = (props) => <Icon name="List" {...props} />;
- const Info = (props) => <Icon name="Info" {...props} />;
- const ArrowRight = (props) => <Icon name="ArrowRight" {...props} />;
- const Lightbulb = (props) => <Icon name="Lightbulb" {...props} />;
- const Mic = (props) => <Icon name="Mic" {...props} />;
- const Menu = (props) => <Icon name="Menu" {...props} />;
- const X = (props) => <Icon name="X" {...props} />;
- const Play = (props) => <Icon name="Play" {...props} />;
- const Pause = (props) => <Icon name="Pause" {...props} />;
- const Clock = (props) => <Icon name="Clock" {...props} />;
- const Award = (props) => <Icon name="Award" {...props} />;
- const HelpCircle = (props) => <Icon name="HelpCircle" {...props} />;
- const FileText = (props) => <Icon name="FileText" {...props} />;
- const Activity = (props) => <Icon name="Activity" {...props} />;
- const RotateCcw = (props) => <Icon name="RotateCcw" {...props} />;
- const Sparkles = (props) => <Icon name="Sparkles" {...props} />;
- const LinkIcon = (props) => <Icon name="LinkIcon" {...props} />;
- const CheckCircle2 = (props) => <Icon name="CheckCircle2" {...props} />;
-
- // --- HỆ THỐNG ĐỌC GIỌNG NÓI ---
- const speakText = (text) => {
- if (window.currentAudio) {
-  window.currentAudio.pause();
- }
- if ('speechSynthesis' in window) window.speechSynthesis.cancel();
- const url =`https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=en-US&client=tw-ob`;
- const audio = new Audio(url);
- window.currentAudio = audio;
- audio.play().catch(error => {
- console.warn("Mạng lỗi hoặc Google chặn, chuyển sang giọng mặc định của máy...", error);
- fallbackSpeakText(text);
- });
- };
-
- const fallbackSpeakText = (text) => {
- if (!('speechSynthesis' in window)) return;
- window.speechSynthesis.cancel();
- const utterance = new SpeechSynthesisUtterance(text);
- utterance.lang = 'en-US';
- utterance.rate = 0.85;
- window.speechSynthesis.speak(utterance);
- };
-
- // --- CÁC COMPONENT GIAO DIỆN ---
- const VocabCard = React.memo(({ word, ipa, pos, vi, example, subItems }) => {
- const [activeSubItem, setActiveSubItem] = useState(null);
- const displayPos = POSITIONS[pos] || { label: pos, color: 'bg-slate-50 text-slate-600 border-slate-200' };
-
- return (
- <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
- <div className="flex justify-between items-start mb-2 gap-2">
- <div className="flex-1 min-w-0">
- <h4 className="text-lg font-bold text-slate-800 flex items-center flex-wrap gap-2">
- <span dangerouslySetInnerHTML={{ __html: word }}></span>
- {pos !== 'phrase' && (
- <span className={`text-[13px] font-semibold px-2.5 py-0.5 rounded-md border whitespace-nowrap flex-shrink-0 ${displayPos.color}`}>
- {displayPos.label}
- </span>
- )}
- {vi && <span className="text-indigo-600 font-bold text-base ml-2">{vi}</span>}
- </h4>
- <p className="text-slate-500 text-sm font-mono mt-1 break-words">{ipa}</p>
- </div>
- <button 
- onClick={(e) => { e.stopPropagation(); speakText(word); }}
- className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0 mb-3"
- title="Nghe phát âm từ vựng"
- >
- <Volume2 size={20} />
- </button>
- </div>
- <div className="bg-slate-50 p-3.5 rounded-lg flex items-start gap-3">
- <button 
- onClick={(e) => { e.stopPropagation(); speakText(example.replace(/<[^>]*>?/gm, '')); }}
- className="mt-0.5 text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0"
- title="Nghe phát âm câu ví dụ"
- >
- <Volume2 size={16} />
- </button>
- <p className="text-slate-700 text-sm italic leading-relaxed font-light" dangerouslySetInnerHTML={{ __html: `"${example}"` }}></p>
- </div>
- {subItems && subItems.length > 0 && (
- <div className="mt-3 flex flex-wrap gap-2">
- {subItems.map((item, idx) => (
- <button 
- key={idx}
- onClick={() => setActiveSubItem(activeSubItem === idx ? null : idx)}
- className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors border ${activeSubItem === idx ? 'bg-indigo-100 text-indigo-700 border-indigo-200 ' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 '}`}
- >
- {item.en}
- {activeSubItem === idx && <span className="ml-2 text-red-500 font-light">{item.vi}</span>}
- </button>
- ))}
- </div>
- )}
- </div>
- );
- });
-
- const QuestionBlock = React.memo(({ question, idx }) => {
- const [activeTab, setActiveTab] = useState('b1');
- const [translatedSentence, setTranslatedSentence] = useState(null);
- const [showQuestionVi, setShowQuestionVi] = useState(false);
- const [fontSize, setFontSize] = useState(16);
- 
- // Logic xử lý âm thanh mẫu
- const audioRef = React.useRef(null);
- const [isPlaying, setIsPlaying] = useState(false);
-
- // Nếu tab đang chọn (ví dụ C1) không tồn tại trong câu hỏi này thì fallback về 'b1'
- const effectiveTab = (question && question[activeTab] && Array.isArray(question[activeTab])) ? activeTab : 'b1';
-
- // Tự động dừng âm thanh khi chuyển Tab (B1/B2/C1)
- useEffect(() => {
- if (audioRef.current) {
- audioRef.current.pause();
- setIsPlaying(false);
- }
- }, [effectiveTab]);
-
- useEffect(() => {
- if (!question || !question[activeTab] || !Array.isArray(question[activeTab])) {
- setActiveTab('b1');
- }
- }, [question, activeTab]);
-
- const handlePlayAudio = () => {
- const audioUrl = question && question.audioFiles ? question.audioFiles[effectiveTab] : null;
- if (!audioUrl) return;
-
- if (isPlaying) {
- audioRef.current.pause();
- setIsPlaying(false);
- } else {
- if (!audioRef.current || audioRef.current.src !== new URL(audioUrl, document.baseURI).href) {
- audioRef.current = new Audio(audioUrl);
- audioRef.current.onended = () => setIsPlaying(false);
- }
- const playPromise = audioRef.current.play();
- if (playPromise?.catch) {
-  playPromise.catch(() => setIsPlaying(false));
- }
- setIsPlaying(true);
- }
- };
-
- const handleSentenceClick = (item) => {
- if (translatedSentence && translatedSentence.en === item.en) {
- setTranslatedSentence(null);
- } else {
- setTranslatedSentence(item);
- }
- };
-
- const currentAnswer = (question && question[effectiveTab]) || (question && question.b1) || [];
-
- const currentIdeaMap = React.useMemo(() => {
- if (question && question.ideaMap && question.ideaMap[effectiveTab]) {
- return question.ideaMap[effectiveTab];
- }
- return [];
- }, [question, effectiveTab]);
-
- return (
- <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
- <div 
- className="bg-indigo-50 p-4 sm:p-5 border-b border-indigo-100 cursor-pointer hover:bg-indigo-100/80 transition-colors"
- onClick={() => setShowQuestionVi(!showQuestionVi)}
- title="Nhấn để xem/ẩn nghĩa tiếng Việt"
- >
- <div className="flex gap-3">
- <span className="bg-indigo-600 text-white font-bold w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-sm sm:text-base">
- {idx + 1}
- </span>
- <div>
- <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight">{question.q.en}</h3>
- {showQuestionVi && (
- <p className="text-indigo-600 text-base sm:text-lg font-light mt-1 animate-fade-in">{question.q.vi}</p>
- )}
- </div>
- </div>
- </div>
-
- {currentIdeaMap && currentIdeaMap.length > 0 && (
- <div className="px-4 sm:px-5 py-4 border-b border-slate-100 bg-slate-50 ">
- <h4 className="text-xs font-bold text-violet-600 uppercase tracking-wider mb-2 flex items-center gap-1">
- <List size={14} className="text-violet-500" /> IDEA MAP <span className={effectiveTab === 'b1' ? 'text-blue-600' : effectiveTab === 'b2' ? 'text-green-600' : 'text-purple-600'}>({effectiveTab.toUpperCase()})</span>
- </h4>
- <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
- {currentIdeaMap.map((idea, i) => (
- <React.Fragment key={i}>
- <span className="bg-white border border-slate-200 text-slate-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-light shadow-sm">
- {idea}
- </span>
- {i < currentIdeaMap.length - 1 && <ArrowRight size={12} className="text-slate-400 sm:w-3.5 sm:h-3.5" />}
- </React.Fragment>
- ))}
- </div>
- </div>
- )}
-
- <div className="p-4 sm:p-5">
- <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-slate-200 mb-4 gap-3">
- <div className="flex items-end gap-2 sm:gap-4 overflow-x-auto">
- <div className="flex border-r border-slate-200 pr-2">
- <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'b1' ? 'text-blue-600 ' : 'text-slate-400'}`}
- onClick={() => setActiveTab('b1')}
- >
- Level B1 {effectiveTab === 'b1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-md"></span>}
- </button>
- <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'b2' ? 'text-green-600' : 'text-slate-400'}`}
- onClick={() => setActiveTab('b2')}
- >
- Level B2 {effectiveTab === 'b2' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-t-md"></span>}
- </button>
- {question && question.c1 && (
- <button
- className={`pb-2 px-3 font-bold text-sm relative whitespace-nowrap flex-shrink-0 ${effectiveTab === 'c1' ? 'text-purple-600' : 'text-slate-400'}`}
- onClick={() => setActiveTab('c1')}
- >
- Level C1 {effectiveTab === 'c1' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600 rounded-t-md"></span>}
- </button>
- )}
- </div>
-
- {/* Cỡ chữ */}
- <div className="flex border-r border-slate-200 pr-2 pl-1 flex-shrink-0">
- <button onClick={() => setFontSize(prev => Math.max(14, prev - 2))} className="pb-2 px-1.5 font-bold text-sm relative whitespace-nowrap flex-shrink-0 text-slate-400 hover:text-slate-700 transition-colors" title="Giảm cỡ chữ">-</button>
- <button onClick={() => setFontSize(16)} className="pb-2 px-1.5 font-bold text-sm relative whitespace-nowrap flex-shrink-0 text-slate-400 hover:text-slate-700 transition-colors" title="Cỡ chữ mặc định">Mặc định</button>
- <button onClick={() => setFontSize(prev => Math.min(32, prev + 2))} className="pb-2 px-1.5 font-bold text-sm relative whitespace-nowrap flex-shrink-0 text-slate-400 hover:text-slate-700 transition-colors" title="Tăng cỡ chữ">+</button>
- </div>
-
- {/* Nút nghe file MP3 thực tế */}
- {question && question.audioFiles && question.audioFiles[effectiveTab] && (
- <button
- onClick={handlePlayAudio}
- className={`flex items-center gap-2 px-3 py-1 mb-2 rounded-full text-xs font-bold transition-all shadow-sm whitespace-nowrap flex-shrink-0 ${
- isPlaying 
- ? 'bg-rose-500 text-white animate-pulse' 
- : 'bg-indigo-600 text-white hover:bg-indigo-700'
- }`}
- >
- {isPlaying ? <><span className="block w-2 h-2 bg-white rounded-full"></span> ĐANG NGHE...</> : <><Volume2 size={14} /> NGHE BÀI MẪU</>}
- </button>
- )}
- </div>
- <p className="text-slate-400 text-[11px] pb-2 hidden sm:flex items-center gap-1">
- <Info size={12} /> Bấm vào câu để xem nghĩa
- </p>
- </div>
-
- <div className="text-slate-700 leading-relaxed text-justify transition-all font-light" style={{ fontSize: `${fontSize}px` }}>
- {Array.isArray(currentAnswer) && currentAnswer.map((sentence, i) => {
- const isSelected = translatedSentence?.en === sentence.en;
- return (
- <span key={i} className="inline">
- <span 
- onClick={() => handleSentenceClick(sentence)}
- className={`cursor-pointer transition-colors ${isSelected ? '' : 'hover:bg-slate-50 '}`}
- >
- {sentence.en}
- </span>
- {isSelected && (
- <span className="inline animate-fade-in font-light text-amber-700 ml-1.5 mr-0.5">
- {sentence.vi}
- </span>
- )}
- {" "}
- </span>
- );
- })}
- </div>
- </div>
- </div>
- );
- });
-
- 
-  // --- VIDEO MINH HOẠ CHUYỂN ĐỘNG MỞ RỘNG Ý (ANIMATED MOTION VIDEO) ---
-  const VisualAnswerFlow = () => {
-    const [activeMode, setActiveMode] = useState('chain'); // 'chain' | 'dual'
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0); // 0 đến 18.0s
-    const [autoSpeak, setAutoSpeak] = useState(false);
-    const spokenScenesRef = useRef({});
-
-    const totalDuration = 18.0;
-
-    // Quản lý đồng hồ thời gian video
-    useEffect(() => {
-      let interval = null;
-      if (isPlaying) {
-        interval = setInterval(() => {
-          setCurrentTime((prev) => {
-            if (prev >= totalDuration) {
-              setIsPlaying(false);
-              return totalDuration;
-            }
-            return parseFloat((prev + 0.1).toFixed(1));
-          });
-        }, 100);
-      }
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    }, [isPlaying, totalDuration]);
-
-    // Tự động đọc giọng nói nếu bật autoSpeak
-    useEffect(() => {
-      if (!autoSpeak || !isPlaying) return;
-
-      if (activeMode === 'chain') {
-        if (currentTime >= 0.4 && currentTime < 0.7 && !spokenScenesRef.current['chain_1']) {
-          spokenScenesRef.current['chain_1'] = true;
-          speakText("I prefer watching films at home");
-        }
-        if (currentTime >= 3.5 && currentTime < 3.8 && !spokenScenesRef.current['chain_2']) {
-          spokenScenesRef.current['chain_2'] = true;
-          speakText("because it is more comfortable.");
-        }
-        if (currentTime >= 8.0 && currentTime < 8.3 && !spokenScenesRef.current['chain_3']) {
-          spokenScenesRef.current['chain_3'] = true;
-          speakText("I mean, I can pause the movie whenever I want.");
-        }
-        if (currentTime >= 13.0 && currentTime < 13.3 && !spokenScenesRef.current['chain_4']) {
-          spokenScenesRef.current['chain_4'] = true;
-          speakText("And I usually watch films with my family on weekends.");
-        }
-      } else {
-        if (currentTime >= 0.4 && currentTime < 0.7 && !spokenScenesRef.current['dual_1']) {
-          spokenScenesRef.current['dual_1'] = true;
-          speakText("I prefer watching films at home because it is affordable. It helps me save money.");
-        }
-        if (currentTime >= 6.0 && currentTime < 6.3 && !spokenScenesRef.current['dual_2']) {
-          spokenScenesRef.current['dual_2'] = true;
-          speakText("Besides, it gives me complete freedom and privacy.");
-        }
-        if (currentTime >= 11.0 && currentTime < 11.3 && !spokenScenesRef.current['dual_3']) {
-          spokenScenesRef.current['dual_3'] = true;
-          speakText("I can wear my pajamas and lie comfortably on the couch.");
-        }
-      }
-    }, [currentTime, autoSpeak, isPlaying, activeMode]);
-
-    const handlePlayPause = () => {
-      if (currentTime >= totalDuration) {
-        setCurrentTime(0);
-        spokenScenesRef.current = {};
-        setIsPlaying(true);
-      } else {
-        setIsPlaying(!isPlaying);
-      }
-    };
-
-    const handleReplay = () => {
-      setCurrentTime(0);
-      spokenScenesRef.current = {};
-      setIsPlaying(true);
-    };
-
-    const handleSeek = (time) => {
-      setCurrentTime(time);
-      if (time === 0) spokenScenesRef.current = {};
-    };
-
-    const handleModeSwitch = (mode) => {
-      setActiveMode(mode);
-      setCurrentTime(0);
-      spokenScenesRef.current = {};
-      setIsPlaying(false);
-    };
-
-    const formatTime = (secs) => {
-      const m = Math.floor(secs / 60);
-      const s = Math.floor(secs % 60);
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    };
-
-    // Điều kiện hiển thị theo thời gian (Mode 1: Chuỗi Móc Xích)
-    const showChain1 = currentTime >= 0.2;
-    const showChain2 = currentTime >= 3.5;
-    const hook1Active = currentTime >= 6.5; // Bốc từ khóa "comfortable"
-    const showChain3 = currentTime >= 8.0;
-    const hook2Active = currentTime >= 11.5; // Bốc từ khóa "pause the movie"
-    const showChain4 = currentTime >= 13.0;
-    const showChainComplete = currentTime >= 16.5;
-
-    // Điều kiện hiển thị (Mode 2: Hai Luồng Ý Tưởng)
-    const showDual1 = currentTime >= 0.2;
-    const showDualBridge = currentTime >= 5.5; // Cầu nối chuyển ý
-    const showDual2 = currentTime >= 9.0;
-    const showDualExpand = currentTime >= 12.0;
-    const showDualComplete = currentTime >= 16.0;
-
-    return (
-      <section className="space-y-4 mt-8">
-        {/* TIÊU ĐỀ SECTION */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-amber-400 shadow-sm">
-              <Play size={22} className="ml-0.5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-orange-600">Video minh họa chuyển động</span>
-                <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">18 Giây</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-950">
-                Cơ Chế Bốc Từ Khóa Mở Rộng Ý
-              </h3>
-            </div>
-          </div>
-
-          {/* CHỌN MÔ HÌNH: MÓC XÍCH vs 2 IDEAS */}
-          <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button
-              type="button"
-              onClick={() => handleModeSwitch('chain')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                activeMode === 'chain'
-                  ? 'bg-white text-indigo-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <LinkIcon size={14} />
-              <span>Mô hình 1: Chuỗi Móc Xích</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeSwitch('dual')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                activeMode === 'dual'
-                  ? 'bg-white text-teal-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>Mô hình 2: Hai Ý Tưởng (2 Ideas)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* KHUNG VIDEO ANIMATION PLAYER */}
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-950 text-white shadow-2xl border border-slate-800">
-          {/* HEADER TRONG KHUNG VIDEO */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/60 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
-              </span>
-              <span className="text-slate-300 font-light ml-2 hidden sm:inline">
-                Câu hỏi: "Do you prefer watching films at home or in the cinema?"
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAutoSpeak(!autoSpeak)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
-                autoSpeak ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-              title="Tự động đọc giọng nói khi chạy video"
-            >
-              <Volume2 size={13} />
-              <span>Âm thanh đọc: {autoSpeak ? 'Bật' : 'Tắt'}</span>
-            </button>
-          </div>
-
-          {/* SÂN KHẤU DIỄN HOẠT (STAGE) */}
-          <div className="p-6 sm:p-8 min-h-[380px] flex flex-col justify-center">
-            {activeMode === 'chain' ? (
-              <div className="space-y-4">
-                {/* CÂU 1: TRẢ LỜI TRỰC TIẾP */}
-                <div className={`transition-all duration-500 ${showChain1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
-                      Câu 1 • Trả lời trực tiếp
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-white mt-1.5 leading-snug">
-                    "I prefer watching films at home..."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 Tôi thích xem phim ở nhà hơn...
-                  </p>
-                </div>
-
-                {/* CÂU 2: LÝ DO */}
-                <div className={`transition-all duration-500 ${showChain2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold">
-                      Câu 2 • Giải thích lý do
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-slate-100 mt-1.5 leading-snug">
-                    "...because it is more{' '}
-                    <span
-                      className={`transition-all duration-300 ${
-                        hook1Active
-                          ? 'inline-block bg-amber-400 text-slate-950 font-bold px-2.5 py-0.5 rounded-lg shadow-lg shadow-amber-400/50 scale-110 ring-4 ring-amber-300 animate-pulse'
-                          : 'text-amber-300 font-medium underline'
-                      }`}
-                    >
-                      comfortable
-                    </span>
-                    ."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 ...bởi vì nó thoải mái hơn rất nhiều.
-                  </p>
-                </div>
-
-                {/* BỐC CHI TIẾT 1 TỪ "COMFORTABLE" */}
-                {hook1Active && (
-                  <div className="pl-4 sm:pl-6 my-1 animate-fade-in flex items-center gap-3">
-                    <div className="w-1.5 h-7 bg-gradient-to-b from-amber-400 to-purple-400 rounded-full animate-pulse"></div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs sm:text-sm font-bold shadow-sm">
-                      <span className="flex items-center gap-1">
-                        <LinkIcon size={13} className="text-amber-400" />
-                        Bốc từ khóa <strong>"comfortable"</strong>
-                      </span>
-                      <span className="text-slate-500">➔</span>
-                      <span className="text-slate-200">Não tự hỏi: <em>Thoải mái ở điểm gì?</em></span>
-                    </div>
-                  </div>
-                )}
-
-                {/* CÂU 3: MỞ RỘNG TỪ "COMFORTABLE" */}
-                <div className={`transition-all duration-500 ${showChain3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold">
-                      Câu 3 • Mở rộng từ "comfortable"
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-purple-100 mt-1.5 leading-snug">
-                    "I mean, I can{' '}
-                    <span
-                      className={`transition-all duration-300 ${
-                        hook2Active
-                          ? 'inline-block bg-amber-400 text-slate-950 font-bold px-2.5 py-0.5 rounded-lg shadow-lg shadow-amber-400/50 scale-110 ring-4 ring-amber-300 animate-pulse'
-                          : 'text-amber-300 font-medium underline'
-                      }`}
-                    >
-                      pause the movie
-                    </span>{' '}
-                    whenever I want."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 Ý tôi là, tôi có thể tạm dừng phim bất cứ lúc nào tôi muốn.
-                  </p>
-                </div>
-
-                {/* BỐC CHI TIẾT 2 TỪ "PAUSE THE MOVIE" */}
-                {hook2Active && (
-                  <div className="pl-4 sm:pl-6 my-1 animate-fade-in flex items-center gap-3">
-                    <div className="w-1.5 h-7 bg-gradient-to-b from-purple-400 to-rose-400 rounded-full animate-pulse"></div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-400/10 border border-purple-400/30 text-purple-300 text-xs sm:text-sm font-bold shadow-sm">
-                      <span className="flex items-center gap-1">
-                        <LinkIcon size={13} className="text-purple-400" />
-                        Bốc chi tiết <strong>"pause the movie"</strong>
-                      </span>
-                      <span className="text-slate-500">➔</span>
-                      <span className="text-slate-200">Não tự hỏi: <em>Thường xem với ai, lúc nào?</em></span>
-                    </div>
-                  </div>
-                )}
-
-                {/* CÂU 4: MỞ RỘNG TIẾP SANG ĐỜI THỰC */}
-                <div className={`transition-all duration-500 ${showChain4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold">
-                      Câu 4 • Mở rộng tiếp sang đời thực
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-rose-100 mt-1.5 leading-snug">
-                    "And I usually watch films with my family on weekends."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 Và tôi thường xem cùng gia đình vào dịp cuối tuần.
-                  </p>
-                </div>
-
-                {/* HOÀN THÀNH */}
-                {showChainComplete && (
-                  <div className="mt-3 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 animate-fade-in flex items-center justify-between">
-                    <div className="text-xs sm:text-sm text-emerald-300 font-bold flex items-center gap-2">
-                      <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
-                      <span>Hoàn thành bài nói 4 câu: Mỗi câu sau đều sinh ra từ từ khóa của câu trước!</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleReplay}
-                      className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm"
-                    >
-                      <RotateCcw size={13} /> Xem lại
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* MODE 2: HAI LUỒNG Ý TƯỞNG (DUAL IDEAS) */
-              <div className="space-y-4">
-                {/* Ý TƯỞNG 1 */}
-                <div className={`transition-all duration-500 ${showDual1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-400 border border-teal-500/30 text-xs font-bold">
-                      Ý tưởng 1 • Tiết kiệm (Affordable)
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-white mt-1.5 leading-snug">
-                    "I prefer watching films at home because it is{' '}
-                    <span className="text-amber-300 underline font-medium">affordable</span>; staying home helps me save money."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 Tôi thích xem ở nhà vì tiết kiệm; ở nhà giúp tôi tiết kiệm tiền vé.
-                  </p>
-                </div>
-
-                {/* CẦU NỐI CHUYỂN Ý */}
-                {showDualBridge && (
-                  <div className="my-2 animate-fade-in">
-                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-400/40 text-orange-300 text-xs sm:text-sm font-bold shadow-sm">
-                      <Sparkles size={16} className="text-amber-400 animate-pulse" />
-                      <span>⚡ Cầu nối chuyển ý: Dùng liên từ <strong>"Besides, ..."</strong> để đổi kênh sang Ý 2 mượt mà!</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Ý TƯỞNG 2 */}
-                <div className={`transition-all duration-500 ${showDual2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold">
-                      Ý tưởng 2 • Tự do & Riêng tư (Freedom)
-                    </span>
-                  </div>
-                  <p className="text-lg sm:text-2xl font-light text-indigo-100 mt-1.5 leading-snug">
-                    "Besides, it gives me complete{' '}
-                    <span className="text-amber-300 underline font-medium">freedom and privacy</span>."
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                    👉 Ngoài ra, nó còn cho tôi sự tự do và riêng tư tuyệt đối.
-                  </p>
-                </div>
-
-                {/* MỞ RỘNG Ý TƯỞNG 2 */}
-                {showDualExpand && (
-                  <div className="animate-fade-in pl-4 sm:pl-6 border-l-2 border-indigo-500/40">
-                    <p className="text-base sm:text-xl font-light text-slate-200 leading-snug">
-                      "I can simply wear my pajamas, lie on the couch, and watch peacefully."
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-400 font-light mt-0.5">
-                      👉 Tôi có thể mặc đồ ngủ, nằm ườn trên sofa và xem phim bình yên.
-                    </p>
-                  </div>
-                )}
-
-                {/* HOÀN THÀNH DUAL */}
-                {showDualComplete && (
-                  <div className="mt-3 p-3.5 rounded-xl bg-teal-500/15 border border-teal-500/40 animate-fade-in flex items-center justify-between">
-                    <div className="text-xs sm:text-sm text-teal-300 font-bold flex items-center gap-2">
-                      <CheckCircle2 size={18} className="text-teal-400 flex-shrink-0" />
-                      <span>Hoàn thành mô hình 2 Ideas: Rõ ràng, đa chiều, giàu liên từ chuẩn B2 - C1!</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleReplay}
-                      className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-teal-500 text-slate-950 hover:bg-teal-400 transition-colors flex items-center gap-1 flex-shrink-0 shadow-sm"
-                    >
-                      <RotateCcw size={13} /> Xem lại
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* THANH ĐIỀU KHIỂN VIDEO (CONTROLS BAR) */}
-          <div className="px-5 py-4 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-4">
-            {/* NÚT PLAY / PAUSE VÀ REPLAY */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePlayPause}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-md active:scale-95"
-                title={isPlaying ? 'Tạm dừng' : 'Phát video'}
-              >
-                {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
-              </button>
-              <button
-                type="button"
-                onClick={handleReplay}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
-                title="Xem lại từ đầu"
-              >
-                <RotateCcw size={15} />
-              </button>
-            </div>
-
-            {/* SEEKBAR TIẾN TRÌNH */}
-            <div className="flex-1 w-full flex items-center gap-3">
-              <div
-                className="relative flex-1 h-2 bg-slate-800 rounded-full cursor-pointer group"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const clickX = e.clientX - rect.left;
-                  const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-                  handleSeek(parseFloat((ratio * totalDuration).toFixed(1)));
-                }}
-              >
-                {/* THANH TIẾN TRÌNH ĐÃ CHẠY */}
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 rounded-full relative transition-all duration-100"
-                  style={{ width: `${(currentTime / totalDuration) * 100}%` }}
-                >
-                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                </div>
-
-                {/* CÁC ĐIỂM MỐC CHAPTER TRÊN THANH */}
-                <div className="absolute inset-0 flex justify-between pointer-events-none px-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Câu 1"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Câu 2"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Bốc từ khóa 1"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 self-center" title="Bốc từ khóa 2"></span>
-                </div>
-              </div>
-
-              {/* ĐỒNG HỒ THỜI GIAN */}
-              <span className="text-xs font-mono font-bold text-slate-400 whitespace-nowrap">
-                {formatTime(currentTime)} / {formatTime(totalDuration)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* HỘP GHI CHÚ TỐI GIẢN (1 DÒNG ĐẮT GIÁ) */}
-        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 flex items-center gap-2.5 text-xs sm:text-sm font-light text-amber-950">
-          <Lightbulb size={18} className="text-amber-600 flex-shrink-0" />
-          <span>
-            <strong>Bí quyết thực chiến:</strong> Đừng cố nghĩ một chủ đề mới toanh làm não bị nghẽn! Hãy nhặt đúng 1 từ vừa nói ở câu trước, tự hỏi <em>"như thế nào / ví dụ là gì"</em> rồi nói tiếp câu sau.
-          </span>
-        </div>
-      </section>
-    );
+  let state = {
+    view: "home", // "home" | "practice" | "auth"
+    authMode: "login", // "login" | "register"
+    authError: "",
+    authInfo: "",
+    authLoading: false,
+    cloudSyncStatus: "",
+    googleModalOpen: false,
+    googleModalError: "",
+    currentUserEmail: "",
+    currentUserId: "",
+    currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
+    currentQuestionIndex: 0,
+    selectedLevel: "b1", // "b1" | "b2"
+    // Recording runtime state
+    isRecording: false,
+    recordingSeconds: 0,
+    liveTranscript: "",
+    submitSuccessMsg: "",
+    // Student Vocabulary Modal
+    vocabModalOpen: false,
+    vocabSearchQuery: ""
   };
 
-  // --- COMPONENT LÝ THUYẾT CHUNG ---
- const GeneralTheory = React.memo(() => {
- const tones = {
- indigo: {
- accent: 'bg-indigo-600',
- soft: 'bg-indigo-50',
- softText: 'text-indigo-700',
- border: 'border-indigo-100',
- chip: 'bg-indigo-50 text-indigo-700 border-indigo-100',
- step: 'bg-indigo-600 text-white'
- },
- emerald: {
- accent: 'bg-emerald-600',
- soft: 'bg-emerald-50',
- softText: 'text-emerald-700',
- border: 'border-emerald-100',
- chip: 'bg-emerald-50 text-emerald-700 border-emerald-100',
- step: 'bg-emerald-600 text-white'
- },
- sky: {
- accent: 'bg-sky-600',
- soft: 'bg-sky-50',
- softText: 'text-sky-700',
- border: 'border-sky-100',
- chip: 'bg-sky-50 text-sky-700 border-sky-100',
- step: 'bg-sky-600 text-white'
- },
- amber: {
- accent: 'bg-amber-500',
- soft: 'bg-amber-50',
- softText: 'text-amber-800',
- border: 'border-amber-100',
- chip: 'bg-amber-50 text-amber-800 border-amber-100',
- step: 'bg-amber-500 text-slate-950'
- },
- rose: {
- accent: 'bg-rose-600',
- soft: 'bg-rose-50',
- softText: 'text-rose-700',
- border: 'border-rose-100',
- chip: 'bg-rose-50 text-rose-700 border-rose-100',
- step: 'bg-rose-600 text-white'
- },
- purple: {
- accent: 'bg-purple-600',
- soft: 'bg-purple-50',
- softText: 'text-purple-700',
- border: 'border-purple-100',
- chip: 'bg-purple-50 text-purple-700 border-purple-100',
- step: 'bg-purple-600 text-white'
- },
- slate: {
- accent: 'bg-slate-900',
- soft: 'bg-slate-100',
- softText: 'text-slate-700',
- border: 'border-slate-200',
- chip: 'bg-slate-100 text-slate-700 border-slate-200',
- step: 'bg-slate-900 text-white'
- }
- };
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingTimer = null;
+  let speechRecognizer = null;
+  let finalTranscriptBuffer = "";
+  let interimTranscriptBuffer = "";
+  let noteSaveDebounceTimer = null;
 
- const [activeWhWord, setActiveWhWord] = useState(null);
-
- const yesNoAux = [
- { en:"Do you like cooking?", vi:"Bạn có thích nấu ăn không?" },
- { en:"Do you think emails will replace letters?", vi:"Bạn có nghĩ rằng thư điện tử sẽ thay thế thư tay không?" },
- { en:"Did you have many friends when you were a child?", vi:"Bạn có nhiều bạn bè khi còn nhỏ không?" },
- { en:"Have you ever travelled by plane?", vi:"Bạn đã từng đi du lịch bằng máy bay chưa?" }
- ];
-
- const yesNoTobe = [
- { en:"Are you a family person?", vi:"Bạn có phải là người của gia đình không?" },
- { en:"Are you good at saving money?", vi:"Bạn có giỏi tiết kiệm tiền không?" },
- { en:"Are there many advertisements in your country?", vi:"Có nhiều quảng cáo ở đất nước của bạn không?" },
- { en:"Is it important to keep up with the news?", vi:"Việc cập nhật tin tức có quan trọng không?" }
- ];
-
- const yesNoModal = [
- { en:"Can you access the Internet from where you work?", vi:"Bạn có thể truy cập Internet từ nơi làm việc không?" },
- { en:"Should children be punished when they make mistakes?", vi:"Trẻ em có nên bị phạt khi chúng phạm lỗi không?" },
- { en:"Can you share some experiences or tips from your dating life?", vi:"Bạn có thể chia sẻ một vài kinh nghiệm hoặc mẹo trong chuyện hẹn hò không?" },
- { en:"Would you like to change anything in your room?", vi:"Bạn có muốn thay đổi thứ gì trong phòng của mình không?" }
- ];
-
- const choiceExamples = [
- { en:"Do you prefer watching films at home or in the cinema?", vi:"Bạn thích xem phim ở nhà hay ở rạp chiếu phim hơn?" },
- { en:"Do you prefer reading online or printed materials?", vi:"Bạn thích đọc tài liệu trực tuyến hay tài liệu in hơn?" },
- { en:"Which do you prefer: letters or emails?", vi:"Bạn thích cái nào hơn: thư tay hay thư điện tử?" },
- { en:"Would you prefer to travel alone or with someone else?", vi:"Bạn thích đi du lịch một mình hay đi cùng người khác hơn?" }
- ];
-
- const detailExamples = [
- { en:"What did you often do when you were a child?", vi:"Bạn thường làm gì khi còn là một đứa trẻ?" },
- { en:"What do you often buy at the market?", vi:"Bạn thường mua gì ở chợ?" },
- { en:"What gameshow do you often watch?", vi:"Chương trình truyền hình nào bạn thường xem?" },
- { en:"In the future, which type of school do you think will become more common?", vi:"Trong tương lai, loại hình trường học nào bạn nghĩ sẽ trở nên phổ biến hơn?" },
- { en:"Where do you often go for a walk?", vi:"Bạn thường đi dạo ở đâu?" },
- { en:"When do people in your country often decorate their homes?", vi:"Khi nào người dân ở đất nước bạn thường trang trí nhà cửa của họ?" },
- { en:"Who is the most talkative person in your family?", vi:"Ai là người nói nhiều nhất trong gia đình bạn?" },
- { en:"Why do children learn things more quickly than adults?", vi:"Tại sao trẻ em học hỏi mọi thứ nhanh hơn người lớn?" },
- { en:"How do you save money?", vi:"Bạn tiết kiệm tiền bằng cách nào?" },
- { en:"How much time do you spend on your hobby?", vi:"Bạn dành bao nhiêu thời gian cho sở thích của mình?" },
- { en:"How do you travel to work?", vi:"Bạn đi làm bằng phương tiện gì?" },
- { en:"How often do you donate money or do charity work?", vi:"Bạn có thường quyên góp tiền hoặc làm công việc từ thiện không?" }
- ];
-
- const examFacts = [
- { icon: <FileText size={20} />, label:"Cấu trúc", value:"2 chủ đề", detail:"Mỗi chủ đề có 3 câu hỏi ngắn." },
- { icon: <Clock size={20} />, label:"Thời gian", value:"3 phút", detail:"Đề hiện lên là bắt đầu nói." },
- { icon: <Activity size={20} />, label:"Mục tiêu", value:"4-5 câu", detail:"Mốc an toàn để hướng tới B2." },
- { icon: <Award size={20} />, label:"Điểm số", value:"6 tiêu chí", detail:"Nội dung, mở rộng, phát âm, liên kết, trôi chảy, ngữ pháp." }
- ];
-
- const workflow = [
- { title:"Nhìn tín hiệu", detail:"Xác định Yes-No, lựa chọn A/B, hoặc câu hỏi Wh." },
- { title:"Chốt ý chính", detail:"Nói ngay câu trả lời trực tiếp, không vòng vo." },
- { title:"Thêm lý do", detail:"Dùng because, since, one main reason is that..." },
- { title:"Mở rộng tự nhiên", detail:"Bổ sung thời gian, nơi chốn, tần suất, ví dụ cá nhân." }
- ];
-
- const yesNoGroups = [
- {
- title:"TRỢ ĐỘNG TỪ",
- tone:"indigo",
- chips: ["do","does","did","will","have","has"],
- items: yesNoAux
- },
- {
- title:"ĐỘNG TỪ TOBE",
- tone:"emerald",
- chips: ["is","are","was","were"],
- items: yesNoTobe
- },
- {
- title:"ĐỘNG TỪ KHIẾM KHUYẾT",
- tone:"purple",
- chips: ["would","can","could","should"],
- items: yesNoModal
- }
- ];
-
- const choicePatterns = [
-"Do you prefer A or B?",
-"Would you prefer A or B?",
-"Which do you prefer: A or B?",
-"Which do you enjoy more, A or B?"
- ];
-
- const whWords = [
- { en:"what", vi:"cái gì / điều gì" },
- { en:"which", vi:"cái nào" },
- { en:"where", vi:"ở đâu" },
- { en:"when", vi:"khi nào" },
- { en:"why", vi:"tại sao" },
- { en:"who", vi:"ai" },
- { en:"how", vi:"như thế nào / bằng cách nào" },
- { en:"how often", vi:"thường xuyên như thế nào" },
- { en:"how much", vi:"bao nhiêu" }
- ];
-
- const detailStructures = {
- tobe: [
- {
- id:"tobe-basic",
- number: 1,
- parts: [
- { text:"Wh" },
- { text:"động từ tobe", tone:"neon" },
- { text:"S" },
- { text: "...?" }
- ]
- },
- {
- id:"tobe-ing",
- number: 2,
- parts: [
- { text:"Wh" },
- { text:"động từ tobe", tone:"grammar" },
- { text:"S" },
- { verb:"ing" },
- { text: "...?" }
- ]
- },
- {
- id:"tobe-v3",
- number: 3,
- parts: [
- { text:"Wh" },
- { text:"động từ tobe", tone:"grammar" },
- { text:"S" },
- { verb:"3/ed" },
- { text: "...?" }
- ]
- }
- ],
- support: [
- {
- id:"aux",
- number: 4,
- parts: [
- { text:"Wh" },
- { text:"trợ động từ", tone:"grammar" },
- { text:"S" },
- { verb:"o" },
- { text: "...?" }
- ]
- },
- {
- id:"modal",
- number: 5,
- parts: [
- { text:"Wh" },
- { text:"động từ khiếm khuyết", tone:"grammar" },
- { text:"S" },
- { verb:"o" },
- { text: "...?" }
- ]
- }
- ]
- };
-
- const answerFormula = [
- {
- letter:"A",
- level:"B1",
- title:"Answer",
- tone:"emerald",
- headline:"Trả lời trực tiếp",
- points: [
- <><span className="font-black text-slate-950">Yes-No:</span> nói Yes hoặc No rồi nêu quan điểm.</>,
- <><span className="font-black text-slate-950">Lựa chọn:</span> I prefer + N/Ving</>,
- <><span className="font-black text-slate-950">Wh-question:</span> trả lời thẳng vào thông tin được hỏi.</>
- ]
- },
- {
- letter:"R",
- level:"B2",
- title:"Reason",
- tone:"sky",
- headline:"Giải thích lý do",
- points: [
- <><span className="font-black text-slate-950">because / since</span> + lý do</>,
- <><span className="font-black text-slate-950">This is because</span> + lý do</>,
- <><span className="font-black text-slate-950">The main reason is that</span> + lý do</>
- ]
- },
- {
- letter:"E",
- level:"B2+",
- title:"Expansion",
- tone:"purple",
- headline:"Mở rộng câu trả lời",
- points: [
-"Thêm ví dụ cá nhân.",
-"Nói về tần suất, thời gian, nơi chốn.",
-"Kết nối sang thói quen hoặc trải nghiệm thật."
- ]
- }
- ];
-
- const SectionTitle = ({ eyebrow, title, subtitle, icon }) => (
- <div className="mb-5 flex items-start gap-3">
- <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
- {icon}
- </div>
- <div className="min-w-0 flex-1">
- <p className="text-sm font-extrabold uppercase text-orange-600">{eyebrow}</p>
- <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{title}</h3>
- {subtitle && <p className="mt-2 w-full max-w-none text-base font-light leading-relaxed text-slate-600 ">{subtitle}</p>}
- </div>
- </div>
- );
-
- const ExampleRows = ({ items, tone ="indigo", columns = false }) => {
- const color = tones[tone];
- const [openQuestion, setOpenQuestion] = useState(null);
- return (
- <div className={columns ?"grid grid-cols-1 lg:grid-cols-2" :"divide-y divide-slate-100"}>
- {items.map((q, idx) => (
- <button
- key={q.en}
- type="button"
- onClick={() => setOpenQuestion(openQuestion === q.en ? null : q.en)}
- className={`group w-full px-5 py-3.5 text-left transition-colors hover:bg-slate-50 ${columns ? 'border-b border-slate-100 lg:border-r lg:[&:nth-child(even)]:border-r-0' : ''}`}
- >
- <p className="font-light leading-snug text-slate-900 group-hover:text-slate-950">{q.en}</p>
- {openQuestion === q.en && (
- <p className={`mt-2 rounded-md border px-3 py-2 text-sm font-light leading-relaxed ${color.soft} ${color.softText} ${color.border}`}>
- {q.vi}
- </p>
- )}
- </button>
- ))}
- </div>
- );
- };
-
- const Chip = ({ children, tone ="indigo" }) => (
- <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-sm font-extrabold ${tones[tone].chip}`}>
- {children}
- </span>
- );
-
- const WhChip = ({ item }) => {
- const isActive = activeWhWord === item.en;
- return (
- <button
- type="button"
- onClick={() => setActiveWhWord(isActive ? null : item.en)}
- className={`flex flex-col items-center justify-center rounded-md border p-1 text-[11px] xl:text-xs 2xl:text-sm font-extrabold transition-colors ${
- isActive
- ? 'border-rose-200 bg-rose-100 text-rose-800'
- : tones.rose.chip + ' hover:bg-rose-100'
- }`}
- >
- <span>{item.en}</span>
- {isActive && <span className="font-bold text-rose-700 text-center">= {item.vi}</span>}
- </button>
- );
- };
-
- const renderChoicePattern = (pattern) => {
- return pattern.split(/(\bA\b|\bB\b|\bor\b)/gi).map((part, idx) => {
- const normalized = part.toLowerCase();
- if (part ==="A" || part ==="B") {
- return <span key={idx} className="font-black text-red-600 ">{part}</span>;
- }
- if (normalized ==="or") {
- return <span key={idx} className="font-black text-slate-950">or</span>;
- }
- return <React.Fragment key={idx}>{part}</React.Fragment>;
- });
- };
-
- const renderFormulaPart = (part, idx) => {
- if (part.verb) {
- return (
- <span key={idx} className="font-black text-blue-600 ">
- V<sub className="text-[0.62em] leading-none">{part.verb}</sub>
- </span>
- );
- }
-
- const className = part.tone ==="neon"
- ?"font-black text-blue-600"
- : part.tone ==="grammar"
- ?"font-black text-amber-900"
- :"font-black text-slate-950";
-
- return <span key={idx} className={className}>{part.text}</span>;
- };
-
- const FormulaRow = ({ formula }) => (
- <div className="flex min-w-0 items-center gap-2 border-b border-slate-100 px-3 py-3">
- <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-rose-600 text-sm font-black text-white">
- {formula.number}
- </span>
- <p className="min-w-0 whitespace-nowrap font-mono text-[12px] font-black leading-none tracking-normal text-slate-900 2xl:text-sm">
- {formula.parts.map((part, idx) => (
- <React.Fragment key={`${formula.id}-${idx}`}>
- {idx > 0 && <span className="mx-1.5 text-base font-black text-slate-950">+</span>}
- {renderFormulaPart(part, idx)}
- </React.Fragment>
- ))}
- </p>
- </div>
- );
-
- return (
- <div className="animate-fade-in space-y-10 pb-12">
- <header className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="grid grid-cols-1 lg:grid-cols-5">
- <div className="lg:col-span-3 p-6 lg:p-8">
- <div className="flex items-center gap-3 text-orange-600">
- <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-50 ">
- <FileText size={24} />
- </div>
- <span className="text-sm font-extrabold uppercase">Tài liệu chung</span>
- </div>
- <h2 className="mt-5 max-w-none text-3xl font-black leading-tight text-slate-950">
- Lý thuyết chung Speaking Part 1
- </h2>
- <p className="mt-4 max-w-none text-lg font-light leading-relaxed text-slate-600 ">
- Một bản đồ học nhanh cho phần hỏi đáp cá nhân: biết dạng câu hỏi, chọn cách trả lời, rồi mở rộng đủ ý trong thời gian ngắn.
- </p>
-
- <div className="mt-7 rounded-lg bg-slate-950 p-4 text-white">
- <p className="mb-3 text-sm font-extrabold uppercase text-orange-300">Luồng trả lời khuyến nghị</p>
- <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
- {answerFormula.map((step) => (
- <div key={step.letter} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-slate-900">
- <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-lg font-black ${tones[step.tone].step}`}>
- {step.letter}
- </span>
- <div>
- <p className="text-base font-black">{step.title}</p>
- <p className="text-sm font-light text-slate-500">{step.headline}</p>
- </div>
- </div>
- ))}
- </div>
- </div>
- </div>
-
- <aside className="lg:col-span-2 border-t border-slate-200 bg-slate-100 p-6 lg:border-l lg:border-t-0 lg:p-8">
- <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
- {examFacts.map((fact) => (
- <div key={fact.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
- <div className="flex items-center gap-2 text-slate-500 ">
- {fact.icon}
- <span className="text-sm font-extrabold uppercase">{fact.label}</span>
- </div>
- <p className="mt-3 whitespace-nowrap text-2xl font-black leading-tight text-slate-950">{fact.value}</p>
- <p className="mt-1 text-sm font-light leading-relaxed text-slate-600 ">{fact.detail}</p>
- </div>
- ))}
- </div>
- </aside>
- </div>
- </header>
-
- <section>
- <SectionTitle
- eyebrow="Bước xử lý"
- title="Từ câu hỏi đến câu trả lời trong 4 nhịp"
- subtitle="Part 1 không cần nói dài. Cái cần là phản xạ đúng dạng câu, rõ ý chính và đủ thông tin để giám khảo thấy bạn kiểm soát được câu trả lời."
- icon={<Activity size={21} />}
- />
- <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
- {workflow.map((item, idx) => (
- <div key={item.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
- <div className="mb-4 flex items-center justify-between">
- <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-sm font-black text-white">
- {idx + 1}
- </span>
- {idx < workflow.length - 1 && <ArrowRight size={20} className="hidden text-slate-300 xl:block" />}
- </div>
- <h4 className="text-lg font-black text-slate-950">{item.title}</h4>
- <p className="mt-2 text-base font-light leading-relaxed text-slate-600 ">{item.detail}</p>
- </div>
- ))}
- </div>
- </section>
-
- <section>
- <SectionTitle
- eyebrow="Nhận diện"
- title="Ba dạng câu hỏi thường gặp"
- subtitle="Mỗi dạng có tín hiệu nhận biết riêng. Nhìn đúng tín hiệu thì bạn sẽ chọn được khung trả lời phù hợp ngay."
- icon={<HelpCircle size={21} />}
- />
- 
- <div className="space-y-6">
- <article className="rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="h-1.5 rounded-t-lg bg-indigo-600"></div>
- <div className="grid grid-cols-1 lg:grid-cols-4">
- <div className="border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
- <div className="lg:sticky lg:top-8">
- <p className="text-sm font-black uppercase text-indigo-700 ">Dạng 01</p>
- <h4 className="mt-2 text-2xl font-black text-slate-950">Yes - No</h4>
- <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
- Câu hỏi bắt đầu bằng trợ động từ, động từ tobe hoặc động từ khiếm khuyết. Câu trả lời nên có Yes/No rõ ràng trước.
- </p>
- <div className="mt-5 rounded-lg bg-indigo-50 p-4">
- <p className="font-black text-indigo-800">Khung trả lời</p>
- <div className="mt-2 space-y-1 text-justify text-base font-light leading-relaxed text-indigo-800">
- <p><span className="font-black text-slate-950">Bước 1:</span> Trả lời Yes hoặc No đồng thời nói rõ quan điểm cá nhân</p>
- <p><span className="font-black text-slate-950">Bước 2:</span> cho lý do</p>
- <p><span className="font-black text-slate-950">Bước 3:</span> mở rộng câu trả lời</p>
- </div>
- </div>
- </div>
- </div>
- <div className="lg:col-span-3 divide-y divide-slate-100">
- {yesNoGroups.map((group) => (
- <div key={group.title} className="p-5">
- <div className="mb-3 flex flex-wrap items-center gap-2">
- <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${tones[group.tone].step}`}>
- <List size={17} />
- </span>
- <h5 className="mr-1 text-lg font-black text-slate-950">{group.title}</h5>
- {group.chips.map((chip) => <Chip key={chip} tone={group.tone}>{chip}</Chip>)}
- </div>
- <div className="-mx-5 border-t border-slate-100 ">
- <ExampleRows items={group.items} tone={group.tone} />
- </div>
- </div>
- ))}
- </div>
- </div>
- </article>
- 
- <article className="rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="h-1.5 rounded-t-lg bg-amber-500"></div>
- <div className="grid grid-cols-1 lg:grid-cols-4">
- <div className="border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
- <div className="lg:sticky lg:top-8">
- <p className="text-sm font-black uppercase text-amber-700">Dạng 02</p>
- <h4 className="mt-2 text-2xl font-black text-slate-950">Chọn một trong hai</h4>
- <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
- Tín hiệu rõ nhất là từ <strong className="font-black text-slate-950">or</strong>. Bạn chỉ cần chọn một phía rồi giải thích vì sao.
- </p>
- <div className="mt-5 rounded-lg bg-amber-50 p-4">
- <p className="font-black text-amber-900">Khung trả lời</p>
- <div className="mt-2 space-y-1 text-justify text-base font-light leading-relaxed text-amber-900">
- <p><span className="font-black text-slate-950">Bước 1:</span> đưa ra lựa chọn</p>
- <p><span className="font-black text-slate-950">Bước 2:</span> cho lý do</p>
- <p><span className="font-black text-slate-950">Bước 3:</span> mở rộng câu trả lời</p>
- </div>
- </div>
- </div>
- </div>
- <div className="lg:col-span-3">
- <div className="grid grid-cols-1 border-b border-slate-100 lg:grid-cols-2">
- {choicePatterns.map((pattern, idx) => (
- <div key={pattern} className="flex gap-3 border-b border-slate-100 px-5 py-4 lg:border-r lg:[&:nth-child(even)]:border-r-0">
- <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500 text-sm font-black text-slate-950">
- {idx + 1}
- </span>
- <p className="font-mono text-lg font-black leading-snug text-slate-900 ">{renderChoicePattern(pattern)}</p>
- </div>
- ))}
- </div>
- <ExampleRows items={choiceExamples} tone="amber" columns />
- </div>
- </div>
- </article>
-
- <article className="rounded-lg border border-slate-200 bg-white shadow-sm">
- <div className="h-1.5 rounded-t-lg bg-rose-600"></div>
- <div className="grid grid-cols-1 lg:grid-cols-4">
- <div className="border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
- <div className="lg:sticky lg:top-8">
- <p className="text-sm font-black uppercase text-rose-700">Dạng 03</p>
- <h4 className="mt-2 text-2xl font-black text-slate-950">Thông tin chi tiết</h4>
- <p className="mt-3 text-base font-light leading-relaxed text-slate-600 ">
- Câu hỏi bắt đầu bằng <strong className="font-black uppercase text-red-600 ">Wh-word</strong>. Từ hỏi quyết định loại thông tin cần trả lời.
- </p>
- <div className="mt-5 grid grid-cols-3 gap-1.5">
- {whWords.map((item) => <WhChip key={item.en} item={item} />)}
- </div>
- </div>
- </div>
- <div className="lg:col-span-3">
- <div className="wh-formula-grid grid grid-cols-1 border-b border-slate-100 xl:grid-cols-2">
- <div className="border-r border-slate-100 ">
- {detailStructures.tobe.map((formula) => <FormulaRow key={formula.id} formula={formula} />)}
- </div>
- <div>
- {detailStructures.support.map((formula) => <FormulaRow key={formula.id} formula={formula} />)}
- </div>
- </div>
- <ExampleRows items={detailExamples} tone="rose" columns />
- </div>
- </div>
- </article>
- </div>
- </section>
-
- <VisualAnswerFlow />
-
- 
-
- </div>
- );
- });
-
-
- // Tách riêng"Shared vocab & expressions" từ group1 (chạy 1 lần ngoài component để tránh mất data khi re-render)
- const sharedVocabGroup = vstepGroupsData.find(g => g.id === 'group1');
- let sharedVocabData = null;
- if (sharedVocabGroup) {
- sharedVocabData = sharedVocabGroup.subtopics.find(s => s.id === 'sub1_5');
- if (sharedVocabData) {
- sharedVocabData.title ="Cấu trúc & từ vựng dùng chung";
- }
- sharedVocabGroup.subtopics = sharedVocabGroup.subtopics.filter(s => s.id !== 'sub1_5');
- }
-
- const Adj = ({ word, vi }) => {
- const [showVi, setShowVi] = useState(false);
- return (
- <span 
- onClick={() => setShowVi(!showVi)} 
- className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg cursor-pointer transition-colors text-sm font-light border border-slate-200 select-none shadow-sm active:scale-95"
- title="Nhấn để xem nghĩa tiếng Việt"
- >
- <span>{word}</span>
- {showVi && <span className="text-xs text-rose-600 font-light ml-1 animate-fade-in">{vi}</span>}
- </span>
- );
- };
-
- const AdjectivesTab = React.memo(() => {
- return (
- <div className="space-y-6 text-slate-800 pb-8 animate-fade-in">
- <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-blue-200 p-6 rounded-2xl shadow-sm">
- <h3 className="text-xl font-black text-indigo-900 mb-4">CÁCH SỬ DỤNG TÍNH TỪ</h3>
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
- <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
- <div className="mb-2 text-base leading-relaxed">
- <span className="font-bold text-slate-900">1. I feel</span> <span className="font-bold text-slate-400 mx-1">+</span>
- <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
- </div>
- <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả cảm xúc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"I feel <span className="font-bold text-rose-500">relaxed</span>."</div>
- </div>
- <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
- <div className="mb-2 text-base leading-relaxed">
- <span className="font-bold text-slate-900">2. It makes me feel</span> <span className="font-bold text-slate-400 mx-1">+</span>
- <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
- </div>
- <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả cảm xúc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"It makes me feel <span className="font-bold text-rose-500">happy</span>."</div>
- </div>
- <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
- <div className="mb-2 text-base leading-relaxed">
- <span className="font-bold text-slate-900">3. It's / I find it</span> <span className="font-bold text-slate-400 mx-1">+</span>
- <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
- </div>
- <p className="text-sm text-slate-600 mb-2 font-light">Dùng tính từ miêu tả sự vật, sự việc</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic mb-2 font-light">"It's <span className="font-bold text-rose-500">beautiful</span>."</div>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"I find it <span className="font-bold text-rose-500">beautiful</span>."</div>
- </div>
- <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
- <div className="mb-2 text-base leading-relaxed">
- <span className="font-bold text-slate-900 mr-1">4. It's</span>
- <span className="px-2 py-0.5 bg-teal-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">tính từ</span>
- <span className="font-bold text-slate-900 mx-1">for</span>
- <span className="px-2 py-0.5 bg-slate-800 text-white rounded-md text-sm font-bold mx-1 shadow-sm">ai đó</span>
- <span className="font-bold text-slate-900 mx-1">to</span>
- <span className="px-2 py-0.5 bg-rose-500 text-white rounded-md text-sm font-bold mx-1 shadow-sm">làm gì đó</span>
- </div>
- <p className="text-sm text-slate-600 mb-2 font-light">Miêu tả tính chất của việc gì đối với ai đó</p>
- <div className="bg-indigo-50 p-2 rounded-lg text-sm text-indigo-900 italic font-light">"It's <span className="font-bold text-rose-500">easy</span> for me to learn English."</div>
- </div>
- </div>
-
- <div className="space-y-3">
- <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-emerald-100 shadow-sm">
- <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 1</span>
- <div>
- <p className="text-sm text-slate-700 font-light">Có thể thêm trạng từ chỉ mức độ trước tính từ: <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">very, really, quite, a bit, extremely</span></p>
- <p className="text-sm text-emerald-700 mt-1.5 italic font-light">VD:"It's <span className="font-bold">really</span> beautiful."</p>
- </div>
- </div>
- <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-amber-100 shadow-sm">
- <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 2</span>
- <div>
- <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1 font-light">
- <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">more + tính từ</span>
- <span className="text-slate-400 text-xs">hoặc</span>
- <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">tính từ + er</span>
- <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-50 text-amber-500 rounded-full mx-0.5 shadow-sm text-xs border border-amber-200">➔</span>
- <span>Mang nghĩa <span className="font-bold text-amber-700">"... hơn"</span></span>
- </div>
- <p className="text-sm text-amber-700 italic font-light">VD:"It's <span className="font-bold">more</span> comfortable." /"It's <span className="font-bold">easier</span>."</p>
- </div>
- </div>
- <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
- <span className="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap mt-0.5">Lưu ý 3</span>
- <div>
- <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-700 mb-1 font-light">
- <span className="font-mono text-xs font-bold text-white bg-slate-700 px-2 py-0.5 rounded shadow-sm">the most + tính từ</span>
- <span className="inline-flex items-center justify-center w-5 h-5 bg-rose-50 text-rose-500 rounded-full mx-0.5 shadow-sm text-xs border border-rose-200">➔</span>
- <span>Mang nghĩa <span className="font-bold text-rose-700">"... nhất"</span></span>
- </div>
- <p className="text-sm text-rose-700 italic font-light">VD:"It's <span className="font-bold">the most</span> memorable experience."</p>
- </div>
- </div>
- </div>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">1. Tính từ miêu tả Cảm xúc & Trạng thái tinh thần</h3>
- <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl mb-4 text-sm text-yellow-800 ">
- <strong className="font-bold">Mẹo:</strong> Nhấn vào từng từ để xem nghĩa tiếng Việt!
- </div>
- <ul className="space-y-4">
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tích cực</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="happy" vi="vui vẻ" /><Adj word="relaxed" vi="thư giãn" /><Adj word="excited" vi="hào hứng" />
- <Adj word="comfortable" vi="thoải mái" /><Adj word="confident" vi="tự tin" /><Adj word="calm" vi="bình tĩnh" />
- <Adj word="refreshed" vi="sảng khoái" /><Adj word="energetic" vi="tràn đầy năng lượng" /><Adj word="motivated" vi="có động lực" />
- <Adj word="peaceful" vi="yên bình" /><Adj word="proud" vi="tự hào" /><Adj word="satisfied" vi="hài lòng" />
- <Adj word="cheerful" vi="vui tươi" /><Adj word="positive" vi="tích cực" /><Adj word="safe" vi="an toàn" />
- <Adj word="grateful" vi="biết ơn" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tiêu cực - Mệt mỏi</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="tired" vi="mệt mỏi" /><Adj word="exhausted" vi="kiệt sức" /><Adj word="stressed" vi="căng thẳng" />
- <Adj word="bored" vi="buồn chán" /><Adj word="sad" vi="buồn bã" /><Adj word="nervous" vi="lo lắng" />
- <Adj word="anxious" vi="lo âu" /><Adj word="frustrated" vi="bực bội" /><Adj word="disappointed" vi="thất vọng" />
- <Adj word="lonely" vi="cô đơn" /><Adj word="overwhelmed" vi="quá tải, ngợp" /><Adj word="uncomfortable" vi="khó chịu" />
- <Adj word="awkward" vi="ngại ngùng" /><Adj word="insecure" vi="tự ti, bất an" /><Adj word="sleepy" vi="buồn ngủ" />
- <Adj word="angry" vi="tức giận" />
- </div>
- </li>
- </ul>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">2. Tính từ miêu tả Đồ ăn & Thức uống</h3>
- <ul className="space-y-4">
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Độ ngon & Mùi vị</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="delicious" vi="rất ngon" /><Adj word="tasty" vi="ngon miệng" />
- <Adj word="flavorful" vi="đậm đà, thơm ngon" /><Adj word="rich" vi="đậm đà, béo ngậy" />
- <Adj word="sweet" vi="ngọt" /><Adj word="spicy" vi="cay" /><Adj word="sour" vi="chua" />
- <Adj word="salty" vi="mặn" /><Adj word="bitter" vi="đắng" /><Adj word="bland" vi="nhạt nhẽo" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tính chất & Kết cấu</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="crispy" vi="giòn rụm" /><Adj word="crunchy" vi="giòn sần sật" /><Adj word="tender" vi="mềm, mềm thơm" />
- <Adj word="juicy" vi="mọng nước" /><Adj word="soft" vi="mềm mịn" /><Adj word="creamy" vi="béo ngậy, sánh mịn" />
- <Adj word="chewy" vi="dai dai, dẻo" /><Adj word="fresh" vi="tươi mới" />
- <Adj word="tough" vi="dai, khó nhai" /><Adj word="dry" vi="khô khốc" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Đánh giá chung</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="healthy" vi="lành mạnh" /><Adj word="nutritious" vi="bổ dưỡng" /><Adj word="refreshing" vi="thanh mát, sảng khoái" />
- <Adj word="filling" vi="no bụng, chắc bụng" /><Adj word="light" vi="nhẹ bụng, thanh đạm" /><Adj word="greasy" vi="nhiều dầu mỡ, ngấy" />
- <Adj word="affordable" vi="vừa túi tiền" /><Adj word="expensive" vi="đắt đỏ" /><Adj word="convenient" vi="tiện lợi" />
- <Adj word="authentic" vi="chuẩn vị, chính gốc" />
- </div>
- </li>
- </ul>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">3. Tính từ miêu tả Địa điểm, Sự vật & Thời tiết</h3>
- <ul className="space-y-4">
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Địa điểm</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="peaceful" vi="yên bình" /><Adj word="quiet" vi="yên tĩnh" /><Adj word="comfortable" vi="tiện nghi, thoải mái" />
- <Adj word="pleasant" vi="dễ chịu, thư thái" /><Adj word="relaxing" vi="thư thái, thư giãn" /><Adj word="cozy" vi="ấm cúng" />
- <Adj word="spacious" vi="rộng rãi" /><Adj word="cramped" vi="chật chội" /><Adj word="beautiful" vi="đẹp đẽ" />
- <Adj word="lively" vi="náo nhiệt" /><Adj word="vibrant" vi="sôi động, rực rỡ" /><Adj word="bustling" vi="nhộn nhịp, tấp nập" />
- <Adj word="crowded" vi="đông đúc" /><Adj word="noisy" vi="ồn ào" /><Adj word="modern" vi="hiện đại" />
- <Adj word="clean" vi="sạch sẽ" /><Adj word="polluted" vi="ô nhiễm" /><Adj word="convenient" vi="thuận tiện" />
- <Adj word="safe" vi="an toàn" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Thời tiết</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="pleasant" vi="dễ chịu, ôn hòa" /><Adj word="comfortable" vi="dễ chịu, thoải mái" /><Adj word="refreshing" vi="sảng khoái, trong lành" />
- <Adj word="warm" vi="ấm áp" /><Adj word="cool" vi="mát mẻ" /><Adj word="hot" vi="nóng" />
- <Adj word="scorching" vi="nóng như thiêu" /><Adj word="cold" vi="lạnh" /><Adj word="chilly" vi="se lạnh" />
- <Adj word="freezing" vi="lạnh cóng" /><Adj word="humid" vi="oi bức, ẩm" /><Adj word="dry" vi="khô ráo" />
- <Adj word="sunny" vi="nhiều nắng" /><Adj word="windy" vi="nhiều gió" /><Adj word="gloomy" vi="u ám" />
- <Adj word="unpredictable" vi="thất thường" /><Adj word="harsh" vi="khắc nghiệt" />
- </div>
- </li>
- </ul>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">4. Tính từ miêu tả Trải nghiệm & Sự việc</h3>
- <ul className="space-y-4">
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tích cực & Thú vị</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="fun" vi="vui vẻ" /><Adj word="interesting" vi="thú vị" /><Adj word="exciting" vi="hào hứng" />
- <Adj word="enjoyable" vi="thích thú" /><Adj word="relaxing" vi="thư giãn" /><Adj word="rewarding" vi="bổ ích, đáng giá" />
- <Adj word="meaningful" vi="ý nghĩa" /><Adj word="memorable" vi="đáng nhớ" /><Adj word="special" vi="đặc biệt" />
- <Adj word="inspiring" vi="truyền cảm hứng" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Thử thách & Độ khó</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="easy" vi="dễ dàng" /><Adj word="simple" vi="đơn giản" /><Adj word="hard" vi="khó" />
- <Adj word="difficult" vi="khó khăn" /><Adj word="challenging" vi="đầy thử thách" /><Adj word="complicated" vi="phức tạp" />
- <Adj word="demanding" vi="đòi hỏi cao" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Mệt mỏi & Tiêu cực</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="boring" vi="nhàm chán" /><Adj word="tiring" vi="mệt mỏi" /><Adj word="exhausting" vi="kiệt sức" />
- <Adj word="stressful" vi="căng thẳng" /><Adj word="frustrating" vi="bực bội, nản lòng" /><Adj word="annoying" vi="phiền phức" />
- <Adj word="time-consuming" vi="tốn thời gian" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Giá trị & Tiện ích</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="useful" vi="hữu ích" /><Adj word="helpful" vi="có ích" /><Adj word="practical" vi="thiết thực" />
- <Adj word="effective" vi="hiệu quả" /><Adj word="convenient" vi="thuận tiện" /><Adj word="inconvenient" vi="bất tiện" />
- <Adj word="important" vi="quan trọng" /><Adj word="necessary" vi="cần thiết" />
- </div>
- </li>
- </ul>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">5. Tính từ miêu tả Con người</h3>
- <ul className="space-y-4">
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Ngoại hình</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="tall" vi="cao ráo" /><Adj word="short" vi="thấp, lùn" /><Adj word="slim" vi="thon gọn, mảnh mai" />
- <Adj word="fit" vi="cân đối, săn chắc" /><Adj word="chubby" vi="mũm mĩm, tròn trịa" /><Adj word="strong" vi="khỏe khoắn, vạm vỡ" />
- <Adj word="good-looking" vi="sáng sủa, ưa nhìn" /><Adj word="attractive" vi="cuốn hút" /><Adj word="handsome" vi="đẹp trai" />
- <Adj word="pretty" vi="xinh xắn" /><Adj word="cute" vi="dễ thương" /><Adj word="neat" vi="gọn gàng, chỉn chu" />
- <Adj word="young" vi="trẻ trung" /><Adj word="old" vi="lớn tuổi, già" />
- </div>
- </li>
- <li className="flex flex-col gap-2">
- <strong className="font-mono text-red-800 font-bold uppercase tracking-wide text-sm">Tính cách</strong> 
- <div className="flex flex-wrap gap-2">
- <Adj word="friendly" vi="thân thiện" /><Adj word="kind" vi="tốt bụng" /><Adj word="funny" vi="hài hước, vui tính" />
- <Adj word="easy-going" vi="dễ tính, hòa đồng" /><Adj word="hard-working" vi="chăm chỉ" /><Adj word="patient" vi="kiên nhẫn" />
- <Adj word="outgoing" vi="cởi mở, hướng ngoại" /><Adj word="shy" vi="nhút nhát" /><Adj word="quiet" vi="trầm tính, ít nói" />
- <Adj word="supportive" vi="hay giúp đỡ, ủng hộ" /><Adj word="generous" vi="hào phóng" /><Adj word="reliable" vi="đáng tin cậy" />
- <Adj word="polite" vi="lịch sự" /><Adj word="honest" vi="thật thà, trung thực" /><Adj word="smart" vi="thông minh, nhanh nhạy" />
- <Adj word="confident" vi="tự tin" />
- </div>
- </li>
- </ul>
- </div>
- </div>
- );
- });
-
- const BenefitsTab = React.memo(() => {
- const [activeLevel, setActiveLevel] = useState('b1');
- const [activeItem, setActiveItem] = useState(null);
- const [activeStruct, setActiveStruct] = useState(null);
- 
- const sNode = "<span class='font-bold text-red-600 '>S</span>";
- const aiDoNode = "<span class='px-2 py-0.5 bg-slate-800 text-white rounded-md text-sm font-bold mx-1'>ai đó</span>";
- const lamGiDoNode = "<span class='px-2 py-0.5 bg-rose-500 text-white rounded-md text-sm font-bold mx-1'>làm gì đó</span>";
- 
- const structures = [
- { 
- en: `${sNode} help<span class='text-orange-500 font-bold'>s</span> ${aiDoNode} ${lamGiDoNode}`,
- vi: `${sNode} giúp ${aiDoNode} ${lamGiDoNode}`
- },
- { 
- en: `${sNode} allow<span class='text-orange-500 font-bold'>s</span> ${aiDoNode} to ${lamGiDoNode}`,
- vi: `${sNode} cho phép ${aiDoNode} ${lamGiDoNode}`
- },
- { 
- en: `${sNode} is a great way for ${aiDoNode} to ${lamGiDoNode}`,
- vi: `${sNode} là một cách tuyệt vời để ${aiDoNode} ${lamGiDoNode}`
- },
- { 
- en: `${sNode} give<span class='text-orange-500 font-bold'>s</span> ${aiDoNode} the chan<span class='text-orange-500 font-bold'>ce</span> to ${lamGiDoNode}`,
- vi: `${sNode} cho ${aiDoNode} cơ hội ${lamGiDoNode}`
- }
- ];
-
- const b1Phrases = {
- mental: [
- { en:"relax", vi:"thư giãn" },
- { en:"reduce stress", vi:"giảm căng thẳng" },
- { en:"regain energy", vi:"phục hồi năng lượng" },
- { en:"improve my mood", vi:"cải thiện tâm trạng" },
- { en:"forget about work", vi:"quên đi công việc" },
- { en:"make new friends", vi:"kết bạn mới" },
- { en:"become more confident", vi:"trở nên tự tin hơn" },
- { en:"become more responsible", vi:"trở nên có trách nhiệm hơn" },
- { en:"become more positive", vi:"trở nên tích cực hơn" },
- { en:"become more patient", vi:"trở nên kiên nhẫn hơn" },
- { en:"become more sociable", vi:"trở nên hòa đồng hơn" },
- { en:"become more independent", vi:"trở nên tự lập hơn" }
- ],
- knowledge: [
- { en:"learn new things", vi:"học những điều mới" },
- { en:"learn a new language", vi:"học một ngôn ngữ mới" },
- { en:"learn new vocabulary", vi:"học từ vựng mới" },
- { en:"improve memory", vi:"cải thiện trí nhớ" },
- { en:"improve imagination", vi:"cải thiện trí tưởng tượng" },
- { en:"improve concentration", vi:"cải thiện sự tập trung" },
- { en:"improve soft-skills", vi:"cải thiện kỹ năng mềm" },
- { en:"widen knowledge", vi:"mở rộng kiến thức" },
- { en:"make better decisions", vi:"đưa ra quyết định tốt hơn" },
- { en:"work better", vi:"làm việc tốt hơn" },
- { en:"study better", vi:"học tập tốt hơn" },
- { en:"explore cultures", vi:"khám phá các nền văn hóa" },
- { en:"have new experiences", vi:"có những trải nghiệm mới" },
- { en:"explore new places", vi:"khám phá những địa điểm mới" }
- ],
- health: [
- { en:"improve physical health", vi:"cải thiện sức khỏe thể chất" },
- { en:"improve mental health", vi:"cải thiện sức khỏe tinh thần" },
- { en:"stay healthy", vi:"giữ sức khỏe" },
- { en:"sleep better", vi:"ngủ ngon hơn" },
- { en:"lose weight", vi:"giảm cân" },
- { en:"keep fit", vi:"giữ dáng" },
- { en:"have a healthy lifestyle", vi:"có một lối sống lành mạnh" },
- { en:"avoid getting sick", vi:"tránh bị ốm" },
- { en:"get stronger", vi:"trở nên khỏe mạnh hơn" },
- { en:"build muscles", vi:"xây dựng cơ bắp" }
- ]
- };
-
- const b2Phrases = {
- mental: [
- { en:"unwind", vi:"thư giãn" },
- { en:"blow off some steam", vi:"xả hơi / giảm căng thẳng" },
- { en:"recharge battery", vi:"nạp lại năng lượng" },
- { en:"boost my mood", vi:"cải thiện tâm trạng" },
- { en:"forget about work for a while", vi:"tạm quên đi công việc" },
- { en:"expand my social circle", vi:"mở rộng mối quan hệ xã hội" },
- { en:"become more confident", vi:"trở nên tự tin hơn" },
- { en:"become more responsible", vi:"trở nên có trách nhiệm hơn" },
- { en:"become more positive", vi:"trở nên tích cực hơn" },
- { en:"become more patient", vi:"trở nên kiên nhẫn hơn" },
- { en:"become more sociable", vi:"trở nên hòa đồng hơn" },
- { en:"become more independent", vi:"trở nên tự lập hơn" },
- { en:"become more disciplined", vi:"trở nên kỷ luật hơn" }
- ],
- knowledge: [
- { en:"learn new things", vi:"học những điều mới" },
- { en:"learn a new language", vi:"học một ngôn ngữ mới" },
- { en:"learn new vocabulary", vi:"học từ vựng mới" },
- { en:"learn valuable lessons", vi:"học những bài học quý giá" },
- { en:"enhance memory", vi:"tăng cường trí nhớ" },
- { en:"enhance imagination", vi:"tăng cường trí tưởng tượng" },
- { en:"enhance concentration", vi:"tăng cường sự tập trung" },
- { en:"enhance soft-skills", vi:"tăng cường kỹ năng mềm" },
- { en:"gain more knowledge", vi:"thu nhận thêm kiến thức" },
- { en:"make better decisions", vi:"đưa ra quyết định tốt hơn" },
- { en:"work more effectively", vi:"làm việc hiệu quả hơn" },
- { en:"study more effectively", vi:"học tập hiệu quả hơn" },
- { en:"explore different cultures", vi:"khám phá các nền văn hóa khác nhau" },
- { en:"develop critical thinking", vi:"phát triển tư duy phản biện" },
- { en:"gain new experiences", vi:"có được những trải nghiệm mới" },
- { en:"explore unfamiliar places", vi:"khám phá những địa điểm mới lạ" }
- ],
- health: [
- { en:"enhance physical health", vi:"tăng cường sức khỏe thể chất" },
- { en:"enhance mental health", vi:"tăng cường sức khỏe tinh thần" },
- { en:"keep my mind sharp", vi:"giữ cho đầu óc minh mẫn" },
- { en:"stay healthy", vi:"giữ sức khỏe" },
- { en:"sleep better", vi:"ngủ ngon hơn" },
- { en:"lose weight", vi:"giảm cân" },
- { en:"stay in shape", vi:"giữ vóc dáng" },
- { en:"build a healthy lifestyle", vi:"xây dựng lối sống lành mạnh" },
- { en:"lower the risk of getting sick", vi:"giảm nguy cơ mắc bệnh" },
- { en:"get stronger", vi:"trở nên khỏe mạnh hơn" },
- { en:"build muscles", vi:"xây dựng cơ bắp" },
- { en:"strengthen the immune system", vi:"tăng cường hệ miễn dịch" }
- ]
- };
-
- const currentPhrases = activeLevel === 'b1' ? b1Phrases : b2Phrases;
-
- return (
- <div className="animate-fade-in space-y-6 sm:space-y-8 mt-2">
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">1. Cấu trúc kể lợi ích</h3>
- <div className="grid grid-cols-1 gap-3 sm:gap-4">
- {structures.map((struct, idx) => (
- <div 
- key={idx} 
- className="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center gap-2 md:gap-4 cursor-pointer hover:shadow transition-shadow"
- onClick={() => setActiveStruct(activeStruct === idx ? null : idx)}
- >
- <span className="font-light text-slate-800 text-base sm:text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.en }}></span>
- {activeStruct === idx && (
- <>
- <span className="text-slate-400 hidden md:inline font-bold">=</span>
- <span className="font-light text-slate-800 text-base sm:text-lg leading-relaxed animate-fade-in" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
- </>
- )}
- </div>
- ))}
- </div>
- </div>
-
- <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
- <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-4 uppercase">2. Các cụm từ chỉ lợi ích</h3>
- <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl mb-4 text-sm text-yellow-800 ">
- <strong className="font-bold">Mẹo:</strong> Nhấn vào từng cụm từ để xem nghĩa tiếng Việt!
- </div>
- 
- <div className="flex items-center gap-2 mb-6">
- <button 
- onClick={() => { setActiveLevel('b1'); setActiveItem(null); }}
- className={`px-5 py-2 sm:py-2.5 rounded-xl font-bold transition-all ${activeLevel === 'b1' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '}`}
- >
- Level B1
- </button>
- <button 
- onClick={() => { setActiveLevel('b2'); setActiveItem(null); }}
- className={`px-5 py-2 sm:py-2.5 rounded-xl font-bold transition-all ${activeLevel === 'b2' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '}`}
- >
- Level B2
- </button>
- </div>
-
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
- <div className="space-y-4">
- <h4 className="font-bold text-center text-rose-600 bg-rose-50 py-2 rounded-xl border border-rose-100 uppercase text-sm tracking-wider">Tinh thần</h4>
- <div className="flex flex-col gap-2 w-full">
- {currentPhrases.mental.map((item, idx) => (
- <button 
- key={`mental-${idx}`}
- onClick={() => setActiveItem(activeItem ===`mental-${idx}` ? null :`mental-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
- activeItem ===`mental-${idx}` 
- ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
- : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
- }`}
- >
- <span className="shrink-0">{item.en}</span>
- {activeItem ===`mental-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
- </button>
- ))}
- </div>
- </div>
-
- <div className="space-y-4">
- <h4 className="font-bold text-center text-blue-600 bg-blue-50 py-2 rounded-xl border border-blue-100 uppercase text-sm tracking-wider">Kiến thức</h4>
- <div className="flex flex-col gap-2 w-full">
- {currentPhrases.knowledge.map((item, idx) => (
- <button 
- key={`knowledge-${idx}`}
- onClick={() => setActiveItem(activeItem ===`knowledge-${idx}` ? null :`knowledge-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
- activeItem ===`knowledge-${idx}` 
- ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
- : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
- }`}
- >
- <span className="shrink-0">{item.en}</span>
- {activeItem ===`knowledge-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
- </button>
- ))}
- </div>
- </div>
-
- <div className="space-y-4">
- <h4 className="font-bold text-center text-emerald-600 bg-emerald-50 py-2 rounded-xl border border-emerald-100 uppercase text-sm tracking-wider">Sức khoẻ</h4>
- <div className="flex flex-col gap-2 w-full">
- {currentPhrases.health.map((item, idx) => (
- <button 
- key={`health-${idx}`}
- onClick={() => setActiveItem(activeItem ===`health-${idx}` ? null :`health-${idx}`)}
- className={`px-3 py-2.5 rounded-xl text-sm font-light transition-all border flex flex-wrap items-center gap-2 text-left w-full ${
- activeItem ===`health-${idx}` 
- ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' 
- : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 '
- }`}
- >
- <span className="shrink-0">{item.en}</span>
- {activeItem ===`health-${idx}` && <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-lg text-sm shrink-0 animate-fade-in font-light">{item.vi}</span>}
- </button>
- ))}
- </div>
- </div>
- </div>
- </div>
- </div>
- );
- });
-
- const StructureCard = React.memo(({ struct, hideEnAudio }) => (
- <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
- <div className="flex justify-between items-start mb-2">
- <span className="font-bold text-slate-800 text-base sm:text-lg pr-2 leading-snug" dangerouslySetInnerHTML={{ __html: struct.en }}></span>
- {!hideEnAudio && (
- <button onClick={(e) => { e.stopPropagation(); speakText(struct.en.replace(/<[^>]*>?/gm, '')); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0" title="Nghe phát âm cấu trúc"><Volume2 size={18} /></button>
- )}
- </div>
- <div className="mt-2 flex flex-col gap-3.5 flex-1">
- <span className="text-indigo-600 text-sm sm:text-base font-light block leading-relaxed" dangerouslySetInnerHTML={{ __html: struct.vi }}></span>
- <div className="bg-slate-50 p-3.5 rounded-lg flex items-start gap-2.5 mt-auto border border-slate-100 ">
- <button onClick={(e) => { e.stopPropagation(); speakText(struct.example.replace(/<[^>]*>?/gm, '')); }} className="mt-0.5 text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0" title="Nghe phát âm câu ví dụ"><Volume2 size={16} /></button>
- <p className="text-slate-700 text-sm italic leading-relaxed font-light" dangerouslySetInnerHTML={{ __html: struct.example }}></p>
- </div>
- </div>
- </div>
- ));
-
- const contentSections = [
-  { key: 'b1', label: 'Level B1', dotClass: 'bg-blue-500' },
-  { key: 'b2', label: 'Level B2', dotClass: 'bg-green-500' },
-  { key: 'b1b2', label: 'Level B1 & B2', dotClass: 'bg-blue-500' },
-  { key: 'c1', label: 'Level C1', dotClass: 'bg-purple-500' }
- ];
-
- const renderCollection = (data, renderItem, groupedLayout = false) => {
-  if (!data) return null;
-
-  if (Array.isArray(data)) {
-   if (groupedLayout && data.length > 0 && data[0].groupTitle) {
-    return (
-     <div className="space-y-6 sm:space-y-8">
-     {data.map((group, idx) => (
-      <div key={idx} id={`expr-group-${idx}`}>
-      <h4 className="text-base sm:text-lg font-black text-black uppercase tracking-wider mb-4 mt-2">{group.groupTitle}</h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">
-      {group.items.map((item, itemIdx) => renderItem(item, itemIdx))}
-      </div>
-      </div>
-     ))}
-     </div>
-    );
-   }
-   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">{data.map(renderItem)}</div>;
+  // ==========================================================================
+  // SUPABASE CLOUD SYNC LAYER (ACTIVE WHEN supabase-config.js IS CONFIGURED)
+  // ==========================================================================
+  function isCloudMode() {
+    return Boolean(CLOUD && CLOUD.isEnabled && CLOUD.isEnabled());
   }
 
-  return (
-   <div>
-   {contentSections.map((section) => {
-    const items = data[section.key];
-    if (!items || items.length === 0) return null;
-    return (
-     <div key={section.key} className="mb-6 sm:mb-8">
-     <h4 className={`text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${section.key === 'b2' ? 'text-green-600' : section.key === 'c1' ? 'text-purple-600' : 'text-blue-600'}`}>
-     <span className={`w-1.5 h-1.5 rounded-full ${section.dotClass}`}></span> {section.label}
-     </h4>
-     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">{items.map(renderItem)}</div>
-     </div>
-    );
-   })}
-   </div>
-  );
- };
+  function getTopicIdForQuestion(qId) {
+    for (const t of TOPICS) {
+      if ((t.questions || []).some(q => q.id === qId)) return t.id;
+    }
+    return state.currentTopicId || "topic-travelling";
+  }
 
- const renderStructures = (data, hideEnAudio = false) => {
-  if (!data) return null;
-  return renderCollection(data, (struct, idx) => <StructureCard key={idx} struct={struct} hideEnAudio={hideEnAudio} />, true);
- };
+  async function loadCloudStudentData(sessionUser) {
+    const client = CLOUD.getClient();
+    if (!client || !sessionUser) return;
 
- const renderVocabList = (data) => {
-  if (!data) return null;
-  return renderCollection(data, (vocab, idx) => (
-   <VocabCard key={idx} word={vocab.word || vocab.en} ipa={vocab.ipa} pos={vocab.pos || 'phrase'} vi={vocab.vi} example={vocab.example} subItems={vocab.subItems} />
-  ), true);
- };
+    const uid = sessionUser.id;
+    const email = String(sessionUser.email || "").trim().toLowerCase();
+    const meta = sessionUser.user_metadata || {};
+    const appMeta = sessionUser.app_metadata || {};
+    const displayName =
+      String(meta.full_name || meta.name || "").trim() ||
+      email
+        .split("@")[0]
+        .replace(/[._-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+    const avatarUrl = meta.avatar_url || meta.picture || "";
+    const provider = appMeta.provider || "email";
 
- const App = () => {
+    state.cloudSyncStatus = "Đang đồng bộ dữ liệu đám mây...";
+    renderApp();
 
- // Sort dữ liệu dựa trên thứ tự custom
- const sortedData = sortedVstepGroups;
+    // 1. Ensure profile exists and refresh last_active_at
+    try {
+      await client.from("profiles").upsert(
+        {
+          id: uid,
+          email: email,
+          full_name: displayName,
+          avatar_url: avatarUrl,
+          auth_provider: provider,
+          last_active_at: new Date().toISOString()
+        },
+        { onConflict: "id" }
+      );
+    } catch (e) {}
 
- const [expandedGroups, setExpandedGroups] = useState(sortedData.length > 0 ? [sortedData[0].id] : []);
- const [activeView, setActiveView] = useState({ type: 'general_theory' });
- const [activeSharedTab, setActiveSharedTab] = useState('expressions');
- const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
- 
- if (sortedData.length === 0) {
- return (
- <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
- <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-md border border-slate-200 ">
- <h2 className="text-2xl font-bold text-red-600 mb-4">Chưa tải được dữ liệu</h2>
- </div>
- </div>
- )
- }
+    // 2. Fetch vocab, idea notes, and attempts in parallel
+    const [vocabRes, notesRes, attemptsRes] = await Promise.all([
+      client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      client.from("question_notes").select("*").eq("user_id", uid),
+      client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true })
+    ]);
 
- const toggleGroup = (groupId) => {
- setExpandedGroups(prev => 
- prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
- );
- };
+    const savedVocab = Array.isArray(vocabRes.data)
+      ? vocabRes.data.map(row => ({
+          word: row.word,
+          ipa: row.ipa || "",
+          pos: row.pos || "",
+          meaning: row.meaning || "",
+          example: row.example || "",
+          topic: row.topic || ""
+        }))
+      : [];
 
- const navigateToView = (viewObject) => {
- setActiveView(viewObject);
- setIsMobileMenuOpen(false);
- };
+    const questionsData = {};
 
- const currentGroup = sortedData.find(g => g.id === activeView.id || g.id === activeView.groupId);
- const currentSubtopic = activeView.type === 'subtopic' ? currentGroup?.subtopics.find(s => s.id === activeView.id) : null;
+    if (Array.isArray(notesRes.data)) {
+      notesRes.data.forEach(row => {
+        if (!questionsData[row.question_id]) {
+          questionsData[row.question_id] = {
+            ideaNote: "",
+            selectedTakeId: null,
+            submittedTakeId: null,
+            submittedAt: null,
+            attempts: []
+          };
+        }
+        questionsData[row.question_id].ideaNote = row.idea_note || "";
+      });
+    }
 
- return (
- <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
- <div className="md:hidden bg-black text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
- <h1 className="text-lg font-black tracking-tight flex items-center gap-2 min-w-0">
- <Mic size={20} className="flex-shrink-0" />
- <span className="truncate">SPEAKING PART 01</span>
- </h1>
- <button 
- onClick={() => setIsMobileMenuOpen(true)}
- className="p-1 hover:bg-slate-800 rounded transition-colors flex-shrink-0 ml-2"
- >
- <Menu size={24} />
- </button>
- </div>
+    const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
+    const audioPaths = attemptRows.map(r => r.audio_path).filter(Boolean);
+    const signedUrlMap = await CLOUD.getSignedAudioUrls(audioPaths);
 
- {isMobileMenuOpen && (
- <div className="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-sm transition-opacity" onClick={() => setIsMobileMenuOpen(false)}></div>
- )}
- 
- <div className={`fixed inset-y-0 left-0 z-50 w-[85%] max-w-[320px] bg-white border-r border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:w-80 md:flex-shrink-0 md:h-screen md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
- <div className="p-4 sm:p-5 border-b border-slate-700 bg-black text-white flex justify-between items-center overflow-hidden">
- <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 min-w-0">
- <Mic size={24} className="flex-shrink-0" />
- <span className="truncate hidden md:inline">SPEAKING PART 01</span>
- <span className="truncate md:hidden">Menu Bài Học</span>
- </h1>
- <button className="md:hidden p-1 hover:bg-slate-800 rounded flex-shrink-0 ml-2" onClick={() => setIsMobileMenuOpen(false)}>
- <X size={24} />
- </button>
- </div>
- 
- <div className="p-4 overflow-y-auto flex-1 pb-20">
- <div className="mb-6">
- <h2 className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">TÀI LIỆU CHUNG</h2>
- <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm p-1.5 space-y-1">
- <button 
- onClick={() => navigateToView({ type: 'general_theory' })} 
- className={`w-full text-left px-3.5 py-2.5 rounded-lg font-bold transition-all text-sm flex items-center ${activeView.type === 'general_theory' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-50 '}`}
- >
- <span className="truncate">Lý thuyết chung</span>
- </button>
- {sharedVocabData && (
- <button 
- onClick={() => navigateToView({ type: 'shared_vocab' })} 
- className={`w-full text-left px-3.5 py-2.5 rounded-lg font-bold transition-all text-sm flex items-center ${activeView.type === 'shared_vocab' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-50 '}`}
- >
- <span className="truncate">Cấu trúc & từ vựng dùng chung</span>
- </button>
- )}
- </div>
- </div>
+    attemptRows.forEach(row => {
+      const qId = row.question_id;
+      if (!questionsData[qId]) {
+        questionsData[qId] = {
+          ideaNote: "",
+          selectedTakeId: null,
+          submittedTakeId: null,
+          submittedAt: null,
+          attempts: []
+        };
+      }
+      const qd = questionsData[qId];
+      const attObj = {
+        id: row.id,
+        num: row.take_number || qd.attempts.length + 1,
+        createdAt: CLOUD.formatDateTime(row.created_at),
+        durationSec: row.duration_sec || 0,
+        audioDataUrl: row.audio_path && signedUrlMap[row.audio_path] ? signedUrlMap[row.audio_path] : null,
+        audioPath: row.audio_path || "",
+        transcript: row.transcript || "",
+        teacherFeedback: row.teacher_feedback || "",
+        teacherScore: row.teacher_score || ""
+      };
+      qd.attempts.push(attObj);
+      if (row.is_submitted) {
+        qd.submittedTakeId = row.id;
+        qd.submittedAt = CLOUD.formatDateTime(row.submitted_at || row.created_at);
+        qd.selectedTakeId = row.id;
+      }
+    });
 
- <h2 className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">DANH SÁCH BÀI HỌC</h2>
- <div className="space-y-3">
- {sortedData.map(group => {
- const isExpanded = expandedGroups.includes(group.id);
- return (
- <div key={group.id} className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
- <button onClick={() => toggleGroup(group.id)} className="w-full flex items-center justify-between p-3.5 sm:p-4 bg-slate-50 hover:bg-slate-100 transition-colors">
- <span className="font-bold text-slate-800 text-sm sm:text-base text-left pr-2">{group.title}</span>
- {isExpanded ? <ChevronDown size={18} className="text-slate-500 flex-shrink-0" /> : <ChevronRight size={18} className="text-slate-400 flex-shrink-0" />}
- </button>
+    Object.values(questionsData).forEach(qd => {
+      if (!qd.selectedTakeId && qd.attempts.length > 0) {
+        qd.selectedTakeId = qd.attempts[qd.attempts.length - 1].id;
+      }
+    });
 
- {isExpanded && (
- <div className="p-1.5 sm:p-2 border-t border-slate-100 bg-white ">
- <button onClick={() => navigateToView({ type: 'group', id: group.id })} className={`w-full text-left px-3 py-2.5 rounded-lg mb-1 font-semibold flex items-center gap-2 transition-all text-[13px] sm:text-sm ${activeView.type === 'group' && activeView.id === group.id ? 'bg-orange-100 text-orange-600' : 'hover:bg-orange-50 text-orange-500'}`}>
- Từ vựng chung của nhóm {group.title.match(/\d+/)?.[0] || '1'}
- </button>
- 
- <div className="space-y-1 mt-1.5 sm:mt-2">
- {group.subtopics.map(sub => {
- const isActiveSub = activeView.type === 'subtopic' && activeView.id === sub.id;
- return (
- <button key={sub.id} onClick={() => navigateToView({ type: 'subtopic', id: sub.id, groupId: group.id })} className={`w-full text-left px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all text-[13px] sm:text-sm flex items-center justify-between ${isActiveSub ? 'bg-indigo-50 text-indigo-700 relative' : 'hover:bg-slate-50 text-slate-600 '}`}>
- <span className="truncate pr-2">{sub.title}</span>
- {isActiveSub && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0"></div>}
- </button>
- );
- })}
- </div>
- </div>
- )}
- </div>
- );
- })}
- </div>
- </div>
- </div>
+    db.accounts[email] = {
+      id: uid,
+      name: displayName,
+      email: email,
+      authProvider: provider,
+      picture: avatarUrl,
+      createdAt: CLOUD.formatDateTime(sessionUser.created_at),
+      savedVocab: savedVocab,
+      questionsData: questionsData
+    };
 
- <div className="flex-1 overflow-y-auto relative w-full">
- <div className="max-w-[1440px] w-full mx-auto p-4 sm:p-6 md:p-10 pb-20">
- {activeView.type === 'general_theory' && (
- <GeneralTheory />
- )}
+    state.currentUserEmail = email;
+    state.currentUserId = uid;
+    state.authError = "";
+    state.authInfo = "";
+    state.authLoading = false;
+    state.cloudSyncStatus = "";
+    if (state.view === "auth") state.view = "home";
+    renderApp();
+  }
 
- {activeView.type === 'shared_vocab' && sharedVocabData && (
- <div className="animate-fade-in">
- <header className="mb-6 sm:mb-8 flex items-center gap-3">
- <div className="bg-orange-100 text-orange-600 p-2 sm:p-3 rounded-2xl hidden sm:block"><BookOpen size={28} /></div>
- <div>
- <span className="text-xs sm:text-sm font-bold text-orange-500 uppercase tracking-wider">Tài liệu chung</span>
- <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight mt-1">{sharedVocabData.title}</h2>
- </div>
- </header>
+  async function cloudSaveIdeaNote(qId, noteText) {
+    if (!isCloudMode() || !state.currentUserId) return;
+    const client = CLOUD.getClient();
+    try {
+      await client.from("question_notes").upsert(
+        {
+          user_id: state.currentUserId,
+          question_id: qId,
+          idea_note: noteText,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: "user_id,question_id" }
+      );
+    } catch (e) {}
+  }
 
- {/* Tabs */}
- <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 border-b border-slate-200 pb-4">
- <button
- onClick={() => setActiveSharedTab('expressions')}
- className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all ${
- activeSharedTab === 'expressions' 
- ? 'bg-blue-600 text-white shadow-md' 
- : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '
- }`}
- >
- Cách diễn đạt
- </button>
- <button
- onClick={() => setActiveSharedTab('adjectives')}
- className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all ${
- activeSharedTab === 'adjectives' 
- ? 'bg-blue-600 text-white shadow-md' 
- : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '
- }`}
- >
- Tính từ
- </button>
- <button
- onClick={() => setActiveSharedTab('benefits')}
- className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base transition-all ${
- activeSharedTab === 'benefits' 
- ? 'bg-blue-600 text-white shadow-md' 
- : 'bg-slate-100 text-slate-600 hover:bg-slate-200 '
- }`}
- >
- Kể lợi ích
- </button>
- </div>
+  async function cloudAddVocab(item) {
+    if (!isCloudMode() || !state.currentUserId) return;
+    const client = CLOUD.getClient();
+    try {
+      await client.from("student_vocab").upsert(
+        {
+          user_id: state.currentUserId,
+          word: item.word,
+          ipa: item.ipa || "",
+          pos: item.pos || "",
+          meaning: item.meaning || "",
+          example: item.example || "",
+          topic: item.topic || ""
+        },
+        { onConflict: "user_id,word_lower" }
+      );
+    } catch (e) {}
+  }
 
- {activeSharedTab === 'expressions' && sharedVocabData.expressions && sharedVocabData.expressions.length > 0 && (
-  <section className="mb-6 sm:mb-8 animate-fade-in">
+  async function cloudRemoveVocab(word) {
+    if (!isCloudMode() || !state.currentUserId) return;
+    const client = CLOUD.getClient();
+    try {
+      await client
+        .from("student_vocab")
+        .delete()
+        .eq("user_id", state.currentUserId)
+        .eq("word_lower", String(word || "").trim().toLowerCase());
+    } catch (e) {}
+  }
 
-  <div className="mb-6 flex justify-end w-full">
-  <select 
-  className="w-full sm:w-auto p-2 border border-slate-300 rounded-lg text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-  onChange={(e) => {
-    if (e.target.value !== "") {
-      const el = document.getElementById(`expr-group-${e.target.value}`);
-      if (el) {
-        const headerOffset = 150;
-        const elementPosition = el.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.scrollY - headerOffset;
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth"
+  async function cloudCreateAttempt(qId, takeObj, audioBlob) {
+    if (!isCloudMode() || !state.currentUserId) return;
+    const client = CLOUD.getClient();
+    state.cloudSyncStatus = "☁️ Đang lưu bản ghi âm lên đám mây...";
+    renderApp();
+
+    let audioPath = "";
+    if (audioBlob && audioBlob.size > 0) {
+      const upRes = await CLOUD.uploadRecording(state.currentUserId, qId, takeObj.id, audioBlob);
+      if (!upRes.error && upRes.path) {
+        audioPath = upRes.path;
+        takeObj.audioPath = audioPath;
+      }
+    }
+
+    try {
+      await client.from("speaking_attempts").insert({
+        id: takeObj.id,
+        user_id: state.currentUserId,
+        topic_id: getTopicIdForQuestion(qId),
+        question_id: qId,
+        take_number: takeObj.num,
+        duration_sec: takeObj.durationSec,
+        transcript: takeObj.transcript || "",
+        audio_path: audioPath,
+        is_submitted: false
+      });
+      await client
+        .from("profiles")
+        .update({ last_active_at: new Date().toISOString() })
+        .eq("id", state.currentUserId);
+      state.cloudSyncStatus = "";
+    } catch (e) {
+      state.cloudSyncStatus = "⚠️ Lỗi đồng bộ bản ghi âm. Vui lòng thử lại.";
+    }
+    renderApp();
+  }
+
+  async function cloudDeleteAttempt(takeObj) {
+    if (!isCloudMode() || !state.currentUserId || !takeObj) return;
+    const client = CLOUD.getClient();
+    try {
+      await client.from("speaking_attempts").delete().eq("id", takeObj.id).eq("user_id", state.currentUserId);
+      if (takeObj.audioPath) {
+        await CLOUD.deleteRecording(takeObj.audioPath);
+      }
+    } catch (e) {}
+  }
+
+  async function cloudSubmitAttempt(qId, chosenTakeId) {
+    if (!isCloudMode() || !state.currentUserId) return;
+    const client = CLOUD.getClient();
+    const nowIso = new Date().toISOString();
+    try {
+      await client
+        .from("speaking_attempts")
+        .update({ is_submitted: false, submitted_at: null })
+        .eq("user_id", state.currentUserId)
+        .eq("question_id", qId);
+
+      await client
+        .from("speaking_attempts")
+        .update({ is_submitted: true, submitted_at: nowIso })
+        .eq("id", chosenTakeId)
+        .eq("user_id", state.currentUserId);
+
+      await client
+        .from("profiles")
+        .update({ last_active_at: nowIso })
+        .eq("id", state.currentUserId);
+    } catch (e) {}
+  }
+
+  // ==========================================================================
+  // PERMANENT STORAGE (LOCALSTORAGE + INDEXEDDB + /api/db SERVER DISK)
+  // ==========================================================================
+  function mergeAccounts(targetAccounts, incomingAccounts) {
+    if (!incomingAccounts || typeof incomingAccounts !== "object") return;
+    Object.keys(incomingAccounts).forEach(email => {
+      const inc = incomingAccounts[email];
+      if (!targetAccounts[email]) {
+        targetAccounts[email] = inc;
+      } else {
+        const cur = targetAccounts[email];
+        const vocabMap = new Map();
+        (cur.savedVocab || []).concat(inc.savedVocab || []).forEach(v => {
+          if (v && v.word) vocabMap.set(v.word.toLowerCase(), v);
+        });
+        cur.savedVocab = Array.from(vocabMap.values());
+
+        cur.questionsData = cur.questionsData || {};
+        const incQD = inc.questionsData || {};
+        Object.keys(incQD).forEach(qId => {
+          if (!cur.questionsData[qId]) {
+            cur.questionsData[qId] = incQD[qId];
+          } else {
+            const cq = cur.questionsData[qId];
+            const iq = incQD[qId];
+            if (!cq.ideaNote && iq.ideaNote) cq.ideaNote = iq.ideaNote;
+            if (!cq.submittedTakeId && iq.submittedTakeId) {
+              cq.submittedTakeId = iq.submittedTakeId;
+              cq.submittedAt = iq.submittedAt;
+            }
+            const attMap = new Map();
+            (cq.attempts || []).concat(iq.attempts || []).forEach(a => {
+              if (a && a.id) attMap.set(a.id, a);
+            });
+            cq.attempts = Array.from(attMap.values());
+            if (!cq.selectedTakeId && cq.attempts.length > 0) {
+              cq.selectedTakeId = cq.attempts[cq.attempts.length - 1].id;
+            }
+          }
         });
       }
-      e.target.value = "";
+    });
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.accounts) {
+          mergeAccounts(db.accounts, parsed.accounts);
+        }
+      }
+      const savedUser = localStorage.getItem(SESSION_KEY);
+      if (savedUser && savedUser !== "__LOGGED_OUT__" && db.accounts[savedUser]) {
+        state.currentUserEmail = savedUser;
+      } else if (savedUser === "__LOGGED_OUT__") {
+        state.currentUserEmail = "";
+        state.view = "auth";
+      }
+    } catch (e) {}
+  }
+
+  function openIndexedDB() {
+    return new Promise(resolve => {
+      if (!("indexedDB" in window)) return resolve(null);
+      try {
+        const req = window.indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const idb = e.target.result;
+          if (!idb.objectStoreNames.contains(IDB_STORE)) {
+            idb.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  async function loadFromIndexedDB() {
+    const idb = await openIndexedDB();
+    if (!idb) return;
+    return new Promise(resolve => {
+      try {
+        const tx = idb.transaction(IDB_STORE, "readonly");
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.get("main_db");
+        req.onsuccess = () => {
+          if (req.result && req.result.accounts) {
+            mergeAccounts(db.accounts, req.result.accounts);
+          }
+          resolve();
+        };
+        req.onerror = () => resolve();
+      } catch (e) {
+        resolve();
+      }
+    });
+  }
+
+  async function saveToIndexedDB() {
+    const idb = await openIndexedDB();
+    if (!idb) return;
+    try {
+      const tx = idb.transaction(IDB_STORE, "readwrite");
+      const store = tx.objectStore(IDB_STORE);
+      store.put(db, "main_db");
+    } catch (e) {}
+  }
+
+  async function syncAccountToServerDisk() {
+    const acc = getCurrentAccount();
+    if (!acc) return;
+    try {
+      await fetch("/api/db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accounts: {
+            [acc.email]: acc
+          }
+        })
+      });
+    } catch (e) {}
+  }
+
+  async function verifyLoginOnServer(email, password) {
+    try {
+      const res = await fetch("/api/student-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ok && data.account) {
+          mergeAccounts(db.accounts, { [email]: data.account });
+          return { ok: true, account: db.accounts[email] };
+        }
+        return { ok: false, error: data.error || "" };
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  async function completeGoogleSignIn(googleEmail, googleName, googlePicture) {
+    let email = String(googleEmail || "").trim().toLowerCase();
+    if (!email) return;
+    if (!email.includes("@")) {
+      email = email + "@gmail.com";
     }
-  }}
-  >
-  <option value="">Chọn chủ đề để di chuyển nhanh</option>
-  {sharedVocabData.expressions.map((group, idx) => {
-    const text = group.groupTitle.charAt(0).toUpperCase() + group.groupTitle.slice(1).toLowerCase();
-    return <option key={idx} value={idx}>{text}</option>;
-  })}
-  </select>
-  </div>
-  {renderStructures(sharedVocabData.expressions, true)}
+    const displayName =
+      String(googleName || "").trim() ||
+      email
+        .split("@")[0]
+        .replace(/[._-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
 
-  </section>
-  )}
+    // 1. Sync with backend /api/google-login if running on local server
+    try {
+      const res = await fetch("/api/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          name: displayName,
+          picture: googlePicture || "",
+          createdAt: getNowTimestamp(),
+          defaultVocab: defaultVocabDeck
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ok && data.account) {
+          mergeAccounts(db.accounts, { [email]: data.account });
+        }
+      }
+    } catch (e) {}
 
- {activeSharedTab === 'adjectives' && (
- <AdjectivesTab />
- )}
+    // 2. Ensure account exists in local db as well
+    if (!db.accounts[email]) {
+      db.accounts[email] = {
+        name: displayName,
+        email: email,
+        password: "",
+        authProvider: "google",
+        picture: googlePicture || "",
+        createdAt: getNowTimestamp(),
+        savedVocab: JSON.parse(JSON.stringify(defaultVocabDeck)),
+        questionsData: {}
+      };
+    } else {
+      db.accounts[email].authProvider = "google";
+      if (googleName && googleName.trim()) {
+        db.accounts[email].name = googleName.trim();
+      }
+    }
 
- {activeSharedTab === 'benefits' && (
- <BenefitsTab />
- )}
- </div>
- )}
+    state.currentUserEmail = email;
+    state.authError = "";
+    state.googleModalOpen = false;
+    state.googleModalError = "";
+    state.view = "home";
+    persistAllData();
+    renderApp();
+  }
 
- {activeView.type === 'group' && currentGroup && (
- <div className="animate-fade-in">
- <header className="mb-5 sm:mb-6">
- <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 leading-tight">{currentGroup.title}</h2>
- <p className="text-slate-500 text-sm sm:text-lg leading-relaxed font-light">{currentGroup.description}</p>
- </header>
+  function decodeGoogleJwt(jwtToken) {
+    try {
+      const base64Url = jwtToken.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
 
- {currentGroup.groupVocabulary && (
- <section className="mb-8 sm:mb-12">
- {renderVocabList(currentGroup.groupVocabulary)}
- </section>
- )}
+  async function triggerGoogleLoginFlow() {
+    // 1. Real Supabase Google OAuth (Production GitHub Pages mode)
+    if (isCloudMode()) {
+      state.authError = "";
+      state.authInfo = "";
+      state.authLoading = true;
+      renderApp();
+      const { error } = await CLOUD.signInWithGoogle();
+      if (error) {
+        state.authLoading = false;
+        state.authError = "Không thể mở đăng nhập Google: " + (error.message || "Lỗi kết nối");
+        renderApp();
+      }
+      return;
+    }
 
- {currentGroup.usefulIdeas && (
- <section className="mb-8 sm:mb-12">
- <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2">
- <span className="bg-rose-100 text-rose-600 p-1.5 sm:p-2 rounded-lg"><Lightbulb size={18} className="sm:w-5 sm:h-5" /></span>
- Các ý tưởng & Cụm từ hay xài (High-scoring Ideas)
- </h3>
- {renderVocabList(currentGroup.usefulIdeas)}
- </section>
- )}
- </div>
- )}
+    // 2. Standalone GIS OAuth if configured manually
+    const clientId = window.GOOGLE_OAUTH_CLIENT_ID || "";
+    if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: response => {
+            const payload = decodeGoogleJwt(response.credential);
+            if (payload && payload.email) {
+              completeGoogleSignIn(payload.email, payload.name, payload.picture);
+            }
+          }
+        });
+        window.google.accounts.id.prompt();
+        return;
+      } catch (e) {}
+    }
 
- {activeView.type === 'subtopic' && currentSubtopic && (
- <div className="animate-fade-in">
- <header className="mb-6 sm:mb-8 flex items-center gap-3">
- <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-2xl hidden sm:block"><Mic size={28} /></div>
- <div>
- <span className="text-xs sm:text-sm font-bold text-indigo-500 uppercase tracking-wider">{currentGroup?.title}</span>
- <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight mt-1">{currentSubtopic.title}</h2>
- </div>
- </header>
+    // 3. Built-in Google Sign-In Dialog (Local mode)
+    state.googleModalOpen = true;
+    state.googleModalError = "";
+    renderApp();
+    setTimeout(() => {
+      const inp = document.getElementById("inp-google-email");
+      if (inp) inp.focus();
+    }, 30);
+  }
 
- {currentSubtopic.subVocab && currentSubtopic.subVocab.length > 0 && (
- <section className="mb-6 sm:mb-8">
- <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4 border-b border-slate-200 pb-2">Từ vựng mới trong chủ đề này</h3>
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
- {currentSubtopic.subVocab.map((vocab, idx) => (
- <VocabCard key={idx} {...vocab} />
- ))}
- </div>
- </section>
- )}
+  function persistAllData() {
+    if (isCloudMode()) {
+      // Cloud mode persists directly via Supabase APIs
+      return;
+    }
+    try {
+      localStorage.setItem(SESSION_KEY, state.currentUserEmail || "__LOGGED_OUT__");
+      localStorage.setItem(LS_KEY, JSON.stringify(db));
+    } catch (e) {
+      try {
+        const lightDb = JSON.parse(JSON.stringify(db));
+        Object.values(lightDb.accounts || {}).forEach(acc => {
+          Object.values(acc.questionsData || {}).forEach(qd => {
+            (qd.attempts || []).forEach(att => {
+              if (att.savedAudioFile) delete att.audioDataUrl;
+            });
+          });
+        });
+        localStorage.setItem(LS_KEY, JSON.stringify(lightDb));
+      } catch (err) {}
+    }
 
- {currentSubtopic.expressions && currentSubtopic.expressions.length > 0 && (
- <section className="mb-6 sm:mb-8">
- <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4 border-b border-slate-200 pb-2">Expressions</h3>
- {renderStructures(currentSubtopic.expressions, true)}
- </section>
- )}
+    saveToIndexedDB();
+    syncAccountToServerDisk();
+  }
 
- {currentSubtopic.vocabulary && currentSubtopic.vocabulary.length > 0 && (
- <section className="mb-6 sm:mb-8">
- <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4 border-b border-slate-200 pb-2">Vocabulary</h3>
- {renderVocabList(currentSubtopic.vocabulary)}
- </section>
- )}
+  // ==========================================================================
+  // HELPERS & ACCOUNT ACCESSORS
+  // ==========================================================================
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
- {currentSubtopic.questions && currentSubtopic.questions.length > 0 && (
- <section>
- <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4 border-b border-slate-200 pb-2">Câu hỏi & Trả lời mẫu</h3>
- <div className="space-y-4 sm:space-y-6">
- {currentSubtopic.questions.map((q, idx) => (
- <QuestionBlock key={`${currentSubtopic.id}_q_${idx}`} question={q} idx={idx} />
- ))}
- </div>
- </section>
- )}
- </div>
- )}
- </div>
- </div>
- </div>
- );
- }
+  function formatDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  }
 
- class ErrorBoundary extends React.Component {
- constructor(props) {
- super(props);
- this.state = { hasError: false, error: null };
- }
- static getDerivedStateFromError(error) {
- return { hasError: true, error };
- }
- componentDidCatch(error, errorInfo) {
- console.error("ErrorBoundary caught:", error, errorInfo);
- }
- render() {
- if (this.state.hasError) {
- return (
- <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
- <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-lg border border-red-200">
- <h2 className="text-xl font-bold text-red-600 mb-2">Đã xảy ra sự cố khi tải nội dung này</h2>
- <p className="text-slate-600 text-sm mb-4">Vui lòng bấm nút bên dưới để tải lại trang.</p>
- <button 
- onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
- className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
- >
- Tải lại trang
- </button>
- </div>
- </div>
- );
- }
- return this.props.children;
- }
- }
+  function getNowTimestamp() {
+    const d = new Date();
+    const pad = n => (n < 10 ? "0" + n : "" + n);
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
 
- const root = ReactDOM.createRoot(document.getElementById('root'));
- root.render(
- <ErrorBoundary>
- <App />
- </ErrorBoundary>
- );
+  function getInitials(name) {
+    const parts = String(name || "HV")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (parts.length === 0) return "HV";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
 
- 
+  function getCurrentAccount() {
+    if (state.currentUserEmail && db.accounts[state.currentUserEmail]) {
+      return db.accounts[state.currentUserEmail];
+    }
+    return null;
+  }
+
+  function getQuestionData(qId) {
+    const acc = getCurrentAccount();
+    if (!acc) return { ideaNote: "", selectedTakeId: null, submittedTakeId: null, attempts: [] };
+    if (!acc.questionsData) acc.questionsData = {};
+    if (!acc.questionsData[qId]) {
+      acc.questionsData[qId] = {
+        ideaNote: "",
+        selectedTakeId: null,
+        submittedTakeId: null,
+        submittedAt: null,
+        attempts: []
+      };
+    }
+    return acc.questionsData[qId];
+  }
+
+  function getCurrentTopic() {
+    return TOPICS.find(t => t.id === state.currentTopicId) || TOPICS[0];
+  }
+
+  function getCurrentQuestion() {
+    const topic = getCurrentTopic();
+    const idx = Math.max(0, Math.min(topic.questions.length - 1, state.currentQuestionIndex));
+    state.currentQuestionIndex = idx;
+    return topic.questions[idx];
+  }
+
+  // ==========================================================================
+  // TEXT-TO-SPEECH (FOR VOCABULARY WORDS & MODEL ANSWERS)
+  // ==========================================================================
+  window.speakEnglishText = function (rawText) {
+    const cleanText = String(rawText || "").replace(/<[^>]*>?/gm, "").trim();
+    if (!cleanText) return;
+
+    if (window.currentTtsAudio) {
+      try {
+        window.currentTtsAudio.pause();
+      } catch (e) {}
+    }
+
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = "en-US";
+        utter.rate = 0.92;
+        window.speechSynthesis.speak(utter);
+        return;
+      } catch (e) {}
+    }
+
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=en-US&client=tw-ob`;
+      const audio = new Audio(url);
+      window.currentTtsAudio = audio;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  };
+
+  // ==========================================================================
+  // MULTI-TAKE AUDIO RECORDING + SPEECH-TO-TEXT + PERMANENT BASE64 ENCODING
+  // ==========================================================================
+  function blobToBase64(blob) {
+    return new Promise(resolve => {
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result || null);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  function startRecording(qId) {
+    if (state.isRecording) {
+      stopRecording(qId);
+      return;
+    }
+
+    state.isRecording = true;
+    state.recordingSeconds = 0;
+    state.liveTranscript = "";
+    state.submitSuccessMsg = "";
+    finalTranscriptBuffer = "";
+    interimTranscriptBuffer = "";
+    audioChunks = [];
+
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+      try {
+        speechRecognizer = new SpeechRec();
+        speechRecognizer.lang = "en-US";
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+
+        speechRecognizer.onresult = event => {
+          interimTranscriptBuffer = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const piece = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscriptBuffer += piece + " ";
+            } else {
+              interimTranscriptBuffer += piece;
+            }
+          }
+          state.liveTranscript = (finalTranscriptBuffer + interimTranscriptBuffer).trim();
+          const liveEl = document.getElementById("live-transcript-preview");
+          if (liveEl) {
+            liveEl.textContent =
+              state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...";
+            liveEl.classList.toggle("placeholder", !state.liveTranscript);
+          }
+        };
+
+        speechRecognizer.onerror = () => {};
+        speechRecognizer.onend = () => {
+          if (state.isRecording && speechRecognizer) {
+            try {
+              speechRecognizer.start();
+            } catch (e) {}
+          }
+        };
+        speechRecognizer.start();
+      } catch (e) {
+        speechRecognizer = null;
+      }
+    }
+
+    if (recordingTimer) clearInterval(recordingTimer);
+    recordingTimer = setInterval(() => {
+      state.recordingSeconds++;
+      const timerEl = document.getElementById("rec-timer-text");
+      if (timerEl) {
+        timerEl.textContent = `${formatDuration(state.recordingSeconds)} / 0:45`;
+      }
+      if (state.recordingSeconds >= 45) {
+        stopRecording(qId);
+      }
+    }, 1000);
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(stream => {
+          if (!state.isRecording) {
+            stream.getTracks().forEach(t => t.stop());
+            return;
+          }
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) audioChunks.push(e.data);
+          };
+          mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            const mimeType = mediaRecorder.mimeType || "audio/webm";
+            const blob = new Blob(audioChunks, { type: mimeType });
+            if (isCloudMode()) {
+              const previewUrl = URL.createObjectURL(blob);
+              finalizeNewTake(qId, previewUrl, blob);
+            } else {
+              const base64Url = await blobToBase64(blob);
+              finalizeNewTake(qId, base64Url, blob);
+            }
+          };
+          mediaRecorder.start();
+          renderApp();
+        })
+        .catch(() => {
+          mediaRecorder = null;
+          renderApp();
+        });
+    } else {
+      mediaRecorder = null;
+      renderApp();
+    }
+  }
+
+  function stopRecording(qId) {
+    if (recordingTimer) {
+      clearInterval(recordingTimer);
+      recordingTimer = null;
+    }
+    state.isRecording = false;
+
+    if (speechRecognizer) {
+      try {
+        speechRecognizer.onend = null;
+        speechRecognizer.stop();
+      } catch (e) {}
+      speechRecognizer = null;
+    }
+
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      try {
+        mediaRecorder.stop();
+        return;
+      } catch (e) {}
+    }
+
+    finalizeNewTake(qId, null);
+  }
+
+  function finalizeNewTake(qId, audioUrl, rawBlob) {
+    const dur = Math.max(1, state.recordingSeconds);
+    const recognizedText = (state.liveTranscript || finalTranscriptBuffer || "").trim();
+    const qData = getQuestionData(qId);
+    const nextNum = qData.attempts.length + 1;
+    const takeId = "take_" + Date.now() + "_" + nextNum;
+
+    const newTake = {
+      id: takeId,
+      num: nextNum,
+      createdAt: getNowTimestamp(),
+      durationSec: dur,
+      audioDataUrl: audioUrl,
+      audioPath: "",
+      transcript: recognizedText,
+      teacherFeedback: "",
+      teacherScore: ""
+    };
+
+    qData.attempts.push(newTake);
+    qData.selectedTakeId = takeId;
+
+    if (isCloudMode()) {
+      renderApp();
+      cloudCreateAttempt(qId, newTake, rawBlob || null);
+    } else {
+      persistAllData();
+      renderApp();
+    }
+  }
+
+  // ==========================================================================
+  // VIEW 1: STUDENT ACCOUNT LOGIN / REGISTER (PRIVATE, NO OTHER ACCOUNTS SHOWN)
+  // ==========================================================================
+  function renderGoogleIconSvg(size) {
+    const s = size || 18;
+    return `
+      <svg width="${s}" height="${s}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+    `;
+  }
+
+  function renderAuthView() {
+    const isReg = state.authMode === "register";
+
+    return `
+      <div class="auth-wrapper">
+        <div class="auth-card-box">
+          <div style="margin-bottom:10px;">
+            <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:var(--accent-yellow);padding:3px 9px;border:1.5px solid #18181B;">
+              SPEAKING PART 1 · TÀI KHOẢN HỌC VIÊN
+            </span>
+          </div>
+
+          <h1 style="font-size:22px;font-weight:900;color:#18181B;margin-bottom:6px;">
+            ${isReg ? "Tạo tài khoản học viên" : "Đăng nhập học tập"}
+          </h1>
+          <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:16px;">
+            ${
+              isReg
+                ? "Đăng nhập nhanh bằng Google hoặc tạo tài khoản để lưu kho từ vựng của riêng bạn và nộp bài ghi âm."
+                : "Đăng nhập bằng tài khoản Google hoặc email của bạn để tiếp tục học và xây dựng kho từ vựng cá nhân."
+            }
+          </p>
+
+          <!-- GOOGLE SIGN-IN BUTTON -->
+          <button type="button" class="google-auth-btn" id="btn-google-login" ${state.authLoading ? "disabled" : ""}>
+            ${renderGoogleIconSvg(19)}
+            <span>${state.authLoading ? "Đang kết nối tới Google..." : "Tiếp tục với Google"}</span>
+          </button>
+
+          <div class="auth-or-divider">
+            <span>Hoặc dùng tài khoản Email</span>
+          </div>
+
+          <div class="auth-tabs-row">
+            <button type="button" class="auth-tab ${!isReg ? "active" : ""}" id="btn-tab-login">Đăng nhập</button>
+            <button type="button" class="auth-tab ${isReg ? "active" : ""}" id="btn-tab-register">Tạo tài khoản mới</button>
+          </div>
+
+          ${
+            state.authError
+              ? `<div style="padding:8px 12px;border:1.5px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:12.5px;font-weight:700;margin-bottom:12px;">⚠️ ${escapeHtml(state.authError)}</div>`
+              : ""
+          }
+          ${
+            state.authInfo
+              ? `<div style="padding:8px 12px;border:1.5px solid #16A34A;background:#F0FDF4;color:#166534;font-size:12.5px;font-weight:700;margin-bottom:12px;">✓ ${escapeHtml(state.authInfo)}</div>`
+              : ""
+          }
+
+          <form id="auth-form" onsubmit="return false;">
+            ${
+              isReg
+                ? `
+              <div class="form-field">
+                <label class="form-label" for="inp-auth-name">Họ và tên của bạn</label>
+                <input type="text" id="inp-auth-name" class="form-input" placeholder="Ví dụ: Nguyễn Minh Tùng" required />
+              </div>
+            `
+                : ""
+            }
+
+            <div class="form-field">
+              <label class="form-label" for="inp-auth-email">Email hoặc Tên đăng nhập</label>
+              <input type="text" id="inp-auth-email" class="form-input" placeholder="Nhập email hoặc tên đăng nhập..." required />
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="inp-auth-pass">Mật khẩu</label>
+              <input type="password" id="inp-auth-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
+            </div>
+
+            <button type="submit" class="form-submit-btn">
+              ${isReg ? "Tạo tài khoản & Vào học →" : "Đăng nhập →"}
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  // ==========================================================================
+  // VIEW 2: HOME VIEW — 4 STANDALONE TOPIC CARDS (STUDENT ONLY)
+  // ==========================================================================
+  function renderHomeView() {
+    const acc = getCurrentAccount();
+    if (!acc) return renderAuthView();
+
+    const vocabCount = (acc.savedVocab || []).length;
+
+    return `
+      <div class="home-shell">
+        <header class="home-topbar">
+          <div class="home-brand-title" id="btn-home-title">SPEAKING PART 1</div>
+
+          <div class="topbar-actions">
+            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
+              <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
+            </button>
+
+            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
+              <span class="user-initials">${escapeHtml(getInitials(acc.name))}</span>
+              <span>${escapeHtml(acc.name)}</span>
+              <span style="font-size:11px;color:#71717A;">· Đăng xuất</span>
+            </button>
+          </div>
+        </header>
+
+        <main class="home-container">
+          <div class="home-header-block">
+            <div>
+              <div class="home-eyebrow">SPEAKING PART 1 · PRACTICE TOPICS</div>
+              <h1 class="home-h1">DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1</h1>
+              <p class="home-desc">
+                Chọn một thẻ chủ đề bên dưới để bắt đầu luyện nói. Bạn có thể ghi chú ý tưởng, ghi âm nhiều lần để chọn bản tốt nhất nộp bài, và lưu từ vựng vào kho từ vựng của riêng mình.
+              </p>
+            </div>
+          </div>
+
+          <div class="topics-grid">
+            ${TOPICS.map(topic => {
+              const submittedCount = topic.questions.filter(q => {
+                const qd = acc.questionsData && acc.questionsData[q.id];
+                return qd && qd.submittedTakeId;
+              }).length;
+              const isAllDone = submittedCount === topic.questions.length;
+
+              return `
+                <article class="topic-card" data-open-topic="${topic.id}">
+                  <div class="topic-card-top">
+                    <div class="topic-num-badge">${topic.number}</div>
+                    <span class="topic-progress-tag ${isAllDone ? "done" : ""}">
+                      ${isAllDone ? "Đã hoàn thành 3/3 câu ✓" : `Đã nộp ${submittedCount}/${topic.questions.length} câu`}
+                    </span>
+                  </div>
+
+                  <h2 class="topic-card-title">${escapeHtml(topic.title)}</h2>
+                  <div class="topic-card-vi">${escapeHtml(topic.titleVi)}</div>
+                  <p class="topic-card-desc">${escapeHtml(topic.description)}</p>
+
+                  <ul class="topic-questions-preview">
+                    ${topic.questions
+                      .map(
+                        (q, idx) => `
+                        <li>
+                          <span class="preview-q-num">Q${idx + 1}.</span>
+                          <span>${escapeHtml(q.prompt)}</span>
+                        </li>
+                      `
+                      )
+                      .join("")}
+                  </ul>
+
+                  <div class="topic-card-footer">
+                    <span>${topic.questions.length} câu hỏi · Level B1 & B2</span>
+                    <span>Vào luyện đề →</span>
+                  </div>
+                </article>
+              `;
+            }).join("")}
+          </div>
+        </main>
+      </div>
+    `;
+  }
+
+  // ==========================================================================
+  // VIEW 3: PRACTICE ROOM — 50/50 SPLIT-SCREEN (STUDENT ONLY)
+  // ==========================================================================
+  function renderPracticeView() {
+    const acc = getCurrentAccount();
+    if (!acc) return renderAuthView();
+
+    const topic = getCurrentTopic();
+    const question = getCurrentQuestion();
+    const qId = question.id;
+    const qIdx = state.currentQuestionIndex;
+    const totalQ = topic.questions.length;
+    const lvl = state.selectedLevel;
+    const levelData = question.levels[lvl] || question.levels.b1;
+
+    const qData = getQuestionData(qId);
+    const attempts = qData.attempts || [];
+    const selectedTakeId =
+      qData.selectedTakeId || (attempts.length > 0 ? attempts[attempts.length - 1].id : null);
+    const submittedTakeId = qData.submittedTakeId || null;
+    const selectedTakeObj = attempts.find(a => a.id === selectedTakeId) || null;
+    const submittedTakeObj = attempts.find(a => a.id === submittedTakeId) || null;
+
+    const submittedInTopicCount = topic.questions.filter(q => {
+      const qd = acc.questionsData && acc.questionsData[q.id];
+      return qd && qd.submittedTakeId;
+    }).length;
+
+    const vocabCount = (acc.savedVocab || []).length;
+
+    return `
+      <div class="practice-shell">
+        <!-- TOP HEADER -->
+        <header class="practice-header">
+          <div class="practice-header-left">
+            <button type="button" class="back-topics-btn" id="btn-back-home">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <span>Danh sách chủ đề</span>
+            </button>
+            <h1 class="header-topic-name">${escapeHtml(topic.title)}</h1>
+            <span class="header-part-badge">Speaking Part 1</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
+              <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
+            </button>
+
+            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
+              <span class="user-initials">${escapeHtml(getInitials(acc.name))}</span>
+              <span>${escapeHtml(acc.name)}</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- MAIN 50/50 SPLIT WORKSPACE -->
+        <main class="practice-workspace">
+          <!-- LEFT PANE: QUESTION + IDEA NOTES + MULTI-TAKE RECORDER & SUBMIT -->
+          <section class="left-pane" aria-label="Câu hỏi và ghi âm">
+            <div class="left-pane-inner">
+              <div class="question-step-tag">
+                SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}
+              </div>
+
+              <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
+              <p class="examiner-instruction">
+                The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.
+              </p>
+
+              <!-- 1. QUESTION PROMPT CARD -->
+              <div class="question-prompt-card">
+                <p class="question-prompt-text">${escapeHtml(question.prompt)}</p>
+              </div>
+
+              <!-- 2. IDEA NOTES BOX ("GHI CHÚ Ý TƯỞNG CỦA HỌC VIÊN") -->
+              <div class="idea-notes-card">
+                <div class="idea-notes-header">
+                  <label class="idea-notes-title" for="idea-note-input">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    <span>Ghi chú ý tưởng / Từ khóa trước khi nói</span>
+                  </label>
+                  <span class="idea-notes-saved-badge" id="idea-saved-indicator">
+                    ${qData.ideaNote ? "✓ Đã lưu ghi chú" : "Tự động lưu"}
+                  </span>
+                </div>
+                <textarea
+                  id="idea-note-input"
+                  class="idea-notes-textarea"
+                  placeholder="Ghi nhanh các từ khóa hoặc ý tưởng của bạn trước khi bấm ghi âm..."
+                >${escapeHtml(qData.ideaNote || "")}</textarea>
+              </div>
+
+              <!-- 3. MULTI-TAKE AUDIO RECORDER & SUBMISSION SELECTION CARD -->
+              <div class="recorder-box-card">
+                <div class="recorder-controls-row">
+                  <button
+                    type="button"
+                    class="record-btn ${state.isRecording ? "recording" : ""}"
+                    id="btn-record-toggle"
+                  >
+                    ${
+                      state.isRecording
+                        ? `
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      <span>Dừng ghi âm</span>
+                    `
+                        : `
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                      <span>${
+                        attempts.length > 0
+                          ? `Ghi âm thêm lần mới (Lần #${attempts.length + 1})`
+                          : "Bắt đầu ghi âm"
+                      }</span>
+                    `
+                    }
+                  </button>
+
+                  ${
+                    state.isRecording
+                      ? `
+                    <div class="rec-timer-badge">
+                      <span class="rec-blink-dot"></span>
+                      <span id="rec-timer-text">${formatDuration(state.recordingSeconds)} / 0:45</span>
+                    </div>
+                  `
+                      : ""
+                  }
+                </div>
+
+                <p class="recorder-helper-note">
+                  Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
+                </p>
+
+                <!-- LIVE TRANSCRIPT WHILE RECORDING -->
+                ${
+                  state.isRecording
+                    ? `
+                  <div class="takes-list-section">
+                    <div class="transcript-result-box">
+                      <div class="transcript-box-header">
+                        <span class="transcript-box-label">Đang nhận diện giọng nói (Transcript)...</span>
+                      </div>
+                      <p id="live-transcript-preview" class="transcript-text-content ${state.liveTranscript ? "" : "placeholder"}">
+                        ${escapeHtml(state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...")}
+                      </p>
+                    </div>
+                  </div>
+                `
+                    : ""
+                }
+
+                <!-- LIST OF RECORDED TAKES FOR THIS QUESTION -->
+                ${
+                  !state.isRecording && attempts.length > 0
+                    ? `
+                  <div class="takes-list-section">
+                    <div class="takes-list-heading">
+                      <span>Danh sách bản ghi âm của bạn (${attempts.length} lần ghi)</span>
+                      <span style="font-size:11.5px;color:#52525B;font-weight:500;">Tích chọn 1 bản để nộp bài</span>
+                    </div>
+
+                    ${attempts
+                      .map((att, idx) => {
+                        const isSelected = att.id === selectedTakeId;
+                        const isSubmitted = att.id === submittedTakeId;
+                        return `
+                          <div class="take-item-card ${isSelected ? "selected-take" : ""} ${isSubmitted ? "submitted-take" : ""}">
+                            <div class="take-item-top">
+                              <label class="take-select-label">
+                                <input
+                                  type="radio"
+                                  name="select_take_${qId}"
+                                  value="${att.id}"
+                                  ${isSelected ? "checked" : ""}
+                                  data-select-take="${att.id}"
+                                />
+                                <span>Bản ghi âm #${idx + 1} (${formatDuration(att.durationSec)})</span>
+                                <span class="take-meta-time">· ${escapeHtml(att.createdAt || "")}</span>
+                              </label>
+
+                              <div style="display:flex;align-items:center;gap:6px;">
+                                ${isSubmitted ? `<span class="submitted-badge">✓ Bản đã nộp</span>` : ""}
+                                <button
+                                  type="button"
+                                  class="take-delete-btn"
+                                  data-delete-take="${att.id}"
+                                  title="Xóa bản ghi âm này"
+                                >Xóa</button>
+                              </div>
+                            </div>
+
+                            ${
+                              att.audioDataUrl
+                                ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>`
+                                : att.savedAudioFile
+                                  ? `<audio controls src="${att.savedAudioFile}" class="student-audio-player"></audio>`
+                                  : ""
+                            }
+
+                            <div class="transcript-result-box">
+                              <div class="transcript-box-header">
+                                <span class="transcript-box-label">Transcript câu trả lời (Bản #${idx + 1})</span>
+                              </div>
+                              ${
+                                att.transcript
+                                  ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
+                                  : `<p class="transcript-text-content placeholder">Chưa nhận diện được lời nói tiếng Anh trong lượt ghi âm này.</p>`
+                              }
+                            </div>
+
+                            ${
+                              att.teacherFeedback || att.teacherScore
+                                ? `
+                              <div style="margin-top:8px;padding:9px 12px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:6px;font-size:13px;color:#14532D;">
+                                <div style="font-weight:800;margin-bottom:2px;">
+                                  👨‍🏫 Nhận xét của Giáo viên ${att.teacherScore ? `· <span style="background:#16A34A;color:#FFF;padding:1px 7px;border-radius:4px;font-size:11.5px;">${escapeHtml(att.teacherScore)}</span>` : ""}
+                                </div>
+                                ${att.teacherFeedback ? `<div>${escapeHtml(att.teacherFeedback)}</div>` : ""}
+                              </div>
+                            `
+                                : ""
+                            }
+                          </div>
+                        `;
+                      })
+                      .join("")}
+
+                    <!-- SUBMIT SELECTED RECORDING BUTTON BAR -->
+                    <div class="submit-take-bar">
+                      <div>
+                        ${
+                          submittedTakeObj
+                            ? `<div class="submit-confirm-note">✓ Đã nộp bài: <strong>Bản ghi âm #${attempts.indexOf(submittedTakeObj) + 1}</strong> (Lúc ${escapeHtml(qData.submittedAt || "")})</div>`
+                            : `<div style="font-size:12.5px;color:#52525B;">Đang chọn <strong>Bản ghi âm #${selectedTakeObj ? attempts.indexOf(selectedTakeObj) + 1 : 1}</strong> để nộp.</div>`
+                        }
+                        ${
+                          state.cloudSyncStatus
+                            ? `<div style="font-size:12px;color:#1D4ED8;font-weight:700;margin-top:2px;">${escapeHtml(state.cloudSyncStatus)}</div>`
+                            : ""
+                        }
+                        ${
+                          state.submitSuccessMsg
+                            ? `<div style="font-size:12px;color:#15803D;font-weight:700;margin-top:2px;">${escapeHtml(state.submitSuccessMsg)}</div>`
+                            : ""
+                        }
+                      </div>
+
+                      <button
+                        type="button"
+                        class="submit-take-btn"
+                        id="btn-submit-selected-take"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>
+                          ${
+                            submittedTakeId === selectedTakeId && submittedTakeId
+                              ? `Đã nộp Bản ghi #${attempts.indexOf(selectedTakeObj) + 1}`
+                              : `Nộp bài (Bản ghi âm #${selectedTakeObj ? attempts.indexOf(selectedTakeObj) + 1 : 1})`
+                          }
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+
+              <!-- INLINE STEPPER -->
+              <div class="stepper-row">
+                <button
+                  type="button"
+                  class="btn-prev-q"
+                  id="btn-prev-q"
+                  ${qIdx === 0 ? "disabled" : ""}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                  <span>Câu trước</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-next-q"
+                  id="btn-next-q"
+                >
+                  <span>${qIdx < totalQ - 1 ? "Câu tiếp" : "Về danh sách chủ đề"}</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- RIGHT PANE: GỢI Ý DÀN BÀI (5 SECTIONS + CLICK-TO-HEAR VOCAB WITH IPA) -->
+          <aside class="right-pane" aria-label="Gợi ý dàn bài">
+            <div class="right-pane-inner">
+              <div class="guide-top-bar">
+                <div class="guide-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                  <span>Gợi ý dàn bài</span>
+                </div>
+
+                <div class="level-switch-group" role="group" aria-label="Chọn Level B1 hoặc B2">
+                  <button
+                    type="button"
+                    class="level-switch-btn ${lvl === "b1" ? "active" : ""}"
+                    data-level="b1"
+                  >Level B1</button>
+                  <button
+                    type="button"
+                    class="level-switch-btn ${lvl === "b2" ? "active" : ""}"
+                    data-level="b2"
+                  >Level B2</button>
+                </div>
+              </div>
+
+              <!-- I. PHÂN TÍCH CÂU HỎI -->
+              <section class="guide-section">
+                <div class="guide-section-header">
+                  <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
+                </div>
+                <ul class="guide-bullets">
+                  <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
+                  <li><strong>Thì & Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
+                  <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
+                </ul>
+              </section>
+
+              <!-- II. CÁCH TRẢ LỜI -->
+              <section class="guide-section">
+                <div class="guide-section-header">
+                  <h2 class="guide-section-title">II. Cách trả lời</h2>
+                </div>
+                <ol class="guide-numbered">
+                  ${levelData.strategy
+                    .map(
+                      item => `
+                      <li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>
+                    `
+                    )
+                    .join("")}
+                </ol>
+              </section>
+
+              <!-- III. CÂU TRẢ LỜI MẪU -->
+              <section class="guide-section">
+                <div class="guide-section-header">
+                  <h2 class="guide-section-title">III. Câu trả lời mẫu</h2>
+                  <button
+                    type="button"
+                    class="listen-sample-btn"
+                    id="btn-listen-sample"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                    <span>Nghe câu trả lời mẫu</span>
+                  </button>
+                </div>
+                <blockquote class="sample-answer-blockquote">
+                  “${levelData.modelAnswer}”
+                </blockquote>
+              </section>
+
+              <!-- IV. LỖI CẦN TRÁNH -->
+              <section class="guide-section">
+                <div class="guide-section-header">
+                  <h2 class="guide-section-title">IV. Lỗi cần tránh</h2>
+                </div>
+                <ol class="guide-numbered">
+                  ${question.pitfalls.map(p => `<li>${escapeHtml(p)}</li>`).join("")}
+                </ol>
+              </section>
+
+              <!-- V. TỪ VỰNG NÊN DÙNG (CÓ IPA + BẤM VÀO TỪ ĐỂ NGHE + LƯU VÀO KHO TỪ VỰNG) -->
+              <section class="guide-section">
+                <div class="guide-section-header">
+                  <h2 class="guide-section-title">V. Từ vựng nên dùng</h2>
+                  <span style="font-size:11.5px;color:#71717A;">Bấm vào từ để nghe phát âm · Bấm +Lưu từ vào kho</span>
+                </div>
+                <div class="vocab-table-wrap">
+                  <table class="vocab-table">
+                    <thead>
+                      <tr>
+                        <th>Từ / cụm từ</th>
+                        <th>Loại từ</th>
+                        <th>Nghĩa</th>
+                        <th>Ví dụ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${levelData.vocab
+                        .map(row => {
+                          const isSaved = (acc.savedVocab || []).some(
+                            v => v.word.toLowerCase() === row.word.toLowerCase()
+                          );
+                          return `
+                            <tr>
+                              <td class="td-word">
+                                <button
+                                  type="button"
+                                  class="vocab-word-click-btn"
+                                  data-speak-word="${escapeHtml(row.word)}"
+                                  title="Bấm để nghe phát âm: ${escapeHtml(row.word)}"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                  <span>${escapeHtml(row.word)}</span>
+                                </button>
+                                ${
+                                  row.ipa
+                                    ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(row.word)}" title="Bấm để nghe phát âm">${escapeHtml(row.ipa)}</span>`
+                                    : ""
+                                }
+                                <button
+                                  type="button"
+                                  class="vocab-save-mini-btn ${isSaved ? "saved" : ""}"
+                                  data-toggle-save-vocab="${escapeHtml(row.word)}"
+                                  data-vocab-ipa="${escapeHtml(row.ipa || "")}"
+                                  data-vocab-pos="${escapeHtml(row.pos || "")}"
+                                  data-vocab-meaning="${escapeHtml(row.meaning || "")}"
+                                  data-vocab-example="${escapeHtml((row.example || "").replace(/<[^>]*>?/gm, ""))}"
+                                  data-vocab-topic="${escapeHtml(topic.title)}"
+                                >
+                                  <span>${isSaved ? "✓ Đã lưu vào kho" : "+ Lưu vào kho từ"}</span>
+                                </button>
+                              </td>
+                              <td class="td-pos">${escapeHtml(row.pos)}</td>
+                              <td class="td-meaning">${escapeHtml(row.meaning)}</td>
+                              <td class="td-example">${row.example}</td>
+                            </tr>
+                          `;
+                        })
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </aside>
+        </main>
+
+        <!-- BOTTOM QUESTION NAVIGATION BAR -->
+        <nav class="practice-bottom-nav" aria-label="Danh sách câu hỏi">
+          <div class="bottom-q-pills">
+            <span class="bottom-part-text">Part 1</span>
+            ${topic.questions
+              .map((qItem, idx) => {
+                const isActive = idx === qIdx;
+                const qd = acc.questionsData && acc.questionsData[qItem.id];
+                const isSubmitted = !!(qd && qd.submittedTakeId);
+                return `
+                  <button
+                    type="button"
+                    class="q-pill-btn ${isActive ? "active" : ""} ${isSubmitted ? "done" : ""}"
+                    data-jump-q="${idx}"
+                    title="Câu ${idx + 1}${isSubmitted ? " (Đã nộp bài)" : ""}"
+                  >${idx + 1}</button>
+                `;
+              })
+              .join("")}
+            <span class="bottom-q-counter">Đã nộp ${submittedInTopicCount}/${totalQ}</span>
+          </div>
+        </nav>
+      </div>
+    `;
+  }
+
+  // ==========================================================================
+  // STUDENT VOCABULARY BANK MODAL ("KHO TỪ VỰNG CỦA TÔI")
+  // ==========================================================================
+  function renderModals() {
+    let html = "";
+    const acc = getCurrentAccount();
+
+    if (state.googleModalOpen) {
+      html += `
+        <div class="modal-backdrop" id="google-modal-backdrop">
+          <div class="google-modal-card" onclick="event.stopPropagation()">
+            <div class="google-modal-header">
+              ${renderGoogleIconSvg(34)}
+              <h2 class="google-modal-title">Đăng nhập bằng Google</h2>
+              <p class="google-modal-sub">Tiếp tục tới <strong>Luyện Speaking Part 1</strong></p>
+            </div>
+
+            ${
+              state.googleModalError
+                ? `<div style="padding:8px 12px;border:1px solid #DC2626;background:#FEF2F2;color:#B91C1C;border-radius:6px;font-size:12.5px;font-weight:600;margin-bottom:12px;">${escapeHtml(state.googleModalError)}</div>`
+                : ""
+            }
+
+            <form id="google-signin-form" onsubmit="return false;">
+              <div style="margin-bottom:14px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#5F6368;margin-bottom:5px;" for="inp-google-email">
+                  Email tài khoản Google (@gmail.com) *
+                </label>
+                <input
+                  type="email"
+                  id="inp-google-email"
+                  class="google-input-field"
+                  placeholder="vidu@gmail.com"
+                  required
+                />
+              </div>
+
+              <div style="margin-bottom:18px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#5F6368;margin-bottom:5px;" for="inp-google-name">
+                  Họ và tên hiển thị của bạn
+                </label>
+                <input
+                  type="text"
+                  id="inp-google-name"
+                  class="google-input-field"
+                  placeholder="Ví dụ: Nguyễn Minh Tùng"
+                />
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:6px;">
+                <button type="button" class="google-cancel-btn" id="btn-google-cancel">Hủy</button>
+                <button type="submit" class="google-continue-btn">Tiếp tục →</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    if (state.vocabModalOpen && acc) {
+      const allWords = acc.savedVocab || [];
+      const q = state.vocabSearchQuery.trim().toLowerCase();
+      const filtered = q
+        ? allWords.filter(
+            v =>
+              v.word.toLowerCase().includes(q) ||
+              (v.meaning && v.meaning.toLowerCase().includes(q)) ||
+              (v.topic && v.topic.toLowerCase().includes(q))
+          )
+        : allWords;
+
+      html += `
+        <div class="modal-backdrop" id="vocab-modal-backdrop">
+          <div class="modal-panel" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background:#FFFBEB;">
+              <div>
+                <h2 style="font-size:17px;font-weight:900;color:#18181B;">
+                  📚 Kho từ vựng của tôi (${allWords.length} từ)
+                </h2>
+                <p style="font-size:12.5px;color:#52525B;margin-top:2px;">
+                  Bấm vào bất kỳ từ vựng nào để nghe phát âm. Từ vựng được lưu riêng trong tài khoản của bạn qua từng chủ đề.
+                </p>
+              </div>
+              <button type="button" class="close-modal-btn" id="btn-close-vocab-modal">✕</button>
+            </div>
+
+            <div class="modal-body">
+              <form id="add-custom-vocab-form" onsubmit="return false;" style="background:#FAFAFA;border:1.5px solid #E4E4E7;border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:800;color:#18181B;text-transform:uppercase;margin-bottom:8px;">
+                  + Tự thêm từ vựng mới vào kho của bạn
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+                  <input type="text" id="custom-vocab-word" class="form-input" style="height:34px;font-size:13px;" placeholder="Từ / cụm từ (VD: itinerary)" required />
+                  <input type="text" id="custom-vocab-ipa" class="form-input" style="height:34px;font-size:13px;" placeholder="IPA (VD: /aɪˈtɪnəreri/)" />
+                  <input type="text" id="custom-vocab-pos" class="form-input" style="height:34px;font-size:13px;" placeholder="Loại từ (n., v., adj.)" />
+                  <input type="text" id="custom-vocab-meaning" class="form-input" style="height:34px;font-size:13px;" placeholder="Nghĩa tiếng Việt *" required />
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                  <input type="text" id="custom-vocab-example" class="form-input" style="height:34px;font-size:13px;flex:1;" placeholder="Câu ví dụ (tùy chọn)..." />
+                  <button type="submit" class="top-pill-btn dark" style="height:34px;">+ Lưu từ mới</button>
+                </div>
+              </form>
+
+              <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <input
+                  type="text"
+                  id="vocab-search-input"
+                  class="form-input"
+                  style="height:36px;max-width:340px;font-size:13px;"
+                  placeholder="Tìm từ vựng theo tiếng Anh, nghĩa hoặc chủ đề..."
+                  value="${escapeHtml(state.vocabSearchQuery)}"
+                />
+                <span style="font-size:12px;color:#71717A;font-weight:600;">Hiển thị ${filtered.length}/${allWords.length} từ</span>
+              </div>
+
+              ${
+                filtered.length === 0
+                  ? `<p style="font-size:14px;color:#71717A;padding:20px 0;">Chưa có từ vựng nào khớp. Hãy bấm nút <strong>+ Lưu vào kho từ</strong> ở bảng Từ vựng nên dùng khi học từng đề!</p>`
+                  : `
+                  <div class="vocab-table-wrap">
+                    <table class="vocab-table">
+                      <thead>
+                        <tr>
+                          <th>Từ / cụm từ (Bấm để nghe)</th>
+                          <th>Loại từ</th>
+                          <th>Nghĩa</th>
+                          <th>Ví dụ & Chủ đề</th>
+                          <th style="width:50px;">Xóa</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${filtered
+                          .map(item => `
+                            <tr>
+                              <td class="td-word">
+                                <button
+                                  type="button"
+                                  class="vocab-word-click-btn"
+                                  data-speak-word="${escapeHtml(item.word)}"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                  <span>${escapeHtml(item.word)}</span>
+                                </button>
+                                ${
+                                  item.ipa
+                                    ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(item.word)}">${escapeHtml(item.ipa)}</span>`
+                                    : ""
+                                }
+                              </td>
+                              <td class="td-pos">${escapeHtml(item.pos || "")}</td>
+                              <td class="td-meaning"><strong>${escapeHtml(item.meaning || "")}</strong></td>
+                              <td class="td-example">
+                                <div>${escapeHtml(item.example || "")}</div>
+                                ${
+                                  item.topic
+                                    ? `<span style="display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;background:#F4F4F5;border-radius:4px;color:#52525B;">Đề: ${escapeHtml(item.topic)}</span>`
+                                    : ""
+                                }
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  class="take-delete-btn"
+                                  data-remove-saved-vocab="${escapeHtml(item.word)}"
+                                >Xóa</button>
+                              </td>
+                            </tr>
+                          `)
+                          .join("")}
+                      </tbody>
+                    </table>
+                  </div>
+                `
+              }
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    return html;
+  }
+
+  // ==========================================================================
+  // MAIN RENDER & EVENT BINDING
+  // ==========================================================================
+  function renderApp() {
+    const root = document.getElementById("app");
+    if (!root) return;
+
+    const leftPane = document.querySelector(".left-pane");
+    const rightPane = document.querySelector(".right-pane");
+    const savedLeftScroll = leftPane ? leftPane.scrollTop : 0;
+    const savedRightScroll = rightPane ? rightPane.scrollTop : 0;
+
+    let mainHtml = "";
+    if (state.view === "auth" || !getCurrentAccount()) {
+      mainHtml = renderAuthView();
+    } else if (state.view === "home") {
+      mainHtml = renderHomeView();
+    } else {
+      mainHtml = renderPracticeView();
+    }
+
+    root.innerHTML = mainHtml + renderModals();
+
+    const nextLeftPane = document.querySelector(".left-pane");
+    const nextRightPane = document.querySelector(".right-pane");
+    if (nextLeftPane) nextLeftPane.scrollTop = savedLeftScroll;
+    if (nextRightPane) nextRightPane.scrollTop = savedRightScroll;
+
+    bindEvents();
+  }
+
+  function openTopic(topicId) {
+    if (state.isRecording) {
+      stopRecording(getCurrentQuestion().id);
+    }
+    state.currentTopicId = topicId;
+    state.currentQuestionIndex = 0;
+    state.submitSuccessMsg = "";
+    state.view = "practice";
+    renderApp();
+  }
+
+  function switchQuestion(newIndex) {
+    const topic = getCurrentTopic();
+    if (newIndex < 0 || newIndex >= topic.questions.length) return;
+    if (state.isRecording) {
+      stopRecording(getCurrentQuestion().id);
+    }
+    state.currentQuestionIndex = newIndex;
+    state.submitSuccessMsg = "";
+    renderApp();
+    const lp = document.querySelector(".left-pane");
+    const rp = document.querySelector(".right-pane");
+    if (lp) lp.scrollTop = 0;
+    if (rp) rp.scrollTop = 0;
+  }
+
+  function bindEvents() {
+    // 1. Auth View Events
+    const btnTabLogin = document.getElementById("btn-tab-login");
+    if (btnTabLogin) {
+      btnTabLogin.onclick = () => {
+        state.authMode = "login";
+        state.authError = "";
+        renderApp();
+      };
+    }
+    const btnTabReg = document.getElementById("btn-tab-register");
+    if (btnTabReg) {
+      btnTabReg.onclick = () => {
+        state.authMode = "register";
+        state.authError = "";
+        renderApp();
+      };
+    }
+
+    // Google Sign-In Button & Modal Events
+    const btnGoogleLogin = document.getElementById("btn-google-login");
+    if (btnGoogleLogin) {
+      btnGoogleLogin.onclick = () => {
+        triggerGoogleLoginFlow();
+      };
+    }
+
+    ["google-modal-backdrop", "btn-google-cancel"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.onclick = () => {
+          state.googleModalOpen = false;
+          state.googleModalError = "";
+          renderApp();
+        };
+      }
+    });
+
+    const googleForm = document.getElementById("google-signin-form");
+    if (googleForm) {
+      googleForm.onsubmit = async e => {
+        e.preventDefault();
+        const emailEl = document.getElementById("inp-google-email");
+        const nameEl = document.getElementById("inp-google-name");
+        const gEmail = (emailEl ? emailEl.value : "").trim().toLowerCase();
+        const gName = (nameEl ? nameEl.value : "").trim();
+        if (!gEmail) {
+          state.googleModalError = "Vui lòng nhập địa chỉ email Google của bạn.";
+          renderApp();
+          return;
+        }
+        await completeGoogleSignIn(gEmail, gName, "");
+      };
+    }
+
+    const authForm = document.getElementById("auth-form");
+    if (authForm) {
+      authForm.onsubmit = async e => {
+        e.preventDefault();
+        const nameEl = document.getElementById("inp-auth-name");
+        const emailEl = document.getElementById("inp-auth-email");
+        const passEl = document.getElementById("inp-auth-pass");
+        const name = (nameEl ? nameEl.value : "").trim();
+        const email = (emailEl ? emailEl.value : "").trim().toLowerCase();
+        const password = (passEl ? passEl.value : "").trim();
+
+        if (!email || !password) {
+          state.authError = "Vui lòng nhập đầy đủ Email và Mật khẩu.";
+          state.authInfo = "";
+          renderApp();
+          return;
+        }
+
+        // === SUPABASE CLOUD AUTH MODE ===
+        if (isCloudMode()) {
+          const client = CLOUD.getClient();
+          state.authLoading = true;
+          state.authError = "";
+          state.authInfo = "";
+          renderApp();
+
+          if (state.authMode === "register") {
+            if (!name) {
+              state.authLoading = false;
+              state.authError = "Vui lòng nhập họ và tên của bạn.";
+              renderApp();
+              return;
+            }
+            if (password.length < 6) {
+              state.authLoading = false;
+              state.authError = "Mật khẩu cần tối thiểu 6 ký tự.";
+              renderApp();
+              return;
+            }
+            const { data, error } = await client.auth.signUp({
+              email: email,
+              password: password,
+              options: {
+                data: { full_name: name },
+                emailRedirectTo: CLOUD.getRedirectUrl()
+              }
+            });
+            state.authLoading = false;
+            if (error) {
+              state.authError = error.message || "Không thể tạo tài khoản. Vui lòng thử lại.";
+              renderApp();
+              return;
+            }
+            if (data && data.session && data.user) {
+              await loadCloudStudentData(data.user);
+            } else {
+              state.authInfo =
+                "Đăng ký thành công! Vui lòng mở hộp thư Email để xác nhận tài khoản, hoặc bấm 'Tiếp tục với Google' để vào học ngay.";
+              state.authMode = "login";
+              renderApp();
+            }
+          } else {
+            const { data, error } = await client.auth.signInWithPassword({
+              email: email,
+              password: password
+            });
+            state.authLoading = false;
+            if (error) {
+              state.authError = "Email hoặc mật khẩu chưa đúng (hoặc tài khoản chưa xác nhận email).";
+              renderApp();
+              return;
+            }
+            if (data && data.user) {
+              await loadCloudStudentData(data.user);
+            }
+          }
+          return;
+        }
+
+        // === LOCAL FALLBACK MODE ===
+        if (state.authMode === "register") {
+          if (!name) {
+            state.authError = "Vui lòng nhập họ và tên của bạn.";
+            renderApp();
+            return;
+          }
+          if (db.accounts[email]) {
+            state.authError = "Tài khoản này đã tồn tại. Vui lòng chuyển sang tab Đăng nhập.";
+            renderApp();
+            return;
+          }
+          db.accounts[email] = {
+            name: name,
+            email: email,
+            password: password,
+            createdAt: getNowTimestamp(),
+            savedVocab: JSON.parse(JSON.stringify(defaultVocabDeck)),
+            questionsData: {}
+          };
+          state.currentUserEmail = email;
+          state.authError = "";
+          state.view = "home";
+          persistAllData();
+          renderApp();
+        } else {
+          // Check server disk first if available, else local db
+          const srv = await verifyLoginOnServer(email, password);
+          if (srv && srv.ok) {
+            state.currentUserEmail = email;
+            state.authError = "";
+            state.view = "home";
+            persistAllData();
+            renderApp();
+            return;
+          }
+
+          const acc = db.accounts[email];
+          if (!acc) {
+            state.authError =
+              (srv && srv.error) ||
+              "Chưa tìm thấy tài khoản này. Bạn hãy bấm sang tab 'Tạo tài khoản mới' nhé!";
+            renderApp();
+            return;
+          }
+          if (acc.password && acc.password !== password) {
+            state.authError = "Mật khẩu chưa chính xác. Vui lòng thử lại.";
+            renderApp();
+            return;
+          }
+          state.currentUserEmail = email;
+          state.authError = "";
+          state.view = "home";
+          persistAllData();
+          renderApp();
+        }
+      };
+    }
+
+    // 2. Topbar Utility Actions
+    const btnLogout = document.getElementById("btn-logout-account");
+    if (btnLogout) {
+      btnLogout.onclick = async () => {
+        if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        if (isCloudMode()) {
+          const client = CLOUD.getClient();
+          try {
+            await client.auth.signOut();
+          } catch (e) {}
+        }
+        state.currentUserEmail = "";
+        state.currentUserId = "";
+        state.view = "auth";
+        state.authMode = "login";
+        state.authError = "";
+        state.authInfo = "";
+        try {
+          localStorage.setItem(SESSION_KEY, "__LOGGED_OUT__");
+        } catch (e) {}
+        renderApp();
+      };
+    }
+
+    const btnOpenVocab = document.getElementById("btn-open-vocab-bank");
+    if (btnOpenVocab) {
+      btnOpenVocab.onclick = () => {
+        state.vocabModalOpen = true;
+        renderApp();
+      };
+    }
+
+    // 3. Home View Topic Cards
+    document.querySelectorAll("[data-open-topic]").forEach(card => {
+      card.onclick = () => {
+        openTopic(card.getAttribute("data-open-topic"));
+      };
+    });
+
+    const btnBackHome = document.getElementById("btn-back-home");
+    if (btnBackHome) {
+      btnBackHome.onclick = () => {
+        if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        state.view = "home";
+        renderApp();
+      };
+    }
+
+    // 4. Practice View Events
+    if (state.view === "practice") {
+      const topic = getCurrentTopic();
+      const question = getCurrentQuestion();
+      const qData = getQuestionData(question.id);
+      const levelData = question.levels[state.selectedLevel] || question.levels.b1;
+
+      const ideaInput = document.getElementById("idea-note-input");
+      if (ideaInput) {
+        ideaInput.oninput = e => {
+          qData.ideaNote = e.target.value;
+          const badge = document.getElementById("idea-saved-indicator");
+          if (badge) badge.textContent = isCloudMode() ? "☁️ Đang lưu..." : "✓ Đã lưu ghi chú";
+          if (isCloudMode()) {
+            if (noteSaveDebounceTimer) clearTimeout(noteSaveDebounceTimer);
+            const qIdSnap = question.id;
+            const valSnap = qData.ideaNote;
+            noteSaveDebounceTimer = setTimeout(async () => {
+              await cloudSaveIdeaNote(qIdSnap, valSnap);
+              const b = document.getElementById("idea-saved-indicator");
+              if (b) b.textContent = "✓ Đã lưu ghi chú";
+            }, 600);
+          } else {
+            persistAllData();
+          }
+        };
+      }
+
+      const btnRec = document.getElementById("btn-record-toggle");
+      if (btnRec) {
+        btnRec.onclick = () => {
+          startRecording(question.id);
+        };
+      }
+
+      document.querySelectorAll("[data-select-take]").forEach(radio => {
+        radio.onchange = () => {
+          qData.selectedTakeId = radio.getAttribute("data-select-take");
+          state.submitSuccessMsg = "";
+          persistAllData();
+          renderApp();
+        };
+      });
+
+      document.querySelectorAll("[data-delete-take]").forEach(btn => {
+        btn.onclick = async () => {
+          const delId = btn.getAttribute("data-delete-take");
+          const delObj = (qData.attempts || []).find(a => a.id === delId);
+          qData.attempts = (qData.attempts || []).filter(a => a.id !== delId);
+          if (qData.selectedTakeId === delId) {
+            qData.selectedTakeId =
+              qData.attempts.length > 0 ? qData.attempts[qData.attempts.length - 1].id : null;
+          }
+          if (qData.submittedTakeId === delId) {
+            qData.submittedTakeId = null;
+            qData.submittedAt = null;
+          }
+          if (isCloudMode()) {
+            renderApp();
+            await cloudDeleteAttempt(delObj);
+          } else {
+            persistAllData();
+            renderApp();
+          }
+        };
+      });
+
+      const btnSubmitTake = document.getElementById("btn-submit-selected-take");
+      if (btnSubmitTake) {
+        btnSubmitTake.onclick = async () => {
+          const attempts = qData.attempts || [];
+          const chosenId =
+            qData.selectedTakeId || (attempts.length > 0 ? attempts[attempts.length - 1].id : null);
+          if (!chosenId) return;
+          qData.selectedTakeId = chosenId;
+          qData.submittedTakeId = chosenId;
+          qData.submittedAt = getNowTimestamp();
+          const chosenIdx = attempts.findIndex(a => a.id === chosenId) + 1;
+          state.submitSuccessMsg = isCloudMode()
+            ? `✓ Đã nộp Bản ghi âm #${chosenIdx} lên hệ thống cho Giáo viên!`
+            : `✓ Đã nộp Bản ghi âm #${chosenIdx} thành công!`;
+          if (isCloudMode()) {
+            renderApp();
+            await cloudSubmitAttempt(question.id, chosenId);
+          } else {
+            persistAllData();
+            renderApp();
+          }
+        };
+      }
+
+      const btnPrevQ = document.getElementById("btn-prev-q");
+      if (btnPrevQ) {
+        btnPrevQ.onclick = () => {
+          if (state.currentQuestionIndex > 0) {
+            switchQuestion(state.currentQuestionIndex - 1);
+          }
+        };
+      }
+
+      const btnNextQ = document.getElementById("btn-next-q");
+      if (btnNextQ) {
+        btnNextQ.onclick = () => {
+          if (state.currentQuestionIndex < topic.questions.length - 1) {
+            switchQuestion(state.currentQuestionIndex + 1);
+          } else {
+            if (state.isRecording) stopRecording(question.id);
+            state.view = "home";
+            renderApp();
+          }
+        };
+      }
+
+      document.querySelectorAll("[data-jump-q]").forEach(btn => {
+        btn.onclick = () => {
+          switchQuestion(parseInt(btn.getAttribute("data-jump-q"), 10));
+        };
+      });
+
+      document.querySelectorAll("[data-level]").forEach(btn => {
+        btn.onclick = () => {
+          state.selectedLevel = btn.getAttribute("data-level");
+          renderApp();
+        };
+      });
+
+      const btnListenSample = document.getElementById("btn-listen-sample");
+      if (btnListenSample) {
+        btnListenSample.onclick = () => {
+          window.speakEnglishText(levelData.modelAnswer);
+        };
+      }
+    }
+
+    // 5. Click-to-Hear Vocabulary Words
+    document.querySelectorAll("[data-speak-word]").forEach(el => {
+      el.onclick = e => {
+        e.stopPropagation();
+        window.speakEnglishText(el.getAttribute("data-speak-word"));
+      };
+    });
+
+    document.querySelectorAll("[data-toggle-save-vocab]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const acc = getCurrentAccount();
+        if (!acc) return;
+        acc.savedVocab = acc.savedVocab || [];
+        const word = btn.getAttribute("data-toggle-save-vocab");
+        const existingIdx = acc.savedVocab.findIndex(
+          v => v.word.toLowerCase() === word.toLowerCase()
+        );
+        if (existingIdx >= 0) {
+          acc.savedVocab.splice(existingIdx, 1);
+          if (isCloudMode()) cloudRemoveVocab(word);
+        } else {
+          const newItem = {
+            word: word,
+            ipa: btn.getAttribute("data-vocab-ipa") || "",
+            pos: btn.getAttribute("data-vocab-pos") || "",
+            meaning: btn.getAttribute("data-vocab-meaning") || "",
+            example: btn.getAttribute("data-vocab-example") || "",
+            topic: btn.getAttribute("data-vocab-topic") || ""
+          };
+          acc.savedVocab.unshift(newItem);
+          if (isCloudMode()) cloudAddVocab(newItem);
+        }
+        persistAllData();
+        renderApp();
+      };
+    });
+
+    // 6. Vocabulary Bank Modal Events
+    ["vocab-modal-backdrop", "btn-close-vocab-modal"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.onclick = () => {
+          state.vocabModalOpen = false;
+          renderApp();
+        };
+      }
+    });
+
+    const vocabSearchInp = document.getElementById("vocab-search-input");
+    if (vocabSearchInp) {
+      vocabSearchInp.oninput = e => {
+        state.vocabSearchQuery = e.target.value;
+        const pos = e.target.selectionStart;
+        renderApp();
+        const nextInp = document.getElementById("vocab-search-input");
+        if (nextInp) {
+          nextInp.focus();
+          nextInp.setSelectionRange(pos, pos);
+        }
+      };
+    }
+
+    const addCustomVocabForm = document.getElementById("add-custom-vocab-form");
+    if (addCustomVocabForm) {
+      addCustomVocabForm.onsubmit = e => {
+        e.preventDefault();
+        const acc = getCurrentAccount();
+        if (!acc) return;
+        const w = (document.getElementById("custom-vocab-word").value || "").trim();
+        const ipa = (document.getElementById("custom-vocab-ipa").value || "").trim();
+        const pos = (document.getElementById("custom-vocab-pos").value || "").trim();
+        const meaning = (document.getElementById("custom-vocab-meaning").value || "").trim();
+        const example = (document.getElementById("custom-vocab-example").value || "").trim();
+        if (!w || !meaning) return;
+
+        acc.savedVocab = acc.savedVocab || [];
+        const newItem = {
+          word: w,
+          ipa: ipa || `/${w.toLowerCase()}/`,
+          pos: pos || "vocab",
+          meaning: meaning,
+          example: example,
+          topic: "Tự thêm"
+        };
+        acc.savedVocab = acc.savedVocab.filter(v => v.word.toLowerCase() !== w.toLowerCase());
+        acc.savedVocab.unshift(newItem);
+        if (isCloudMode()) cloudAddVocab(newItem);
+        persistAllData();
+        renderApp();
+      };
+    }
+
+    document.querySelectorAll("[data-remove-saved-vocab]").forEach(btn => {
+      btn.onclick = () => {
+        const acc = getCurrentAccount();
+        if (!acc || !acc.savedVocab) return;
+        const word = btn.getAttribute("data-remove-saved-vocab");
+        acc.savedVocab = acc.savedVocab.filter(
+          v => v.word.toLowerCase() !== word.toLowerCase()
+        );
+        if (isCloudMode()) cloudRemoveVocab(word);
+        persistAllData();
+        renderApp();
+      };
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", async () => {
+    if (isCloudMode()) {
+      const client = CLOUD.getClient();
+      state.view = "auth";
+      renderApp();
+
+      const { data } = await client.auth.getSession();
+      if (data && data.session && data.session.user) {
+        await loadCloudStudentData(data.session.user);
+      } else {
+        renderApp();
+      }
+
+      client.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_IN" && session && session.user) {
+          if (state.currentUserId !== session.user.id) {
+            await loadCloudStudentData(session.user);
+          }
+        } else if (event === "SIGNED_OUT") {
+          state.currentUserEmail = "";
+          state.currentUserId = "";
+          state.view = "auth";
+          renderApp();
+        }
+      });
+      return;
+    }
+
+    // Local fallback mode
+    loadFromLocalStorage();
+    await loadFromIndexedDB();
+    renderApp();
+  });
+})();
