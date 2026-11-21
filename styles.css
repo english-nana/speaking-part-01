@@ -745,7 +745,7 @@ button, input, select, textarea {
   border-top: 1px dashed #E4E4E7;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -788,35 +788,23 @@ button, input, select, textarea {
   cursor: wait;
 }
 
-.submit-confirm-note {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #15803D;
-}
-
-.submit-pending-note {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #B45309;
-}
-
 /* AUTOMATED EVALUATION & MAIN ERROR CORRECTION CARD */
 .ai-eval-card {
   margin-top: 10px;
   padding: 12px 14px;
-  border: 1.5px solid #18181B;
-  border-radius: 7px;
-  background: #FFFDF7;
+  border: 1px solid #E4E4E7;
+  border-radius: 6px;
+  background: #FAFAFA;
 }
 
 .ai-eval-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
   padding-bottom: 8px;
-  border-bottom: 1px dashed #E4E4E7;
+  border-bottom: 1px solid #E4E4E7;
   margin-bottom: 8px;
 }
 
@@ -828,23 +816,22 @@ button, input, select, textarea {
 
 .ai-eval-title {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: #18181B;
 }
 
 .ai-eval-band-note {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #71717A;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .ai-eval-score-pill {
-  font-family: var(--font-mono);
   font-size: 12.5px;
-  font-weight: 800;
-  padding: 4px 10px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 5px;
-  border: 1.5px solid #18181B;
+  border: 1px solid #18181B;
   white-space: nowrap;
 }
 
@@ -868,48 +855,31 @@ button, input, select, textarea {
   color: #52525B;
 }
 
-.ai-eval-summary {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #27272A;
-  margin-bottom: 6px;
-}
-
-.ai-eval-good-list {
-  list-style: none;
+.ai-eval-list {
+  list-style: disc;
+  padding-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  font-size: 12.5px;
-  color: #166534;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.ai-eval-errors-wrap {
-  margin-top: 6px;
-}
-
-.ai-eval-section-heading {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: #991B1B;
-  margin-bottom: 6px;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: #27272A;
 }
 
 .ai-eval-errors-list {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .ai-eval-error-item {
   background: #FFFFFF;
-  border: 1px solid #FECACA;
+  border: 1px solid #E4E4E7;
   border-left: 3px solid #DC2626;
   border-radius: 5px;
-  padding: 7px 10px;
+  padding: 8px 11px;
 }
 
 .ai-eval-fix-line {
@@ -917,8 +887,10 @@ button, input, select, textarea {
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #27272A;
 }
 
 .ai-err-wrong {
@@ -928,25 +900,15 @@ button, input, select, textarea {
 
 .ai-err-fix {
   color: #15803D;
+  font-weight: 600;
 }
 
 .ai-err-reason {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 400;
   color: #52525B;
-  margin-top: 3px;
-  line-height: 1.45;
-}
-
-.ai-eval-tip {
-  margin-top: 8px;
-  padding: 7px 10px;
-  border-radius: 5px;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  font-size: 12px;
-  color: #1E40AF;
-  font-weight: 600;
-  line-height: 1.45;
+  margin-top: 2px;
+  line-height: 1.55;
 }
 
 /* STEPPER ROW */

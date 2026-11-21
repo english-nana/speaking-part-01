@@ -16,7 +16,6 @@
     authError: "",
     authInfo: "",
     authLoading: false,
-    cloudSyncStatus: "",
     isTeacher: false,
     needsProfileSetup: false,
     profileFormName: "",
@@ -31,7 +30,6 @@
     recordingSeconds: 0,
     liveTranscript: "",
     isSubmitting: false,
-    submitSuccessMsg: "",
     submitErrorMsg: "",
     vocabModalOpen: false,
     vocabSearchQuery: ""
@@ -82,7 +80,6 @@
     const avatarUrl = meta.avatar_url || meta.picture || "";
     const provider = appMeta.provider || "email";
 
-    state.cloudSyncStatus = "Đang đồng bộ dữ liệu đám mây...";
     renderApp();
 
     const [profileRes, vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
@@ -184,7 +181,6 @@
     state.authError = "";
     state.authInfo = "";
     state.authLoading = false;
-    state.cloudSyncStatus = "";
     if (state.view === "auth") state.view = "home";
     renderApp();
   }
@@ -239,14 +235,12 @@
   async function cloudCreateAttempt(qId, takeObj, audioBlob) {
     const client = CLOUD.getClient();
     if (!client || !currentAccount) return;
-    state.cloudSyncStatus = "☁️ Đang lưu bản ghi âm lên đám mây...";
-    renderApp();
 
     let audioPath = takeObj.audioPath || "";
     if (!audioPath && audioBlob && audioBlob.size > 0) {
       const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, audioBlob);
       if (upRes.error) {
-        state.cloudSyncStatus = "⚠️ Chưa tải được file âm thanh: " + (upRes.error.message || "Lỗi quyền Storage");
+        state.submitErrorMsg = "Chưa tải được file âm thanh: " + (upRes.error.message || "Lỗi quyền Storage");
         renderApp();
         return;
       }
@@ -272,7 +266,7 @@
     );
 
     if (error) {
-      state.cloudSyncStatus = "⚠️ Lỗi lưu bản ghi vào cơ sở dữ liệu: " + error.message;
+      state.submitErrorMsg = "Lỗi lưu bản ghi vào cơ sở dữ liệu: " + error.message;
       renderApp();
       return;
     }
@@ -282,7 +276,6 @@
       .update({ last_active_at: new Date().toISOString() })
       .eq("id", currentAccount.id);
 
-    state.cloudSyncStatus = "";
     renderApp();
   }
 
@@ -429,7 +422,6 @@
     state.isRecording = true;
     state.recordingSeconds = 0;
     state.liveTranscript = "";
-    state.submitSuccessMsg = "";
     state.submitErrorMsg = "";
     finalTranscriptBuffer = "";
     audioChunks = [];
@@ -773,7 +765,6 @@
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
               <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
-              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span>` : ""}
               <span>${escapeHtml(currentAccount.name)}</span>
               <span style="font-size:11px;color:#71717A;">· Đăng xuất</span>
             </button>
@@ -891,7 +882,6 @@
 
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
               <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
-              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span>` : ""}
               <span>${escapeHtml(currentAccount.name)}</span>
             </button>
           </div>
@@ -1078,30 +1068,11 @@
                       );
                       return `
                         <div class="submit-take-bar">
-                          <div style="flex:1;min-width:220px;">
-                            ${
-                              isCurrentTakeSubmitted
-                                ? `<div class="submit-confirm-note">✓ Đã nộp thành công Bản ghi âm #${submittedTakeNum} cho Giáo viên (Lúc ${escapeHtml(qData.submittedAt || "")})</div>`
-                                : submittedTakeObj
-                                  ? `<div class="submit-pending-note">⚠️ Đang chọn <strong>Bản ghi âm #${selectedTakeNum}</strong> (chưa nộp) · Bản đã nộp trước đó: Bản #${submittedTakeNum}.</div>`
-                                  : `<div class="submit-pending-note">⚠️ Chưa nộp bài — Bấm nút <strong>"Bấm để nộp bài"</strong> bên phải để gửi Bản ghi âm #${selectedTakeNum} cho Giáo viên.</div>`
-                            }
-                            ${
-                              state.cloudSyncStatus
-                                ? `<div style="font-size:12px;color:#1D4ED8;font-weight:700;margin-top:2px;">${escapeHtml(state.cloudSyncStatus)}</div>`
-                                : ""
-                            }
-                            ${
-                              state.submitSuccessMsg
-                                ? `<div style="font-size:12px;color:#15803D;font-weight:700;margin-top:2px;">${escapeHtml(state.submitSuccessMsg)}</div>`
-                                : ""
-                            }
-                            ${
-                              state.submitErrorMsg
-                                ? `<div style="font-size:12px;color:#B91C1C;font-weight:700;margin-top:2px;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
-                                : ""
-                            }
-                          </div>
+                          ${
+                            state.submitErrorMsg
+                              ? `<div style="font-size:12.5px;color:#B91C1C;font-weight:600;margin-right:auto;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                              : ""
+                          }
 
                           <button
                             type="button"
@@ -1465,7 +1436,6 @@
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
     state.currentTopicId = topicId;
     state.currentQuestionIndex = 0;
-    state.submitSuccessMsg = "";
     state.submitErrorMsg = "";
     state.view = "practice";
     renderApp();
@@ -1476,7 +1446,6 @@
     if (newIndex < 0 || newIndex >= topic.questions.length) return;
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
     state.currentQuestionIndex = newIndex;
-    state.submitSuccessMsg = "";
     state.submitErrorMsg = "";
     renderApp();
     const lp = document.querySelector(".left-pane");
@@ -1753,7 +1722,6 @@
       document.querySelectorAll("[data-select-take]").forEach(radio => {
         radio.onchange = () => {
           qData.selectedTakeId = radio.getAttribute("data-select-take");
-          state.submitSuccessMsg = "";
           state.submitErrorMsg = "";
           renderApp();
         };
@@ -1787,14 +1755,11 @@
           if (!chosenObj || state.isSubmitting) return;
 
           state.isSubmitting = true;
-          state.submitSuccessMsg = "";
           state.submitErrorMsg = "";
-          state.cloudSyncStatus = "☁️ Đang nộp bài lên hệ thống cho Giáo viên...";
           renderApp();
 
           const res = await cloudSubmitAttempt(question.id, chosenObj);
           state.isSubmitting = false;
-          state.cloudSyncStatus = "";
 
           if (!res.ok) {
             state.submitErrorMsg = "Không nộp được bài: " + (res.error || "Lỗi máy chủ");
@@ -1805,8 +1770,6 @@
           qData.selectedTakeId = chosenObj.id;
           qData.submittedTakeId = chosenObj.id;
           qData.submittedAt = CLOUD.formatDateTime(new Date().toISOString());
-          const chosenIdx = attempts.indexOf(chosenObj) + 1;
-          state.submitSuccessMsg = `✓ Đã nộp Bản ghi âm #${chosenIdx} lên hệ thống cho Giáo viên!`;
           renderApp();
         };
       }

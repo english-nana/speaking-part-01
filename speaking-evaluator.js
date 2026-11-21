@@ -436,38 +436,36 @@
     }
 
     const goodPoints = [];
-    if (matchedDomainCount > 0) {
-      goodPoints.push(`Trả lời đúng trọng tâm câu hỏi (${wordCount} từ${durationSec ? ` trong ${durationSec} giây` : ""}).`);
-    }
-    const usedVocabDisplay = Array.from(new Set([...b2SampleHits, ...allB2Lexis, ...b1SampleHits])).slice(0, 5);
+    const usedVocabDisplay = Array.from(new Set([...b2SampleHits, ...allB2Lexis, ...b1SampleHits])).slice(0, 4);
     if (usedVocabDisplay.length > 0) {
-      goodPoints.push(`Dùng được từ/cụm từ vựng chủ đề tốt: ${usedVocabDisplay.join(", ")}.`);
+      goodPoints.push(`Từ vựng chủ đề: ${usedVocabDisplay.join(", ")}.`);
     }
     if (usedComplex.length > 0 || usedRelative.length > 0) {
       const structures = [...usedComplex, ...usedRelative].slice(0, 3).join(", ");
-      goodPoints.push(`Biết mở rộng câu bằng từ nối phức/mệnh đề quan hệ (${structures}).`);
+      goodPoints.push(`Cấu trúc câu: đã dùng từ nối phức / mệnh đề quan hệ (${structures}).`);
     }
 
+    const timeNote = durationSec ? ` / ${durationSec} giây` : "";
     let summary = "";
     if (badgeTone === "b2") {
-      summary = `Bài nói trôi chảy (${wordCount} từ), triển khai ý đầy đủ và có sử dụng từ vựng/cấu trúc mức B2.`;
+      summary = `Bài nói trôi chảy (${wordCount} từ${timeNote}), triển khai ý đầy đủ ở mức B2.`;
     } else if (badgeTone === "b1") {
-      summary = `Bài nói trả lời đúng trọng tâm câu hỏi ở mức B1 (${wordCount} từ), truyền đạt được ý chính cho người nghe.`;
+      summary = `Bài nói trả lời đúng trọng tâm ở mức B1 (${wordCount} từ${timeNote}), truyền đạt được ý chính.`;
     } else if (matchedDomainCount === 0) {
       summary = "Nội dung câu trả lời hiện chưa bám sát từ khóa trọng tâm của câu hỏi đề bài.";
     } else {
-      summary = `Câu trả lời còn khá ngắn (${wordCount} từ), cần bổ sung thêm 1–2 câu giải thích lý do hoặc ví dụ thực tế để đạt mức B1.`;
+      summary = `Câu trả lời còn ngắn (${wordCount} từ), nên bổ sung thêm 1–2 câu giải thích hoặc ví dụ để đạt mức B1.`;
     }
 
     let tip = "";
     if (badgeTone === "below") {
-      tip = "Gợi ý nâng điểm: Hãy nói ít nhất 2–3 câu hoàn chỉnh (~25–40 từ): Câu 1 trả lời thẳng + Câu 2 nêu lý do (because...) + Câu 3 thêm ví dụ ngắn.";
+      tip = "Gợi ý: Nói ít nhất 2–3 câu (~25–40 từ) gồm câu trả lời thẳng, lý do (because...) và 1 ví dụ ngắn.";
     } else if (badgeTone === "b1") {
-      tip = "Để vươn lên mức B2 (6.0+): Hãy thêm 1 từ nối chuyển ý (Moreover / Especially), 1 mệnh đề quan hệ (, which helps me...) và thay các từ đơn giản bằng từ vựng B2 ở bảng Mục V.";
+      tip = "Gợi ý lên B2 (6.0+): Thêm 1 từ nối (Moreover / Especially), 1 mệnh đề quan hệ (, which helps...) và dùng thêm từ vựng ở Mục V.";
     } else if (errors.length > 0) {
-      tip = "Bạn đã đạt khung B2; hãy sửa gọn các lỗi nhỏ ở trên để câu nói mượt và chắc chắn điểm 7.0–7.5+ hơn nữa.";
+      tip = "Gợi ý: Chỉ cần chỉnh các lỗi nhỏ bên dưới để giữ vững mức 7.0–7.5+.";
     } else {
-      tip = "Bài nói mạch lạc, tự nhiên và ít lỗi. Hãy tiếp tục duy trì tốc độ nói ổn định và ngữ điệu nhấn trọng âm từ khóa.";
+      tip = "Gợi ý: Duy trì tốc độ nói đều, tự nhiên và nhấn trọng âm vào các từ khóa chính.";
     }
 
     return {
@@ -493,57 +491,50 @@
         ? `<span class="ai-eval-score-pill tone-${esc(res.badgeTone)}">${esc(res.scoreText)} / 10 · ${esc(res.levelLabel)}</span>`
         : `<span class="ai-eval-score-pill tone-neutral">${esc(res.levelLabel)}</span>`;
 
+    const items = [];
+    if (res.summary) items.push(res.summary);
+    (res.goodPoints || []).forEach(pt => items.push(pt));
+    if (res.hasTranscript && (!res.errors || res.errors.length === 0)) {
+      items.push("Ngữ pháp: Không phát hiện lỗi ngữ pháp nghiêm trọng trong transcript.");
+    }
+    if (res.tip) items.push(res.tip);
+
     return `
       <div class="ai-eval-card">
         <div class="ai-eval-header">
           <div class="ai-eval-title-wrap">
-            <span class="ai-eval-title">🎯 Đánh giá &amp; Sửa lỗi bài nói (Thang điểm VSTEP 10)</span>
-            <span class="ai-eval-band-note">Thang tham khảo: 4.0–5.5 Đạt B1 · 6.0–8.5 Đạt B2</span>
+            <span class="ai-eval-title">Đánh giá &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
+            <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
           </div>
           ${scorePill}
         </div>
 
-        <p class="ai-eval-summary">${esc(res.summary)}</p>
-
-        ${
-          res.goodPoints && res.goodPoints.length > 0
-            ? `
-          <ul class="ai-eval-good-list">
-            ${res.goodPoints.map(pt => `<li>✓ ${esc(pt)}</li>`).join("")}
-          </ul>
-        `
-            : ""
-        }
+        <ul class="ai-eval-list">
+          ${items.map(text => `<li>${esc(text)}</li>`).join("")}
+        </ul>
 
         ${
           res.errors && res.errors.length > 0
             ? `
-          <div class="ai-eval-errors-wrap">
-            <div class="ai-eval-section-heading">Các lỗi chính cần sửa (${res.errors.length} lỗi):</div>
-            <div class="ai-eval-errors-list">
-              ${res.errors
-                .map(
-                  err => `
-                <div class="ai-eval-error-item">
-                  <div class="ai-eval-fix-line">
-                    <span class="ai-err-wrong">❌ “${esc(err.wrong)}”</span>
-                    <span style="color:#71717A;font-weight:700;">→</span>
-                    <span class="ai-err-fix">✅ “${esc(err.fix)}”</span>
-                  </div>
-                  <div class="ai-err-reason">${esc(err.reason)}</div>
+          <div class="ai-eval-errors-list">
+            ${res.errors
+              .map(
+                err => `
+              <div class="ai-eval-error-item">
+                <div class="ai-eval-fix-line">
+                  <span class="ai-err-wrong">“${esc(err.wrong)}”</span>
+                  <span>→</span>
+                  <span class="ai-err-fix">“${esc(err.fix)}”</span>
                 </div>
-              `
-                )
-                .join("")}
-            </div>
+                <div class="ai-err-reason">${esc(err.reason)}</div>
+              </div>
+            `
+              )
+              .join("")}
           </div>
         `
-            : res.hasTranscript
-              ? `<div style="font-size:12.5px;font-weight:700;color:#15803D;margin-top:6px;">✓ Không phát hiện lỗi ngữ pháp/cấu trúc câu nghiêm trọng trong transcript.</div>`
-              : ""
+            : ""
         }
-
-        ${res.tip ? `<div class="ai-eval-tip">💡 ${esc(res.tip)}</div>` : ""}
       </div>
     `;
   }
