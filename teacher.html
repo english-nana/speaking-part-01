@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261121f" />
+  <link rel="stylesheet" href="./styles.css?v=20261121g" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261121f"></script>
-  <script src="./supabase-client.js?v=20261121f"></script>
-  <script src="./travel-data.js?v=20261121f"></script>
-  <script src="./speaking-evaluator.js?v=20261121f"></script>
+  <script src="./supabase-config.js?v=20261121g"></script>
+  <script src="./supabase-client.js?v=20261121g"></script>
+  <script src="./travel-data.js?v=20261121g"></script>
+  <script src="./speaking-evaluator.js?v=20261121g"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -90,14 +90,13 @@
         tState.dbError = "";
         renderTeacherApp();
 
-        const [profilesRes, vocabRes, notesRes, attemptsRes] = await Promise.all([
+        const [profilesRes, vocabRes, attemptsRes] = await Promise.all([
           client.from("profiles").select("*").order("last_active_at", { ascending: false }),
           client.from("student_vocab").select("user_id"),
-          client.from("question_notes").select("*"),
           client.from("speaking_attempts").select("*").order("created_at", { ascending: false })
         ]);
 
-        const firstErr = profilesRes.error || attemptsRes.error || vocabRes.error || notesRes.error;
+        const firstErr = profilesRes.error || attemptsRes.error || vocabRes.error;
         if (firstErr) {
           tState.dbError =
             "Không thể đọc dữ liệu từ Supabase (" +
@@ -108,17 +107,11 @@
 
         const profiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
         const vocabRows = Array.isArray(vocabRes.data) ? vocabRes.data : [];
-        const noteRows = Array.isArray(notesRes.data) ? notesRes.data : [];
         const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
 
         const vocabCountByUser = {};
         vocabRows.forEach(v => {
           vocabCountByUser[v.user_id] = (vocabCountByUser[v.user_id] || 0) + 1;
-        });
-
-        const notesMap = {};
-        noteRows.forEach(n => {
-          notesMap[`${n.user_id}__${n.question_id}`] = n.idea_note || "";
         });
 
         const profileById = {};
@@ -172,7 +165,6 @@
             topicTitle: qMeta.topicTitle,
             questionNum: qMeta.num,
             prompt: qMeta.prompt,
-            ideaNote: notesMap[k] || "",
             isOfficiallySubmitted: Boolean(chosen.is_submitted),
             submittedAt: CLOUD.formatDateTime(chosen.submitted_at || chosen.created_at),
             rawTime: new Date(chosen.submitted_at || chosen.created_at || 0).getTime(),
@@ -256,7 +248,6 @@
           "Trạng thái",
           "Thời gian nộp",
           "Thời lượng (giây)",
-          "Ghi chú ý tưởng",
           "Transcript bài nói",
           "Điểm / Band",
           "Nhận xét giáo viên"
@@ -273,7 +264,6 @@
               sub.isOfficiallySubmitted ? "Đã nộp chính thức" : "Bản nháp",
               sub.submittedAt,
               sub.durationSec,
-              sub.ideaNote,
               sub.transcript,
               sub.teacherScore,
               sub.teacherFeedback
@@ -655,16 +645,6 @@
                       <div style="font-size:15.5px;font-weight:700;color:#18181B;margin-bottom:10px;">
                         Câu hỏi: “${escapeHtml(sub.prompt)}”
                       </div>
-
-                      ${
-                        sub.ideaNote
-                          ? `
-                          <div style="padding:9px 12px;background:#FFFDF5;border:1px solid #FDE68A;border-radius:6px;font-size:13.5px;color:#451A03;margin-bottom:10px;">
-                            <strong>📝 Ghi chú ý tưởng của học viên:</strong> ${escapeHtml(sub.ideaNote)}
-                          </div>
-                        `
-                          : ""
-                      }
 
                       <div style="margin-bottom:10px;">
                         ${

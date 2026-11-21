@@ -40,7 +40,6 @@
   let recordingTimer = null;
   let speechRecognizer = null;
   let finalTranscriptBuffer = "";
-  let noteSaveDebounceTimer = null;
 
   // ==========================================================================
   // SUPABASE CLOUD SYNC LAYER
@@ -82,10 +81,9 @@
 
     renderApp();
 
-    const [profileRes, vocabRes, notesRes, attemptsRes, teacherRes] = await Promise.all([
+    const [profileRes, vocabRes, attemptsRes, teacherRes] = await Promise.all([
       client.from("profiles").select("*").eq("id", uid).maybeSingle(),
       client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      client.from("question_notes").select("*").eq("user_id", uid),
       client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
       client.rpc("is_teacher")
     ]);
@@ -129,12 +127,6 @@
       : [];
 
     const questionsData = {};
-
-    if (Array.isArray(notesRes.data)) {
-      notesRes.data.forEach(row => {
-        ensureQuestionData(questionsData, row.question_id).ideaNote = row.idea_note || "";
-      });
-    }
 
     const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
     const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(r => r.audio_path).filter(Boolean));
@@ -183,22 +175,6 @@
     state.authLoading = false;
     if (state.view === "auth") state.view = "home";
     renderApp();
-  }
-
-  async function cloudSaveIdeaNote(qId, noteText) {
-    const client = CLOUD.getClient();
-    if (!client || !currentAccount) return;
-    try {
-      await client.from("question_notes").upsert(
-        {
-          user_id: currentAccount.id,
-          question_id: qId,
-          idea_note: noteText,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: "user_id,question_id" }
-      );
-    } catch (e) {}
   }
 
   async function cloudAddVocab(item) {
@@ -910,9 +886,6 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                     <span>Ghi chú ý tưởng / Từ khóa trước khi nói</span>
                   </label>
-                  <span class="idea-notes-saved-badge" id="idea-saved-indicator">
-                    ${qData.ideaNote ? "✓ Đã lưu ghi chú" : "Tự động lưu"}
-                  </span>
                 </div>
                 <textarea
                   id="idea-note-input"
@@ -1701,16 +1674,6 @@
       if (ideaInput) {
         ideaInput.oninput = e => {
           qData.ideaNote = e.target.value;
-          const badge = document.getElementById("idea-saved-indicator");
-          if (badge) badge.textContent = "☁️ Đang lưu...";
-          if (noteSaveDebounceTimer) clearTimeout(noteSaveDebounceTimer);
-          const qIdSnap = question.id;
-          const valSnap = qData.ideaNote;
-          noteSaveDebounceTimer = setTimeout(async () => {
-            await cloudSaveIdeaNote(qIdSnap, valSnap);
-            const b = document.getElementById("idea-saved-indicator");
-            if (b) b.textContent = "✓ Đã lưu ghi chú";
-          }, 600);
         };
       }
 

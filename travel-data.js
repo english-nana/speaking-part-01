@@ -1,7 +1,7 @@
 // ==========================================================================
 // SPEAKING PART 1 — 4 STANDALONE TOPICS (TRAVELLING, TRIPS, TRAVEL PLANS, SEASONS)
-// Easy-to-speak B1 & B2 model answers built from "kien-thuc-co-ban"
-// (Câu đơn, Câu ghép, Câu phức, Mệnh đề quan hệ) + Full IPA in Vocabulary Table
+// Áp dụng công thức A-R-E (Answer + Reason -> Example -> Feeling/Result)
+// Thiết kế ngắn gọn, dễ đọc cho học sinh yếu (B1: ~28–36 từ | B2: ~35–43 từ)
 // ==========================================================================
 
 window.SPEAKING_TOPICS = [
@@ -22,109 +22,102 @@ window.SPEAKING_TOPICS = [
         num: 1,
         prompt: "Do you prefer traveling with friends or traveling alone?",
         analysis: {
-          questionType: "Câu hỏi lựa chọn (Choice question với 'or') xoay quanh chủ đề Travelling.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức chỉ lý do (because) kết hợp Câu ghép (, and / , so) hoặc Mệnh đề quan hệ (, which helps us...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi lựa chọn ('Do you prefer... or...'). Áp dụng công thức A-R-E (Answer + Reason → Example → Feeling).",
+          tense: "Hiện tại đơn. Mở đầu thẳng bằng 'I prefer + V-ing... because...' hoặc 'Honestly, I tend to...'.",
+          length: "3 câu ngắn gọn (~30–38 từ), dễ đọc một mạch trong 15–20 giây."
         },
         pitfalls: [
-          "Trả lời cộc lốc 1 câu đơn mà không nối thêm lý do bằng 'because'.",
-          "Quên chia V-ing sau động từ 'prefer' (phải nói 'prefer traveling', không nói 'prefer travel').",
-          "Mắc lỗi nối 2 câu đơn chỉ bằng dấu phẩy mà thiếu từ nối ', and' hoặc ', so' (lỗi Comma Splice trong bài Câu ghép)."
+          "Trả lời cộc lốc ('With friends.') mà thiếu lý do 'because...' và ví dụ.",
+          "Quên thêm V-ing sau 'prefer' (phải nói 'prefer traveling', không nói 'prefer travel').",
+          "Nói thiếu âm cuối của 'like', 'friends', 'food', 'photos' làm câu bị cụt."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Chọn đi cùng bạn bè vì vui và an toàn hơn đi một mình."
+                label: "A + R (Trả lời + Lý do)",
+                text: "Chọn đi cùng bạn bè vì rất vui: I prefer traveling with friends because it is very fun."
               },
               {
-                label: "Lý do (Câu đơn mở rộng mục đích)",
-                text: "Có thể trò chuyện với nhau và chụp nhiều ảnh đẹp."
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Ví dụ hoạt động cùng nhau: For example, we can talk, eat good food, and take nice photos together."
               },
               {
-                label: "Chi tiết thực tế (Câu ghép - , and)",
-                text: "Có thể thử nhiều món ăn địa phương, và cùng chia tiền phòng với nhau."
+                label: "Cảm xúc (Chốt câu)",
+                text: "Chốt cảm xúc ngắn gọn: It makes me feel very happy."
               }
             ],
             modelAnswer:
-              "I prefer <strong>traveling with my friends</strong> because it is very fun and safe. During the trip, we can talk together and <strong>take many nice photos</strong>. We can also try <strong>local food</strong>, and we can <strong>share the cost</strong> of the hotel.",
+              "I prefer <strong>traveling with friends</strong> because it is very fun. For example, we can talk, eat good food, and <strong>take nice photos</strong> together. It makes me <strong>feel very happy</strong>.",
             vocab: [
               {
                 word: "prefer",
                 ipa: "/prɪˈfɜːr/",
                 pos: "v.",
-                meaning: "thích hơn",
-                example: "I <strong>prefer</strong> traveling with my friends because it is very fun and safe."
+                meaning: "thích hơn (+ V-ing)",
+                example: "I <strong>prefer</strong> traveling with friends because it is very fun."
               },
               {
-                word: "take many nice photos",
-                ipa: "/teɪk ˈmeni naɪs ˈfoʊtoʊz/",
+                word: "take nice photos",
+                ipa: "/teɪk naɪs ˈfoʊtoʊz/",
                 pos: "v. phr.",
-                meaning: "chụp nhiều bức ảnh đẹp",
-                example: "During the trip, we can talk together and <strong>take many nice photos</strong>."
+                meaning: "chụp những bức ảnh đẹp",
+                example: "For example, we can talk, eat good food, and <strong>take nice photos</strong> together."
               },
               {
-                word: "local food",
-                ipa: "/ˈloʊkl fuːd/",
-                pos: "n. phr.",
-                meaning: "đồ ăn địa phương",
-                example: "We can also try <strong>local food</strong> at the market."
-              },
-              {
-                word: "share the cost",
-                ipa: "/ʃer ðə kɒst/",
+                word: "feel very happy",
+                ipa: "/fiːl ˈveri ˈhæpi/",
                 pos: "v. phr.",
-                meaning: "chia sẻ chi phí",
-                example: "We can try local food, and we can <strong>share the cost</strong> of the hotel."
+                meaning: "cảm thấy rất vui",
+                example: "It makes me <strong>feel very happy</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Thích đi du lịch cùng nhóm bạn thân vì chuyến đi sẽ vui vẻ và đáng nhớ hơn."
+                label: "A + R (Mở đầu tự nhiên - Honestly)",
+                text: "Dùng 'Honestly, I tend to...' để mở đầu tự nhiên và nêu lý do vui vẻ, thoải mái hơn."
               },
               {
-                label: "Lý do (Mệnh đề quan hệ - who)",
-                text: "Luôn có những người bạn hợp gu để cùng trò chuyện và khám phá những địa điểm mới."
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Chia tiền khách sạn và cùng thưởng thức món ăn đường phố với bạn thân."
               },
               {
-                label: "Chi tiết thực tế (Mệnh đề quan hệ - , which helps us...)",
-                text: "Cùng chia tiền khách sạn và đồ ăn, điều này giúp cả nhóm tiết kiệm được rất nhiều tiền."
+                label: "Cảm xúc (Chốt bằng cụm B2 + , which)",
+                text: "Cảm thấy thoải mái (feel at ease) và thực sự xả hơi (unwind)."
               }
             ],
             modelAnswer:
-              "I prefer <strong>traveling with my close friends</strong> because it makes the trip much more <strong>enjoyable</strong>. I love going with friends who enjoy <strong>exploring new places</strong> and trying local food with me. Also, we can share the hotel room and transport, <strong>which helps us save a lot of money</strong>.",
+              "<strong>Honestly, I tend to</strong> travel with <strong>close friends</strong> because it is much more <strong>enjoyable</strong>. For example, we share hotel costs and try street food together. This makes me <strong>feel at ease</strong>, which helps me really <strong>unwind</strong>.",
             vocab: [
               {
-                word: "close friends",
-                ipa: "/kloʊs frendz/",
-                pos: "n. phr.",
-                meaning: "những người bạn thân",
-                example: "I prefer traveling with my <strong>close friends</strong> because it makes the trip much more enjoyable."
+                word: "tend to",
+                ipa: "/tend tuː/",
+                pos: "v. phr.",
+                meaning: "có xu hướng, thường hay",
+                example: "Honestly, I <strong>tend to</strong> travel with close friends."
               },
               {
                 word: "enjoyable",
                 ipa: "/ɪnˈdʒɔɪəbl/",
                 pos: "adj.",
-                meaning: "thú vị, vui vẻ",
-                example: "It makes the trip much more <strong>enjoyable</strong>."
+                meaning: "thú vị, đáng nhớ",
+                example: "It is much more <strong>enjoyable</strong> when we go together."
               },
               {
-                word: "explore new places",
-                ipa: "/ɪkˈsplɔːr nuː ˈpleɪsɪz/",
+                word: "feel at ease",
+                ipa: "/fiːl æt iːz/",
                 pos: "v. phr.",
-                meaning: "khám phá những địa điểm mới",
-                example: "I love going with friends who enjoy <strong>exploring new places</strong>."
+                meaning: "cảm thấy thoải mái, nhẹ nhõm",
+                example: "This makes me <strong>feel at ease</strong> during the whole trip."
               },
               {
-                word: "save a lot of money",
-                ipa: "/seɪv ə lɒt əv ˈmʌni/",
-                pos: "v. phr.",
-                meaning: "tiết kiệm rất nhiều tiền",
-                example: "We can share the hotel room, which helps us <strong>save a lot of money</strong>."
+                word: "unwind",
+                ipa: "/ˌʌnˈwaɪnd/",
+                pos: "v.",
+                meaning: "thư giãn, xả hơi",
+                example: "Going with friends helps me really <strong>unwind</strong>."
               }
             ]
           }
@@ -135,109 +128,102 @@ window.SPEAKING_TOPICS = [
         num: 2,
         prompt: "What do you usually prepare before going on a trip?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('What do you usually...') hỏi về thói quen chuẩn bị trước chuyến đi.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu đơn chỉ mục đích (to + Vo), Câu ghép (, so) và Câu phức thời gian (Before I go on a trip, ...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi thói quen ('What do you usually...'). Áp dụng công thức Dạng 2 + A-R-E (Habit + Reason → Example → Feeling).",
+          tense: "Hiện tại đơn ('I usually...' hoặc 'Actually, I tend to...').",
+          length: "3 câu ngắn gọn (~30–38 từ), dùng các vật dụng quen thuộc hằng ngày."
         },
         pitfalls: [
-          "Quên dấu phẩy sau mệnh đề thời gian đứng đầu câu ('Before I go on a trip, I always...').",
-          "Quên âm cuối số nhiều /-s/ ở các danh từ đếm được như 'clothes', 'shoes', 'items'.",
-          "Dùng mạo từ 'a' trước danh từ không đếm được như 'sunscreen' hoặc 'medicine'."
+          "Lặp lại mỗi câu 'I prepare...' thay vì nói cụ thể 'check the weather', 'pack clothes'.",
+          "Quên mạo từ 'a' trước danh từ số ít ('a power bank', 'a short checklist').",
+          "Đọc nhầm từ 'clothes' (/kloʊðz/ — 1 âm tiết) thành 'close'."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu đơn + to Vo)",
-                text: "Thường xem dự báo thời tiết trước để chuẩn bị quần áo phù hợp."
+                label: "A + R (Thói quen + Lý do)",
+                text: "Xem thời tiết trước để mang đúng quần áo: I usually check the weather first because I want to bring the right clothes."
               },
               {
-                label: "Chi tiết trang phục (Câu đơn)",
-                text: "Mang theo quần áo mỏng nhẹ và một đôi giày đi bộ thoải mái."
+                label: "E (Ví dụ đồ dùng - For example)",
+                text: "Kể 2 món quen thuộc: For example, I always pack light clothes and a power bank."
               },
               {
-                label: "Vật dụng cần thiết (Câu ghép - , and)",
-                text: "Luôn bỏ sạc dự phòng vào ba lô, và mang theo một ít thuốc cơ bản."
+                label: "Cảm xúc / Kết quả",
+                text: "Chốt cảm giác yên tâm: This helps me feel ready."
               }
             ],
             modelAnswer:
-              "Before a trip, I usually <strong>check the weather</strong> to prepare the right clothes. I always bring <strong>light clothes</strong> and a pair of <strong>comfortable walking shoes</strong>. Besides, I put a <strong>power bank</strong> in my backpack, and I also bring some basic medicine.",
+              "I usually <strong>check the weather</strong> first because I want to bring the right clothes. For example, I always <strong>pack light clothes</strong> and a <strong>power bank</strong>. This helps me <strong>feel ready</strong>.",
             vocab: [
               {
                 word: "check the weather",
                 ipa: "/tʃek ðə ˈweðər/",
                 pos: "v. phr.",
-                meaning: "kiểm tra thời tiết",
-                example: "Before a trip, I usually <strong>check the weather</strong> to prepare the right clothes."
+                meaning: "xem dự báo thời tiết",
+                example: "I usually <strong>check the weather</strong> first before a trip."
               },
               {
-                word: "light clothes",
-                ipa: "/laɪt kloʊðz/",
-                pos: "n. phr.",
-                meaning: "quần áo mỏng nhẹ",
-                example: "I always bring <strong>light clothes</strong> and a pair of comfortable walking shoes."
-              },
-              {
-                word: "comfortable walking shoes",
-                ipa: "/ˈkʌmftəbl ˈwɔːkɪŋ ʃuːz/",
-                pos: "n. phr.",
-                meaning: "giày đi bộ thoải mái",
-                example: "I always bring light clothes and a pair of <strong>comfortable walking shoes</strong>."
+                word: "pack light clothes",
+                ipa: "/pæk laɪt kloʊðz/",
+                pos: "v. phr.",
+                meaning: "xếp quần áo gọn nhẹ",
+                example: "For example, I always <strong>pack light clothes</strong> and a power bank."
               },
               {
                 word: "power bank",
                 ipa: "/ˈpaʊər bæŋk/",
                 pos: "n.",
                 meaning: "sạc dự phòng",
-                example: "I put a <strong>power bank</strong> in my backpack, and I also bring some basic medicine."
+                example: "I bring a <strong>power bank</strong> so my phone stays full."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - Before + S + V)",
-                text: "Trước khi đi du lịch, luôn xem trước thời tiết để chọn trang phục phù hợp."
+                label: "A + R (Mở đầu tự nhiên - Actually)",
+                text: "Dùng 'Actually, I tend to make a short checklist...' vì giúp mình gọn gàng, không bỏ sót."
               },
               {
-                label: "Lý do (Câu ghép - , so)",
-                text: "Thích đi bộ khám phá và chụp ảnh, nên luôn mang đồ thoải mái và một đôi giày tốt."
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Xếp quần áo phù hợp, kem chống nắng và sạc dự phòng cho điện thoại."
               },
               {
-                label: "Ví dụ vật dụng (Mệnh đề quan hệ - that I might need)",
-                text: "Ngoài ra còn chuẩn bị một túi nhỏ đựng các đồ thiết yếu như kem chống nắng, sạc dự phòng và thuốc cơ bản."
+                label: "Cảm xúc (Chốt cụm hay)",
+                text: "Chốt bằng cụm 'peace of mind' (sự an tâm)."
               }
             ],
             modelAnswer:
-              "Before I go on a trip, I always check the weather forecast so that I can <strong>pack suitable clothes</strong>. I love walking around to take photos, so I usually bring comfortable outfits and a good pair of shoes. Moreover, I prepare some <strong>essential items</strong> that I might need, such as <strong>sunscreen</strong>, a power bank, and <strong>basic medicine</strong>.",
+              "<strong>Actually, I tend to</strong> make a short checklist because it keeps me organized. For example, I pack <strong>suitable clothes</strong>, <strong>sunscreen</strong>, and a power bank for my phone. Having everything ready gives me real <strong>peace of mind</strong>.",
             vocab: [
               {
-                word: "pack suitable clothes",
-                ipa: "/pæk ˈsuːtəbl kloʊðz/",
+                word: "stay organized",
+                ipa: "/steɪ ˈɔːrɡənaɪzd/",
                 pos: "v. phr.",
-                meaning: "xếp quần áo phù hợp",
-                example: "I always check the weather forecast so that I can <strong>pack suitable clothes</strong>."
+                meaning: "giữ mọi thứ ngăn nắp, gọn gàng",
+                example: "Making a checklist keeps me <strong>organized</strong> before traveling."
               },
               {
-                word: "essential items",
-                ipa: "/ɪˈsenʃl ˈaɪtəmz/",
+                word: "suitable clothes",
+                ipa: "/ˈsuːtəbl kloʊðz/",
                 pos: "n. phr.",
-                meaning: "các vật dụng thiết yếu",
-                example: "Moreover, I prepare some <strong>essential items</strong> that I might need."
+                meaning: "quần áo phù hợp",
+                example: "For example, I pack <strong>suitable clothes</strong> and a power bank."
               },
               {
                 word: "sunscreen",
                 ipa: "/ˈsʌnskriːn/",
                 pos: "n.",
                 meaning: "kem chống nắng",
-                example: "I prepare some essential items, such as <strong>sunscreen</strong> and a power bank."
+                example: "I never forget <strong>sunscreen</strong> on sunny days."
               },
               {
-                word: "basic medicine",
-                ipa: "/ˈbeɪsɪk ˈmedɪsn/",
+                word: "peace of mind",
+                ipa: "/piːs əv maɪnd/",
                 pos: "n. phr.",
-                meaning: "thuốc cơ bản",
-                example: "I always bring sunscreen, a power bank, and <strong>basic medicine</strong>."
+                meaning: "cảm giác yên tâm",
+                example: "Having everything ready gives me real <strong>peace of mind</strong>."
               }
             ]
           }
@@ -248,109 +234,95 @@ window.SPEAKING_TOPICS = [
         num: 3,
         prompt: "Which season is the best for traveling in your hometown?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('Which season is the best...') hỏi về mùa đẹp nhất để du lịch ở quê hương.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức chỉ lý do (because / since), Câu ghép (, so) và Mệnh đề quan hệ (, which makes it easy...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi lựa chọn mùa đẹp nhất ('Which season is the best...'). Áp dụng A-R-E (Answer + Reason → Example → Result/Feeling).",
+          tense: "Hiện tại đơn ('I think the dry season is...' hoặc 'I'd say...').",
+          length: "3 câu ngắn gọn (~32–38 từ), nêu tên mùa, thời tiết, ví dụ hoạt động và cảm nhận."
         },
         pitfalls: [
-          "Thiếu mạo từ 'the' trước tên mùa đặc trưng ('the dry season', 'the rainy season').",
-          "Dùng cả 'Because ... so ...' trong cùng một câu (lỗi kinh điển trong bài Câu phức).",
-          "Chỉ nói về thời tiết mà không nêu hoạt động du khách có thể làm ở quê hương."
+          "Quên mạo từ 'the' trước 'dry season' hoặc 'rainy season'.",
+          "Dùng cả 'Because... so...' trong cùng một câu.",
+          "Chỉ nói mỗi 'sunny' mà không đưa ra ví dụ du khách làm gì."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mùa đẹp nhất ở quê mình là mùa khô vì bầu trời trong xanh và nắng đẹp."
+                label: "A + R (Chọn mùa + Lý do)",
+                text: "Chọn mùa khô vì trời nắng trong xanh: I think the dry season is the best because the sky is sunny and clear."
               },
               {
-                label: "Lý do thuận lợi (Câu ghép - , so)",
-                text: "Trời rất ít mưa, nên du khách có thể đi lại rất dễ dàng."
+                label: "E (Ví dụ hoạt động - For example)",
+                text: "Du khách dễ đi chợ đêm và ăn đồ ăn đường phố: For example, tourists can easily visit night markets and eat street food."
               },
               {
-                label: "Hoạt động gợi ý (Câu đơn)",
-                text: "Họ có thể tham quan các điểm nổi tiếng và thưởng thức nhiều món ăn đường phố ngon miệng."
+                label: "Cảm xúc / Kết quả",
+                text: "Chốt cảm giác vui vẻ: It makes the trip fun."
               }
             ],
             modelAnswer:
-              "The best season for traveling in my hometown is <strong>the dry season</strong> because the sky is clear and sunny. It rarely rains during this time, so tourists can <strong>travel around</strong> very easily. They can visit <strong>famous attractions</strong> and enjoy delicious <strong>street food</strong> at the night market.",
+              "I think <strong>the dry season</strong> is the best because the sky is sunny and clear. For example, tourists can easily visit <strong>night markets</strong> and eat <strong>street food</strong>. It makes the trip fun.",
             vocab: [
               {
                 word: "the dry season",
                 ipa: "/ðə draɪ ˈsiːzn/",
                 pos: "n. phr.",
                 meaning: "mùa khô",
-                example: "The best season for traveling in my hometown is <strong>the dry season</strong>."
+                example: "I think <strong>the dry season</strong> is the best time to visit."
               },
               {
-                word: "travel around",
-                ipa: "/ˈtrævl əˈraʊnd/",
-                pos: "v. phr.",
-                meaning: "đi lại, dạo quanh",
-                example: "It rarely rains during this time, so tourists can <strong>travel around</strong> very easily."
-              },
-              {
-                word: "famous attractions",
-                ipa: "/ˈfeɪməs əˈtrækʃnz/",
+                word: "night markets",
+                ipa: "/naɪt ˈmɑːrkɪts/",
                 pos: "n. phr.",
-                meaning: "các điểm tham quan nổi tiếng",
-                example: "They can visit <strong>famous attractions</strong> and enjoy delicious street food."
+                meaning: "chợ đêm",
+                example: "Tourists can easily visit <strong>night markets</strong> at night."
               },
               {
                 word: "street food",
                 ipa: "/striːt fuːd/",
                 pos: "n. phr.",
                 meaning: "đồ ăn đường phố",
-                example: "They can enjoy delicious <strong>street food</strong> at the night market."
+                example: "Visitors love trying local <strong>street food</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Thời điểm lý tưởng nhất để thăm quê mình là mùa khô vì thời tiết rất mát mẻ và dễ chịu."
+                label: "A + R (Mở đầu tự nhiên - I'd say)",
+                text: "Dùng 'I'd say...' chọn mùa khô vì thời tiết mát mẻ, dễ chịu (cool and pleasant)."
               },
               {
-                label: "Lý do (Mệnh đề quan hệ - , which makes it...)",
-                text: "Trời hầu như không mưa, điều này giúp du khách rất thuận tiện đi khám phá thành phố."
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Du khách dạo chợ đêm và thử đồ ăn giá phải chăng (affordable)."
               },
               {
-                label: "Ví dụ hoạt động (Câu đơn mở rộng)",
-                text: "Họ có thể đi dạo chợ đêm, chụp ảnh ngoài trời và thử nhiều món đặc sản địa phương hợp túi tiền."
+                label: "Kết quả (, which makes...)",
+                text: "Không có mưa lớn nên đi lại rất thuận tiện (convenient)."
               }
             ],
             modelAnswer:
-              "I think the best time to visit my hometown is <strong>the dry season</strong> because the weather is very <strong>cool and pleasant</strong>. There is almost no rain, <strong>which makes it very convenient</strong> for tourists to explore the city. For example, they can walk around the <strong>night market</strong> and try many <strong>affordable</strong> local dishes.",
+              "<strong>I'd say</strong> the dry season is ideal because the weather is <strong>cool and pleasant</strong>. For example, tourists can explore local markets and try <strong>affordable</strong> street food. There is no heavy rain, <strong>which makes traveling very convenient</strong>.",
             vocab: [
               {
                 word: "cool and pleasant",
                 ipa: "/kuːl ænd ˈpleznt/",
                 pos: "adj. phr.",
                 meaning: "mát mẻ và dễ chịu",
-                example: "The best time to visit my hometown is the dry season because the weather is very <strong>cool and pleasant</strong>."
-              },
-              {
-                word: "convenient",
-                ipa: "/kənˈviːniənt/",
-                pos: "adj.",
-                meaning: "thuận tiện, tiện lợi",
-                example: "There is almost no rain, which makes it very <strong>convenient</strong> for tourists."
-              },
-              {
-                word: "night market",
-                ipa: "/naɪt ˈmɑːrkɪt/",
-                pos: "n. phr.",
-                meaning: "chợ đêm",
-                example: "For example, they can walk around the <strong>night market</strong>."
+                example: "The weather is <strong>cool and pleasant</strong> in the dry season."
               },
               {
                 word: "affordable",
                 ipa: "/əˈfɔːrdəbl/",
                 pos: "adj.",
                 meaning: "hợp túi tiền, giá phải chăng",
-                example: "They can try many <strong>affordable</strong> local dishes."
+                example: "Tourists can try <strong>affordable</strong> street food at local markets."
+              },
+              {
+                word: "convenient",
+                ipa: "/kənˈviːniənt/",
+                pos: "adj.",
+                meaning: "thuận tiện, dễ dàng",
+                example: "No heavy rain makes traveling very <strong>convenient</strong>."
               }
             ]
           }
@@ -376,95 +348,95 @@ window.SPEAKING_TOPICS = [
         num: 1,
         prompt: "Do you like going on trips?",
         analysis: {
-          questionType: "Câu hỏi Yes/No ('Do you like...') hỏi về sở thích đi du lịch.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức thời gian (Whenever I feel stressed...) và Mệnh đề quan hệ (a great activity that helps me...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi Yes/No ('Do you like...'). Áp dụng công thức Dạng 1 + A-R-E (Yes, I do → Reason → Example → Feeling).",
+          tense: "Hiện tại đơn. Trả lời thẳng 'Yes, I do' (B1) hoặc 'Yes, I really do' (B2).",
+          length: "3 câu ngắn gọn (~31–37 từ), rất dễ nhớ và trôi chảy."
         },
         pitfalls: [
-          "Dùng sai giới từ 'go to a trip' thay vì cụm từ đúng là 'go on a trip' / 'go on trips'.",
-          "Chỉ trả lời 'Yes, I do' mà không mở rộng lợi ích đối với tinh thần và sức khỏe.",
-          "Quên thêm '-s' vào động từ 'helps' trong mệnh đề quan hệ 'an activity that helps me...'."
+          "Chỉ nói 'Yes, I do.' rồi dừng lại ngay — mất điểm vì trả lời quá cụt.",
+          "Dùng sai cụm 'go to trips' thay vì đúng là 'go on trips'.",
+          "Quên chia '-s' ở động từ 'helps' hoặc 'makes' sau chủ ngữ 'it'."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Trả lời có, mình rất thích đi du lịch vì nó giúp mình thư giãn sau những ngày học và làm việc bận rộn."
+                label: "A + R (Trả lời + Lý do)",
+                text: "Yes, I do. I like going on trips because it helps me reduce stress after school."
               },
               {
-                label: "Lý do (Câu đơn)",
-                text: "Đi đến một nơi mới giúp mình giảm căng thẳng và quên đi áp lực."
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "For example, I love visiting the beach with my family."
               },
               {
-                label: "Chi tiết (Câu ghép - , so)",
-                text: "Mình rất thích ngắm cảnh đẹp, nên mỗi chuyến đi đều làm mình thấy rất vui."
+                label: "Cảm xúc (Chốt câu)",
+                text: "It makes me feel relaxed."
               }
             ],
             modelAnswer:
-              "Yes, I really like <strong>going on trips</strong> because it helps me relax after busy days at school. Visiting a new place is a great way to <strong>reduce stress</strong> and forget about work. I love seeing <strong>beautiful scenery</strong>, so every trip makes me feel very happy.",
+              "Yes, I do. I like <strong>going on trips</strong> because it helps me <strong>reduce stress</strong> after school. For example, I love visiting the beach with my family. It makes me <strong>feel relaxed</strong>.",
             vocab: [
               {
                 word: "go on trips",
                 ipa: "/ɡoʊ ɒn trɪps/",
                 pos: "v. phr.",
                 meaning: "đi du lịch, đi chơi xa",
-                example: "Yes, I really like <strong>going on trips</strong> because it helps me relax."
+                example: "I really like <strong>going on trips</strong> with my family."
               },
               {
                 word: "reduce stress",
                 ipa: "/rɪˈduːs stres/",
                 pos: "v. phr.",
                 meaning: "giảm căng thẳng",
-                example: "Visiting a new place is a great way to <strong>reduce stress</strong>."
+                example: "Traveling helps me <strong>reduce stress</strong> after school."
               },
               {
-                word: "beautiful scenery",
-                ipa: "/ˈbjuːtɪfl ˈsiːnəri/",
-                pos: "n. phr.",
-                meaning: "phong cảnh đẹp",
-                example: "I love seeing <strong>beautiful scenery</strong>, so every trip makes me feel very happy."
+                word: "feel relaxed",
+                ipa: "/fiːl rɪˈlækst/",
+                pos: "v. phr.",
+                meaning: "cảm thấy thư giãn",
+                example: "Every short trip makes me <strong>feel relaxed</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Mệnh đề quan hệ - that helps me...)",
-                text: "Chắc chắn có, đi du lịch là một hoạt động tuyệt vời giúp mình giảm căng thẳng và nạp lại năng lượng."
+                label: "A + R (Mở đầu Dạng 1 - Yes, I really do)",
+                text: "Dùng 'Yes, I really do. Honestly, it always cheers me up after a busy week.'"
               },
               {
-                label: "Lý do (Câu phức thời gian - Whenever + S + V)",
-                text: "Mỗi khi cảm thấy mệt mỏi sau giờ học hoặc giờ làm, mình thường muốn đi chơi xa vài ngày để thư thái đầu óc."
+                label: "E (Ví dụ ngắn - For example)",
+                text: "Đi chơi biển cuối tuần cùng bạn thân: taking a short weekend trip to the beach."
               },
               {
-                label: "Kết quả (Mệnh đề quan hệ - , which makes me...)",
-                text: "Mình có thể tận hưởng không khí trong lành và đồ ăn ngon, điều này giúp mình cảm thấy vui vẻ và làm việc hiệu quả hơn."
+                label: "Cảm xúc (Cụm B2 tự nhiên)",
+                text: "Chốt bằng cụm 'a little reward' (phần thưởng nhỏ) và 'unwind'."
               }
             ],
             modelAnswer:
-              "Yes, definitely. Going on trips is a wonderful activity <strong>that helps me reduce stress</strong> and <strong>recharge my energy</strong>. <strong>Whenever</strong> I feel tired after work or school, I want to take a short trip to <strong>clear my mind</strong>. I can enjoy fresh air and good food, <strong>which makes me feel very happy</strong>.",
+              "<strong>Yes, I really do. Honestly,</strong> it always <strong>cheers me up</strong> after a busy week. For example, I love taking a short weekend trip to the beach. It feels like <strong>a little reward</strong> and helps me <strong>unwind</strong>.",
             vocab: [
               {
-                word: "recharge my energy",
-                ipa: "/ˌriːˈtʃɑːrdʒ maɪ ˈenərdʒi/",
-                pos: "v. phr.",
-                meaning: "nạp lại năng lượng",
-                example: "Going on trips is a wonderful activity that helps me <strong>recharge my energy</strong>."
+                word: "cheer me up",
+                ipa: "/tʃɪr miː ʌp/",
+                pos: "phr. v.",
+                meaning: "làm tôi vui lên, phấn chấn lên",
+                example: "A short trip always <strong>cheers me up</strong> after a busy week."
               },
               {
-                word: "whenever",
-                ipa: "/wenˈevər/",
-                pos: "conj.",
-                meaning: "mỗi khi, bất cứ khi nào",
-                example: "<strong>Whenever</strong> I feel tired after work, I want to take a short trip."
+                word: "a little reward",
+                ipa: "/ə ˈlɪtl rɪˈwɔːrd/",
+                pos: "n. phr.",
+                meaning: "một phần thưởng nhỏ cho bản thân",
+                example: "Every weekend trip feels like <strong>a little reward</strong>."
               },
               {
-                word: "clear my mind",
-                ipa: "/klɪər maɪ maɪnd/",
-                pos: "v. phr.",
-                meaning: "làm đầu óc thư thái, nhẹ nhõm",
-                example: "I want to take a short trip to <strong>clear my mind</strong>."
+                word: "unwind",
+                ipa: "/ˌʌnˈwaɪnd/",
+                pos: "v.",
+                meaning: "thư giãn, giải tỏa áp lực",
+                example: "Going to the beach really helps me <strong>unwind</strong>."
               }
             ]
           }
@@ -475,95 +447,102 @@ window.SPEAKING_TOPICS = [
         num: 2,
         prompt: "Do you have any plans for your next trip?",
         analysis: {
-          questionType: "Câu hỏi Yes/No ('Do you have any plans...') hỏi về kế hoạch chuyến đi sắp tới.",
-          tense: "Hiện tại đơn kết hợp Tương lai (will / plan to). Áp dụng Câu ghép (, but / , so) và Câu phức thời gian (As soon as / Once...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi dự định tương lai ('Do you have any plans...'). Áp dụng A-R-E + mở đầu tự nhiên 'Not right now' / 'Not really, to be honest'.",
+          tense: "Hiện tại đơn nêu lý do bận rộn + 'plan to' / 'I'm planning to' nói về dự định sắp tới.",
+          length: "3 câu ngắn gọn (~30–38 từ), rất tự nhiên khi chưa có lịch đi cụ thể."
         },
         pitfalls: [
-          "Dùng 'will' ngay bên trong mệnh đề 'As soon as' hoặc 'When' (lỗi Lưu ý 03 trong bài Câu phức: phải nói 'As soon as I finish...', không nói 'As soon as I will finish...').",
-          "Dùng sai giới từ 'busy for' thay vì 'busy with my studies / work'.",
-          "Trả lời quá ngắn khi chưa có kế hoạch thật."
+          "Trả lời toàn thì Hiện tại đơn mà quên dùng cụm dự định tương lai ('plan to', 'going to', 'will').",
+          "Dùng sai giới từ 'busy for school' thay vì đúng là 'busy with school'.",
+          "Nói 'No, I don't' rồi im lặng."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Hiện tại mình chưa có kế hoạch cụ thể vì đang rất bận học / làm việc."
+                label: "A + R (Trả lời + Lý do)",
+                text: "Chưa có ngay vì đang bận học: Not right now, because I am busy with school."
               },
               {
-                label: "Lý do (Câu ghép - , so)",
-                text: "Tháng tới mình có nhiều bài thi quan trọng, nên mình phải tập trung học trước."
+                label: "E (Ví dụ lý do - For example)",
+                text: "Tháng tới có nhiều kỳ thi nên cần học chăm: For example, I have many exams next month, so I must study hard first."
               },
               {
-                label: "Dự định sắp tới (Câu đơn - plan to + Vo)",
-                text: "Sau kỳ thi, mình dự định đi Đà Lạt vài ngày cùng nhóm bạn thân."
+                label: "Dự định (Chốt câu tương lai)",
+                text: "Chốt dự định đơn giản: Later, I plan to visit Da Lat."
               }
             ],
             modelAnswer:
-              "Not right now, because I am very <strong>busy with my studies</strong> at the moment. Next month I have some important exams, so I need to <strong>focus on</strong> my schoolwork first. However, after the exams, I <strong>plan to travel</strong> to Da Lat with my close friends.",
+              "Not right now, because I am <strong>busy with school</strong>. For example, I have many exams next month, so I must <strong>study hard</strong> first. Later, I <strong>plan to visit</strong> Da Lat.",
             vocab: [
               {
-                word: "busy with my studies",
-                ipa: "/ˈbɪzi wɪð maɪ ˈstʌdiz/",
+                word: "busy with school",
+                ipa: "/ˈbɪzi wɪð skuːl/",
                 pos: "adj. phr.",
                 meaning: "bận rộn với việc học",
-                example: "I am very <strong>busy with my studies</strong> at the moment."
+                example: "Not right now, because I am <strong>busy with school</strong>."
               },
               {
-                word: "focus on",
-                ipa: "/ˈfoʊkəs ɒn/",
-                pos: "phr. v.",
-                meaning: "tập trung vào",
-                example: "Next month I have some important exams, so I need to <strong>focus on</strong> my schoolwork first."
-              },
-              {
-                word: "plan to travel",
-                ipa: "/plæn tuː ˈtrævl/",
+                word: "study hard",
+                ipa: "/ˈstʌdi hɑːrd/",
                 pos: "v. phr.",
-                meaning: "dự định đi du lịch",
-                example: "After the exams, I <strong>plan to travel</strong> to Da Lat with my close friends."
+                meaning: "học tập chăm chỉ",
+                example: "I have many exams next month, so I must <strong>study hard</strong> first."
+              },
+              {
+                word: "plan to visit",
+                ipa: "/plæn tuː ˈvɪzɪt/",
+                pos: "v. phr.",
+                meaning: "dự định đi thăm",
+                example: "Later, I <strong>plan to visit</strong> Da Lat with my friends."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu ghép - , but)",
-                text: "Mình rất muốn đi chơi xa, nhưng hiện tại mình chưa có kế hoạch chi tiết nào."
+                label: "A + R (Mở đầu tự nhiên - to be honest)",
+                text: "Not really, to be honest, since I have tight deadlines this month."
               },
               {
-                label: "Lý do (Câu phức - Since + S + V)",
-                text: "Vì tháng tới có nhiều hạn chót công việc và bài thi nên mình phải ưu tiên hoàn thành trước."
+                label: "Dự định tương lai (I'm planning to...)",
+                text: "Once my exams finish, I'm planning to go to Da Nang."
               },
               {
-                label: "Dự định (Câu phức thời gian - As soon as + S + V)",
-                text: "Ngay khi hoàn thành xong mọi việc, mình sẽ đi nghỉ ngắn ngày ở Đà Nẵng để tận hưởng không khí biển."
+                label: "Cảm xúc / Kết quả",
+                text: "Chốt lợi ích bằng 'fresh sea air' và 'clear my mind'."
               }
             ],
             modelAnswer:
-              "I really want to go on a trip, but I do not have a <strong>detailed plan</strong> right now. <strong>Since</strong> I have many exams and deadlines next month, I have to finish my work first. However, <strong>as soon as</strong> I finish everything, I will go to Da Nang with my friends to <strong>enjoy the fresh sea air</strong>.",
+              "<strong>Not really, to be honest,</strong> since I have tight deadlines this month. Once my exams finish, <strong>I'm planning to</strong> go to Da Nang. Enjoying the <strong>fresh sea air</strong> will help me <strong>clear my mind</strong>.",
             vocab: [
               {
-                word: "detailed plan",
-                ipa: "/ˈdiːteɪld plæn/",
+                word: "to be honest",
+                ipa: "/tuː biː ˈɒnɪst/",
+                pos: "phr.",
+                meaning: "thành thật mà nói",
+                example: "Not really, <strong>to be honest</strong>, because I am quite busy."
+              },
+              {
+                word: "I'm planning to",
+                ipa: "/aɪm ˈplænɪŋ tuː/",
+                pos: "phr.",
+                meaning: "tôi đang dự định sẽ...",
+                example: "Once my exams finish, <strong>I'm planning to</strong> go to Da Nang."
+              },
+              {
+                word: "fresh sea air",
+                ipa: "/freʃ siː er/",
                 pos: "n. phr.",
-                meaning: "kế hoạch chi tiết",
-                example: "I really want to go on a trip, but I do not have a <strong>detailed plan</strong> right now."
+                meaning: "không khí biển trong lành",
+                example: "Enjoying the <strong>fresh sea air</strong> makes me feel great."
               },
               {
-                word: "as soon as",
-                ipa: "/æz suːn æz/",
-                pos: "conj.",
-                meaning: "ngay khi",
-                example: "<strong>As soon as</strong> I finish everything, I will go to Da Nang with my friends."
-              },
-              {
-                word: "enjoy the fresh sea air",
-                ipa: "/ɪnˈdʒɔɪ ðə freʃ siː er/",
+                word: "clear my mind",
+                ipa: "/klɪər maɪ maɪnd/",
                 pos: "v. phr.",
-                meaning: "tận hưởng không khí biển trong lành",
-                example: "I will go to Da Nang with my friends to <strong>enjoy the fresh sea air</strong>."
+                meaning: "giúp đầu óc nhẹ nhõm, thư thái",
+                example: "A beach trip will help me <strong>clear my mind</strong>."
               }
             ]
           }
@@ -574,95 +553,102 @@ window.SPEAKING_TOPICS = [
         num: 3,
         prompt: "What kind of trips do you enjoy the most?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('What kind of trips...') hỏi về loại chuyến đi yêu thích nhất.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức chỉ lý do (because / since), Câu ghép (, so) và Mệnh đề quan hệ (, which is very affordable).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi sở thích cụ thể (Dạng 3: 'What kind of...'). Áp dụng mở đầu 'I like...' (B1) / 'I usually go for...' (B2) + A-R-E.",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~31–39 từ)."
         },
         pitfalls: [
-          "Nói 'suitable with me' thay vì đúng giới từ là 'suitable for me'.",
-          "Dùng cả 'Although ... but ...' trong một câu khi muốn nói 'Mặc dù bận nhưng mình vẫn thích đi chuyến ngắn'.",
-          "Quên chia danh từ số nhiều 'short trips' sau 'I enjoy ...'."
+          "Nói thiếu '-s' ở danh từ đếm được số nhiều ('short trips', 'on weekends').",
+          "Dùng 'I like go' hoặc 'I prefer go' thiếu '-ing' hoặc 'to'.",
+          "Chỉ nêu tên loại chuyến đi mà quên nói ví dụ đi đâu."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mình thích những chuyến đi ngắn ngày nhất vì mình thường khá bận vào các ngày trong tuần."
+                label: "A + R (Loại chuyến đi + Lý do)",
+                text: "I like short trips because I am quite busy on weekdays."
               },
               {
-                label: "Lý do (Câu ghép - , so)",
-                text: "Mình không có nhiều thời gian rảnh, nên một chuyến đi 2 ngày dịp cuối tuần là rất phù hợp với mình."
+                label: "E (Ví dụ - For example)",
+                text: "For example, I often visit a quiet town near my home."
               },
               {
-                label: "Chi tiết (Câu đơn)",
-                text: "Những chuyến đi ngắn cũng rất dễ chuẩn bị và hợp túi tiền."
+                label: "Cảm xúc / Kết quả",
+                text: "It is cheap and makes me feel relaxed."
               }
             ],
             modelAnswer:
-              "I enjoy <strong>short trips</strong> the most because I am usually quite busy on weekdays. I do not have much free time, so a two-day trip <strong>on weekends</strong> is very <strong>suitable for me</strong>. Also, short trips are easy to prepare and very <strong>affordable</strong>.",
+              "I like <strong>short trips</strong> because I am quite <strong>busy on weekdays</strong>. For example, I often visit a <strong>quiet town</strong> near my home. It is cheap and makes me feel relaxed.",
             vocab: [
               {
                 word: "short trips",
                 ipa: "/ʃɔːrt trɪps/",
                 pos: "n. phr.",
                 meaning: "những chuyến đi ngắn ngày",
-                example: "I enjoy <strong>short trips</strong> the most because I am usually quite busy on weekdays."
+                example: "I like <strong>short trips</strong> on Saturday and Sunday."
               },
               {
-                word: "on weekends",
-                ipa: "/ɒn ˈwiːkendz/",
-                pos: "prep. phr.",
-                meaning: "vào dịp cuối tuần",
-                example: "A two-day trip <strong>on weekends</strong> is very suitable for me."
-              },
-              {
-                word: "suitable for me",
-                ipa: "/ˈsuːtəbl fɔːr miː/",
+                word: "busy on weekdays",
+                ipa: "/ˈbɪzi ɒn ˈwiːkdeɪz/",
                 pos: "adj. phr.",
-                meaning: "phù hợp với mình",
-                example: "A two-day trip on weekends is very <strong>suitable for me</strong>."
+                meaning: "bận rộn vào các ngày trong tuần",
+                example: "I am quite <strong>busy on weekdays</strong> at school."
+              },
+              {
+                word: "quiet town",
+                ipa: "/ˈkwaɪət taʊn/",
+                pos: "n. phr.",
+                meaning: "thị trấn yên tĩnh",
+                example: "For example, I often visit a <strong>quiet town</strong> near my home."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - Since + S + V)",
-                text: "Vì lịch học và làm việc khá bận rộn nên mình thích nhất các chuyến đi ngắn dịp cuối tuần."
+                label: "A + R (Mở đầu Dạng 3 - I usually go for...)",
+                text: "I usually go for short weekend trips because my schedule is quite busy."
               },
               {
-                label: "Lý do (Mệnh đề quan hệ - where I can...)",
-                text: "Mình thích đến một thị trấn yên bình gần thành phố nơi mình có thể hít thở không khí trong lành và thư giãn."
+                label: "E (Ví dụ + Mệnh đề quan hệ where)",
+                text: "Thăm thị trấn yên bình (peaceful town) nơi có thể uống cà phê và chụp ảnh."
               },
               {
-                label: "Ưu điểm (Mệnh đề quan hệ - , which helps me...)",
-                text: "Chuyến đi 2 ngày không tốn nhiều thời gian chuẩn bị, điều này giúp mình nghỉ ngơi thoải mái mà không thấy mệt."
+                label: "Cảm xúc (Cụm B2 tự nhiên)",
+                text: "Chốt bằng 'affordable' và 'calm and recharged'."
               }
             ],
             modelAnswer:
-              "<strong>Since</strong> my schedule is quite busy on weekdays, I enjoy <strong>short weekend trips</strong> the most. I love visiting a peaceful town near my city <strong>where I can enjoy fresh air</strong> and relax at a quiet coffee shop. A two-day trip does not require much preparation, <strong>which helps me</strong> rest comfortably without feeling tired.",
+              "<strong>I usually go for</strong> <strong>short weekend trips</strong> because my schedule is quite busy. For example, I love visiting a <strong>peaceful town</strong> where I can drink coffee and take photos. They are <strong>affordable</strong> and leave me feeling <strong>calm and recharged</strong>.",
             vocab: [
+              {
+                word: "usually go for",
+                ipa: "/ˈjuːʒuəli ɡoʊ fɔːr/",
+                pos: "v. phr.",
+                meaning: "thường hay chọn",
+                example: "<strong>I usually go for</strong> short weekend trips."
+              },
               {
                 word: "short weekend trips",
                 ipa: "/ʃɔːrt ˈwiːkend trɪps/",
                 pos: "n. phr.",
-                meaning: "các chuyến đi ngắn cuối tuần",
-                example: "Since my schedule is quite busy, I enjoy <strong>short weekend trips</strong> the most."
+                meaning: "những chuyến đi ngắn cuối tuần",
+                example: "I enjoy <strong>short weekend trips</strong> with close friends."
               },
               {
                 word: "peaceful town",
                 ipa: "/ˈpiːsfl taʊn/",
                 pos: "n. phr.",
                 meaning: "thị trấn yên bình",
-                example: "I love visiting a <strong>peaceful town</strong> near my city where I can enjoy fresh air."
+                example: "I love visiting a <strong>peaceful town</strong> near the city."
               },
               {
-                word: "require much preparation",
-                ipa: "/rɪˈkwaɪər mʌtʃ ˌprepəˈreɪʃn/",
-                pos: "v. phr.",
-                meaning: "đòi hỏi nhiều sự chuẩn bị",
-                example: "A two-day trip does not <strong>require much preparation</strong>."
+                word: "calm and recharged",
+                ipa: "/kɑːm ænd ˌriːˈtʃɑːrdʒd/",
+                pos: "adj. phr.",
+                meaning: "bình yên và tràn đầy năng lượng trở lại",
+                example: "Short trips leave me feeling <strong>calm and recharged</strong>."
               }
             ]
           }
@@ -680,7 +666,7 @@ window.SPEAKING_TOPICS = [
     title: "Travel plans",
     titleVi: "Kế hoạch du lịch & Điểm đến yêu thích",
     description:
-      "Luyện 3 câu hỏi về kế hoạch đi du lịch trong tháng tới, địa điểm bạn mong muốn ghé thăm nhất (Đà Lạt / Đà Nẵng) và cách bạn chuẩn bị hành lý.",
+      "Luyện 3 câu hỏi về kế hoạch đi du lịch trong tháng tới, địa điểm bạn mong muốn ghé thăm nhất và cách chuẩn bị hành lý.",
     questionsCount: 3,
     questions: [
       {
@@ -688,95 +674,95 @@ window.SPEAKING_TOPICS = [
         num: 1,
         prompt: "Do you have any plans for a trip next month?",
         analysis: {
-          questionType: "Câu hỏi Yes/No ('Do you have any plans...') hỏi cụ thể về kế hoạch đi chơi vào tháng tới.",
-          tense: "Hiện tại đơn kết hợp Tương lai gần (be going to / will). Áp dụng Câu phức nhượng bộ (Although) hoặc điều kiện (If).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi kế hoạch tháng tới ('Do you have any plans... next month?'). Áp dụng công thức A-R-E kết hợp tương lai.",
+          tense: "Hiện tại đơn nói lý do + Tương lai ('will', 'I'm planning to').",
+          length: "3 câu ngắn gọn (~32–36 từ), dễ nhớ và dễ phát âm."
         },
         pitfalls: [
-          "Trả lời 'No, I don't' rồi dừng lại ngay.",
-          "Dùng cả 'Although ... but ...' hoặc 'Because ... so ...' trong cùng một câu phức.",
-          "Quên dùng giới từ 'on' trong cụm 'go on a short trip'."
+          "Chỉ nói 'No' mà không nêu lý do và kế hoạch bù sau khi rảnh.",
+          "Dùng 'stay at home' thì được, hoặc 'stay home' (tuyệt đối không nói 'go to home').",
+          "Quên dấu hiệu thì tương lai cho câu hỏi về tháng tới."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Tháng tới mình chưa có kế hoạch đi du lịch vì mình khá bận việc học ở trường."
+                label: "A + R (Trả lời + Lý do)",
+                text: "Chưa có vì có bài thi cuối kỳ: Not yet, because I have my final exams next month."
               },
               {
-                label: "Lý do (Câu ghép - , so)",
-                text: "Mình sắp có kỳ thi cuối kỳ, nên mình cần ở nhà ôn bài."
+                label: "E (Ví dụ việc phải làm - For example)",
+                text: "Ở nhà ôn bài mỗi ngày: For example, I need to stay home and study hard every day."
               },
               {
-                label: "Mở rộng (Câu phức điều kiện - If)",
-                text: "Nếu thi xong sớm, mình sẽ đi chơi xa một chuyến ngắn ngày với bạn bè."
+                label: "Dự định tương lai (If + will)",
+                text: "Nếu xong sớm sẽ đi chơi ngắn ngày: If I finish early, I will go on a short trip."
               }
             ],
             modelAnswer:
-              "No, I do not have any plans for a trip next month because I am quite busy at school. I have my <strong>final exams</strong> soon, so I need to stay at home to <strong>review my lessons</strong>. <strong>If</strong> I finish my exams early, I will go on a short trip with my friends.",
+              "Not yet, because I have my <strong>final exams</strong> next month. For example, I need to <strong>stay home</strong> and study hard every day. If I finish early, I will <strong>go on a short trip</strong>.",
             vocab: [
               {
                 word: "final exams",
                 ipa: "/ˈfaɪnl ɪɡˈzæmz/",
                 pos: "n. phr.",
                 meaning: "các bài thi cuối kỳ",
-                example: "I have my <strong>final exams</strong> soon, so I need to stay at home."
+                example: "I have my <strong>final exams</strong> next month."
               },
               {
-                word: "review my lessons",
-                ipa: "/rɪˈvjuː maɪ ˈlesnz/",
+                word: "stay home",
+                ipa: "/steɪ hoʊm/",
                 pos: "v. phr.",
-                meaning: "ôn tập bài vở",
-                example: "I need to stay at home to <strong>review my lessons</strong>."
+                meaning: "ở nhà (không dùng 'to home')",
+                example: "I need to <strong>stay home</strong> and study hard."
               },
               {
                 word: "go on a short trip",
                 ipa: "/ɡoʊ ɒn ə ʃɔːrt trɪp/",
                 pos: "v. phr.",
                 meaning: "đi một chuyến du lịch ngắn",
-                example: "If I finish my exams early, I will <strong>go on a short trip</strong> with my friends."
+                example: "If I finish early, I will <strong>go on a short trip</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức nhượng bộ - Although)",
-                text: "Mặc dù rất thích đi du lịch, nhưng tháng tới mình chưa có kế hoạch cho chuyến đi nào."
+                label: "A + R (Mở đầu tự nhiên - to be honest)",
+                text: "Not really, to be honest, because I have some important projects next month."
               },
               {
-                label: "Lý do (Câu phức lý do - because)",
-                text: "Mình phải hoàn thành một số bài kiểm tra và dự án quan trọng ở trường / công ty."
+                label: "Dự định tương lai (I'm planning to...)",
+                text: "Sau khi xong hết việc, dự định đi Đà Lạt với bạn thân."
               },
               {
-                label: "Dự định (Câu phức thời gian - Once + S + V)",
-                text: "Ngay khi kỳ thi kết thúc, mình sẽ cùng bạn thân đi Đà Lạt vài ngày để xả hơi."
+                label: "Kết quả / Cảm xúc (recharge)",
+                text: "Nghỉ ngơi một chút sẽ giúp nạp lại năng lượng."
               }
             ],
             modelAnswer:
-              "<strong>Although</strong> I really love traveling, I do not have any plans for a trip next month. I have to stay home because I need to finish several <strong>important projects</strong> and exams. However, <strong>once</strong> my exams are over, my close friends and I will travel to Da Lat for a few days to <strong>relax and unwind</strong>.",
+              "<strong>Not really, to be honest,</strong> because I have some <strong>important projects</strong> next month. However, once everything is done, <strong>I'm planning to</strong> visit Da Lat with <strong>close friends</strong>. Taking a break then will help me <strong>recharge</strong>.",
             vocab: [
-              {
-                word: "although",
-                ipa: "/ɔːlˈðoʊ/",
-                pos: "conj.",
-                meaning: "mặc dù (không dùng chung với 'but')",
-                example: "<strong>Although</strong> I really love traveling, I do not have any plans for a trip next month."
-              },
               {
                 word: "important projects",
                 ipa: "/ɪmˈpɔːrtnt ˈprɒdʒekts/",
                 pos: "n. phr.",
                 meaning: "các dự án quan trọng",
-                example: "I need to finish several <strong>important projects</strong> and exams."
+                example: "I have some <strong>important projects</strong> next month."
               },
               {
-                word: "relax and unwind",
-                ipa: "/rɪˈlæks ænd ˌʌnˈwaɪnd/",
-                pos: "v. phr.",
-                meaning: "thư giãn và xả hơi",
-                example: "We will travel to Da Lat for a few days to <strong>relax and unwind</strong>."
+                word: "close friends",
+                ipa: "/kloʊs frendz/",
+                pos: "n. phr.",
+                meaning: "những người bạn thân",
+                example: "I am planning to visit Da Lat with <strong>close friends</strong>."
+              },
+              {
+                word: "recharge",
+                ipa: "/ˌriːˈtʃɑːrdʒ/",
+                pos: "v.",
+                meaning: "nạp lại năng lượng",
+                example: "Taking a short break will help me <strong>recharge</strong>."
               }
             ]
           }
@@ -787,95 +773,102 @@ window.SPEAKING_TOPICS = [
         num: 2,
         prompt: "Where would you like to go?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('Where would you like to go?') hỏi về địa điểm du lịch mong muốn.",
-          tense: "Cấu trúc mong muốn 'I would like to visit / go to...' kết hợp Hiện tại đơn. Áp dụng Câu ghép (, and) và Mệnh đề quan hệ nơi chốn (where...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi địa điểm mong muốn ('Where would you like to go?'). Áp dụng mẫu Dạng 1 'My go-to destination is...' hoặc 'I would like to visit...' + A-R-E.",
+          tense: "'I would like to...' / 'I would love to...' + Hiện tại đơn miêu tả.",
+          length: "3 câu ngắn gọn (~33–39 từ)."
         },
         pitfalls: [
-          "Dùng thừa giới từ 'to' sau động từ 'visit' (phải nói 'visit Da Lat', tuyệt đối không nói 'visit to Da Lat').",
-          "Nói 'I like go to Da Lat' thay vì cấu trúc đúng 'I would like to go to Da Lat'.",
-          "Quên miêu tả đặc điểm nổi bật của địa điểm đó (phong cảnh, thời tiết, đồ ăn)."
+          "Dùng thừa giới từ 'to' sau 'visit' (sai: 'visit to Da Lat'; đúng: 'visit Da Lat').",
+          "Nói 'I would like visit' mà quên 'to' trước động từ nguyên mẫu.",
+          "Quên miêu tả điểm nổi bật (thời tiết, hoạt động) và cảm xúc."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mình rất muốn đi Đà Lạt vì đó là một thành phố rất yên bình và xinh đẹp."
+                label: "A + R (Địa điểm + Lý do)",
+                text: "I would like to visit Da Lat because the weather is cool and nice."
               },
               {
-                label: "Đặc điểm yêu thích (Câu ghép - , and)",
-                text: "Đà Lạt có phong cảnh thiên nhiên tuyệt đẹp, và thời tiết ở đó mát mẻ quanh năm."
+                label: "E (Ví dụ hoạt động - For example)",
+                text: "For example, I want to see the flowers and sit in a nice cafe."
               },
               {
-                label: "Hoạt động muốn làm (Câu đơn)",
-                text: "Mình muốn hít thở không khí trong lành, ngồi quán cà phê ấm cúng và đi dạo chợ đêm."
+                label: "Cảm xúc (Chốt câu)",
+                text: "It makes me feel peaceful."
               }
             ],
             modelAnswer:
-              "If I have free time, I would really like to visit <strong>Da Lat</strong> because it is a very peaceful city. Da Lat has <strong>beautiful natural scenery</strong>, and the weather there is <strong>cool all year round</strong>. I want to enjoy the fresh air, sit at a <strong>cozy coffee shop</strong>, and walk around the night market.",
+              "I <strong>would like to visit</strong> Da Lat because the weather is <strong>cool and nice</strong>. For example, I want to see the flowers and sit in a nice cafe. It makes me <strong>feel peaceful</strong>.",
             vocab: [
               {
-                word: "beautiful natural scenery",
-                ipa: "/ˈbjuːtɪfl ˈnætʃrəl ˈsiːnəri/",
-                pos: "n. phr.",
-                meaning: "phong cảnh thiên nhiên tuyệt đẹp",
-                example: "Da Lat has <strong>beautiful natural scenery</strong>, and the weather there is cool."
+                word: "would like to visit",
+                ipa: "/wʊd laɪk tuː ˈvɪzɪt/",
+                pos: "v. phr.",
+                meaning: "muốn đi thăm (không có 'to' sau visit)",
+                example: "I <strong>would like to visit</strong> Da Lat this year."
               },
               {
-                word: "cool all year round",
-                ipa: "/kuːl ɔːl jɪər raʊnd/",
+                word: "cool and nice",
+                ipa: "/kuːl ænd naɪs/",
                 pos: "adj. phr.",
-                meaning: "mát mẻ quanh năm",
-                example: "The weather there is <strong>cool all year round</strong>."
+                meaning: "mát mẻ và dễ chịu",
+                example: "The weather in Da Lat is <strong>cool and nice</strong>."
               },
               {
-                word: "cozy coffee shop",
-                ipa: "/ˈkoʊzi ˈkɒfi ʃɒp/",
-                pos: "n. phr.",
-                meaning: "quán cà phê ấm cúng",
-                example: "I want to enjoy the fresh air and sit at a <strong>cozy coffee shop</strong>."
+                word: "feel peaceful",
+                ipa: "/fiːl ˈpiːsfl/",
+                pos: "v. phr.",
+                meaning: "cảm thấy yên bình",
+                example: "Sitting in a nice cafe makes me <strong>feel peaceful</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Mệnh đề quan hệ nơi chốn - where...)",
-                text: "Mình rất muốn đến Đà Lạt — địa điểm lý tưởng nơi mình luôn muốn tìm đến mỗi khi cần tránh cái nóng và sự ồn ào ở thành phố."
+                label: "A + R (Mở đầu Dạng 1 - My go-to destination is...)",
+                text: "My go-to destination is Da Lat because its pace of life is slow and peaceful."
               },
               {
-                label: "Lý do (Câu ghép - , and)",
-                text: "Không khí trên đó luôn trong lành, mát lạnh, và nhịp sống cũng rất nhẹ nhàng."
+                label: "E (Ví dụ + Mệnh đề quan hệ , which helps...)",
+                text: "Uống cà phê nóng ở đó giúp đầu óc thư thái (clear my mind)."
               },
               {
-                label: "Hoạt động (Mệnh đề quan hệ - , which makes me...)",
-                text: "Mình có thể uống cà phê nóng buổi sáng và ngắm rừng thông, điều này giúp mình cảm thấy vô cùng thư thái."
+                label: "Chốt cảm xúc (ideal place + unwind)",
+                text: "Thật sự là nơi lý tưởng để thư giãn."
               }
             ],
             modelAnswer:
-              "I would love to visit Da Lat, which is the <strong>ideal place where</strong> I can <strong>get away from</strong> the heat and noise of my city. The air there is always fresh and cool, and the <strong>pace of life</strong> is very peaceful. I can drink hot coffee in the morning and enjoy the nature, <strong>which makes me feel completely relaxed</strong>.",
+              "My <strong>go-to</strong> <strong>destination</strong> is Da Lat because its <strong>pace of life</strong> is slow and peaceful. For example, I would love to drink hot coffee there, <strong>which helps me clear my mind</strong>. It is truly an <strong>ideal place</strong> to unwind.",
             vocab: [
               {
-                word: "ideal place",
-                ipa: "/aɪˈdiːəl pleɪs/",
-                pos: "n. phr.",
-                meaning: "địa điểm lý tưởng",
-                example: "Da Lat is the <strong>ideal place</strong> where I can get away from the noise of my city."
+                word: "go-to",
+                ipa: "/ˈɡoʊ tuː/",
+                pos: "adj.",
+                meaning: "lựa chọn yêu thích hàng đầu",
+                example: "My <strong>go-to</strong> destination is always Da Lat."
               },
               {
-                word: "get away from",
-                ipa: "/ɡet əˈweɪ frɒm/",
-                pos: "phr. v.",
-                meaning: "tạm rời xa, thoát khỏi",
-                example: "I can <strong>get away from</strong> the heat and noise of my city."
+                word: "destination",
+                ipa: "/ˌdestɪˈneɪʃn/",
+                pos: "n.",
+                meaning: "điểm đến du lịch",
+                example: "Da Lat is a popular <strong>destination</strong> in Vietnam."
               },
               {
                 word: "pace of life",
                 ipa: "/peɪs əv laɪf/",
                 pos: "n. phr.",
                 meaning: "nhịp sống",
-                example: "The air there is always fresh and cool, and the <strong>pace of life</strong> is very peaceful."
+                example: "Its <strong>pace of life</strong> is slow and relaxing."
+              },
+              {
+                word: "ideal place",
+                ipa: "/aɪˈdiːəl pleɪs/",
+                pos: "n. phr.",
+                meaning: "nơi lý tưởng",
+                example: "Da Lat is an <strong>ideal place</strong> to unwind."
               }
             ]
           }
@@ -886,95 +879,95 @@ window.SPEAKING_TOPICS = [
         num: 3,
         prompt: "What do you usually prepare before going on a trip?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('What do you usually prepare...') gắn liền với chủ đề lên kế hoạch chuyến đi.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu đơn chỉ mục đích (to + Vo), Câu ghép (, and) và Mệnh đề quan hệ (, which helps me...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi thói quen chuẩn bị ('What do you usually prepare...'). Áp dụng công thức Dạng 2 + A-R-E.",
+          tense: "Hiện tại đơn ('I usually...' hoặc 'Actually, I tend to...').",
+          length: "3 câu ngắn gọn (~34–36 từ), dễ thuộc các cụm đồ dùng."
         },
         pitfalls: [
-          "Lặp lại từ 'prepare' nhiều lần thay vì dùng 'pack', 'bring', 'book'.",
-          "Phát âm sai từ 'clothes' (/kloʊðz/ — chỉ có 1 âm tiết).",
-          "Quên từ nối chuyển ý như 'First,', 'Besides,', 'Moreover,' khiến các câu bị rời rạc."
+          "Đếm sai danh từ không đếm được 'money' và 'luggage' (không thêm 'a' hay '-s').",
+          "Quên 'to' sau 'want' ('want to forget').",
+          "Đọc nhầm từ 'clothes' thành 'close'."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu đơn)",
-                text: "Đầu tiên, mình thường xếp nhiều loại quần áo như áo thun, quần jeans và áo khoác để chụp ảnh đẹp."
+                label: "A + R (Thói quen + Lý do)",
+                text: "I usually pack my clothes early because I do not want to forget anything."
               },
               {
-                label: "Đồ cá nhân (Câu ghép - , and)",
-                text: "Mình cũng mang theo giấy tờ tùy thân, và chuẩn bị một cục sạc dự phòng cho điện thoại."
+                label: "E (Ví dụ đồ dùng - For example)",
+                text: "For example, I bring my ID card, money, and a phone charger."
               },
               {
-                label: "Đồ bảo vệ sức khỏe (Câu đơn)",
-                text: "Ngoài ra, mình luôn mang kem chống nắng và một ít thuốc cơ bản."
+                label: "Cảm xúc (Chốt câu)",
+                text: "It makes me feel safe."
               }
             ],
             modelAnswer:
-              "First, I usually <strong>pack different clothes</strong> like T-shirts, jeans, and jackets to take nice photos. I also bring my <strong>ID card</strong>, and I always prepare a <strong>power bank</strong> for my phone. Besides, I never forget to bring <strong>sunscreen</strong> and some basic medicine.",
+              "I usually <strong>pack my clothes</strong> early because I do not want to forget anything. For example, I bring my <strong>ID card</strong>, money, and a <strong>phone charger</strong>. It makes me feel safe.",
             vocab: [
               {
-                word: "pack different clothes",
-                ipa: "/pæk ˈdɪfrənt kloʊðz/",
+                word: "pack my clothes",
+                ipa: "/pæk maɪ kloʊðz/",
                 pos: "v. phr.",
-                meaning: "xếp nhiều loại quần áo",
-                example: "First, I usually <strong>pack different clothes</strong> like T-shirts, jeans, and jackets."
+                meaning: "xếp quần áo vào hành lý",
+                example: "I usually <strong>pack my clothes</strong> the night before."
               },
               {
                 word: "ID card",
                 ipa: "/ˌaɪˈdiː kɑːrd/",
                 pos: "n. phr.",
                 meaning: "thẻ căn cước / giấy tờ tùy thân",
-                example: "I also bring my <strong>ID card</strong>, and I always prepare a power bank."
+                example: "I always bring my <strong>ID card</strong> and phone charger."
               },
               {
-                word: "sunscreen",
-                ipa: "/ˈsʌnskriːn/",
-                pos: "n.",
-                meaning: "kem chống nắng",
-                example: "Besides, I never forget to bring <strong>sunscreen</strong> and some basic medicine."
+                word: "phone charger",
+                ipa: "/foʊn ˈtʃɑːrdʒər/",
+                pos: "n. phr.",
+                meaning: "cục sạc điện thoại",
+                example: "Do not forget your <strong>phone charger</strong> before a trip."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - Before + S + V)",
-                text: "Trước khi lên đường, mình luôn đặt trước phòng khách sạn và xem dự báo thời tiết."
+                label: "A + R (Mở đầu tự nhiên - Actually, I tend to...)",
+                text: "Đặt phòng khách sạn trước (book in advance) vì giá đặt sát ngày khá cao."
               },
               {
-                label: "Xếp hành lý (Mệnh đề quan hệ - , which helps me...)",
-                text: "Mình chỉ chọn những bộ trang phục gọn nhẹ và dễ phối, điều này giúp mình không phải mang hành lý quá nặng."
+                label: "E (Ví dụ - For example)",
+                text: "Mang quần áo nhẹ và đồ thiết yếu (essential items) để tránh hành lý nặng (heavy luggage)."
               },
               {
-                label: "Vật dụng thiết yếu (Câu phức - in case + S + V)",
-                text: "Cuối cùng, mình luôn mang theo kem chống nắng, sạc dự phòng và thuốc cơ bản phòng khi cần dùng trên đường."
+                label: "Kết quả / Cảm xúc",
+                text: "Chuẩn bị sớm giúp mình thấy thoải mái suốt chuyến đi."
               }
             ],
             modelAnswer:
-              "Before I go on a trip, I always <strong>book my hotel in advance</strong> and check the weather forecast. I only pack light and comfortable clothes, <strong>which helps me avoid carrying heavy luggage</strong>. Finally, I bring some <strong>essential items</strong> like sunscreen, a power bank, and basic medicine <strong>in case</strong> I need them.",
+              "<strong>Actually, I tend to</strong> book my hotel <strong>in advance</strong> because last-minute prices are quite high. For example, I also pack light clothes and <strong>essential items</strong> like sunscreen to avoid <strong>heavy luggage</strong>. Preparing early keeps me comfortable.",
             vocab: [
               {
-                word: "book my hotel in advance",
-                ipa: "/bʊk maɪ hoʊˈtel ɪn ədˈvæns/",
-                pos: "v. phr.",
-                meaning: "đặt phòng khách sạn trước",
-                example: "Before I go on a trip, I always <strong>book my hotel in advance</strong>."
+                word: "in advance",
+                ipa: "/ɪn ədˈvæns/",
+                pos: "adv. phr.",
+                meaning: "trước (về thời gian)",
+                example: "I tend to book my hotel <strong>in advance</strong>."
+              },
+              {
+                word: "essential items",
+                ipa: "/ɪˈsenʃl ˈaɪtəmz/",
+                pos: "n. phr.",
+                meaning: "các món đồ thiết yếu",
+                example: "I pack light clothes and <strong>essential items</strong> like sunscreen."
               },
               {
                 word: "heavy luggage",
                 ipa: "/ˈhevi ˈlʌɡɪdʒ/",
                 pos: "n. phr.",
-                meaning: "hành lý nặng nề (luggage không đếm được)",
-                example: "I only pack light clothes, which helps me avoid carrying <strong>heavy luggage</strong>."
-              },
-              {
-                word: "in case",
-                ipa: "/ɪn keɪs/",
-                pos: "conj.",
-                meaning: "phòng khi, trong trường hợp",
-                example: "I bring sunscreen, a power bank, and basic medicine <strong>in case</strong> I need them."
+                meaning: "hành lý nặng (luggage không đếm được)",
+                example: "Packing smartly helps me avoid <strong>heavy luggage</strong>."
               }
             ]
           }
@@ -992,7 +985,7 @@ window.SPEAKING_TOPICS = [
     title: "The seasons in your country",
     titleVi: "Các mùa trong năm & Thời tiết địa phương",
     description:
-      "Luyện 3 câu hỏi về các mùa ở khu vực bạn sống, mùa bạn yêu thích nhất và thời điểm lý tưởng nhất để du khách ghé thăm đất nước bạn.",
+      "Luyện 3 câu hỏi về các mùa ở khu vực bạn sống, mùa bạn yêu thích nhất và thời điểm đẹp nhất cho du khách ghé thăm.",
     questionsCount: 3,
     questions: [
       {
@@ -1000,95 +993,102 @@ window.SPEAKING_TOPICS = [
         num: 1,
         prompt: "How many seasons are there in your country?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('How many seasons are there...') hỏi về đặc điểm các mùa ở đất nước bạn.",
-          tense: "Hiện tại đơn (present simple). Áp dụng cấu trúc 'There are...', Câu ghép (, so / , but) và Mệnh đề quan hệ (, which makes me feel...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi mô tả số lượng ('How many seasons are there...'). Áp dụng 'There are...' + A-R-E (Answer → Example → Result).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~33–38 từ), mô tả rõ 2 mùa và ảnh hưởng thực tế."
         },
         pitfalls: [
-          "Nói 'Have two seasons' thay vì cấu trúc chuẩn 'There are two main seasons'.",
-          "Quên thêm '-s' vào động từ 'rains' khi đi với chủ ngữ số ít 'it' ('it rains a lot').",
-          "Chỉ nêu tên 2 mùa mà không miêu tả ngắn gọn thời tiết mỗi mùa ra sao."
+          "Nói 'Have two seasons' hoặc 'There is two seasons' (đúng: 'There are two main seasons').",
+          "Quên '-s' trong 'two seasons' hoặc 'rains' khi đi với 'it'.",
+          "Chỉ nêu tên mùa mà không miêu tả thời tiết mùa đó thế nào."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Cấu trúc There are...)",
-                text: "Ở khu vực miền Nam nơi mình sống có 2 mùa chính: mùa khô và mùa mưa."
+                label: "A (Trả lời thẳng - There are...)",
+                text: "In my city, there are two main seasons: dry and rainy."
               },
               {
-                label: "Miêu tả mùa khô (Câu ghép - , so)",
-                text: "Vào mùa khô, trời rất nắng và nóng, nên mình thường cảm thấy hơi mệt."
+                label: "E (Ví dụ thời tiết 2 mùa - For example)",
+                text: "For example, it is very sunny in the dry months, and it rains a lot in the rainy months."
               },
               {
-                label: "Miêu tả mùa mưa (Câu ghép - , so)",
-                text: "Ngược lại, vào mùa mưa thì trời mưa gần như mỗi ngày, nên việc đi ra ngoài khá bất tiện."
+                label: "Kết quả thực tế",
+                text: "Wet streets make riding hard."
               }
             ],
             modelAnswer:
-              "In the region where I live, there are <strong>two main seasons</strong>: the dry season and the rainy season. In <strong>the dry season</strong>, the weather is very hot and sunny, so I often feel a bit tired. However, in <strong>the rainy season</strong>, it rains almost every day, so going outside is quite <strong>inconvenient</strong>.",
+              "In my city, there are <strong>two main seasons</strong>: dry and rainy. For example, it is very sunny in the <strong>dry months</strong>, and it <strong>rains a lot</strong> in the rainy months. Wet streets make riding hard.",
             vocab: [
               {
                 word: "two main seasons",
                 ipa: "/tuː meɪn ˈsiːznz/",
                 pos: "n. phr.",
                 meaning: "hai mùa chính",
-                example: "In the region where I live, there are <strong>two main seasons</strong>."
+                example: "In my city, there are <strong>two main seasons</strong>: dry and rainy."
               },
               {
-                word: "the rainy season",
-                ipa: "/ðə ˈreɪni ˈsiːzn/",
+                word: "dry months",
+                ipa: "/draɪ mʌnθs/",
                 pos: "n. phr.",
-                meaning: "mùa mưa",
-                example: "In <strong>the rainy season</strong>, it rains almost every day."
+                meaning: "những tháng mùa khô",
+                example: "It is very sunny in the <strong>dry months</strong>."
               },
               {
-                word: "inconvenient",
-                ipa: "/ˌɪnkənˈviːniənt/",
-                pos: "adj.",
-                meaning: "bất tiện",
-                example: "It rains almost every day, so going outside is quite <strong>inconvenient</strong>."
+                word: "rains a lot",
+                ipa: "/reɪnz ə lɒt/",
+                pos: "v. phr.",
+                meaning: "mưa rất nhiều",
+                example: "It <strong>rains a lot</strong> in the rainy months."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu ghép - , but)",
-                text: "Khí hậu tùy thuộc vào từng vùng miền, nhưng ở Đồng bằng sông Cửu Long nơi mình sống chỉ có 2 mùa chính là mùa khô và mùa mưa."
+                label: "A (Mở đầu linh hoạt - It depends on the region)",
+                text: "Tùy vùng miền (honestly), nhưng ở miền Nam nơi mình sống có 2 mùa chính."
               },
               {
-                label: "Miêu tả mùa khô (Mệnh đề quan hệ - , which makes me...)",
-                text: "Trong mùa khô, thời tiết thường rất nóng và oi bức vào buổi trưa, điều này khiến mình cảm thấy khá mệt mỏi."
+                label: "E (Ví dụ miêu tả - For example)",
+                text: "Mùa khô thì nóng và oi bức (hot and humid), còn mùa mưa có mưa lớn."
               },
               {
-                label: "Miêu tả mùa mưa (Câu phức - while + S + V)",
-                text: "Trong khi đó, mùa mưa lại có mưa lớn thường xuyên khiến đường sá dễ ngập và đi lại khó khăn."
+                label: "Kết quả thực tế",
+                text: "Việc đi lại trên đường (traveling on the roads) khá bất tiện (inconvenient)."
               }
             ],
             modelAnswer:
-              "It <strong>depends on the region</strong>, but in the Mekong Delta where I live, there are two main seasons: the dry season and the rainy season. During the dry season, the weather is extremely <strong>hot and humid</strong>, <strong>which makes me feel</strong> quite tired. Meanwhile, it rains heavily in the rainy season, so <strong>traveling on the roads</strong> is a bit difficult.",
+              "It <strong>depends on the region</strong>, honestly. In southern Vietnam where I live, there are two main seasons: dry and rainy. For example, dry days feel <strong>hot and humid</strong>, while heavy rain makes <strong>traveling on the roads</strong> quite <strong>inconvenient</strong>.",
             vocab: [
               {
                 word: "depends on the region",
                 ipa: "/dɪˈpendz ɒn ðə ˈriːdʒən/",
                 pos: "v. phr.",
-                meaning: "tùy thuộc vào vùng miền",
-                example: "It <strong>depends on the region</strong>, but in the Mekong Delta where I live, there are two main seasons."
+                meaning: "tùy thuộc vào từng vùng",
+                example: "It <strong>depends on the region</strong>, honestly."
               },
               {
                 word: "hot and humid",
                 ipa: "/hɒt ænd ˈhjuːmɪd/",
                 pos: "adj. phr.",
-                meaning: "nóng và oi bức",
-                example: "During the dry season, the weather is extremely <strong>hot and humid</strong>."
+                meaning: "nóng và ẩm/oi bức",
+                example: "Dry days often feel <strong>hot and humid</strong>."
               },
               {
                 word: "traveling on the roads",
                 ipa: "/ˈtrævəlɪŋ ɒn ðə roʊdz/",
                 pos: "n. phr.",
                 meaning: "việc đi lại trên đường",
-                example: "It rains heavily in the rainy season, so <strong>traveling on the roads</strong> is a bit difficult."
+                example: "Heavy rain makes <strong>traveling on the roads</strong> difficult."
+              },
+              {
+                word: "inconvenient",
+                ipa: "/ˌɪnkənˈviːniənt/",
+                pos: "adj.",
+                meaning: "bất tiện",
+                example: "Wet streets are quite <strong>inconvenient</strong> for riders."
               }
             ]
           }
@@ -1099,95 +1099,95 @@ window.SPEAKING_TOPICS = [
         num: 2,
         prompt: "What is your favorite season?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('What is your favorite season?') hỏi về mùa yêu thích nhất của bản thân.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức chỉ lý do (because / since) và Câu ghép (, so / , or).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi sở thích mùa yêu thích (Dạng 1: 'What is your favorite...'). Áp dụng mẫu 'My favorite season is...' (B1) / 'Honestly, my go-to season is...' (B2) + A-R-E.",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~33–37 từ)."
         },
         pitfalls: [
-          "Dùng cả 'Since ... so ...' hoặc 'Because ... so ...' trong cùng một câu.",
-          "Quên chia động từ V-ing sau giới từ 'without worrying about getting wet'.",
-          "Không đưa ra ví dụ hoạt động cụ thể mình thích làm vào mùa đó."
+          "Quên đưa ví dụ cụ thể mình thường làm gì vào mùa đó.",
+          "Quên dùng mạo từ 'a' trong cụm 'go for a walk'.",
+          "Lặp lại từ 'very good, very nice' thay vì nói cảm xúc cụ thể hơn."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mùa yêu thích nhất của mình là mùa khô vì bầu trời luôn trong xanh và đẹp."
+                label: "A + R (Mùa yêu thích + Lý do)",
+                text: "My favorite season is the dry season because the sky is bright and clean."
               },
               {
-                label: "Lý do thuận tiện (Câu ghép - , so)",
-                text: "Trời không mưa nhiều, nên mình có thể đi ra ngoài dễ dàng mà không sợ bị ướt."
+                label: "E (Ví dụ hoạt động - For example)",
+                text: "For example, I can easily go for a walk in the park with friends."
               },
               {
-                label: "Hoạt động yêu thích (Câu ghép - , or)",
-                text: "Vào cuối tuần, mình thường đi dạo ở công viên, hoặc đi uống cà phê với bạn thân."
+                label: "Cảm xúc (Chốt câu)",
+                text: "It makes me feel happy."
               }
             ],
             modelAnswer:
-              "My favorite season is <strong>the dry season</strong> because the sky is always <strong>clear and beautiful</strong>. It does not rain much, so I can go out easily without <strong>getting wet</strong>. On weekends, I usually <strong>go for a walk</strong> in the park, or I go to a coffee shop with my close friends.",
+              "My <strong>favorite season</strong> is the dry season because the sky is bright and clean. For example, I can easily <strong>go for a walk</strong> in the park with friends. It makes me <strong>feel happy</strong>.",
             vocab: [
               {
-                word: "clear and beautiful",
-                ipa: "/klɪər ænd ˈbjuːtɪfl/",
-                pos: "adj. phr.",
-                meaning: "trong xanh và tuyệt đẹp",
-                example: "My favorite season is the dry season because the sky is always <strong>clear and beautiful</strong>."
-              },
-              {
-                word: "getting wet",
-                ipa: "/ˈɡetɪŋ wet/",
-                pos: "v. phr.",
-                meaning: "bị ướt mưa",
-                example: "I can go out easily without <strong>getting wet</strong>."
+                word: "favorite season",
+                ipa: "/ˈfeɪvərɪt ˈsiːzn/",
+                pos: "n. phr.",
+                meaning: "mùa yêu thích nhất",
+                example: "My <strong>favorite season</strong> is the dry season."
               },
               {
                 word: "go for a walk",
                 ipa: "/ɡoʊ fɔːr ə wɔːk/",
                 pos: "v. phr.",
                 meaning: "đi dạo bộ",
-                example: "On weekends, I usually <strong>go for a walk</strong> in the park."
+                example: "I can easily <strong>go for a walk</strong> in the park."
+              },
+              {
+                word: "feel happy",
+                ipa: "/fiːl ˈhæpi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy vui vẻ",
+                example: "Walking with friends makes me <strong>feel happy</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mình thích mùa khô nhất, đặc biệt là vào dịp cuối năm vì thời tiết lúc đó khá dịu mát và dễ chịu."
+                label: "A + R (Mở đầu Dạng 1 - Honestly, my go-to...)",
+                text: "Honestly, my go-to season is the dry season because the air is very pleasant."
               },
               {
-                label: "Lý do (Câu phức - Since + S + V)",
-                text: "Vì trời hiếm khi mưa nên mình có thể thoải mái đi học, đi làm mà không cần mang theo áo mưa."
+                label: "E (Ví dụ - For example)",
+                text: "Tụ tập bạn bè (hang out with my friends) ngoài trời mà không lo mưa."
               },
               {
-                label: "Ví dụ hoạt động (Mệnh đề quan hệ - , which helps me...)",
-                text: "Buổi tối mình thường đi dạo công viên hoặc ngồi cà phê ngoài trời với bạn bè, điều này giúp mình thư giãn rất tốt."
+                label: "Cảm xúc (calm and recharged)",
+                text: "Chốt cảm giác thư thái, nạp năng lượng."
               }
             ],
             modelAnswer:
-              "I like <strong>the dry season</strong> the most, especially at the end of the year, because the weather is very <strong>pleasant</strong>. <strong>Since</strong> it rarely rains, I can go out comfortably without worrying about getting wet. In the evening, I often <strong>hang out with my friends</strong> at outdoor coffee shops, <strong>which helps me relax</strong> after a long day.",
+              "<strong>Honestly, my go-to</strong> season is the dry season because the air is very <strong>pleasant</strong>. For example, I can <strong>hang out with my friends</strong> outdoors without worrying about rain. It leaves me feeling <strong>calm and recharged</strong>.",
             vocab: [
               {
                 word: "pleasant",
                 ipa: "/ˈpleznt/",
                 pos: "adj.",
                 meaning: "dễ chịu, ôn hòa",
-                example: "I like the dry season the most because the weather is very <strong>pleasant</strong>."
-              },
-              {
-                word: "rarely",
-                ipa: "/ˈrerli/",
-                pos: "adv.",
-                meaning: "hiếm khi",
-                example: "Since it <strong>rarely</strong> rains, I can go out comfortably."
+                example: "The air in the dry season is very <strong>pleasant</strong>."
               },
               {
                 word: "hang out with my friends",
                 ipa: "/hæŋ aʊt wɪð maɪ frendz/",
                 pos: "v. phr.",
-                meaning: "đi chơi / tụ tập cùng bạn bè",
-                example: "In the evening, I often <strong>hang out with my friends</strong> at outdoor coffee shops."
+                meaning: "đi chơi cùng bạn bè",
+                example: "I can <strong>hang out with my friends</strong> outdoors."
+              },
+              {
+                word: "calm and recharged",
+                ipa: "/kɑːm ænd ˌriːˈtʃɑːrdʒd/",
+                pos: "adj. phr.",
+                meaning: "bình yên và tràn đầy năng lượng",
+                example: "It leaves me feeling <strong>calm and recharged</strong>."
               }
             ]
           }
@@ -1198,95 +1198,95 @@ window.SPEAKING_TOPICS = [
         num: 3,
         prompt: "What is the best season to visit your country?",
         analysis: {
-          questionType: "Câu hỏi Wh-Question ('What is the best season to visit...') hỏi về mùa đẹp nhất cho du khách đến thăm đất nước bạn.",
-          tense: "Hiện tại đơn (present simple). Áp dụng Câu phức chỉ lý do (because), Câu ghép (, so) và Mệnh đề quan hệ (outdoor activities that...).",
-          length: "3 câu ngắn gọn, khoảng 20–25 giây."
+          questionType: "Câu hỏi gợi ý thời điểm du lịch ('What is the best season to visit...'). Áp dụng A-R-E (Answer + Reason → Example → Feeling/Result).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~34–38 từ), nêu lý do ít mưa và ví dụ hoạt động của du khách."
         },
         pitfalls: [
-          "Dùng 'fewer rain' thay vì đúng lượng từ cho danh từ không đếm được là 'less rain'.",
-          "Quên nhắc đến góc nhìn của du khách (tourists / visitors can...).",
-          "Thiếu các ví dụ thực tế như đi biển, thăm chợ địa phương, ăn đồ ăn đường phố."
+          "Dùng nhầm 'fewer rain' thay vì đúng lượng từ 'less rain' (vì rain không đếm được).",
+          "Quên nhắc tới trải nghiệm của du khách ('visitors', 'tourists').",
+          "Dùng 'in the beach' thay vì 'on the beach' hoặc 'go to the beach'."
         ],
         levels: {
           b1: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Mùa tốt nhất để đến thăm đất nước mình là mùa khô vì thời tiết nắng đẹp và bầu trời quang đãng."
+                label: "A + R (Mùa đẹp nhất + Lý do)",
+                text: "The dry season is the best time because it is sunny and there is less rain."
               },
               {
-                label: "Lý do thuận lợi (Câu ghép - , so)",
-                text: "Trời ít mưa hơn, nên du khách có thể đi tham quan các thành phố rất thoải mái."
+                label: "E (Ví dụ cho du khách - For example)",
+                text: "For example, visitors can go to the beach and eat street food."
               },
               {
-                label: "Ví dụ hoạt động (Câu đơn)",
-                text: "Họ có thể tắm biển, thăm các khu chợ địa phương và thử nhiều món ăn truyền thống."
+                label: "Cảm xúc / Kết quả",
+                text: "Every trip feels easy and fun."
               }
             ],
             modelAnswer:
-              "The best season to visit my country is <strong>the dry season</strong> because the weather is sunny and the sky is clear. There is <strong>less rain</strong>, so tourists can explore different cities in a <strong>comfortable</strong> way. They can relax on beautiful beaches, <strong>visit local markets</strong>, and try delicious traditional food.",
+              "<strong>The dry season</strong> is the best time because it is sunny and there is <strong>less rain</strong>. For example, visitors can <strong>go to the beach</strong> and eat street food. Every trip feels easy and fun.",
             vocab: [
               {
                 word: "less rain",
                 ipa: "/les reɪn/",
                 pos: "n. phr.",
                 meaning: "ít mưa hơn",
-                example: "There is <strong>less rain</strong>, so tourists can explore different cities."
+                example: "It is sunny and there is <strong>less rain</strong>."
               },
               {
-                word: "comfortable",
-                ipa: "/ˈkʌmftəbl/",
-                pos: "adj.",
-                meaning: "thoải mái, dễ chịu",
-                example: "Tourists can explore different cities in a <strong>comfortable</strong> way."
-              },
-              {
-                word: "visit local markets",
-                ipa: "/ˈvɪzɪt ˈloʊkl ˈmɑːrkɪts/",
+                word: "go to the beach",
+                ipa: "/ɡoʊ tuː ðə biːtʃ/",
                 pos: "v. phr.",
-                meaning: "thăm các khu chợ địa phương",
-                example: "They can relax on beautiful beaches and <strong>visit local markets</strong>."
+                meaning: "đi biển",
+                example: "Visitors can <strong>go to the beach</strong> and swim."
+              },
+              {
+                word: "street food",
+                ipa: "/striːt fuːd/",
+                pos: "n. phr.",
+                meaning: "ẩm thực đường phố",
+                example: "They can eat delicious <strong>street food</strong>."
               }
             ]
           },
           b2: {
             strategy: [
               {
-                label: "Trả lời thẳng (Câu phức - because)",
-                text: "Thời điểm lý tưởng nhất để đến thăm Việt Nam là mùa khô vì thời tiết dễ chịu và bầu trời trong xanh."
+                label: "A + R (Mở đầu tự nhiên - I'd say)",
+                text: "I'd say the best time is the dry season because the weather is warm and pleasant."
               },
               {
-                label: "Lý do (Câu ghép - , so)",
-                text: "Trời ít mưa hơn, nên du khách có thể khám phá thành phố mà không lo những cơn mưa rào bất chợt."
+                label: "E (Ví dụ + Mệnh đề quan hệ where)",
+                text: "Tham gia hoạt động ngoài trời (outdoor activities) hoặc ghé chợ ăn hải sản (seafood)."
               },
               {
-                label: "Ví dụ hoạt động (Mệnh đề quan hệ - where they can...)",
-                text: "Họ có thể tham gia nhiều hoạt động ngoài trời và ghé các khu chợ địa phương nơi có rất nhiều món ăn đường phố ngon và rẻ."
+                label: "Kết quả (sudden showers)",
+                text: "Không có những cơn mưa rào bất chợt nên việc ngắm cảnh rất thư giãn."
               }
             ],
             modelAnswer:
-              "I would say the best time to visit my country is <strong>the dry season</strong> because the weather is usually pleasant and the sky is clear. There is less rain, so tourists can explore the city without worrying about <strong>sudden showers</strong>. Moreover, they can enjoy <strong>outdoor activities</strong> and visit local markets <strong>where they can try</strong> delicious street food.",
+              "<strong>I'd say</strong> the best time is the dry season because the weather is warm and <strong>pleasant</strong>. For example, tourists can enjoy <strong>outdoor activities</strong> or visit markets where they can try fresh <strong>seafood</strong>. Without <strong>sudden showers</strong>, sightseeing feels relaxing.",
             vocab: [
-              {
-                word: "sudden showers",
-                ipa: "/ˈsʌdn ˈʃaʊərz/",
-                pos: "n. phr.",
-                meaning: "những cơn mưa rào bất chợt",
-                example: "Tourists can explore the city without worrying about <strong>sudden showers</strong>."
-              },
               {
                 word: "outdoor activities",
                 ipa: "/ˈaʊtdɔːr ækˈtɪvətiz/",
                 pos: "n. phr.",
                 meaning: "các hoạt động ngoài trời",
-                example: "Moreover, they can enjoy <strong>outdoor activities</strong> and visit local markets."
+                example: "Tourists can enjoy <strong>outdoor activities</strong> all day."
               },
               {
-                word: "delicious street food",
-                ipa: "/dɪˈlɪʃəs striːt fuːd/",
+                word: "seafood",
+                ipa: "/ˈsiːfuːd/",
+                pos: "n.",
+                meaning: "hải sản",
+                example: "They visit markets where they can try fresh <strong>seafood</strong>."
+              },
+              {
+                word: "sudden showers",
+                ipa: "/ˈsʌdn ˈʃaʊərz/",
                 pos: "n. phr.",
-                meaning: "thức ăn đường phố ngon miệng",
-                example: "They can visit local markets where they can try <strong>delicious street food</strong>."
+                meaning: "những cơn mưa rào bất chợt",
+                example: "Without <strong>sudden showers</strong>, sightseeing feels relaxing."
               }
             ]
           }

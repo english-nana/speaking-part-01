@@ -36,9 +36,11 @@
   const RELATIVE_MARKERS = ["which", "who", "where"];
   const B2_DISCOURSE_MARKERS = [
     "honestly", "personally", "actually", "moreover", "furthermore",
-    "in addition", "especially", "particularly", "for example", "for instance",
+    "in addition", "especially", "particularly", "for instance",
     "on the other hand", "as a result", "therefore", "overall", "definitely",
-    "first of all", "secondly", "however", "in particular"
+    "first of all", "secondly", "however", "in particular",
+    "to be honest", "i'd say", "i would say", "well", "what's more",
+    "on top of that", "that said", "i'm planning to"
   ];
   const B2_LEXIS_PHRASES = [
     "memorable", "unforgettable", "affordable", "convenient", "flexible", "destination",
@@ -51,7 +53,10 @@
     "outdoor activities", "sudden showers", "inconvenient", "heavy luggage",
     "hang out with", "cool and pleasant", "pleasant", "important projects", "short weekend trips",
     "peaceful town", "pack suitable clothes", "meaningful",
-    "in case", "although", "whereas", "instead of"
+    "in case", "although", "whereas", "instead of",
+    "go-to", "usually go for", "go for", "tend to", "peace of mind",
+    "feel at ease", "at ease", "cheer me up", "cheers me up",
+    "calm and recharged", "a little reward", "seafood"
   ];
 
   function tokenize(text) {
@@ -736,15 +741,15 @@
     // ------------------------------------------------------------------
     // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP SPEAKING PART 1 (NGHIÊM TÚC & SÁT THỰC TẾ)
     // - < 4.0     : Chưa đạt B1
-    // - 4.0 - 5.5 : Đạt mức B1 (tối thiểu >= 25 từ, đúng trọng tâm, <= 2 lỗi)
-    // - 6.0 - 8.5 : Đạt mức B2 (>= 42 từ, đủ từ vựng & ngữ pháp B2, <= 1 lỗi)
+    // - 4.0 - 5.5 : Đạt mức B1 (tối thiểu >= 22 từ, đúng trọng tâm, <= 2 lỗi)
+    // - 6.0 - 8.5 : Đạt mức B2 (>= 34 từ, đủ từ vựng & ngữ pháp B2, <= 1 lỗi)
     // ------------------------------------------------------------------
     // 1. Task Development & Length (0.3 - 2.5 pts)
     let devPts = 0.3;
-    if (wordCount >= 55) devPts = 2.5;
-    else if (wordCount >= 42) devPts = 2.15;
-    else if (wordCount >= 34) devPts = 1.8;
-    else if (wordCount >= 25) devPts = 1.5;
+    if (wordCount >= 45) devPts = 2.5;
+    else if (wordCount >= 34) devPts = 2.15;
+    else if (wordCount >= 28) devPts = 1.8;
+    else if (wordCount >= 22) devPts = 1.5;
     else if (wordCount >= 15) devPts = 1.0;
     else if (wordCount >= 10) devPts = 0.65;
 
@@ -755,7 +760,7 @@
     vocabPts = Math.min(2.5, vocabPts);
 
     // 3. Grammar Range (0.8 - 2.35 pts; lỗi trừ trực tiếp bên dưới)
-    let gramPts = wordCount >= 25 ? 1.05 : 0.8;
+    let gramPts = wordCount >= 22 ? 1.05 : 0.8;
     if (usedCompound.length > 0) gramPts += 0.15;
     if (usedComplex.length > 0 && wordCount >= 20) gramPts += 0.25;
     if (usedRelative.length > 0) gramPts += 0.45;
@@ -764,10 +769,10 @@
 
     // 4. Fluency & Delivery Pacing (0.25 - 1.2 pts)
     let fluPts = 0.35;
-    if (wordCount >= 40) fluPts = 1.05;
-    else if (wordCount >= 25) fluPts = 0.85;
+    if (wordCount >= 34) fluPts = 1.05;
+    else if (wordCount >= 22) fluPts = 0.85;
     else if (wordCount >= 15) fluPts = 0.55;
-    if (usedDiscourse.length >= 1 && wordCount >= 45) fluPts = Math.min(1.2, fluPts + 0.15);
+    if (usedDiscourse.length >= 1 && wordCount >= 36) fluPts = Math.min(1.2, fluPts + 0.15);
     if (durationSec >= 12 && wordCount / durationSec < 0.75) {
       fluPts = Math.max(0.25, fluPts - 0.2);
     }
@@ -783,13 +788,13 @@
       rawScore = Math.min(rawScore, 2.5);
     } else if (wordCount < 15) {
       rawScore = Math.min(rawScore, 2.5);
-    } else if (wordCount < 25) {
+    } else if (wordCount < 22) {
       rawScore = Math.min(rawScore, errors.length >= 2 ? 2.5 : 3.5);
     } else if (errors.length >= 3) {
       rawScore = Math.min(rawScore, 3.5);
-    } else if (errors.length >= 2 || wordCount < 42 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
-      // Khung B1 tối đa 5.5 (bài ngắn 25-34 từ tối đa 4.5)
-      rawScore = Math.min(rawScore, wordCount < 35 ? 4.5 : 5.5);
+    } else if (errors.length >= 2 || wordCount < 34 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
+      // Khung B1 tối đa 5.5 (bài ngắn 22-27 từ tối đa 4.5)
+      rawScore = Math.min(rawScore, wordCount < 28 ? 4.5 : 5.5);
     } else {
       // Đủ chuẩn vào khung B2 (6.0 - 8.5)
       if (errors.length === 0) {
@@ -797,7 +802,7 @@
       } else {
         rawScore = Math.min(rawScore, 6.5);
       }
-      if (wordCount < 55 && allB2Lexis.length < 4) {
+      if (wordCount < 45 && allB2Lexis.length < 4) {
         rawScore = Math.min(rawScore, 7.5);
       }
     }
@@ -822,22 +827,22 @@
 
     if (isOffTopic) {
       notes.push("Nội dung chưa bám sát từ khóa câu hỏi; cần trả lời trực tiếp vào trọng tâm đề bài.");
-    } else if (wordCount < 25) {
-      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 25–40 từ (2–3 câu rõ ý kèm lý do hoặc ví dụ) để đạt mức B1 (4.0+).`);
+    } else if (wordCount < 22) {
+      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 22–35 từ (3 câu ngắn gọn theo công thức A-R-E: Trả lời + Lý do → Ví dụ → Cảm xúc) để đạt mức B1 (4.0+).`);
     } else if (badgeTone === "below") {
       notes.push(`Bài nói còn ${errors.length} lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); cần sửa các lỗi trên để đạt mức B1 (4.0+).`);
     } else if (badgeTone === "b1") {
-      if (wordCount < 42) {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy mở rộng câu trả lời dài hơn (~45+ từ), thêm từ vựng B2 và mệnh đề quan hệ (, which...).`);
+      if (wordCount < 34) {
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy giữ 3 câu theo A-R-E khoảng 35+ từ, thêm cụm từ vựng tự nhiên ở Mục V và từ nối/mệnh đề quan hệ.`);
       } else if (errors.length > 0) {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Hãy sửa lỗi trên và dùng thêm từ nối/từ vựng B2 để hướng tới mức 6.0+.`);
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Hãy sửa lỗi trên và dùng thêm từ nối/cụm tự nhiên B2 để hướng tới mức 6.0+.`);
       } else {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy dùng thêm từ vựng ở Mục V và cấu trúc mở rộng (Moreover / , which...).`);
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy dùng thêm các cụm tự nhiên ở Mục V (Honestly / tend to / unwind / , which...).`);
       }
     } else if (errors.length > 0) {
       notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}). Khắc phục lỗi nhỏ bên trên để giữ chắc mức 7.0–8.0.`);
     } else {
-      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}), triển khai ý mạch lạc và dùng được từ vựng/cấu trúc nâng cao.`);
+      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}), triển khai tự nhiên đúng cấu trúc A-R-E và dùng được cụm từ nâng cao.`);
     }
 
     return {

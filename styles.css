@@ -502,12 +502,6 @@ button, input, select, textarea {
   gap: 6px;
 }
 
-.idea-notes-saved-badge {
-  font-size: 11px;
-  color: #16A34A;
-  font-weight: 600;
-}
-
 .idea-notes-textarea {
   width: 100%;
   min-height: 68px;
