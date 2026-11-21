@@ -102,39 +102,238 @@
     return words;
   }
 
+  const VERB_ING_MAP = {
+    travel: "traveling",
+    traveling: "traveling",
+    travelling: "travelling",
+    go: "going",
+    going: "going",
+    visit: "visiting",
+    visiting: "visiting",
+    stay: "staying",
+    staying: "staying",
+    eat: "eating",
+    eating: "eating",
+    try: "trying",
+    trying: "trying",
+    take: "taking",
+    taking: "taking",
+    explore: "exploring",
+    exploring: "exploring",
+    pack: "packing",
+    packing: "packing",
+    swim: "swimming",
+    swimming: "swimming",
+    camp: "camping",
+    camping: "camping",
+    walk: "walking",
+    walking: "walking",
+    fly: "flying",
+    flying: "flying",
+    talk: "talking",
+    talking: "talking",
+    share: "sharing",
+    sharing: "sharing",
+    spend: "spending",
+    spending: "spending",
+    plan: "planning",
+    planning: "planning",
+    book: "booking",
+    booking: "booking",
+    wait: "waiting",
+    waiting: "waiting",
+    cook: "cooking",
+    cooking: "cooking",
+    shop: "shopping",
+    shopping: "shopping",
+    prepare: "preparing",
+    preparing: "preparing",
+    relax: "relaxing",
+    relaxing: "relaxing",
+    leave: "leaving",
+    leaving: "leaving"
+  };
+
+  const ING_TO_BASE_MAP = {
+    traveling: "travel",
+    travelling: "travel",
+    going: "go",
+    visiting: "visit",
+    staying: "stay",
+    eating: "eat",
+    trying: "try",
+    taking: "take",
+    exploring: "explore",
+    packing: "pack",
+    swimming: "swim",
+    camping: "camp",
+    walking: "walk",
+    flying: "fly",
+    talking: "talk",
+    sharing: "share",
+    spending: "spend",
+    saving: "save",
+    booking: "book",
+    preparing: "prepare",
+    relaxing: "relax"
+  };
+
+  function toIng(word) {
+    const low = String(word || "").toLowerCase();
+    return VERB_ING_MAP[low] || (low.endsWith("e") ? low.slice(0, -1) + "ing" : low + "ing");
+  }
+
   function detectMainErrors(transcript, question) {
     const raw = String(transcript || "").trim();
     const lower = raw.toLowerCase();
     const issues = [];
     const seenKeys = new Set();
 
-    function addIssue(key, wrong, fix, reason) {
-      if (seenKeys.has(key) || issues.length >= 3) return;
+    const promptText = (question && question.prompt) || "";
+    const isPastPrompt = Boolean(
+      question &&
+        (question.id === "trips_q1" ||
+          question.id === "trips_q3" ||
+          /\blast\s+trip|\blast\s+vacation|\blast\s+time|\bhave\s+you\s+(?:ever\s+)?had|\bmemorable\s+trip|\bdid\s+you\b/i.test(promptText))
+    );
+    const hasPastCue =
+      isPastPrompt ||
+      /\b(yesterday|last\s+(?:year|summer|month|week|trip)|two\s+years?\s+ago|\d+\s+years?\s+ago|was|were|went|visited|stayed|had\s+a\s+great\s+time)\b/i.test(lower);
+
+    function addIssue(key, wrong, fix, reason, replaceTarget, rewriteText) {
+      if (seenKeys.has(key) || issues.length >= 5) return;
       seenKeys.add(key);
-      issues.push({ wrong, fix, reason });
+      issues.push({
+        wrong,
+        fix,
+        reason,
+        replaceTarget: replaceTarget || null,
+        rewriteText: rewriteText || null
+      });
     }
 
-    // 1. Lỗi mạo từ "a" trước danh từ số nhiều "photos" / nghe nhầm "take me a nice photos"
+    // 1. Lỗi phát âm / STT nghe nhầm ("I lie travel", "because it happened", "local foot", "share the cause", "pack close")
+    const lieLikeMatch = raw.match(/\b(i|we|they|you)\s+((?:really|usually|often|also)\s+)?(lie|light|live|life)\s+(travel|traveling|travelling|go|going|visit|visiting|stay|staying|eat|eating|try|trying|take|taking|explore|exploring|swim|swimming|camp|camping|shop|shopping)\b/i);
+    if (lieLikeMatch) {
+      const adv = lieLikeMatch[2] ? lieLikeMatch[2].trim() + " " : "";
+      const vIng = toIng(lieLikeMatch[4]);
+      const fixedPhrase = `${lieLikeMatch[1]} ${adv}like ${vIng}`;
+      addIssue(
+        "stt_lie_like",
+        lieLikeMatch[0],
+        fixedPhrase,
+        `Phát âm thiếu âm cuối /k/ hoặc nhầm nguyên âm khiến "${lieLikeMatch[3]}" sai nghĩa thay cho "like"; sau "like" dùng V-ing ("like ${vIng}").`,
+        lieLikeMatch[0],
+        fixedPhrase
+      );
+    }
+
+    const becHappenedMatch = raw.match(/\bbecause\s+(?:it\s+)?(happened|happen)\b/i);
+    if (becHappenedMatch && (!hasPastCue || /\bwe\s+(talk|share|eat|go|play|take|can)\b/i.test(lower))) {
+      addIssue(
+        "stt_because_happened",
+        becHappenedMatch[0],
+        "because it is very fun",
+        'Sai thì hoặc phát âm nhầm ("because it happened" không hợp ở câu hỏi sở thích hiện tại); hãy nêu lý do rõ ràng như "because it is very fun".',
+        becHappenedMatch[0],
+        "because it is very fun"
+      );
+    }
+
+    const becFanMatch = raw.match(/\bbecause\s+it\s+(fan|fine|fun|have\s+fun|has\s+fun)\b/i);
+    if (becFanMatch) {
+      addIssue(
+        "stt_because_fun",
+        becFanMatch[0],
+        "because it is fun",
+        'Thiếu động từ to be ("is") hoặc nhầm phát âm từ "fun" (/fʌn/) sau "because it".',
+        becFanMatch[0],
+        "because it is fun"
+      );
+    }
+
     const photoMatch = raw.match(/\b(take\s+(?:me\s+)?a(?:\s+\w+)?\s+photos?)\b/i);
     if (photoMatch) {
       const hasMe = /\bme\b/i.test(photoMatch[1]);
+      const rewrite = hasMe ? "take many nice photos" : "take nice photos";
       addIssue(
         "take_photos_a",
         photoMatch[1],
         hasMe ? "take many nice photos" : "take a lot of nice photos / take nice photos",
-        'Không dùng mạo từ "a" trước danh từ số nhiều "photos"; hãy phát âm rõ "many" hoặc "a lot of".'
+        'Không dùng mạo từ "a" trước danh từ số nhiều "photos"; hãy phát âm rõ "many" hoặc "a lot of".',
+        photoMatch[1],
+        rewrite
       );
     }
 
-    // 2. Lỗi nhận diện phát âm từ quen thuộc trong chủ đề Travel
-    if (/\blocal\s+foot\b/i.test(lower)) {
-      addIssue("local_foot", "local foot", "local food", 'Phát âm rõ âm cuối /d/ của từ "food" (/fuːd/) để tránh nhầm thành "foot".');
+    const localFootMatch = raw.match(/\blocal\s+foot\b/i);
+    if (localFootMatch) {
+      addIssue("local_foot", localFootMatch[0], "local food", 'Phát âm rõ âm cuối /d/ của từ "food" (/fuːd/) để tránh nhầm thành "foot".', localFootMatch[0], "local food");
     }
-    if (/\bshare\s+the\s+cause\b/i.test(lower)) {
-      addIssue("share_cause", "share the cause", "share the cost", 'Chú ý phân biệt âm cuối /st/ của từ "cost" (/kɔːst/).');
+    const shareCauseMatch = raw.match(/\bshare\s+the\s+cause\b/i);
+    if (shareCauseMatch) {
+      addIssue("share_cause", shareCauseMatch[0], "share the cost", 'Chú ý phân biệt âm cuối /st/ của từ "cost" (/kɔːst/).', shareCauseMatch[0], "share the cost");
     }
-    if (/\bpack\s+(?:my\s+)?close\b/i.test(lower)) {
-      addIssue("pack_close", "pack close", "pack clothes", 'Danh từ "quần áo" là "clothes" (/kloʊðz/), không phải "close".');
+    const packCloseMatch = raw.match(/\bpack\s+(my\s+)?close\b/i);
+    if (packCloseMatch) {
+      const myPart = packCloseMatch[1] || "";
+      addIssue("pack_close", packCloseMatch[0], `pack ${myPart}clothes`, 'Danh từ "quần áo" là "clothes" (/kloʊðz/), không phải "close".', packCloseMatch[0], `pack ${myPart}clothes`);
+    }
+
+    // 2. Lỗi danh từ số ít thiếu số nhiều hoặc thiếu mạo từ ("with my friend", "go on trip", "there is + số nhiều")
+    const withBareFriend = raw.match(/\bwith\s+friend\b/i);
+    if (withBareFriend) {
+      addIssue(
+        "with_bare_friend",
+        withBareFriend[0],
+        "with my friends",
+        'Danh từ đếm được số ít "friend" không đứng một mình; hãy dùng "with my friends" (hoặc "with a friend").',
+        withBareFriend[0],
+        "with my friends"
+      );
+    } else {
+      const withMyFriend = raw.match(/\bwith\s+my\s+friend\b/i);
+      if (withMyFriend && !hasPastCue && !/\b(named|called|best\s+friend\s+is)\b/i.test(lower)) {
+        addIssue(
+          "with_my_friend_sg",
+          withMyFriend[0],
+          "with my friends",
+          'Khi nói sở thích hoặc thói quen chung, hãy chia số nhiều "with my friends" (trừ khi kể về một người bạn cụ thể).',
+          withMyFriend[0],
+          "with my friends"
+        );
+      }
+    }
+
+    const missingArtMatch = raw.match(/\b(go\s+on|going\s+on|went\s+on|prepare\s+for|preparing\s+for|have|had|take|taking|took|make|making|made|need|book|booking)\s+(trip|vacation|holiday|journey|flight|plan|itinerary|hotel|ticket|suitcase|camera|passport|budget)\b/i);
+    if (missingArtMatch) {
+      const noun = missingArtMatch[2].toLowerCase();
+      const art = /^i/.test(noun) ? "an" : "a";
+      const fixedArt = `${missingArtMatch[1]} ${art} ${noun}`;
+      addIssue(
+        "missing_article_" + noun,
+        missingArtMatch[0],
+        fixedArt,
+        `Danh từ đếm được số ít "${noun}" cần có mạo từ "${art}" đứng trước ("${fixedArt}").`,
+        missingArtMatch[0],
+        fixedArt
+      );
+    }
+
+    const thereIsPlural = raw.match(/\bthere\s+(is|was)\s+((?:(?:many|several|a\s+lot\s+of|lots\s+of|some|two|three|four|five|various|numerous)\s+)?(?:(?:delicious|nice|beautiful|good|famous|interesting|new|great)\s+)?)(friends|photos|pictures|places|clothes|things|trips|seasons|hotels|dishes|activities|attractions|destinations|options|reasons|beaches|mountains|restaurants)\b/i);
+    if (thereIsPlural) {
+      const beFix = thereIsPlural[1].toLowerCase() === "was" ? "were" : "are";
+      const mid = thereIsPlural[2] || "";
+      const plural = thereIsPlural[3].toLowerCase();
+      const fixedThere = `there ${beFix} ${mid}${plural}`;
+      addIssue(
+        "there_is_plural",
+        thereIsPlural[0],
+        fixedThere,
+        `Trước danh từ số nhiều "${plural}" phải dùng "there ${beFix}".`,
+        thereIsPlural[0],
+        fixedThere
+      );
     }
 
     // 3. Lỗi "a / an" đi với danh từ số nhiều hoặc không đếm được
@@ -148,42 +347,138 @@
           "a_plural_" + noun,
           m[1],
           `${phraseNoArticle} / some ${phraseNoArticle}`,
-          `Không dùng "a/an" trước danh từ số nhiều hoặc không đếm được ("${noun}").`
+          `Không dùng "a/an" trước danh từ số nhiều hoặc không đếm được ("${noun}").`,
+          m[1],
+          phraseNoArticle
         );
       }
     }
 
-    // 4. Lỗi chia động từ sau prefer / enjoy / avoid / suggest
-    const gerundMatch = raw.match(/\b(prefer|enjoy|avoid|finish|suggest|mind)\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly)\b/i);
-    if (gerundMatch) {
-      const verbMap = {
-        travel: "traveling", go: "going", visit: "visiting", stay: "staying",
-        eat: "eating", try: "trying", take: "taking", explore: "exploring",
-        pack: "packing", swim: "swimming", camp: "camping", walk: "walking", fly: "flying"
-      };
-      const fixedV = verbMap[gerundMatch[2].toLowerCase()] || gerundMatch[2] + "ing";
+    // 4. Lỗi chia động từ liền sau (V-ing / to V / modal + V / giới từ + V-ing)
+    const gerundRegex = /\b(prefer|enjoy|avoid|finish|suggest|mind|like|love|hate|keep)\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|talk|share|spend|plan|book|wait|cook|shop)\b/gi;
+    let gm;
+    while ((gm = gerundRegex.exec(raw)) !== null) {
+      const v1Low = gm[1].toLowerCase();
+      const beforeChunk = raw.slice(Math.max(0, gm.index - 12), gm.index).toLowerCase();
+      if ((v1Low === "like" || v1Low === "love") && /\b(would|'d)\s+$/.test(beforeChunk)) {
+        continue;
+      }
+      const fixedV = toIng(gm[2]);
+      const fixedPhrase = `${gm[1]} ${fixedV}`;
       addIssue(
-        "gerund_after_" + gerundMatch[1].toLowerCase(),
-        gerundMatch[0],
-        `${gerundMatch[1]} ${fixedV}`,
-        `Sau động từ "${gerundMatch[1].toLowerCase()}" cần dùng danh động từ (V-ing) thay vì động từ nguyên mẫu.`
+        "gerund_after_" + v1Low,
+        gm[0],
+        fixedPhrase,
+        `Sau động từ "${v1Low}" cần dùng danh động từ V-ing ("${v1Low} ${fixedV}") thay vì nguyên mẫu.`,
+        gm[0],
+        fixedPhrase
+      );
+      break;
+    }
+
+    const toInfMatch = raw.match(/\b(would\s+like|'d\s+like|would\s+love|'d\s+love|wants?|wanted|plans?|planned|hopes?|hoped|needs?|needed|decides?|decided)\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|book|save|spend|relax|experience|join|prepare|talk|share)\b/i);
+    if (toInfMatch) {
+      const fixedToInf = `${toInfMatch[1]} to ${toInfMatch[2].toLowerCase()}`;
+      addIssue(
+        "to_inf_" + toInfMatch[1].toLowerCase().replace(/\s+/g, "_"),
+        toInfMatch[0],
+        fixedToInf,
+        `Sau "${toInfMatch[1]}" cần dùng "to + V nguyên mẫu" ("${fixedToInf}").`,
+        toInfMatch[0],
+        fixedToInf
       );
     }
 
-    // 5. Lỗi thừa to be trước động từ thường ("I am like / I am prefer / I am go")
+    const modalErrMatch = raw.match(/\b(can|could|will|would|should|must|may|might)\s+(?:to\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|relax|share|talk|save|book|prepare|spend)|(traveling|travelling|going|visiting|staying|eating|trying|taking|exploring|packing|swimming|camping|walking|flying|relaxing|sharing|talking|saving|booking|preparing|spending))\b/i);
+    if (modalErrMatch) {
+      const modal = modalErrMatch[1];
+      const baseV = (modalErrMatch[2] || ING_TO_BASE_MAP[modalErrMatch[3].toLowerCase()] || modalErrMatch[3]).toLowerCase();
+      const fixedModal = `${modal} ${baseV}`;
+      addIssue(
+        "modal_form",
+        modalErrMatch[0],
+        fixedModal,
+        `Sau động từ khuyết thiếu "${modal.toLowerCase()}" chỉ dùng động từ nguyên mẫu ("${fixedModal}").`,
+        modalErrMatch[0],
+        fixedModal
+      );
+    }
+
+    const prepGerundMatch =
+      raw.match(/\b(before|after|without)\s+(travel|go|visit|stay|eat|try|take|explore|pack|swim|camp|walk|fly|book|prepare|talk|share|relax|spend|leave)\b/i) ||
+      raw.match(/\b(for|about)\s+(go|visit|stay|eat|try|take|explore|pack|swim|camp|fly|book|prepare|talk|share|relax|spend|leave)\b/i);
+    if (prepGerundMatch) {
+      const prep = prepGerundMatch[1];
+      const fixedPrep = `${prep} ${toIng(prepGerundMatch[2])}`;
+      addIssue(
+        "prep_gerund",
+        prepGerundMatch[0],
+        fixedPrep,
+        `Sau giới từ "${prep.toLowerCase()}" cần dùng danh động từ V-ing ("${fixedPrep}").`,
+        prepGerundMatch[0],
+        fixedPrep
+      );
+    }
+
+    // 5. Lỗi tách câu / mệnh đề cụt / nối dồn và thiếu to be
+    const inTripMatch = raw.match(/\bin\s+the\s+(trip|vacation|holiday)\b/i);
+    if (inTripMatch) {
+      const fixedPrepTrip = `during the ${inTripMatch[1].toLowerCase()}`;
+      addIssue("in_the_trip", inTripMatch[0], fixedPrepTrip, `Không dùng "in the ${inTripMatch[1].toLowerCase()}"; hãy dùng "during the ..." hoặc "on the ...".`, inTripMatch[0], fixedPrepTrip);
+    }
+
+    const fragmentMatch = raw.match(/\b((?:during|on)\s+the\s+(?:trip|vacation|holiday))\s+(we|I|you|they)\s+(talk|eat|visit|take|share|play|go|stay|relax)(\s+together)?\b/i);
+    if (fragmentMatch && !hasPastCue) {
+      const beforeFrag = raw.slice(0, fragmentMatch.index).trim().toLowerCase();
+      const hasCoordBefore = /\b(and|or|so|but|because|when|while)$/.test(beforeFrag);
+      const timePhrase = fragmentMatch[1].charAt(0).toUpperCase() + fragmentMatch[1].slice(1).toLowerCase();
+      const subj = fragmentMatch[2] === "i" ? "I" : fragmentMatch[2].toLowerCase();
+      const verb = fragmentMatch[3].toLowerCase();
+      const tog = fragmentMatch[4] || "";
+      const displayFix = `${timePhrase}, ${subj} can ${verb}${tog}`;
+      const rewriteFrag = fragmentMatch.index > 0 && !hasCoordBefore ? `. ${displayFix}` : `${displayFix.charAt(0).toLowerCase() + displayFix.slice(1)}`;
+      addIssue(
+        "runon_fragment",
+        fragmentMatch[0],
+        displayFix,
+        `Nên tách câu rõ ràng và thêm "can" để diễn tả hoạt động có thể làm (${displayFix}...).`,
+        fragmentMatch[0],
+        fragmentMatch.index > 0 && !hasCoordBefore ? `. ${displayFix}` : rewriteFrag
+      );
+    }
+
+    const becNoSubjMatch = raw.match(/\bbecause\s+(?:(very|really|so|quite|too)\s+)?(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|important|necessary|amazing|boring|crowded|humid)\b/i);
+    if (becNoSubjMatch) {
+      const adv = becNoSubjMatch[1] ? becNoSubjMatch[1].toLowerCase() + " " : "";
+      const adj = becNoSubjMatch[2].toLowerCase();
+      const fixedBec = `because it is ${adv}${adj}`;
+      addIssue(
+        "because_missing_subj",
+        becNoSubjMatch[0],
+        fixedBec,
+        'Sau "because" phải là một mệnh đề đầy đủ (S + V); thiếu chủ ngữ và to be ("it is").',
+        becNoSubjMatch[0],
+        fixedBec
+      );
+    }
+
+    // 6. Lỗi thừa to be trước động từ thường ("I am like / I am prefer / I am go")
     const extraBeMatch = raw.match(/\b(i\s+am|we\s+are|they\s+are|he\s+is|she\s+is)\s+(usually\s+|often\s+|always\s+)?(like|prefer|love|enjoy|want|need|go|travel|prepare|visit|stay|live)\b/i);
     if (extraBeMatch) {
       const fixedSubj = extraBeMatch[1].replace(/\s+(am|is|are)$/i, "");
       const adv = extraBeMatch[2] ? extraBeMatch[2].trim() + " " : "";
+      const fixedExtraBe = `${fixedSubj} ${adv}${extraBeMatch[3].toLowerCase()}`;
       addIssue(
         "extra_be",
         extraBeMatch[0],
-        `${fixedSubj} ${adv}${extraBeMatch[3].toLowerCase()}`,
-        'Không dùng "am/is/are" trước động từ thường ở thì Hiện tại đơn.'
+        fixedExtraBe,
+        'Không dùng "am/is/are" trước động từ thường ở thì Hiện tại đơn.',
+        extraBeMatch[0],
+        fixedExtraBe
       );
     }
 
-    // 6. Lỗi thiếu động từ to be trước tính từ ("it very fun", ngoại trừ cụm "make/keep/find it very + adj")
+    // 7. Lỗi thiếu động từ to be trước tính từ ("it very fun" / "it fun", ngoại trừ cụm "make/keep/find it very + adj")
     const missingBeRegex = /\b(it|this|that|they|we|weather|summer|winter|spring|autumn|traveling|trip)\s+(very|really|so|quite|too)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|important|necessary|amazing)\b/gi;
     let bm;
     while ((bm = missingBeRegex.exec(raw)) !== null) {
@@ -193,76 +488,116 @@
       }
       const subj = bm[1].toLowerCase();
       const beWord = subj === "they" || subj === "we" ? "are" : "is";
+      const fixedMissingBe = `${bm[1]} ${beWord} ${bm[2]} ${bm[3]}`;
       addIssue(
         "missing_be",
         bm[0],
-        `${bm[1]} ${beWord} ${bm[2]} ${bm[3]}`,
-        `Thiếu động từ to be ("${beWord}") đứng trước tính từ "${bm[3]}".`
+        fixedMissingBe,
+        `Thiếu động từ to be ("${beWord}") đứng trước tính từ "${bm[3]}".`,
+        bm[0],
+        fixedMissingBe
       );
       break;
     }
 
-    // 7. Lỗi giới từ thường gặp ("go to travel", "go to home", "by foot", "in the beach")
+    if (!seenKeys.has("missing_be")) {
+      const missingBeShortRegex = /\b(it|they|we)\s+(fun|safe|good|nice|great|hot|cold|cool|warm|cheap|expensive|interesting|convenient|comfortable|beautiful|relaxing|amazing|boring|crowded|humid)\b/gi;
+      let bms;
+      while ((bms = missingBeShortRegex.exec(raw)) !== null) {
+        const beforeChunk = raw.slice(Math.max(0, bms.index - 18), bms.index).toLowerCase();
+        if (/\b(make|makes|made|keep|keeps|kept|find|found|feel|feels|consider|call|sound|sounds|seem|seems|look|looks)\s+$/.test(beforeChunk)) {
+          continue;
+        }
+        const subj = bms[1].toLowerCase();
+        const beWord = subj === "they" || subj === "we" ? "are" : "is";
+        const fixedShortBe = `${bms[1]} ${beWord} ${bms[2]}`;
+        addIssue(
+          "missing_be_short",
+          bms[0],
+          fixedShortBe,
+          `Thiếu động từ to be ("${beWord}") trước tính từ "${bms[2]}".`,
+          bms[0],
+          fixedShortBe
+        );
+        break;
+      }
+    }
+
+    // 8. Lỗi giới từ thường gặp ("go to travel", "go to home", "by foot", "in the beach")
     const prepErr = raw.match(/\b(go|going|went)\s+to\s+(travel|traveling|travelling|camping|swimming|shopping|sightseeing|home|abroad)\b/i);
     if (prepErr) {
+      const fixedGo = `${prepErr[1]} ${prepErr[2].toLowerCase()}`;
       addIssue(
         "go_to_err",
         prepErr[0],
-        `${prepErr[1]} ${prepErr[2].toLowerCase()}`,
-        `Không dùng giới từ "to" trong cụm "${prepErr[1].toLowerCase()} ${prepErr[2].toLowerCase()}".`
+        fixedGo,
+        `Không dùng giới từ "to" trong cụm "${fixedGo}".`,
+        prepErr[0],
+        fixedGo
       );
     }
-    if (/\bby\s+foot\b/i.test(lower)) {
-      addIssue("by_foot", "by foot", "on foot", 'Đi bộ phải dùng cụm cố định "on foot" (không dùng "by foot").');
+    const byFootMatch = raw.match(/\bby\s+foot\b/i);
+    if (byFootMatch) {
+      addIssue("by_foot", byFootMatch[0], "on foot", 'Đi bộ phải dùng cụm cố định "on foot" (không dùng "by foot").', byFootMatch[0], "on foot");
     }
-    if (/\bin\s+the\s+beach\b/i.test(lower)) {
-      addIssue("in_beach", "in the beach", "on the beach / at the beach", 'Với bãi biển hãy dùng "on the beach" hoặc "at the beach".');
+    const inBeachMatch = raw.match(/\bin\s+the\s+beach\b/i);
+    if (inBeachMatch) {
+      addIssue("in_beach", inBeachMatch[0], "on the beach / at the beach", 'Với bãi biển hãy dùng "on the beach" hoặc "at the beach".', inBeachMatch[0], "on the beach");
     }
 
-    // 8. Lỗi many / several + danh từ đếm được số ít
+    // 9. Lỗi many / several + danh từ đếm được số ít ("four season", "many friend")
     const manySingMatch = raw.match(/\b(many|several|two|three|four|five)\s+(friend|photo|picture|place|hotel|trip|season|thing|day|city|country|month)\b/i);
     if (manySingMatch) {
       const nounLow = manySingMatch[2].toLowerCase();
       const pluralNoun = nounLow === "city" ? "cities" : nounLow === "country" ? "countries" : nounLow + "s";
+      const fixedMany = `${manySingMatch[1]} ${pluralNoun}`;
       addIssue(
         "many_singular",
         manySingMatch[0],
-        `${manySingMatch[1]} ${pluralNoun}`,
-        `Sau "${manySingMatch[1].toLowerCase()}" cần chia danh từ ở dạng số nhiều ("${pluralNoun}").`
+        fixedMany,
+        `Sau "${manySingMatch[1].toLowerCase()}" cần chia danh từ ở dạng số nhiều ("${pluralNoun}").`,
+        manySingMatch[0],
+        fixedMany
       );
     }
 
-    // 9. Lỗi chia động từ ngôi thứ 3 số ít ("it help", "it make", "which help")
+    // 10. Lỗi chia động từ ngôi thứ 3 số ít ("it help", "it make", "which help")
     const thirdSgMatch = raw.match(/\b(it|this|that|which)\s+(help|make|give|bring|take|need|cost|have)\b/i);
     if (thirdSgMatch) {
       const vLow = thirdSgMatch[2].toLowerCase();
       const fixed3 = vLow === "have" ? "has" : vLow + "s";
+      const fixed3Sg = `${thirdSgMatch[1]} ${fixed3}`;
       addIssue(
         "third_sg",
         thirdSgMatch[0],
-        `${thirdSgMatch[1]} ${fixed3}`,
-        `Chủ ngữ số ít "${thirdSgMatch[1]}" cần thêm "-s" vào động từ ("${fixed3}").`
+        fixed3Sg,
+        `Chủ ngữ số ít "${thirdSgMatch[1]}" cần thêm "-s" vào động từ ("${fixed3}").`,
+        thirdSgMatch[0],
+        fixed3Sg
       );
     }
 
-    // 10. Lỗi "because of + mệnh đề"
+    // 11. Lỗi "because of + mệnh đề"
     const becClause = raw.match(/\bbecause\s+of\s+(i|we|they|it|you)\s+(can|like|love|have|want|need|is|are|am)\b/i);
     if (becClause) {
+      const fixedBecClause = `because ${becClause[1]} ${becClause[2]}`;
       addIssue(
         "because_of_clause",
         becClause[0],
-        `because ${becClause[1]} ${becClause[2]}`,
-        '"because of" chỉ đi với danh từ/V-ing; trước một mệnh đề đầy đủ (S + V) dùng "because".'
+        fixedBecClause,
+        '"because of" chỉ đi với danh từ/V-ing; trước một mệnh đề đầy đủ (S + V) dùng "because".',
+        becClause[0],
+        fixedBecClause
       );
     }
 
-    // 11. Kiểm tra thì theo câu hỏi kế hoạch / dự định tương lai (plans_q1, plans_q2, trips_q2)
+    // 12. Kiểm tra thì theo câu hỏi kế hoạch / dự định tương lai (plans_q1, plans_q2, trips_q2)
     const isFuturePrompt =
       question &&
       (question.id === "plans_q1" ||
         question.id === "plans_q2" ||
         question.id === "trips_q2" ||
-        /would like|next trip|next month|plans/i.test(question.prompt || ""));
+        /would like|next trip|next month|plans/i.test(promptText));
     if (
       isFuturePrompt &&
       raw.split(/\s+/).length >= 12 &&
@@ -276,10 +611,10 @@
       );
     }
 
-    // 12. Lỗi lặp cấu trúc đơn quá nhiều trong bài nói ("we can" >= 4 lần)
+    // 13. Lỗi lặp cấu trúc đơn quá nhiều trong bài nói ("we can" / "I can" >= 4 lần)
     const weCanCount = (lower.match(/\bwe can\b/g) || []).length;
     const iCanCount = (lower.match(/\bi can\b/g) || []).length;
-    if ((weCanCount >= 4 || iCanCount >= 4) && issues.length < 3) {
+    if (weCanCount >= 4 || iCanCount >= 4) {
       const repeated = weCanCount >= 4 ? "we can" : "I can";
       addIssue(
         "repetitive_can",
@@ -290,6 +625,43 @@
     }
 
     return issues;
+  }
+
+  function buildCorrectedTranscript(transcript, issues) {
+    let rewritten = String(transcript || "").trim();
+    if (!rewritten || !issues || issues.length === 0) return "";
+
+    let didRewrite = false;
+    const patches = issues
+      .filter(err => err.replaceTarget && err.rewriteText)
+      .slice()
+      .sort((a, b) => b.replaceTarget.length - a.replaceTarget.length);
+
+    patches.forEach(err => {
+      const escaped = err.replaceTarget.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`\\b${escaped}\\b`, "i");
+      if (re.test(rewritten)) {
+        rewritten = rewritten.replace(re, err.rewriteText);
+        didRewrite = true;
+      }
+    });
+
+    if (!didRewrite) return "";
+
+    rewritten = rewritten
+      .replace(/\s+/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
+      .replace(/,\s*\./g, ".")
+      .replace(/\.{2,}/g, ".")
+      .replace(/\bi\b/g, "I")
+      .replace(/\.\s+([a-z])/g, (_, ch) => `. ${ch.toUpperCase()}`)
+      .trim();
+
+    if (rewritten.length > 0) {
+      rewritten = rewritten.charAt(0).toUpperCase() + rewritten.slice(1);
+      if (!/[.!?]$/.test(rewritten)) rewritten += ".";
+    }
+    return rewritten;
   }
 
   function roundHalfStep(score) {
@@ -359,71 +731,78 @@
     const usedCompound = COMPOUND_MARKERS.filter(m => hasWholeWordOrPhrase(lower, m));
 
     const errors = detectMainErrors(transcript, question);
+    const correctedSentence = buildCorrectedTranscript(transcript, errors);
 
     // ------------------------------------------------------------------
-    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP SPEAKING PART 1
-    // (4.0 - 5.5: B1 | 6.0 - 8.5: B2 | < 4.0: Chưa đạt B1)
+    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP SPEAKING PART 1 (NGHIÊM TÚC & SÁT THỰC TẾ)
+    // - < 4.0     : Chưa đạt B1
+    // - 4.0 - 5.5 : Đạt mức B1 (tối thiểu >= 25 từ, đúng trọng tâm, <= 2 lỗi)
+    // - 6.0 - 8.5 : Đạt mức B2 (>= 42 từ, đủ từ vựng & ngữ pháp B2, <= 1 lỗi)
     // ------------------------------------------------------------------
-    // 1. Task Development & Length (0 - 2.3 pts)
-    let devPts = 0.6;
-    if (wordCount >= 60) devPts = 2.3;
-    else if (wordCount >= 48) devPts = 1.95;
-    else if (wordCount >= 34) devPts = 1.6;
-    else if (wordCount >= 22) devPts = 1.35;
-    else if (wordCount >= 14) devPts = 1.05;
+    // 1. Task Development & Length (0.3 - 2.5 pts)
+    let devPts = 0.3;
+    if (wordCount >= 55) devPts = 2.5;
+    else if (wordCount >= 42) devPts = 2.15;
+    else if (wordCount >= 34) devPts = 1.8;
+    else if (wordCount >= 25) devPts = 1.5;
+    else if (wordCount >= 15) devPts = 1.0;
+    else if (wordCount >= 10) devPts = 0.65;
 
-    // 2. Vocabulary & Topic Lexical Resource (0 - 2.5 pts)
-    let vocabPts = 0.7 + Math.min(0.45, uniqueDomainWords.length * 0.08);
-    if (b1SampleHits.length > 0) vocabPts += Math.min(0.3, b1SampleHits.length * 0.1);
-    vocabPts += Math.min(1.05, allB2Lexis.length * 0.28);
+    // 2. Vocabulary & Topic Lexical Resource (0.4 - 2.5 pts)
+    let vocabPts = matchedDomainCount === 0 ? 0.4 : 0.85 + Math.min(0.45, uniqueDomainWords.length * 0.08);
+    if (b1SampleHits.length > 0) vocabPts += Math.min(0.25, b1SampleHits.length * 0.09);
+    vocabPts += Math.min(1.0, allB2Lexis.length * 0.28);
     vocabPts = Math.min(2.5, vocabPts);
 
-    // 3. Grammar Range & Accuracy (0 - 2.5 pts)
-    let gramPts = 1.05;
-    if (usedCompound.length > 0) gramPts += 0.2;
-    if (usedComplex.length > 0) gramPts += 0.3;
+    // 3. Grammar Range (0.8 - 2.35 pts; lỗi trừ trực tiếp bên dưới)
+    let gramPts = wordCount >= 25 ? 1.05 : 0.8;
+    if (usedCompound.length > 0) gramPts += 0.15;
+    if (usedComplex.length > 0 && wordCount >= 20) gramPts += 0.25;
     if (usedRelative.length > 0) gramPts += 0.45;
     if (usedDiscourse.length >= 1) gramPts += 0.25;
     if (usedDiscourse.length >= 2) gramPts += 0.15;
-    gramPts -= Math.min(1.0, errors.length * 0.35);
-    gramPts = Math.max(0.4, Math.min(2.5, gramPts));
 
-    // 4. Fluency & Delivery Pacing (0 - 1.2 pts)
-    let fluPts = 0.6;
-    if (durationSec >= 24 && wordCount >= 44) fluPts = 1.0;
-    else if (durationSec >= 15 && wordCount >= 25) fluPts = 0.85;
-    else if (wordCount < 14) fluPts = 0.35;
+    // 4. Fluency & Delivery Pacing (0.25 - 1.2 pts)
+    let fluPts = 0.35;
+    if (wordCount >= 40) fluPts = 1.05;
+    else if (wordCount >= 25) fluPts = 0.85;
+    else if (wordCount >= 15) fluPts = 0.55;
     if (usedDiscourse.length >= 1 && wordCount >= 45) fluPts = Math.min(1.2, fluPts + 0.15);
+    if (durationSec >= 12 && wordCount / durationSec < 0.75) {
+      fluPts = Math.max(0.25, fluPts - 0.2);
+    }
 
-    let rawScore = devPts + vocabPts + gramPts + fluPts;
+    // Trừ trực tiếp 0.55 điểm cho mỗi lỗi phát hiện được
+    let rawScore = devPts + vocabPts + gramPts + fluPts - errors.length * 0.55;
 
-    // Phân định rạch ròi B1 (4.0-5.5) vs B2 (6.0-8.5) theo chuẩn chấm VSTEP thật:
-    // B2 đòi hỏi đồng thời: triển khai đủ dài (>= 35 từ) + từ vựng mức B2 + ngữ pháp/từ nối B2
+    const isOffTopic = matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0;
     const hasB2Lexis = allB2Lexis.length >= 3 || (allB2Lexis.length >= 2 && (usedRelative.length > 0 || usedDiscourse.length > 0));
     const hasB2Grammar = usedRelative.length > 0 || usedDiscourse.length > 0;
 
-    if (matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0) {
-      rawScore = Math.min(rawScore, 3.0);
-    } else if (wordCount < 12) {
+    if (isOffTopic) {
+      rawScore = Math.min(rawScore, 2.5);
+    } else if (wordCount < 15) {
+      rawScore = Math.min(rawScore, 2.5);
+    } else if (wordCount < 25) {
+      rawScore = Math.min(rawScore, errors.length >= 2 ? 2.5 : 3.5);
+    } else if (errors.length >= 3) {
       rawScore = Math.min(rawScore, 3.5);
-    } else if (wordCount < 22) {
-      rawScore = Math.min(rawScore, 4.5);
-    } else if (!hasB2Lexis || wordCount < 35 || (errors.length >= 2 && !hasB2Grammar)) {
-      // Thuộc khung B1 (tối đa 5.5) nếu từ vựng chưa đạt mức B2 hoặc bài chưa phát triển đủ ý B2
-      rawScore = Math.min(rawScore, 5.5);
+    } else if (errors.length >= 2 || wordCount < 42 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
+      // Khung B1 tối đa 5.5 (bài ngắn 25-34 từ tối đa 4.5)
+      rawScore = Math.min(rawScore, wordCount < 35 ? 4.5 : 5.5);
     } else {
-      // Đủ điều kiện từ vựng & phát triển ý để bước vào khung B2 (tối thiểu 6.0 nếu ít lỗi)
+      // Đủ chuẩn vào khung B2 (6.0 - 8.5)
       if (errors.length === 0) {
-        rawScore = Math.max(rawScore, hasB2Grammar ? 6.5 : 6.0);
+        rawScore = Math.max(rawScore, 6.5);
       } else {
         rawScore = Math.min(rawScore, 6.5);
       }
-      if (wordCount < 60 && allB2Lexis.length < 4) {
+      if (wordCount < 55 && allB2Lexis.length < 4) {
         rawScore = Math.min(rawScore, 7.5);
       }
     }
 
-    let finalScore = roundHalfStep(Math.max(1.5, Math.min(8.5, rawScore)));
+    const finalScore = roundHalfStep(Math.max(1.5, Math.min(8.5, rawScore)));
 
     let levelLabel = "Chưa đạt B1";
     let badgeTone = "below";
@@ -435,37 +814,30 @@
       badgeTone = "b1";
     }
 
-    const goodPoints = [];
-    const usedVocabDisplay = Array.from(new Set([...b2SampleHits, ...allB2Lexis, ...b1SampleHits])).slice(0, 4);
-    if (usedVocabDisplay.length > 0) {
-      goodPoints.push(`Từ vựng chủ đề: ${usedVocabDisplay.join(", ")}.`);
-    }
-    if (usedComplex.length > 0 || usedRelative.length > 0) {
-      const structures = [...usedComplex, ...usedRelative].slice(0, 3).join(", ");
-      goodPoints.push(`Cấu trúc câu: đã dùng từ nối phức / mệnh đề quan hệ (${structures}).`);
-    }
-
     const timeNote = durationSec ? ` / ${durationSec} giây` : "";
-    let summary = "";
-    if (badgeTone === "b2") {
-      summary = `Bài nói trôi chảy (${wordCount} từ${timeNote}), triển khai ý đầy đủ ở mức B2.`;
-    } else if (badgeTone === "b1") {
-      summary = `Bài nói trả lời đúng trọng tâm ở mức B1 (${wordCount} từ${timeNote}), truyền đạt được ý chính.`;
-    } else if (matchedDomainCount === 0) {
-      summary = "Nội dung câu trả lời hiện chưa bám sát từ khóa trọng tâm của câu hỏi đề bài.";
-    } else {
-      summary = `Câu trả lời còn ngắn (${wordCount} từ), nên bổ sung thêm 1–2 câu giải thích hoặc ví dụ để đạt mức B1.`;
+    const notes = [];
+    if (errors.length === 0) {
+      notes.push(`Không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
     }
 
-    let tip = "";
-    if (badgeTone === "below") {
-      tip = "Gợi ý: Nói ít nhất 2–3 câu (~25–40 từ) gồm câu trả lời thẳng, lý do (because...) và 1 ví dụ ngắn.";
+    if (isOffTopic) {
+      notes.push("Nội dung chưa bám sát từ khóa câu hỏi; cần trả lời trực tiếp vào trọng tâm đề bài.");
+    } else if (wordCount < 25) {
+      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 25–40 từ (2–3 câu rõ ý kèm lý do hoặc ví dụ) để đạt mức B1 (4.0+).`);
+    } else if (badgeTone === "below") {
+      notes.push(`Bài nói còn ${errors.length} lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); cần sửa các lỗi trên để đạt mức B1 (4.0+).`);
     } else if (badgeTone === "b1") {
-      tip = "Gợi ý lên B2 (6.0+): Thêm 1 từ nối (Moreover / Especially), 1 mệnh đề quan hệ (, which helps...) và dùng thêm từ vựng ở Mục V.";
+      if (wordCount < 42) {
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy mở rộng câu trả lời dài hơn (~45+ từ), thêm từ vựng B2 và mệnh đề quan hệ (, which...).`);
+      } else if (errors.length > 0) {
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Hãy sửa lỗi trên và dùng thêm từ nối/từ vựng B2 để hướng tới mức 6.0+.`);
+      } else {
+        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy dùng thêm từ vựng ở Mục V và cấu trúc mở rộng (Moreover / , which...).`);
+      }
     } else if (errors.length > 0) {
-      tip = "Gợi ý: Chỉ cần chỉnh các lỗi nhỏ bên dưới để giữ vững mức 7.0–7.5+.";
+      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}). Khắc phục lỗi nhỏ bên trên để giữ chắc mức 7.0–8.0.`);
     } else {
-      tip = "Gợi ý: Duy trì tốc độ nói đều, tự nhiên và nhấn trọng âm vào các từ khóa chính.";
+      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}), triển khai ý mạch lạc và dùng được từ vựng/cấu trúc nâng cao.`);
     }
 
     return {
@@ -476,10 +848,9 @@
       badgeTone,
       wordCount,
       durationSec,
-      summary,
-      goodPoints,
       errors,
-      tip
+      correctedSentence,
+      notes
     };
   }
 
@@ -491,31 +862,29 @@
         ? `<span class="ai-eval-score-pill tone-${esc(res.badgeTone)}">${esc(res.scoreText)} / 10 · ${esc(res.levelLabel)}</span>`
         : `<span class="ai-eval-score-pill tone-neutral">${esc(res.levelLabel)}</span>`;
 
-    const items = [];
-    if (res.summary) items.push(res.summary);
-    (res.goodPoints || []).forEach(pt => items.push(pt));
-    if (res.hasTranscript && (!res.errors || res.errors.length === 0)) {
-      items.push("Ngữ pháp: Không phát hiện lỗi ngữ pháp nghiêm trọng trong transcript.");
-    }
-    if (res.tip) items.push(res.tip);
-
-    return `
-      <div class="ai-eval-card">
-        <div class="ai-eval-header">
-          <div class="ai-eval-title-wrap">
-            <span class="ai-eval-title">Đánh giá &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
-            <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
+    if (!res.hasTranscript) {
+      const fallbackItems = [];
+      if (res.summary) fallbackItems.push(res.summary);
+      if (res.tip) fallbackItems.push(res.tip);
+      return `
+        <div class="ai-eval-card">
+          <div class="ai-eval-header">
+            <div class="ai-eval-title-wrap">
+              <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
+              <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
+            </div>
+            ${scorePill}
           </div>
-          ${scorePill}
+          <ul class="ai-eval-list">
+            ${fallbackItems.map(text => `<li>${esc(text)}</li>`).join("")}
+          </ul>
         </div>
+      `;
+    }
 
-        <ul class="ai-eval-list">
-          ${items.map(text => `<li>${esc(text)}</li>`).join("")}
-        </ul>
-
-        ${
-          res.errors && res.errors.length > 0
-            ? `
+    const errorsHtml =
+      res.errors && res.errors.length > 0
+        ? `
           <div class="ai-eval-errors-list">
             ${res.errors
               .map(
@@ -533,8 +902,38 @@
               .join("")}
           </div>
         `
-            : ""
-        }
+        : "";
+
+    const rewriteHtml = res.correctedSentence
+      ? `
+        <div class="ai-eval-rewrite">
+          <div class="ai-eval-rewrite-label">Gợi ý diễn đạt lại đúng theo ý của bạn:</div>
+          <div class="ai-eval-rewrite-text">“${esc(res.correctedSentence)}”</div>
+        </div>
+      `
+      : "";
+
+    const notesHtml =
+      res.notes && res.notes.length > 0
+        ? `
+          <ul class="ai-eval-list">
+            ${res.notes.map(text => `<li>${esc(text)}</li>`).join("")}
+          </ul>
+        `
+        : "";
+
+    return `
+      <div class="ai-eval-card">
+        <div class="ai-eval-header">
+          <div class="ai-eval-title-wrap">
+            <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
+            <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
+          </div>
+          ${scorePill}
+        </div>
+        ${errorsHtml}
+        ${rewriteHtml}
+        ${notesHtml}
       </div>
     `;
   }
