@@ -1,5 +1,5 @@
 // ==========================================================================
-// SPEAKING PART 1 — 5 STANDALONE TOPICS (TRAVELLING, TRIPS, TRAVEL PLANS, SEASONS, WEATHER)
+// SPEAKING PART 1 — 10 STANDALONE TOPICS (TRAVELLING, TRIPS, TRAVEL PLANS, SEASONS, WEATHER, AI TOOLS, MOBILE PHONES, EMAIL, ADVERTISING, YOUR BIGGEST ACHIEVEMENT)
 // Áp dụng công thức A-R-E (Answer + Reason -> Example -> Feeling/Result)
 // Thiết kế ngắn gọn, dễ đọc cho học sinh yếu (B1: ~29–36 từ | B2: ~34–40 từ)
 // Mục V: 8 từ/cụm từ mở rộng có đầy đủ IPA & ví dụ cho mỗi Level
@@ -2608,6 +2608,2616 @@ window.SPEAKING_TOPICS = [
                 pos: "v. phr.",
                 meaning: "ở trong nhà",
                 example: "I prefer to <strong>stay indoors</strong> and read when it storms."
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 06: AI TOOLS
+  // ==========================================================================
+  {
+    id: "topic-ai-tools",
+    number: "06",
+    title: "AI tools",
+    titleVi: "Công cụ AI & Ứng dụng trí tuệ nhân tạo",
+    description:
+      "Luyện 3 câu hỏi về việc sử dụng các ứng dụng AI trong học tập và công việc, lý do bạn dùng chúng và mức độ phổ biến của AI ở Việt Nam.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "ai_q1",
+        num: 1,
+        prompt: "Do you use any AI applications?",
+        analysis: {
+          questionType: "Câu hỏi Yes/No về thói quen sử dụng ('Do you use any...'). Áp dụng công thức A-R-E (Yes → Specific app + Reason → Example → Feeling).",
+          tense: "Hiện tại đơn ('Yes, I do. I use...' hoặc 'Yes, I really do. Actually,...').",
+          length: "3 câu ngắn gọn (~33–39 từ), dùng tình huống học tiếng Anh thực tế."
+        },
+        pitfalls: [
+          "Chỉ nói 'Yes, I do.' rồi dừng lại mà không nêu tên ứng dụng cụ thể (như ChatGPT) và ví dụ cách dùng.",
+          "Quên chia '-s' ở động từ khi chủ ngữ là 'it' ('it helps me', 'which really boosts...').",
+          "Quên 'to' trong cấu trúc 'ask + somebody/it + to V' (đúng: 'ask it to check')."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Trả lời + Lý do)",
+                text: "Khẳng định có dùng ChatGPT mỗi ngày để học tốt hơn: Yes, I do. I use ChatGPT almost every day because it helps me study better."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Nhờ kiểm tra bài viết tiếng Anh và giải thích bài khó: For example, I ask it to check my English writing and explain hard lessons."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'feel ready')",
+                text: "Chốt cảm giác tự tin vào lớp: It makes me feel ready for class."
+              }
+            ],
+            modelAnswer:
+              "Yes, I do. I use ChatGPT almost every day because it helps me <strong>study better</strong>. For example, I ask it to check my English writing and explain hard lessons. It makes me <strong>feel ready</strong> for class.",
+            vocab: [
+              {
+                word: "study better",
+                ipa: "/ˈstʌdi ˈbetər/",
+                pos: "v. phr.",
+                meaning: "học tập hiệu quả hơn",
+                example: "I use ChatGPT every day because it helps me <strong>study better</strong>."
+              },
+              {
+                word: "feel ready",
+                ipa: "/fiːl ˈredi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy sẵn sàng",
+                example: "Reviewing lessons with AI makes me <strong>feel ready</strong> for class."
+              },
+              {
+                word: "AI applications",
+                ipa: "/ˌeɪˈaɪ ˌæplɪˈkeɪʃnz/",
+                pos: "n. phr.",
+                meaning: "các ứng dụng trí tuệ nhân tạo",
+                example: "Many students use <strong>AI applications</strong> on their phones."
+              },
+              {
+                word: "check grammar",
+                ipa: "/tʃek ˈɡræmər/",
+                pos: "v. phr.",
+                meaning: "kiểm tra lỗi ngữ pháp",
+                example: "I ask it to <strong>check grammar</strong> in my homework."
+              },
+              {
+                word: "explain hard lessons",
+                ipa: "/ɪkˈspleɪn hɑːrd ˈlesnz/",
+                pos: "v. phr.",
+                meaning: "giải thích những bài học khó",
+                example: "This app can <strong>explain hard lessons</strong> in simple words."
+              },
+              {
+                word: "translate new words",
+                ipa: "/trænzˈleɪt nuː wɜːrdz/",
+                pos: "v. phr.",
+                meaning: "dịch từ vựng mới",
+                example: "I often use AI tools to <strong>translate new words</strong>."
+              },
+              {
+                word: "easy to use",
+                ipa: "/ˈiːzi tuː juːz/",
+                pos: "adj. phr.",
+                meaning: "dễ sử dụng",
+                example: "ChatGPT is free and very <strong>easy to use</strong>."
+              },
+              {
+                word: "save time",
+                ipa: "/seɪv taɪm/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm thời gian",
+                example: "Smart apps help me <strong>save time</strong> every evening."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Yes, I really do + go-to)",
+                text: "Dùng 'Actually, ChatGPT is my go-to AI app' và nêu tính tiện lợi cho lịch sinh hoạt hằng ngày (daily routine)."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Lên ý tưởng (brainstorm ideas) và kiểm tra ngữ pháp trước khi nộp bài."
+              },
+              {
+                label: "Kết quả (, which really boosts...)",
+                text: "Chốt bằng mệnh đề quan hệ ', which really boosts my productivity' (nâng cao hiệu suất)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Yes, I really do.</strong> <strong>Actually,</strong> ChatGPT is my <strong>go-to</strong> AI app because it is super <strong>convenient</strong> for my <strong>daily routine</strong>. For example, I use it to <strong>brainstorm ideas</strong> and check my grammar, <strong>which really boosts my productivity</strong>.",
+            vocab: [
+              {
+                word: "go-to",
+                ipa: "/ˈɡoʊ tuː/",
+                pos: "adj.",
+                meaning: "lựa chọn quen thuộc, ưu tiên hàng đầu",
+                example: "ChatGPT is my <strong>go-to</strong> AI app for studying."
+              },
+              {
+                word: "convenient",
+                ipa: "/kənˈviːniənt/",
+                pos: "adj.",
+                meaning: "thuận tiện, tiện lợi",
+                example: "AI tools are super <strong>convenient</strong> for my daily routine."
+              },
+              {
+                word: "daily routine",
+                ipa: "/ˈdeɪli ruːˈtiːn/",
+                pos: "n. phr.",
+                meaning: "thói quen sinh hoạt hằng ngày",
+                example: "Checking my tasks with AI is part of my <strong>daily routine</strong>."
+              },
+              {
+                word: "brainstorm ideas",
+                ipa: "/ˈbreɪnstɔːrm aɪˈdiːəz/",
+                pos: "v. phr.",
+                meaning: "tìm và phát triển ý tưởng",
+                example: "I use ChatGPT to <strong>brainstorm ideas</strong> for speaking topics."
+              },
+              {
+                word: "boosts my productivity",
+                ipa: "/buːsts maɪ ˌprɒdʌkˈtɪvəti/",
+                pos: "v. phr.",
+                meaning: "tăng năng suất học tập / làm việc",
+                example: "Using AI smartly really <strong>boosts my productivity</strong>."
+              },
+              {
+                word: "voice assistant",
+                ipa: "/vɔɪs əˈsɪstənt/",
+                pos: "n. phr.",
+                meaning: "trợ lý giọng nói",
+                example: "Sometimes I ask a <strong>voice assistant</strong> on my phone."
+              },
+              {
+                word: "user-friendly",
+                ipa: "/ˌjuːzər ˈfrendli/",
+                pos: "adj.",
+                meaning: "thân thiện với người dùng",
+                example: "Modern AI apps have a very <strong>user-friendly</strong> design."
+              },
+              {
+                word: "save hours of work",
+                ipa: "/seɪv ˈaʊərz əv wɜːrk/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm hàng giờ làm việc",
+                example: "Smart tools can <strong>save hours of work</strong> on reports."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "ai_q2",
+        num: 2,
+        prompt: "Why do you use them?",
+        analysis: {
+          questionType: "Câu hỏi lý do ('Why do you use them?'). Áp dụng A-R-E (Direct Reason → Example → Feeling/Result).",
+          tense: "Hiện tại đơn ('I use AI tools because...' hoặc 'Honestly, I tend to...').",
+          length: "3 câu ngắn gọn (~34–38 từ), gắn với việc học, thi cử và hạn chót bài tập."
+        },
+        pitfalls: [
+          "Chỉ nói mỗi 'Because it is good' hoặc 'Because it helps me' mà thiếu ví dụ cụ thể.",
+          "Dùng nhầm 'busy for school' thay vì 'busy with school'.",
+          "Nói 'explain me' thiếu giới từ 'to' (đúng: 'explain new words to me' hoặc 'explain new words in a simple way')."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Lý do chính - tiết kiệm thời gian)",
+                text: "I use AI tools because they save a lot of time when I am busy with school."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Giải thích từ mới dễ hiểu: For example, they explain new words in a simple way."
+              },
+              {
+                label: "Cảm xúc / Kết quả (Tái sử dụng 'reduce stress', 'final exams')",
+                text: "Giúp giảm căng thẳng trước kỳ thi cuối kỳ: This helps me reduce stress before my final exams."
+              }
+            ],
+            modelAnswer:
+              "I use AI tools because they <strong>save a lot of time</strong> when I am <strong>busy with school</strong>. For example, they explain new words in a simple way. This helps me <strong>reduce stress</strong> before my <strong>final exams</strong>.",
+            vocab: [
+              {
+                word: "save a lot of time",
+                ipa: "/seɪv ə lɒt əv taɪm/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm rất nhiều thời gian",
+                example: "AI tools <strong>save a lot of time</strong> when I review lessons."
+              },
+              {
+                word: "busy with school",
+                ipa: "/ˈbɪzi wɪð skuːl/",
+                pos: "adj. phr.",
+                meaning: "bận rộn với việc học",
+                example: "They are helpful when I am <strong>busy with school</strong>."
+              },
+              {
+                word: "reduce stress",
+                ipa: "/rɪˈduːs stres/",
+                pos: "v. phr.",
+                meaning: "giảm căng thẳng",
+                example: "Preparing early helps me <strong>reduce stress</strong>."
+              },
+              {
+                word: "final exams",
+                ipa: "/ˈfaɪnl ɪɡˈzæmz/",
+                pos: "n. phr.",
+                meaning: "các kỳ thi cuối kỳ",
+                example: "AI apps help me review before my <strong>final exams</strong>."
+              },
+              {
+                word: "in a simple way",
+                ipa: "/ɪn ə ˈsɪmpl weɪ/",
+                pos: "adv. phr.",
+                meaning: "theo cách đơn giản, dễ hiểu",
+                example: "They explain grammar rules <strong>in a simple way</strong>."
+              },
+              {
+                word: "learn faster",
+                ipa: "/lɜːrn ˈfæstər/",
+                pos: "v. phr.",
+                meaning: "học nhanh hơn",
+                example: "Good examples help me <strong>learn faster</strong>."
+              },
+              {
+                word: "do homework",
+                ipa: "/duː ˈhoʊmwɜːrk/",
+                pos: "v. phr.",
+                meaning: "làm bài tập về nhà",
+                example: "I use AI to check ideas when I <strong>do homework</strong>."
+              },
+              {
+                word: "get quick answers",
+                ipa: "/ɡet kwɪk ˈænsərz/",
+                pos: "v. phr.",
+                meaning: "nhận được câu trả lời nhanh",
+                example: "Students like AI because they can <strong>get quick answers</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Honestly, I tend to rely on...)",
+                text: "Nêu lý do giúp làm việc ngăn nắp (stay organized) khi có hạn chót gấp (tight deadlines)."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Tóm tắt bài viết dài (summarize long articles) chỉ trong vài giây."
+              },
+              {
+                label: "Kết quả (, which... + peace of mind)",
+                text: "Tiết kiệm hàng giờ đồng hồ và mang lại sự an tâm (peace of mind)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Honestly, I tend to</strong> <strong>rely on</strong> AI apps because they help me <strong>stay organized</strong> when I have <strong>tight deadlines</strong>. For example, they can <strong>summarize long articles</strong> in seconds, <strong>which</strong> saves me hours and gives me real <strong>peace of mind</strong>.",
+            vocab: [
+              {
+                word: "rely on",
+                ipa: "/rɪˈlaɪ ɒn/",
+                pos: "phr. v.",
+                meaning: "dựa vào, tin dùng",
+                example: "I often <strong>rely on</strong> AI apps during busy weeks."
+              },
+              {
+                word: "stay organized",
+                ipa: "/steɪ ˈɔːrɡənaɪzd/",
+                pos: "v. phr.",
+                meaning: "duy trì sự gọn gàng, ngăn nắp",
+                example: "Smart checklists help me <strong>stay organized</strong>."
+              },
+              {
+                word: "tight deadlines",
+                ipa: "/taɪt ˈdedlaɪnz/",
+                pos: "n. phr.",
+                meaning: "hạn chót gấp gáp",
+                example: "AI is a lifesaver when I have <strong>tight deadlines</strong>."
+              },
+              {
+                word: "summarize long articles",
+                ipa: "/ˈsʌməraɪz lɔːŋ ˈɑːrtɪklz/",
+                pos: "v. phr.",
+                meaning: "tóm tắt các bài viết dài",
+                example: "ChatGPT can <strong>summarize long articles</strong> in seconds."
+              },
+              {
+                word: "peace of mind",
+                ipa: "/piːs əv maɪnd/",
+                pos: "n. phr.",
+                meaning: "cảm giác yên tâm",
+                example: "Checking my work twice gives me real <strong>peace of mind</strong>."
+              },
+              {
+                word: "double-check",
+                ipa: "/ˌdʌbl ˈtʃek/",
+                pos: "v.",
+                meaning: "kiểm tra lại lần nữa cho chắc",
+                example: "I always <strong>double-check</strong> important emails with AI."
+              },
+              {
+                word: "workload",
+                ipa: "/ˈwɜːrkloʊd/",
+                pos: "n.",
+                meaning: "khối lượng công việc / bài vở",
+                example: "AI tools make my heavy <strong>workload</strong> easier to manage."
+              },
+              {
+                word: "instant feedback",
+                ipa: "/ˈɪnstənt ˈfiːdbæk/",
+                pos: "n. phr.",
+                meaning: "phản hồi tức thì",
+                example: "Learners enjoy getting <strong>instant feedback</strong> on writing."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "ai_q3",
+        num: 3,
+        prompt: "Is AI popular in your country?",
+        analysis: {
+          questionType: "Câu hỏi Yes/No về mức độ phổ biến ('Is AI popular...'). Áp dụng A-R-E (Yes + Extent → Example across groups → Result).",
+          tense: "Hiện tại đơn ('Yes, it is very popular...' hoặc 'Definitely, AI has become...').",
+          length: "3 câu ngắn gọn (~35–40 từ), nêu ví dụ thực tế của sinh viên và nhân viên văn phòng."
+        },
+        pitfalls: [
+          "Quên thêm '-s' vào danh từ số nhiều ('many students', 'office workers', 'businesses').",
+          "Dùng 'busy for work' thay vì đúng là 'busy with work'.",
+          "Trả lời 'Yes, very popular' nhưng thiếu chủ ngữ và động từ 'it is'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Khẳng định mức độ phổ biến)",
+                text: "Yes, it is very popular in Vietnam now."
+              },
+              {
+                label: "E (Ví dụ sinh viên và người đi làm - For example)",
+                text: "Sinh viên dùng để luyện tiếng Anh, nhân viên dùng khi bận việc: For example, many students use AI apps to practice English, and office workers use them when they are busy with work."
+              },
+              {
+                label: "Kết quả / Cảm nhận",
+                text: "Everyone likes how fast it is."
+              }
+            ],
+            modelAnswer:
+              "Yes, it is very popular in Vietnam now. For example, many <strong>students</strong> use AI apps to <strong>practice English</strong>, and office workers use them when they are <strong>busy with work</strong>. Everyone likes how fast it is.",
+            vocab: [
+              {
+                word: "students",
+                ipa: "/ˈstuːdnts/",
+                pos: "n.",
+                meaning: "học sinh, sinh viên",
+                example: "Many <strong>students</strong> use AI tools for schoolwork."
+              },
+              {
+                word: "practice English",
+                ipa: "/ˈpræktɪs ˈɪŋɡlɪʃ/",
+                pos: "v. phr.",
+                meaning: "luyện tập tiếng Anh",
+                example: "Young people use AI apps to <strong>practice English</strong>."
+              },
+              {
+                word: "busy with work",
+                ipa: "/ˈbɪzi wɪð wɜːrk/",
+                pos: "adj. phr.",
+                meaning: "bận rộn với công việc",
+                example: "Office staff use AI when they are <strong>busy with work</strong>."
+              },
+              {
+                word: "office workers",
+                ipa: "/ˈɔːfɪs ˈwɜːrkərz/",
+                pos: "n. phr.",
+                meaning: "nhân viên văn phòng",
+                example: "Many <strong>office workers</strong> write emails faster with AI."
+              },
+              {
+                word: "young people",
+                ipa: "/jʌŋ ˈpiːpl/",
+                pos: "n. phr.",
+                meaning: "giới trẻ",
+                example: "<strong>Young people</strong> learn new apps very quickly."
+              },
+              {
+                word: "everywhere",
+                ipa: "/ˈevriwer/",
+                pos: "adv.",
+                meaning: "khắp mọi nơi",
+                example: "Smart technology is almost <strong>everywhere</strong> today."
+              },
+              {
+                word: "write emails",
+                ipa: "/raɪt ˈiːmeɪlz/",
+                pos: "v. phr.",
+                meaning: "viết thư điện tử",
+                example: "Some people use AI to <strong>write emails</strong> at the office."
+              },
+              {
+                word: "helpful tool",
+                ipa: "/ˈhelpfl tuːl/",
+                pos: "n. phr.",
+                meaning: "công cụ hữu ích",
+                example: "AI has become a <strong>helpful tool</strong> for everyone."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu khẳng định - Definitely)",
+                text: "AI đã trở nên phổ biến rộng rãi (widely used) ở Việt Nam vì nhiều công cụ miễn phí hoặc giá phải chăng (affordable)."
+              },
+              {
+                label: "E (Ví dụ đối lập với 'while')",
+                text: "Sinh viên dùng cho các dự án quan trọng (important projects), còn doanh nghiệp dùng để trả lời khách hàng nhanh hơn."
+              },
+              {
+                label: "Kết quả (Overall + daily routine + convenient)",
+                text: "Nhìn chung, nó làm nhịp sinh hoạt hằng ngày thuận tiện hơn nhiều."
+              }
+            ],
+            modelAnswer:
+              "<strong>Definitely</strong>, AI has become <strong>widely used</strong> in Vietnam because many tools are free or <strong>affordable</strong>. For example, students use AI for <strong>important projects</strong>, while businesses use it to answer customers faster. Overall, it makes our <strong>daily routine</strong> much more <strong>convenient</strong>.",
+            vocab: [
+              {
+                word: "widely used",
+                ipa: "/ˈwaɪdli juːzd/",
+                pos: "adj. phr.",
+                meaning: "được sử dụng rộng rãi",
+                example: "AI tools are now <strong>widely used</strong> in big cities."
+              },
+              {
+                word: "affordable",
+                ipa: "/əˈfɔːrdəbl/",
+                pos: "adj.",
+                meaning: "giá cả phải chăng",
+                example: "Many AI apps are free or very <strong>affordable</strong>."
+              },
+              {
+                word: "important projects",
+                ipa: "/ɪmˈpɔːrtnt ˈprɒdʒekts/",
+                pos: "n. phr.",
+                meaning: "các dự án quan trọng",
+                example: "Students often use AI for <strong>important projects</strong>."
+              },
+              {
+                word: "daily routine",
+                ipa: "/ˈdeɪli ruːˈtiːn/",
+                pos: "n. phr.",
+                meaning: "sinh hoạt hằng ngày",
+                example: "Technology makes our <strong>daily routine</strong> much smoother."
+              },
+              {
+                word: "convenient",
+                ipa: "/kənˈviːniənt/",
+                pos: "adj.",
+                meaning: "thuận tiện, tiện ích",
+                example: "Online services feel much more <strong>convenient</strong> now."
+              },
+              {
+                word: "customer service",
+                ipa: "/ˈkʌstəmər ˈsɜːrvɪs/",
+                pos: "n. phr.",
+                meaning: "dịch vụ chăm sóc khách hàng",
+                example: "Local shops use AI chatbots for <strong>customer service</strong>."
+              },
+              {
+                word: "tech-savvy",
+                ipa: "/tek ˈsævi/",
+                pos: "adj.",
+                meaning: "am hiểu công nghệ",
+                example: "Vietnamese youth are very <strong>tech-savvy</strong>."
+              },
+              {
+                word: "catch on quickly",
+                ipa: "/kætʃ ɒn ˈkwɪkli/",
+                pos: "v. phr.",
+                meaning: "trở nên thịnh hành nhanh chóng",
+                example: "New AI apps <strong>catch on quickly</strong> in Vietnam."
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 07: MOBILE PHONES
+  // ==========================================================================
+  {
+    id: "topic-mobile-phones",
+    number: "07",
+    title: "Mobile phones",
+    titleVi: "Điện thoại di động & Thói quen sử dụng",
+    description:
+      "Luyện 3 câu hỏi về lý do sử dụng điện thoại di động, những việc bạn làm nhiều nhất trên điện thoại và quan điểm về việc dùng điện thoại quá nhiều.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "phone_q1",
+        num: 1,
+        prompt: "Do you use a mobile phone? Why?",
+        analysis: {
+          questionType: "Câu hỏi Yes/No kèm lý do ('Do you use... Why?'). Áp dụng A-R-E (Yes + Reason → Practical example → Feeling).",
+          tense: "Hiện tại đơn ('Yes, I do. I use my phone...' hoặc 'Yes, I really do. To be honest,...').",
+          length: "3 câu ngắn gọn (~33–38 từ), dùng tình huống liên lạc gia đình, xem thời tiết hoặc đặt vé."
+        },
+        pitfalls: [
+          "Trả lời 'Yes, I do' mà quên trả lời phần 'Why?' bằng 'because...'.",
+          "Quên giới từ 'with' trong cụm 'keep in touch with my family'.",
+          "Quên thêm '-s' trong 'helps me' hoặc 'makes me'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Trả lời + Lý do giữ liên lạc)",
+                text: "Yes, I do. I use my phone every day because it helps me keep in touch with my family."
+              },
+              {
+                label: "E (Ví dụ quen thuộc - tái sử dụng 'check the weather')",
+                text: "For example, I can text my friends and check the weather quickly."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'feel safe')",
+                text: "It makes me feel safe."
+              }
+            ],
+            modelAnswer:
+              "Yes, I do. I use my phone every day because it helps me <strong>keep in touch</strong> with my family. For example, I can text my friends and <strong>check the weather</strong> quickly. It makes me <strong>feel safe</strong>.",
+            vocab: [
+              {
+                word: "keep in touch",
+                ipa: "/kiːp ɪn tʌtʃ/",
+                pos: "v. phr.",
+                meaning: "giữ liên lạc",
+                example: "My phone helps me <strong>keep in touch</strong> with my family."
+              },
+              {
+                word: "check the weather",
+                ipa: "/tʃek ðə ˈweðər/",
+                pos: "v. phr.",
+                meaning: "xem dự báo thời tiết",
+                example: "I use my phone to <strong>check the weather</strong> before going out."
+              },
+              {
+                word: "feel safe",
+                ipa: "/fiːl seɪf/",
+                pos: "v. phr.",
+                meaning: "cảm thấy an toàn",
+                example: "Carrying a phone at night makes me <strong>feel safe</strong>."
+              },
+              {
+                word: "text my friends",
+                ipa: "/tekst maɪ frendz/",
+                pos: "v. phr.",
+                meaning: "nhắn tin cho bạn bè",
+                example: "I can <strong>text my friends</strong> in just a second."
+              },
+              {
+                word: "make a phone call",
+                ipa: "/meɪk ə foʊn kɔːl/",
+                pos: "v. phr.",
+                meaning: "gọi điện thoại",
+                example: "It is easy to <strong>make a phone call</strong> anytime."
+              },
+              {
+                word: "find directions",
+                ipa: "/faɪnd dəˈrekʃnz/",
+                pos: "v. phr.",
+                meaning: "tìm đường đi",
+                example: "I use maps on my phone to <strong>find directions</strong>."
+              },
+              {
+                word: "every day",
+                ipa: "/ˈevri deɪ/",
+                pos: "adv. phr.",
+                meaning: "mỗi ngày",
+                example: "I carry my smartphone with me <strong>every day</strong>."
+              },
+              {
+                word: "important tool",
+                ipa: "/ɪmˈpɔːrtnt tuːl/",
+                pos: "n. phr.",
+                meaning: "công cụ quan trọng",
+                example: "A mobile phone is an <strong>important tool</strong> nowadays."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Yes, I really do + To be honest)",
+                text: "Gọi điện thoại là món đồ thiết yếu (essential item) giúp giữ kết nối mọi lúc mọi nơi."
+              },
+              {
+                label: "E (Ví dụ tái sử dụng 'check my schedule', 'in advance')",
+                text: "Kiểm tra lịch trình và đặt vé trước (book tickets in advance)."
+              },
+              {
+                label: "Kết quả (, which... + convenient)",
+                text: "Chốt bằng mệnh đề quan hệ ', which makes my life super convenient'."
+              }
+            ],
+            modelAnswer:
+              "<strong>Yes, I really do.</strong> <strong>To be honest,</strong> my phone is an <strong>essential item</strong> because it keeps me connected wherever I go. For example, I use it to <strong>check my schedule</strong> and book tickets <strong>in advance</strong>, <strong>which</strong> makes my life super <strong>convenient</strong>.",
+            vocab: [
+              {
+                word: "essential item",
+                ipa: "/ɪˈsenʃl ˈaɪtəm/",
+                pos: "n. phr.",
+                meaning: "vật dụng thiết yếu",
+                example: "My phone is an <strong>essential item</strong> when I leave home."
+              },
+              {
+                word: "check my schedule",
+                ipa: "/tʃek maɪ ˈskedʒuːl/",
+                pos: "v. phr.",
+                meaning: "kiểm tra lịch trình cá nhân",
+                example: "I use my phone to <strong>check my schedule</strong> every morning."
+              },
+              {
+                word: "in advance",
+                ipa: "/ɪn ədˈvæns/",
+                pos: "adv. phr.",
+                meaning: "trước (về thời gian)",
+                example: "I can book movie or bus tickets <strong>in advance</strong>."
+              },
+              {
+                word: "convenient",
+                ipa: "/kənˈviːniənt/",
+                pos: "adj.",
+                meaning: "thuận tiện",
+                example: "Mobile apps make daily life super <strong>convenient</strong>."
+              },
+              {
+                word: "stay connected",
+                ipa: "/steɪ kəˈnektɪd/",
+                pos: "v. phr.",
+                meaning: "giữ kết nối",
+                example: "Smartphones help us <strong>stay connected</strong> with loved ones."
+              },
+              {
+                word: "online payment",
+                ipa: "/ˈɒnlaɪn ˈpeɪmənt/",
+                pos: "n. phr.",
+                meaning: "thanh toán trực tuyến",
+                example: "I use my phone for quick <strong>online payment</strong> at cafes."
+              },
+              {
+                word: "cannot live without",
+                ipa: "/ˈkænɒt lɪv wɪˈðaʊt/",
+                pos: "v. phr.",
+                meaning: "không thể thiếu",
+                example: "Most people feel they <strong>cannot live without</strong> their phones."
+              },
+              {
+                word: "portable charger",
+                ipa: "/ˈpɔːrtəbl ˈtʃɑːrdʒər/",
+                pos: "n. phr.",
+                meaning: "sạc dự phòng cầm tay",
+                example: "I bring a <strong>portable charger</strong> so my phone never dies."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "phone_q2",
+        num: 2,
+        prompt: "What do you use your mobile phone for most?",
+        analysis: {
+          questionType: "Câu hỏi thói quen chính ('What do you use... for most?'). Áp dụng 'I mostly use... to...' (B1) / 'Honestly, I tend to...' (B2) + A-R-E.",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~34–38 từ), nêu hoạt động giải trí và liên lạc gần gũi."
+        },
+        pitfalls: [
+          "Dùng sai dạng động từ trong 'use something for + V-ing' vs 'use something to + V' (không nói 'use my phone to chatting').",
+          "Quên âm cuối '-s' trong 'friends', 'videos', 'photos'.",
+          "Chỉ kể 1 từ ('for games') mà không nêu ngữ cảnh và cảm xúc."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Mục đích chính + Thời điểm)",
+                text: "I mostly use my phone to chat with friends and watch short videos when I have free time."
+              },
+              {
+                label: "E (Ví dụ thêm - tái sử dụng 'take nice photos')",
+                text: "For example, I often listen to music and take nice photos with it."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'feel relaxed')",
+                text: "It helps me feel relaxed."
+              }
+            ],
+            modelAnswer:
+              "I mostly use my phone to <strong>chat with friends</strong> and watch short videos when I <strong>have free time</strong>. For example, I often listen to music and <strong>take nice photos</strong> with it. It helps me <strong>feel relaxed</strong>.",
+            vocab: [
+              {
+                word: "chat with friends",
+                ipa: "/tʃæt wɪð frendz/",
+                pos: "v. phr.",
+                meaning: "trò chuyện với bạn bè",
+                example: "I mostly use my phone to <strong>chat with friends</strong>."
+              },
+              {
+                word: "have free time",
+                ipa: "/hæv friː taɪm/",
+                pos: "v. phr.",
+                meaning: "có thời gian rảnh",
+                example: "I watch funny clips when I <strong>have free time</strong>."
+              },
+              {
+                word: "take nice photos",
+                ipa: "/teɪk naɪs ˈfoʊtoʊz/",
+                pos: "v. phr.",
+                meaning: "chụp những bức ảnh đẹp",
+                example: "I use my phone camera to <strong>take nice photos</strong>."
+              },
+              {
+                word: "feel relaxed",
+                ipa: "/fiːl rɪˈlækst/",
+                pos: "v. phr.",
+                meaning: "cảm thấy thư giãn",
+                example: "Listening to music helps me <strong>feel relaxed</strong>."
+              },
+              {
+                word: "watch short videos",
+                ipa: "/wɒtʃ ʃɔːrt ˈvɪdioʊz/",
+                pos: "v. phr.",
+                meaning: "xem video ngắn",
+                example: "Many students <strong>watch short videos</strong> after dinner."
+              },
+              {
+                word: "listen to music",
+                ipa: "/ˈlɪsn tuː ˈmjuːzɪk/",
+                pos: "v. phr.",
+                meaning: "nghe nhạc",
+                example: "I always <strong>listen to music</strong> on the bus."
+              },
+              {
+                word: "surf the internet",
+                ipa: "/sɜːrf ði ˈɪntərnet/",
+                pos: "v. phr.",
+                meaning: "lướt mạng",
+                example: "People use smartphones to <strong>surf the internet</strong>."
+              },
+              {
+                word: "order food",
+                ipa: "/ˈɔːrdər fuːd/",
+                pos: "v. phr.",
+                meaning: "đặt đồ ăn qua mạng",
+                example: "I also use food apps to <strong>order food</strong> on rainy days."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Honestly, I tend to + unwind)",
+                text: "Dùng nhiều nhất cho ứng dụng nhắn tin (messaging apps) và xem video để xả hơi (unwind) sau ngày dài."
+              },
+              {
+                label: "E (Ví dụ + tái sử dụng 'take a break')",
+                text: "Lướt mạng xã hội (social media) để nghỉ xả hơi một chút sau giờ học."
+              },
+              {
+                label: "Cảm xúc (, which... + cheers me up)",
+                text: "Điều này giúp mình nhanh chóng vui vẻ trở lại (cheers me up)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Honestly, I tend to</strong> use my phone most for <strong>messaging apps</strong> and watching videos to <strong>unwind</strong> after a long day. For example, I scroll through <strong>social media</strong> to <strong>take a break</strong> from studying, <strong>which</strong> quickly <strong>cheers me up</strong>.",
+            vocab: [
+              {
+                word: "messaging apps",
+                ipa: "/ˈmesɪdʒɪŋ æps/",
+                pos: "n. phr.",
+                meaning: "các ứng dụng nhắn tin (Zalo, Messenger)",
+                example: "I use <strong>messaging apps</strong> to talk with classmates."
+              },
+              {
+                word: "unwind",
+                ipa: "/ˌʌnˈwaɪnd/",
+                pos: "v.",
+                meaning: "thư giãn, xả hơi",
+                example: "Watching videos at night helps me <strong>unwind</strong>."
+              },
+              {
+                word: "social media",
+                ipa: "/ˈsoʊʃl ˈmiːdiə/",
+                pos: "n. phr.",
+                meaning: "mạng xã hội",
+                example: "I scroll through <strong>social media</strong> for funny clips."
+              },
+              {
+                word: "take a break",
+                ipa: "/teɪk ə breɪk/",
+                pos: "v. phr.",
+                meaning: "nghỉ giải lao, xả hơi",
+                example: "I listen to music to <strong>take a break</strong> from studying."
+              },
+              {
+                word: "cheers me up",
+                ipa: "/tʃɪrz miː ʌp/",
+                pos: "phr. v.",
+                meaning: "làm tôi vui lên, phấn chấn lên",
+                example: "Chatting with close friends always <strong>cheers me up</strong>."
+              },
+              {
+                word: "scroll through",
+                ipa: "/skroʊl θruː/",
+                pos: "phr. v.",
+                meaning: "lướt xem (trên màn hình)",
+                example: "Many people <strong>scroll through</strong> news feeds every morning."
+              },
+              {
+                word: "video calls",
+                ipa: "/ˈvɪdioʊ kɔːlz/",
+                pos: "n. phr.",
+                meaning: "cuộc gọi video",
+                example: "I make <strong>video calls</strong> to my parents on weekends."
+              },
+              {
+                word: "entertaining",
+                ipa: "/ˌentərˈteɪnɪŋ/",
+                pos: "adj.",
+                meaning: "mang tính giải trí, thú vị",
+                example: "Short travel vlogs are very <strong>entertaining</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "phone_q3",
+        num: 3,
+        prompt: "Do you think people spend too much time on their mobile phones?",
+        analysis: {
+          questionType: "Câu hỏi quan điểm Yes/No ('Do you think...'). Áp dụng A-R-E (Opinion + Reason → Everyday example → Effect/Advice).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~34–38 từ), nêu cảnh quen thuộc ngoài quán cà phê hoặc thức khuya lướt điện thoại."
+        },
+        pitfalls: [
+          "Dùng nhầm 'too many time' (đúng: 'too much time' vì 'time' nghĩa là thời gian không đếm được).",
+          "Quên động từ 'to be' trước tính từ ('is bad', 'are glued to') hoặc quên '-s' ở 'affects'.",
+          "Dùng 'spend time to look at' thay vì 'spend time looking at' hoặc 'look at... all day'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Quan điểm + Lý do)",
+                text: "Yes, I think so, because many people look at their screens all day."
+              },
+              {
+                label: "E (Ví dụ thực tế ở quán cà phê - tái sử dụng 'talk together')",
+                text: "For example, friends meet at a cafe, but they still check their phones and rarely talk together."
+              },
+              {
+                label: "Hậu quả (Tái sử dụng 'feel lazy')",
+                text: "It also makes them feel lazy."
+              }
+            ],
+            modelAnswer:
+              "Yes, I think so, because many people look at their <strong>screens</strong> all day. For example, friends meet at a cafe, but they still check their phones and rarely <strong>talk together</strong>. It also makes them <strong>feel lazy</strong>.",
+            vocab: [
+              {
+                word: "screens",
+                ipa: "/skriːnz/",
+                pos: "n.",
+                meaning: "màn hình (điện thoại, máy tính)",
+                example: "Many people look at their phone <strong>screens</strong> all day."
+              },
+              {
+                word: "talk together",
+                ipa: "/tɔːk təˈɡeðər/",
+                pos: "v. phr.",
+                meaning: "nói chuyện cùng nhau",
+                example: "Friends meet at a cafe, but they rarely <strong>talk together</strong>."
+              },
+              {
+                word: "feel lazy",
+                ipa: "/fiːl ˈleɪzi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy lười biếng, uể oải",
+                example: "Using a phone in bed makes me <strong>feel lazy</strong>."
+              },
+              {
+                word: "too much time",
+                ipa: "/tuː mʌtʃ taɪm/",
+                pos: "n. phr.",
+                meaning: "quá nhiều thời gian",
+                example: "Young people spend <strong>too much time</strong> online."
+              },
+              {
+                word: "bad for our eyes",
+                ipa: "/bæd fɔːr ˈaʊər aɪz/",
+                pos: "adj. phr.",
+                meaning: "có hại cho mắt",
+                example: "Looking at a bright screen at night is <strong>bad for our eyes</strong>."
+              },
+              {
+                word: "face to face",
+                ipa: "/feɪs tuː feɪs/",
+                pos: "adv. phr.",
+                meaning: "trực tiếp, mặt đối mặt",
+                example: "People should talk <strong>face to face</strong> more often."
+              },
+              {
+                word: "stay up late",
+                ipa: "/steɪ ʌp leɪt/",
+                pos: "v. phr.",
+                meaning: "thức khuya",
+                example: "Many students <strong>stay up late</strong> watching videos."
+              },
+              {
+                word: "waste time",
+                ipa: "/weɪst taɪm/",
+                pos: "v. phr.",
+                meaning: "lãng phí thời gian",
+                example: "Checking apps every five minutes can <strong>waste time</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu khẳng định - Definitely + glued to their screens)",
+                text: "Nhiều người dán mắt vào màn hình (glued to their screens), điều này ảnh hưởng xấu đến nhịp sinh hoạt (daily routine)."
+              },
+              {
+                label: "E (Ví dụ + tái sử dụng 'feel sluggish')",
+                text: "Lướt video khuya làm hỏng giấc ngủ (ruin their sleep) và khiến họ uể oải (feel sluggish) sáng hôm sau."
+              },
+              {
+                label: "Lời khuyên kết câu (Tái sử dụng 'take a break')",
+                text: "Mọi người nên tạm nghỉ dùng điện thoại một chút."
+              }
+            ],
+            modelAnswer:
+              "<strong>Definitely</strong>, many people are <strong>glued to their screens</strong>, <strong>which</strong> badly affects their <strong>daily routine</strong>. For example, scrolling through videos late at night can <strong>ruin their sleep</strong> and make them <strong>feel sluggish</strong> the next morning. Everyone should <strong>take a break</strong> from phones.",
+            vocab: [
+              {
+                word: "glued to their screens",
+                ipa: "/ɡluːd tuː ðer skriːnz/",
+                pos: "adj. phr.",
+                meaning: "dán mắt vào màn hình",
+                example: "Many people sit on the bus <strong>glued to their screens</strong>."
+              },
+              {
+                word: "daily routine",
+                ipa: "/ˈdeɪli ruːˈtiːn/",
+                pos: "n. phr.",
+                meaning: "thói quen sinh hoạt hằng ngày",
+                example: "Too much screen time badly affects our <strong>daily routine</strong>."
+              },
+              {
+                word: "ruin their sleep",
+                ipa: "/ˈruːɪn ðer sliːp/",
+                pos: "v. phr.",
+                meaning: "làm hỏng giấc ngủ của họ",
+                example: "Checking phones in bed can <strong>ruin their sleep</strong>."
+              },
+              {
+                word: "feel sluggish",
+                ipa: "/fiːl ˈslʌɡɪʃ/",
+                pos: "v. phr.",
+                meaning: "cảm thấy uể oải, chậm chạp",
+                example: "Sleeping late makes me <strong>feel sluggish</strong> the next morning."
+              },
+              {
+                word: "take a break",
+                ipa: "/teɪk ə breɪk/",
+                pos: "v. phr.",
+                meaning: "tạm nghỉ, ngưng một lát",
+                example: "Everyone should <strong>take a break</strong> from screens at dinner."
+              },
+              {
+                word: "screen addiction",
+                ipa: "/skriːn əˈdɪkʃn/",
+                pos: "n. phr.",
+                meaning: "chứng nghiện màn hình / điện thoại",
+                example: "<strong>Screen addiction</strong> is becoming common among teenagers."
+              },
+              {
+                word: "real-life interaction",
+                ipa: "/ˈriːəl laɪf ˌɪntərˈækʃn/",
+                pos: "n. phr.",
+                meaning: "sự tương tác ngoài đời thực",
+                example: "Phones reduce <strong>real-life interaction</strong> at family meals."
+              },
+              {
+                word: "limit screen time",
+                ipa: "/ˈlɪmɪt skriːn taɪm/",
+                pos: "v. phr.",
+                meaning: "hạn chế thời gian dùng màn hình",
+                example: "I try to <strong>limit screen time</strong> before going to bed."
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 08: EMAIL
+  // ==========================================================================
+  {
+    id: "topic-email",
+    number: "08",
+    title: "Email",
+    titleVi: "Thư điện tử & Giao tiếp trực tuyến",
+    description:
+      "Luyện 3 câu hỏi về tần suất kiểm tra email, lựa chọn giữa email và ứng dụng nhắn tin, cùng các loại email bạn thường nhận nhất.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "email_q1",
+        num: 1,
+        prompt: "How often do you check your email?",
+        analysis: {
+          questionType: "Câu hỏi tần suất ('How often...'). Áp dụng công thức A-R-E (Frequency + Reason → Example → Feeling/Result).",
+          tense: "Hiện tại đơn ('I usually check...' hoặc 'Actually, I tend to...').",
+          length: "3 câu ngắn gọn (~34–38 từ), dùng tình huống nhận bài tập và thông báo thi từ giáo viên."
+        },
+        pitfalls: [
+          "Quên cụm tần suất rõ ràng như 'once a day', 'twice a day', 'every evening'.",
+          "Dùng 'see my email' thay vì cụm tự nhiên 'check my email' / 'check my inbox'.",
+          "Quên 'to' trong 'want to miss' hoặc quên '-s' trong 'gives me'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Tần suất + Lý do)",
+                text: "I usually check my email once a day because I do not want to miss important news."
+              },
+              {
+                label: "E (Ví dụ thực tế ở trường - For example)",
+                text: "For example, my teachers send homework and exam dates by email."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'feel ready')",
+                text: "Checking it every evening helps me feel ready."
+              }
+            ],
+            modelAnswer:
+              "I usually <strong>check my email</strong> once a day because I do not want to <strong>miss important news</strong>. For example, my teachers send homework and <strong>exam dates</strong> by email. Checking it every evening helps me <strong>feel ready</strong>.",
+            vocab: [
+              {
+                word: "check my email",
+                ipa: "/tʃek maɪ ˈiːmeɪl/",
+                pos: "v. phr.",
+                meaning: "kiểm tra thư điện tử",
+                example: "I usually <strong>check my email</strong> once a day after dinner."
+              },
+              {
+                word: "miss important news",
+                ipa: "/mɪs ɪmˈpɔːrtnt nuːz/",
+                pos: "v. phr.",
+                meaning: "bỏ lỡ tin tức quan trọng",
+                example: "I check my phone so I do not <strong>miss important news</strong>."
+              },
+              {
+                word: "exam dates",
+                ipa: "/ɪɡˈzæm deɪts/",
+                pos: "n. phr.",
+                meaning: "ngày thi, lịch thi",
+                example: "My teachers send homework and <strong>exam dates</strong> by email."
+              },
+              {
+                word: "feel ready",
+                ipa: "/fiːl ˈredi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy sẵn sàng",
+                example: "Reading class updates helps me <strong>feel ready</strong>."
+              },
+              {
+                word: "once a day",
+                ipa: "/wʌns ə deɪ/",
+                pos: "adv. phr.",
+                meaning: "một lần một ngày",
+                example: "I open my email app <strong>once a day</strong>."
+              },
+              {
+                word: "twice a day",
+                ipa: "/twaɪs ə deɪ/",
+                pos: "adv. phr.",
+                meaning: "hai lần một ngày",
+                example: "During exam week, I check my mail <strong>twice a day</strong>."
+              },
+              {
+                word: "reply quickly",
+                ipa: "/rɪˈplaɪ ˈkwɪkli/",
+                pos: "v. phr.",
+                meaning: "trả lời nhanh chóng",
+                example: "I try to <strong>reply quickly</strong> when my teacher emails me."
+              },
+              {
+                word: "school updates",
+                ipa: "/skuːl ˈʌpdeɪts/",
+                pos: "n. phr.",
+                meaning: "các thông báo mới của trường",
+                example: "Checking email keeps me up to date with <strong>school updates</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Actually, I tend to... + stay organized)",
+                text: "Kiểm tra hộp thư đến (inbox) hai lần mỗi ngày để làm việc gọn gàng, ngăn nắp (stay organized)."
+              },
+              {
+                label: "E (Ví dụ tái sử dụng 'tight deadlines')",
+                text: "Xem qua vào buổi sáng để không bỏ lỡ hạn chót gấp (tight deadlines) hoặc thông báo lớp học."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'peace of mind')",
+                text: "Cập nhật kịp thời mang lại sự yên tâm thực sự (peace of mind)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Actually, I tend to</strong> check my <strong>inbox</strong> twice a day to <strong>stay organized</strong>. For example, I always look through it in the morning so I never miss <strong>tight deadlines</strong> or class notices. Staying updated gives me real <strong>peace of mind</strong>.",
+            vocab: [
+              {
+                word: "inbox",
+                ipa: "/ˈɪnbɒks/",
+                pos: "n.",
+                meaning: "hộp thư đến",
+                example: "I check my <strong>inbox</strong> every morning and evening."
+              },
+              {
+                word: "stay organized",
+                ipa: "/steɪ ˈɔːrɡənaɪzd/",
+                pos: "v. phr.",
+                meaning: "giữ mọi thứ ngăn nắp, có kế hoạch",
+                example: "Checking mail twice a day helps me <strong>stay organized</strong>."
+              },
+              {
+                word: "tight deadlines",
+                ipa: "/taɪt ˈdedlaɪnz/",
+                pos: "n. phr.",
+                meaning: "những hạn chót công việc gấp",
+                example: "I check email early so I never miss <strong>tight deadlines</strong>."
+              },
+              {
+                word: "peace of mind",
+                ipa: "/piːs əv maɪnd/",
+                pos: "n. phr.",
+                meaning: "cảm giác an tâm",
+                example: "Clearing unread messages gives me real <strong>peace of mind</strong>."
+              },
+              {
+                word: "class notices",
+                ipa: "/klæs ˈnoʊtɪsɪz/",
+                pos: "n. phr.",
+                meaning: "thông báo của lớp học",
+                example: "Important <strong>class notices</strong> always arrive by email."
+              },
+              {
+                word: "stay updated",
+                ipa: "/steɪ ˌʌpˈdeɪtɪd/",
+                pos: "v. phr.",
+                meaning: "luôn cập nhật thông tin mới",
+                example: "Checking messages daily helps me <strong>stay updated</strong>."
+              },
+              {
+                word: "turn on notifications",
+                ipa: "/tɜːrn ɒn ˌnoʊtɪfɪˈkeɪʃnz/",
+                pos: "v. phr.",
+                meaning: "bật thông báo",
+                example: "I <strong>turn on notifications</strong> for my school email."
+              },
+              {
+                word: "look through",
+                ipa: "/lʊk θruː/",
+                pos: "phr. v.",
+                meaning: "xem lướt qua, kiểm tra qua",
+                example: "I <strong>look through</strong> new emails during breakfast."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "email_q2",
+        num: 2,
+        prompt: "Do you prefer email or messaging apps? Why?",
+        analysis: {
+          questionType: "Câu hỏi lựa chọn ('Do you prefer... or... Why?'). Áp dụng A-R-E (Choice + Reason → Example → Feeling/Contrast).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~33–39 từ), so sánh Zalo/Messenger với email."
+        },
+        pitfalls: [
+          "Quên dùng so sánh hơn đúng dạng ('faster than', 'more convenient', không nói 'more fast').",
+          "Lặp lại câu 'I prefer messaging apps' mà thiếu giải thích 'Why?' và ví dụ cụ thể.",
+          "Quên '-s' trong 'messaging apps', 'friends', 'photos'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Chọn ứng dụng nhắn tin + Lý do nhanh hơn)",
+                text: "I prefer messaging apps like Zalo because they are much faster than email."
+              },
+              {
+                label: "E (Ví dụ quen thuộc - For example)",
+                text: "Nhắn tin và gửi ảnh trong vài giây: For example, I can quickly text my friends and send photos in seconds."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'easy and fun')",
+                text: "They make chatting with people easy and fun."
+              }
+            ],
+            modelAnswer:
+              "I <strong>prefer</strong> <strong>messaging apps</strong> like Zalo because they are much faster than email. For example, I can quickly text my friends and send photos in seconds. They make chatting with people <strong>easy and fun</strong>.",
+            vocab: [
+              {
+                word: "prefer",
+                ipa: "/prɪˈfɜːr/",
+                pos: "v.",
+                meaning: "thích hơn",
+                example: "I <strong>prefer</strong> messaging apps like Zalo for daily chats."
+              },
+              {
+                word: "messaging apps",
+                ipa: "/ˈmesɪdʒɪŋ æps/",
+                pos: "n. phr.",
+                meaning: "các ứng dụng nhắn tin",
+                example: "<strong>Messaging apps</strong> are much faster than email."
+              },
+              {
+                word: "easy and fun",
+                ipa: "/ˈiːzi ænd fʌn/",
+                pos: "adj. phr.",
+                meaning: "dễ dàng và vui vẻ",
+                example: "Stickers make chatting with friends <strong>easy and fun</strong>."
+              },
+              {
+                word: "faster than",
+                ipa: "/ˈfæstər ðæn/",
+                pos: "phr.",
+                meaning: "nhanh hơn",
+                example: "Sending a quick message is <strong>faster than</strong> writing an email."
+              },
+              {
+                word: "send photos",
+                ipa: "/send ˈfoʊtoʊz/",
+                pos: "v. phr.",
+                meaning: "gửi hình ảnh",
+                example: "We can <strong>send photos</strong> and videos in seconds."
+              },
+              {
+                word: "in seconds",
+                ipa: "/ɪn ˈsekəndz/",
+                pos: "adv. phr.",
+                meaning: "chỉ trong vài giây",
+                example: "Friends usually reply to my texts <strong>in seconds</strong>."
+              },
+              {
+                word: "group chat",
+                ipa: "/ɡruːp tʃæt/",
+                pos: "n. phr.",
+                meaning: "nhóm chat",
+                example: "Our class has a <strong>group chat</strong> on Zalo."
+              },
+              {
+                word: "voice message",
+                ipa: "/vɔɪs ˈmesɪdʒ/",
+                pos: "n. phr.",
+                meaning: "tin nhắn thoại",
+                example: "When I am busy, I send a short <strong>voice message</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu Dạng 3 - Honestly, I usually go for... + convenient)",
+                text: "Chọn ứng dụng nhắn tin vì thuận tiện hơn nhiều cho các cuộc trò chuyện nhanh."
+              },
+              {
+                label: "E (Ví dụ tái sử dụng 'close friends', 'hang out')",
+                text: "Dùng Zalo nhắn bạn thân hẹn đi chơi, trong khi ('whereas') email hợp hơn cho các dự án quan trọng (important projects)."
+              },
+              {
+                label: "Lưu ý cấu trúc tương phản",
+                text: "Dùng mệnh đề tương phản ', whereas email feels better...' để ghi điểm ngữ pháp B2."
+              }
+            ],
+            modelAnswer:
+              "<strong>Honestly, I usually go for</strong> <strong>messaging apps</strong> because they are much more <strong>convenient</strong> for quick chats. For example, I use Zalo to reach <strong>close friends</strong> and arrange plans to <strong>hang out</strong>, <strong>whereas</strong> email feels better for <strong>important projects</strong> at school.",
+            vocab: [
+              {
+                word: "usually go for",
+                ipa: "/ˈjuːʒuəli ɡoʊ fɔːr/",
+                pos: "v. phr.",
+                meaning: "thường chọn",
+                example: "<strong>I usually go for</strong> messaging apps for everyday chats."
+              },
+              {
+                word: "convenient",
+                ipa: "/kənˈviːniənt/",
+                pos: "adj.",
+                meaning: "tiện lợi, thuận tiện",
+                example: "Chat apps are much more <strong>convenient</strong> on the go."
+              },
+              {
+                word: "close friends",
+                ipa: "/kloʊs frendz/",
+                pos: "n. phr.",
+                meaning: "những người bạn thân",
+                example: "I message my <strong>close friends</strong> on Zalo every evening."
+              },
+              {
+                word: "hang out",
+                ipa: "/hæŋ aʊt/",
+                pos: "phr. v.",
+                meaning: "đi chơi, tụ tập",
+                example: "We quickly arrange plans to <strong>hang out</strong> on weekends."
+              },
+              {
+                word: "whereas",
+                ipa: "/ˌwerˈæz/",
+                pos: "conj.",
+                meaning: "trong khi đó (dùng để so sánh đối lập)",
+                example: "Zalo is casual, <strong>whereas</strong> email is more formal."
+              },
+              {
+                word: "important projects",
+                ipa: "/ɪmˈpɔːrtnt ˈprɒdʒekts/",
+                pos: "n. phr.",
+                meaning: "các dự án quan trọng",
+                example: "Email feels better for <strong>important projects</strong> at school."
+              },
+              {
+                word: "formal communication",
+                ipa: "/ˈfɔːrml kəˌmjuːnɪˈkeɪʃn/",
+                pos: "n. phr.",
+                meaning: "giao tiếp trang trọng",
+                example: "Email is still the best choice for <strong>formal communication</strong>."
+              },
+              {
+                word: "instant reply",
+                ipa: "/ˈɪnstənt rɪˈplaɪ/",
+                pos: "n. phr.",
+                meaning: "câu trả lời ngay lập tức",
+                example: "Messaging apps are great when you need an <strong>instant reply</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "email_q3",
+        num: 3,
+        prompt: "What kind of emails do you receive most?",
+        analysis: {
+          questionType: "Câu hỏi liệt kê loại hình ('What kind of emails...'). Áp dụng A-R-E (Main types → Specific examples → Reaction/Result).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~33–38 từ), gắn với email trường học và thư quảng cáo giảm giá."
+        },
+        pitfalls: [
+          "Dùng sai dạng 'emails' đếm được số nhiều (quên '-s' trong 'school emails', 'promotional emails').",
+          "Dùng nhầm 'receives' khi chủ ngữ là 'I' (đúng: 'I mostly receive...').",
+          "Chỉ nêu tên 1 loại email mà không có ví dụ nội dung bên trong."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (2 loại email nhận nhiều nhất)",
+                text: "I mostly receive school emails and store ads every week."
+              },
+              {
+                label: "E (Ví dụ thực tế - tái sử dụng 'save money')",
+                text: "Giáo viên gửi tài liệu học và các shop gửi mã giảm giá: For example, my teachers send study files, and online shops send discount codes to help me save money."
+              },
+              {
+                label: "Kết quả / Thói quen chốt câu",
+                text: "I only read the useful ones."
+              }
+            ],
+            modelAnswer:
+              "I mostly receive <strong>school emails</strong> and <strong>store ads</strong> every week. For example, my teachers send study files, and online shops send <strong>discount codes</strong> to help me <strong>save money</strong>. I only read the useful ones.",
+            vocab: [
+              {
+                word: "school emails",
+                ipa: "/skuːl ˈiːmeɪlz/",
+                pos: "n. phr.",
+                meaning: "email từ trường học",
+                example: "I mostly receive <strong>school emails</strong> on weekdays."
+              },
+              {
+                word: "store ads",
+                ipa: "/stɔːr ædz/",
+                pos: "n. phr.",
+                meaning: "thư quảng cáo từ cửa hàng",
+                example: "My inbox gets a lot of <strong>store ads</strong> every week."
+              },
+              {
+                word: "discount codes",
+                ipa: "/ˈdɪskaʊnt koʊdz/",
+                pos: "n. phr.",
+                meaning: "mã giảm giá",
+                example: "Online shops send <strong>discount codes</strong> by email."
+              },
+              {
+                word: "save money",
+                ipa: "/seɪv ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm tiền",
+                example: "Using a voucher helps me <strong>save money</strong> on clothes."
+              },
+              {
+                word: "study files",
+                ipa: "/ˈstʌdi faɪlz/",
+                pos: "n. phr.",
+                meaning: "tài liệu học tập",
+                example: "Teachers often send <strong>study files</strong> before class."
+              },
+              {
+                word: "online shops",
+                ipa: "/ˈɒnlaɪn ʃɒps/",
+                pos: "n. phr.",
+                meaning: "các cửa hàng trực tuyến",
+                example: "Many <strong>online shops</strong> send sales news every weekend."
+              },
+              {
+                word: "delete spam",
+                ipa: "/dɪˈliːt spæm/",
+                pos: "v. phr.",
+                meaning: "xóa thư rác",
+                example: "I always <strong>delete spam</strong> so my inbox stays clean."
+              },
+              {
+                word: "useful messages",
+                ipa: "/ˈjuːsfl ˈmesɪdʒɪz/",
+                pos: "n. phr.",
+                meaning: "những tin nhắn hữu ích",
+                example: "I keep all <strong>useful messages</strong> in a special folder."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu tự nhiên - To be honest + inbox + promotional emails)",
+                text: "Thú thật là hộp thư đến (inbox) chủ yếu toàn email khuyến mãi (promotional emails) và thông báo của trường."
+              },
+              {
+                label: "E (Ví dụ cụ thể - For example)",
+                text: "Các ứng dụng mua sắm liên tục gửi thông báo giảm giá (discount alerts)."
+              },
+              {
+                label: "Kết quả (, which... + inconvenient)",
+                text: "Điều này khá bất tiện (inconvenient) khi cần tìm tin quan trọng từ giáo viên."
+              }
+            ],
+            modelAnswer:
+              "<strong>To be honest,</strong> my <strong>inbox</strong> is mostly full of <strong>promotional emails</strong> and school notices. For example, shopping apps send constant <strong>discount alerts</strong>, <strong>which</strong> is quite <strong>inconvenient</strong> when I need to find an important message from my teacher.",
+            vocab: [
+              {
+                word: "inbox",
+                ipa: "/ˈɪnbɒks/",
+                pos: "n.",
+                meaning: "hộp thư đến",
+                example: "My <strong>inbox</strong> gets crowded with ads every weekend."
+              },
+              {
+                word: "promotional emails",
+                ipa: "/prəˈmoʊʃənl ˈiːmeɪlz/",
+                pos: "n. phr.",
+                meaning: "email quảng cáo, tiếp thị",
+                example: "I delete dozens of <strong>promotional emails</strong> every week."
+              },
+              {
+                word: "discount alerts",
+                ipa: "/ˈdɪskaʊnt əˈlɜːrts/",
+                pos: "n. phr.",
+                meaning: "thông báo giảm giá",
+                example: "Shopping apps send constant <strong>discount alerts</strong>."
+              },
+              {
+                word: "inconvenient",
+                ipa: "/ˌɪnkənˈviːniənt/",
+                pos: "adj.",
+                meaning: "bất tiện, gây phiền",
+                example: "Too much junk mail is really <strong>inconvenient</strong>."
+              },
+              {
+                word: "junk mail",
+                ipa: "/dʒʌŋk meɪl/",
+                pos: "n. phr.",
+                meaning: "thư rác",
+                example: "I move annoying ads to the <strong>junk mail</strong> folder."
+              },
+              {
+                word: "unsubscribe from",
+                ipa: "/ˌʌnsəbˈskraɪb frɒm/",
+                pos: "v. phr.",
+                meaning: "hủy đăng ký nhận tin từ...",
+                example: "Sometimes I <strong>unsubscribe from</strong> stores I never visit."
+              },
+              {
+                word: "newsletters",
+                ipa: "/ˈnuːzletərz/",
+                pos: "n.",
+                meaning: "bản tin định kỳ qua email",
+                example: "I only keep English learning <strong>newsletters</strong>."
+              },
+              {
+                word: "attachments",
+                ipa: "/əˈtætʃmənts/",
+                pos: "n.",
+                meaning: "tệp đính kèm",
+                example: "Class emails usually include PDF <strong>attachments</strong>."
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 09: ADVERTISING
+  // ==========================================================================
+  {
+    id: "topic-advertising",
+    number: "09",
+    title: "Advertising",
+    titleVi: "Quảng cáo & Thói quen mua sắm",
+    description:
+      "Luyện 3 câu hỏi về việc chú ý đến quảng cáo xung quanh, nơi bạn thường thấy quảng cáo và trải nghiệm mua đồ vì bị thu hút bởi quảng cáo.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "ads_q1",
+        num: 1,
+        prompt: "Do you often notice advertisements around you?",
+        analysis: {
+          questionType: "Câu hỏi Yes/No về nhận thức hằng ngày ('Do you often notice...'). Áp dụng A-R-E (Yes + Reason → Street/Phone example → Reaction).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~33–38 từ), gắn với cảnh chạy xe máy đi học hoặc lướt mạng xã hội."
+        },
+        pitfalls: [
+          "Dùng nhầm 'advertisement' số ít không mạo từ khi nói chung (đúng: 'advertisements are everywhere').",
+          "Quên 'a' trong cụm 'ride a motorbike'.",
+          "Đọc nhầm từ 'advertisements' (trọng âm 2: /ədˈvɜːrtɪsmənts/ hoặc ngắn gọn 'ads' /ædz/)."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Trả lời + Lý do)",
+                text: "Yes, I do, because advertisements are everywhere in my city."
+              },
+              {
+                label: "E (Ví dụ thực tế - tái sử dụng 'ride a motorbike')",
+                text: "For example, I see big signs on the street when I ride a motorbike to school."
+              },
+              {
+                label: "Kết quả / Cảm nhận",
+                text: "Some funny ads always catch my eye."
+              }
+            ],
+            modelAnswer:
+              "Yes, I do, because <strong>advertisements</strong> are everywhere in my city. For example, I see big signs on the street when I <strong>ride a motorbike</strong> to school. Some funny ads always <strong>catch my eye</strong>.",
+            vocab: [
+              {
+                word: "advertisements",
+                ipa: "/ədˈvɜːrtɪsmənts/",
+                pos: "n.",
+                meaning: "các mẩu quảng cáo",
+                example: "Colorful <strong>advertisements</strong> are everywhere in my city."
+              },
+              {
+                word: "ride a motorbike",
+                ipa: "/raɪd ə ˈmoʊtərbaɪk/",
+                pos: "v. phr.",
+                meaning: "chạy xe máy",
+                example: "I see huge signs when I <strong>ride a motorbike</strong> to school."
+              },
+              {
+                word: "catch my eye",
+                ipa: "/kætʃ maɪ aɪ/",
+                pos: "v. phr.",
+                meaning: "thu hút ánh nhìn của tôi",
+                example: "Funny posters always <strong>catch my eye</strong> at traffic lights."
+              },
+              {
+                word: "big signs",
+                ipa: "/bɪɡ saɪnz/",
+                pos: "n. phr.",
+                meaning: "những tấm biển lớn",
+                example: "There are <strong>big signs</strong> above many shops downtown."
+              },
+              {
+                word: "on the street",
+                ipa: "/ɒn ðə striːt/",
+                pos: "adv. phr.",
+                meaning: "trên đường phố",
+                example: "You can see coffee ads <strong>on the street</strong> every morning."
+              },
+              {
+                word: "funny ads",
+                ipa: "/ˈfʌni ædz/",
+                pos: "n. phr.",
+                meaning: "những quảng cáo hài hước",
+                example: "People love sharing <strong>funny ads</strong> with their friends."
+              },
+              {
+                word: "bright colors",
+                ipa: "/braɪt ˈkʌlərz/",
+                pos: "n. phr.",
+                meaning: "màu sắc tươi sáng, nổi bật",
+                example: "Good posters use <strong>bright colors</strong> to get attention."
+              },
+              {
+                word: "new products",
+                ipa: "/nuː ˈprɒdʌkts/",
+                pos: "n. phr.",
+                meaning: "các sản phẩm mới",
+                example: "Ads help us learn about <strong>new products</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu khẳng định - Definitely + daily routine)",
+                text: "Chắc chắn rồi, gần như không thể phớt lờ quảng cáo trong nhịp sinh hoạt hằng ngày (daily routine)."
+              },
+              {
+                label: "E (Ví dụ kết hợp social media & đường phố)",
+                text: "Khi lướt mạng xã hội (social media) hoặc đi dạo trung tâm, áp phích bắt mắt (eye-catching) hiện ra khắp nơi (pop up)."
+              },
+              {
+                label: "Cảm nhận (Honestly + enjoyable)",
+                text: "Thú thật một số quảng cáo sáng tạo xem cũng khá thú vị (enjoyable)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Definitely</strong>, it is almost impossible to ignore ads in our <strong>daily routine</strong>. For example, whenever I scroll through <strong>social media</strong> or walk downtown, <strong>eye-catching</strong> posters <strong>pop up</strong> everywhere. Honestly, some creative ones are quite <strong>enjoyable</strong> to watch.",
+            vocab: [
+              {
+                word: "daily routine",
+                ipa: "/ˈdeɪli ruːˈtiːn/",
+                pos: "n. phr.",
+                meaning: "nhịp sinh hoạt hằng ngày",
+                example: "We bump into ads everywhere in our <strong>daily routine</strong>."
+              },
+              {
+                word: "social media",
+                ipa: "/ˈsoʊʃl ˈmiːdiə/",
+                pos: "n. phr.",
+                meaning: "mạng xã hội",
+                example: "Brands put short ads all over <strong>social media</strong>."
+              },
+              {
+                word: "eye-catching",
+                ipa: "/ˈaɪ kætʃɪŋ/",
+                pos: "adj.",
+                meaning: "bắt mắt, thu hút ánh nhìn",
+                example: "Companies design <strong>eye-catching</strong> posters near malls."
+              },
+              {
+                word: "pop up",
+                ipa: "/pɒp ʌp/",
+                pos: "phr. v.",
+                meaning: "bất ngờ hiện ra, xuất hiện",
+                example: "Banner ads <strong>pop up</strong> whenever I open an app."
+              },
+              {
+                word: "enjoyable",
+                ipa: "/ɪnˈdʒɔɪəbl/",
+                pos: "adj.",
+                meaning: "thú vị, dễ chịu",
+                example: "Creative holiday commercials are actually quite <strong>enjoyable</strong>."
+              },
+              {
+                word: "impossible to ignore",
+                ipa: "/ɪmˈpɒsəbl tuː ɪɡˈnɔːr/",
+                pos: "adj. phr.",
+                meaning: "không thể ngó lơ / bỏ qua",
+                example: "Bright screens at traffic stops are <strong>impossible to ignore</strong>."
+              },
+              {
+                word: "catchy music",
+                ipa: "/ˈkætʃi ˈmjuːzɪk/",
+                pos: "n. phr.",
+                meaning: "nhạc quảng cáo bắt tai",
+                example: "Many drink ads use <strong>catchy music</strong>."
+              },
+              {
+                word: "target young people",
+                ipa: "/ˈtɑːrɡɪt jʌŋ ˈpiːpl/",
+                pos: "v. phr.",
+                meaning: "nhắm tới giới trẻ",
+                example: "Most snack commercials <strong>target young people</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "ads_q2",
+        num: 2,
+        prompt: "Where do you usually see or hear advertisements?",
+        analysis: {
+          questionType: "Câu hỏi nơi chốn & thói quen ('Where do you usually...'). Áp dụng A-R-E (Main places + Reason → Specific example → Extra place/Feeling).",
+          tense: "Hiện tại đơn.",
+          length: "3 câu ngắn gọn (~35–39 từ), nhắc cả kênh online (TikTok/YouTube) lẫn ngoài đời (biển quảng cáo, radio trên taxi)."
+        },
+        pitfalls: [
+          "Dùng sai giới từ với nền tảng mạng xã hội (đúng: 'on TikTok and YouTube', 'on online platforms', không dùng 'in YouTube').",
+          "Quên trả lời cả vế 'or hear' (có thể nhắc nhạc/giọng nói video hoặc radio trên taxi).",
+          "Quên '-s' trong 'billboards', 'platforms', 'ads'."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + R (Nơi thấy nhiều nhất + Lý do)",
+                text: "I usually see ads on TikTok and YouTube because I use my phone every day."
+              },
+              {
+                label: "E (Ví dụ quen thuộc - For example)",
+                text: "Quảng cáo ngắn chạy trước video nhạc: For example, short ads often play before my music videos."
+              },
+              {
+                label: "Mở rộng ngoài trời (Tái sử dụng 'go outside')",
+                text: "Thấy thêm biển quảng cáo lớn khi ra ngoài: I also see big billboards when I go outside."
+              }
+            ],
+            modelAnswer:
+              "I usually see ads on <strong>TikTok and YouTube</strong> because I use my phone every day. For example, short ads often play before my music videos. I also see big <strong>billboards</strong> when I <strong>go outside</strong>.",
+            vocab: [
+              {
+                word: "TikTok and YouTube",
+                ipa: "/ˈtɪktɒk ænd ˈjuːtuːb/",
+                pos: "n. phr.",
+                meaning: "nền tảng TikTok và YouTube",
+                example: "I usually see video ads on <strong>TikTok and YouTube</strong>."
+              },
+              {
+                word: "billboards",
+                ipa: "/ˈbɪlbɔːrdz/",
+                pos: "n.",
+                meaning: "biển quảng cáo cỡ lớn ngoài trời",
+                example: "There are tall <strong>billboards</strong> along main streets."
+              },
+              {
+                word: "go outside",
+                ipa: "/ɡoʊ ˈaʊtsaɪd/",
+                pos: "v. phr.",
+                meaning: "đi ra ngoài",
+                example: "I see posters at bus stops when I <strong>go outside</strong>."
+              },
+              {
+                word: "music videos",
+                ipa: "/ˈmjuːzɪk ˈvɪdioʊz/",
+                pos: "n. phr.",
+                meaning: "các video ca nhạc",
+                example: "Short ads always play before my <strong>music videos</strong>."
+              },
+              {
+                word: "on TV",
+                ipa: "/ɒn ˌtiːˈviː/",
+                pos: "adv. phr.",
+                meaning: "trên truyền hình",
+                example: "My parents still see many commercials <strong>on TV</strong>."
+              },
+              {
+                word: "on the radio",
+                ipa: "/ɒn ðə ˈreɪdioʊ/",
+                pos: "adv. phr.",
+                meaning: "trên đài phát thanh",
+                example: "Drivers often hear local ads <strong>on the radio</strong>."
+              },
+              {
+                word: "shopping malls",
+                ipa: "/ˈʃɒpɪŋ mɔːlz/",
+                pos: "n. phr.",
+                meaning: "các trung tâm thương mại",
+                example: "Big <strong>shopping malls</strong> play video ads on huge screens."
+              },
+              {
+                word: "skip the ad",
+                ipa: "/skɪp ði æd/",
+                pos: "v. phr.",
+                meaning: "bỏ qua quảng cáo",
+                example: "I usually wait five seconds to <strong>skip the ad</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + R (Mở đầu tự nhiên - Well, I tend to...)",
+                text: "Thường thấy nhất trên các nền tảng trực tuyến (online platforms) như YouTube, TikTok vì hay dành thời gian rảnh ở đó."
+              },
+              {
+                label: "E (Ví dụ + tái sử dụng 'inconvenient')",
+                text: "Quảng cáo video bất ngờ chen giữa video (pop up mid-video), điều đó khá bất tiện (inconvenient)."
+              },
+              {
+                label: "Bổ sung vế 'hear'",
+                text: "Thỉnh thoảng còn nghe quảng cáo radio khi đi taxi."
+              }
+            ],
+            modelAnswer:
+              "<strong>Well, I tend to</strong> see ads most on <strong>online platforms</strong> like YouTube and TikTok because I spend my free time there. For example, video ads often <strong>pop up</strong> mid-video, <strong>which</strong> feels quite <strong>inconvenient</strong>. Sometimes I also hear radio ads in taxis.",
+            vocab: [
+              {
+                word: "online platforms",
+                ipa: "/ˈɒnlaɪn ˈplætfɔːrmz/",
+                pos: "n. phr.",
+                meaning: "các nền tảng trực tuyến",
+                example: "Brands spend a lot on <strong>online platforms</strong> like TikTok."
+              },
+              {
+                word: "pop up",
+                ipa: "/pɒp ʌp/",
+                pos: "phr. v.",
+                meaning: "bật lên, chen ngang bất ngờ",
+                example: "Video ads often <strong>pop up</strong> right in the middle of a song."
+              },
+              {
+                word: "inconvenient",
+                ipa: "/ˌɪnkənˈviːniənt/",
+                pos: "adj.",
+                meaning: "bất tiện, gây gián đoạn",
+                example: "Long ads before a short clip feel really <strong>inconvenient</strong>."
+              },
+              {
+                word: "radio ads",
+                ipa: "/ˈreɪdioʊ ædz/",
+                pos: "n. phr.",
+                meaning: "quảng cáo trên đài phát thanh",
+                example: "Passengers often hear <strong>radio ads</strong> inside taxis."
+              },
+              {
+                word: "sponsored posts",
+                ipa: "/ˈspɒnsərd poʊsts/",
+                pos: "n. phr.",
+                meaning: "bài đăng được tài trợ (quảng cáo)",
+                example: "My feed shows many <strong>sponsored posts</strong> every day."
+              },
+              {
+                word: "livestream sales",
+                ipa: "/ˈlaɪvstriːm seɪlz/",
+                pos: "n. phr.",
+                meaning: "buổi phát trực tiếp bán hàng",
+                example: "<strong>Livestream sales</strong> are a huge trend in Vietnam."
+              },
+              {
+                word: "interrupt",
+                ipa: "/ˌɪntəˈrʌpt/",
+                pos: "v.",
+                meaning: "làm gián đoạn",
+                example: "Too many commercials <strong>interrupt</strong> my favorite shows."
+              },
+              {
+                word: "outdoor billboards",
+                ipa: "/ˈaʊtdɔːr ˈbɪlbɔːrdz/",
+                pos: "n. phr.",
+                meaning: "biển quảng cáo ngoài trời",
+                example: "Huge <strong>outdoor billboards</strong> light up city streets at night."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "ads_q3",
+        num: 3,
+        prompt: "Have you ever bought something because of an advertisement?",
+        analysis: {
+          questionType: "Câu hỏi trải nghiệm quá khứ ('Have you ever bought...'). Áp dụng A-R-E kể lại 1 lần mua đồ gần đây.",
+          tense: "Hiện tại hoàn thành mở đầu ('Yes, I have.') + Quá khứ đơn kể chuyện ('bought', 'had', 'arrived', 'felt', 'turned out').",
+          length: "3 câu ngắn gọn (~33–38 từ), dùng món đồ quen thuộc như ốp điện thoại hoặc sạc dự phòng."
+        },
+        pitfalls: [
+          "Quên chuyển sang Quá khứ đơn khi kể thời điểm cụ thể ('Last month, I buy...' → sai; đúng: 'Last month, I bought...').",
+          "Quên mạo từ 'a' trước danh từ đếm được số ít ('a phone case', 'a big discount', 'a portable charger').",
+          "Chia sai quá khứ của 'feel' thành 'feeled' (đúng: 'felt')."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A + E (Trả lời thẳng + Món đồ đã mua tháng trước)",
+                text: "Yes, I have. Last month, I bought a phone case after seeing a fun ad on TikTok."
+              },
+              {
+                label: "R (Lý do mua - tái sử dụng 'save money')",
+                text: "Có giảm giá lớn nên tiết kiệm được tiền: It had a big discount, so I could save money."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'feel very happy' ở quá khứ)",
+                text: "When it arrived, I felt very happy."
+              }
+            ],
+            modelAnswer:
+              "Yes, I have. Last month, I bought a <strong>phone case</strong> after seeing a fun ad on TikTok. It had a <strong>big discount</strong>, so I could <strong>save money</strong>. When it arrived, I <strong>felt very happy</strong>.",
+            vocab: [
+              {
+                word: "phone case",
+                ipa: "/foʊn keɪs/",
+                pos: "n. phr.",
+                meaning: "ốp lưng điện thoại",
+                example: "Last month, I bought a cute <strong>phone case</strong> online."
+              },
+              {
+                word: "big discount",
+                ipa: "/bɪɡ ˈdɪskaʊnt/",
+                pos: "n. phr.",
+                meaning: "mức giảm giá lớn",
+                example: "The shop offered a <strong>big discount</strong> on weekends."
+              },
+              {
+                word: "save money",
+                ipa: "/seɪv ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm tiền",
+                example: "Buying during a sale helped me <strong>save money</strong>."
+              },
+              {
+                word: "felt very happy",
+                ipa: "/felt ˈveri ˈhæpi/",
+                pos: "v. phr.",
+                meaning: "đã cảm thấy rất vui",
+                example: "When the box arrived, I <strong>felt very happy</strong>."
+              },
+              {
+                word: "buy online",
+                ipa: "/baɪ ˈɒnlaɪn/",
+                pos: "v. phr.",
+                meaning: "mua hàng trực tuyến",
+                example: "Young people often <strong>buy online</strong> after seeing videos."
+              },
+              {
+                word: "free shipping",
+                ipa: "/friː ˈʃɪpɪŋ/",
+                pos: "n. phr.",
+                meaning: "miễn phí vận chuyển",
+                example: "The store gave me a <strong>free shipping</strong> ticket."
+              },
+              {
+                word: "good quality",
+                ipa: "/ɡʊd ˈkwɒləti/",
+                pos: "n. phr.",
+                meaning: "chất lượng tốt",
+                example: "The product looked nice and had <strong>good quality</strong>."
+              },
+              {
+                word: "special sale",
+                ipa: "/ˈspeʃl seɪl/",
+                pos: "n. phr.",
+                meaning: "đợt giảm giá đặc biệt",
+                example: "I ordered new shoes during a <strong>special sale</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A + E (Mở đầu tự nhiên - Yes, I have, actually + tái sử dụng 'portable charger')",
+                text: "Tháng trước mình chốt mua (ended up buying) một cục sạc dự phòng sau khi xem quảng cáo TikTok rất thuyết phục (convincing)."
+              },
+              {
+                label: "R (Lý do - tái sử dụng 'affordable')",
+                text: "Giá rất phải chăng (affordable) khi dùng voucher."
+              },
+              {
+                label: "Kết quả (, which... + a little reward)",
+                text: "Cảm giác như một phần thưởng nhỏ (a little reward) và hóa ra (turned out) cực kỳ hữu ích."
+              }
+            ],
+            modelAnswer:
+              "<strong>Yes, I have, actually.</strong> Last month, I <strong>ended up buying</strong> a <strong>portable charger</strong> after seeing a <strong>convincing</strong> TikTok ad. It was really <strong>affordable</strong> with a voucher, <strong>which</strong> felt like <strong>a little reward</strong> and <strong>turned out</strong> super useful.",
+            vocab: [
+              {
+                word: "ended up buying",
+                ipa: "/ˈendɪd ʌp ˈbaɪɪŋ/",
+                pos: "v. phr.",
+                meaning: "cuối cùng đã quyết định mua",
+                example: "I <strong>ended up buying</strong> a backpack after watching a review."
+              },
+              {
+                word: "portable charger",
+                ipa: "/ˈpɔːrtəbl ˈtʃɑːrdʒər/",
+                pos: "n. phr.",
+                meaning: "sạc dự phòng cầm tay",
+                example: "I ordered a slim <strong>portable charger</strong> for my trips."
+              },
+              {
+                word: "convincing",
+                ipa: "/kənˈvɪnsɪŋ/",
+                pos: "adj.",
+                meaning: "có sức thuyết phục",
+                example: "The short demo video looked very <strong>convincing</strong>."
+              },
+              {
+                word: "affordable",
+                ipa: "/əˈfɔːrdəbl/",
+                pos: "adj.",
+                meaning: "hợp túi tiền, giá phải chăng",
+                example: "It was very <strong>affordable</strong> for students with a voucher."
+              },
+              {
+                word: "a little reward",
+                ipa: "/ə ˈlɪtl rɪˈwɔːrd/",
+                pos: "n. phr.",
+                meaning: "một phần thưởng nhỏ cho bản thân",
+                example: "Buying something nice after exams feels like <strong>a little reward</strong>."
+              },
+              {
+                word: "turned out",
+                ipa: "/tɜːrnd aʊt/",
+                pos: "phr. v.",
+                meaning: "hóa ra, kết quả là",
+                example: "The product <strong>turned out</strong> to be really durable."
+              },
+              {
+                word: "impulse buy",
+                ipa: "/ˈɪmpʌls baɪ/",
+                pos: "n. phr.",
+                meaning: "món đồ mua ngẫu hứng nhất thời",
+                example: "Flash sales often lead to an <strong>impulse buy</strong>."
+              },
+              {
+                word: "worth every penny",
+                ipa: "/wɜːrθ ˈevri ˈpeni/",
+                pos: "adj. phr.",
+                meaning: "đáng đồng tiền bát gạo",
+                example: "Luckily, the headphones were <strong>worth every penny</strong>."
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+
+  // ==========================================================================
+  // ĐỀ 10: YOUR BIGGEST ACHIEVEMENT
+  // ==========================================================================
+  {
+    id: "topic-biggest-achievement",
+    number: "10",
+    title: "Your biggest achievement",
+    titleVi: "Thành tựu lớn nhất của bản thân",
+    description:
+      "Luyện 3 câu hỏi về thành tựu lớn nhất bạn từng đạt được, cảm xúc khi đạt được điều đó và người hoặc yếu tố đã giúp bạn thành công.",
+    questionsCount: 3,
+    questions: [
+      {
+        id: "achievement_q1",
+        num: 1,
+        prompt: "What is the biggest achievement you have made so far?",
+        analysis: {
+          questionType: "Câu hỏi chia sẻ thành tựu cá nhân ('What is the biggest achievement...'). Áp dụng A-R-E (Achievement → Past effort example → Result/Feeling).",
+          tense: "Hiện tại đơn giới thiệu thành tựu + Quá khứ đơn kể quá trình cố gắng ('had to study', 'changed').",
+          length: "3 câu ngắn gọn (~36–39 từ), dùng mốc quen thuộc là thi đỗ đại học."
+        },
+        pitfalls: [
+          "Dùng thiếu V-ing sau 'is' khi nói thành tựu là một việc làm ('My biggest achievement is pass' → sai; đúng: 'is passing...').",
+          "Dùng nhầm 'go to outside' hoặc 'stay at home/stay home' sai giới từ.",
+          "Quên chia quá khứ động từ khi kể lại nỗ lực trước kỳ thi ('had to...', 'changed')."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Thành tựu lớn nhất - thi đỗ đại học)",
+                text: "My biggest achievement so far is passing my university entrance exam."
+              },
+              {
+                label: "E (Ví dụ sự cố gắng - tái sử dụng 'study hard', 'stay home')",
+                text: "I had to study hard every day and stay home on weekends to review."
+              },
+              {
+                label: "Kết quả / Cảm xúc (Tái sử dụng 'feel very happy')",
+                text: "Getting into my dream school made my parents feel very happy."
+              }
+            ],
+            modelAnswer:
+              "My <strong>biggest achievement</strong> so far is <strong>passing my university entrance exam</strong>. I had to <strong>study hard</strong> every day and <strong>stay home</strong> on weekends to review. Getting into my dream school made my parents <strong>feel very happy</strong>.",
+            vocab: [
+              {
+                word: "biggest achievement",
+                ipa: "/ˈbɪɡɪst əˈtʃiːvmənt/",
+                pos: "n. phr.",
+                meaning: "thành tựu lớn nhất",
+                example: "My <strong>biggest achievement</strong> so far is passing a big exam."
+              },
+              {
+                word: "passing my university entrance exam",
+                ipa: "/ˈpæsɪŋ maɪ ˌjuːnɪˈvɜːrsəti ˈentrəns ɪɡˈzæm/",
+                pos: "n. phr.",
+                meaning: "thi đỗ kỳ thi tuyển sinh đại học",
+                example: "<strong>Passing my university entrance exam</strong> made me proud."
+              },
+              {
+                word: "study hard",
+                ipa: "/ˈstʌdi hɑːrd/",
+                pos: "v. phr.",
+                meaning: "học tập chăm chỉ",
+                example: "I had to <strong>study hard</strong> for many months."
+              },
+              {
+                word: "stay home",
+                ipa: "/steɪ hoʊm/",
+                pos: "v. phr.",
+                meaning: "ở nhà",
+                example: "I chose to <strong>stay home</strong> on weekends to review lessons."
+              },
+              {
+                word: "feel very happy",
+                ipa: "/fiːl ˈveri ˈhæpi/",
+                pos: "v. phr.",
+                meaning: "cảm thấy rất vui",
+                example: "Good news made my parents <strong>feel very happy</strong>."
+              },
+              {
+                word: "dream school",
+                ipa: "/driːm skuːl/",
+                pos: "n. phr.",
+                meaning: "ngôi trường mơ ước",
+                example: "I worked hard to get into my <strong>dream school</strong>."
+              },
+              {
+                word: "so far",
+                ipa: "/soʊ fɑːr/",
+                pos: "adv. phr.",
+                meaning: "cho đến bây giờ",
+                example: "That is the best result I have got <strong>so far</strong>."
+              },
+              {
+                word: "get a certificate",
+                ipa: "/ɡet ə sərˈtɪfɪkət/",
+                pos: "v. phr.",
+                meaning: "đạt được một chứng chỉ",
+                example: "My next goal is to <strong>get a certificate</strong> in English."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu tự nhiên - I'd say + proudest achievement)",
+                text: "I'd say my proudest achievement so far is getting into my dream university."
+              },
+              {
+                label: "E (Ví dụ sự hy sinh - tái sử dụng 'tight deadlines', 'close friends')",
+                text: "Phải xoay xở với hạn chót gấp và tạm gác việc đi chơi với bạn thân suốt nhiều tháng."
+              },
+              {
+                label: "Kết quả / Ý nghĩa (Tái sử dụng 'meaningful')",
+                text: "Đỗ kỳ thi đó thực sự ý nghĩa (meaningful) và thay đổi cuộc sống của mình."
+              }
+            ],
+            modelAnswer:
+              "<strong>I'd say</strong> my <strong>proudest achievement</strong> so far is <strong>getting into my dream university</strong>. I had to handle <strong>tight deadlines</strong> and give up going out with <strong>close friends</strong> for months. Passing that exam was truly <strong>meaningful</strong> and changed my life.",
+            vocab: [
+              {
+                word: "proudest achievement",
+                ipa: "/ˈpraʊdɪst əˈtʃiːvmənt/",
+                pos: "n. phr.",
+                meaning: "thành tựu đáng tự hào nhất",
+                example: "Graduating with honors is my <strong>proudest achievement</strong>."
+              },
+              {
+                word: "getting into my dream university",
+                ipa: "/ˈɡetɪŋ ˈɪntuː maɪ driːm ˌjuːnɪˈvɜːrsəti/",
+                pos: "n. phr.",
+                meaning: "trúng tuyển vào trường đại học mơ ước",
+                example: "<strong>Getting into my dream university</strong> took real effort."
+              },
+              {
+                word: "tight deadlines",
+                ipa: "/taɪt ˈdedlaɪnz/",
+                pos: "n. phr.",
+                meaning: "những hạn chót gấp gáp",
+                example: "Students often handle <strong>tight deadlines</strong> before exams."
+              },
+              {
+                word: "close friends",
+                ipa: "/kloʊs frendz/",
+                pos: "n. phr.",
+                meaning: "những người bạn thân",
+                example: "I had less time to hang out with <strong>close friends</strong>."
+              },
+              {
+                word: "meaningful",
+                ipa: "/ˈmiːnɪŋfl/",
+                pos: "adj.",
+                meaning: "đầy ý nghĩa",
+                example: "Receiving that scholarship was a <strong>meaningful</strong> moment."
+              },
+              {
+                word: "pay off",
+                ipa: "/peɪ ɒf/",
+                pos: "phr. v.",
+                meaning: "được đền đáp xứng đáng",
+                example: "All my late nights finally <strong>paid off</strong>."
+              },
+              {
+                word: "overcome challenges",
+                ipa: "/ˌoʊvərˈkʌm ˈtʃælɪndʒɪz/",
+                pos: "v. phr.",
+                meaning: "vượt qua các thử thách",
+                example: "Working hard taught me how to <strong>overcome challenges</strong>."
+              },
+              {
+                word: "turning point",
+                ipa: "/ˈtɜːrnɪŋ pɔɪnt/",
+                pos: "n. phr.",
+                meaning: "bước ngoặt quan trọng",
+                example: "Entering university was a big <strong>turning point</strong> for me."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "achievement_q2",
+        num: 2,
+        prompt: "How did you feel when you achieved it?",
+        analysis: {
+          questionType: "Câu hỏi cảm xúc trong quá khứ ('How did you feel...'). Áp dụng A-R-E (Immediate feeling → Celebration example → Lasting result).",
+          tense: "Quá khứ đơn xuyên suốt ('saw', 'felt', 'called', 'had', 'disappeared', 'gave').",
+          length: "3 câu ngắn gọn (~35–39 từ), dùng cảm xúc tự nhiên và bữa ăn mừng cùng gia đình."
+        },
+        pitfalls: [
+          "Lẫn lộn thì Hiện tại đơn và Quá khứ đơn ('When I see my score, I feel...' → sai; phải là 'saw... felt...').",
+          "Nhầm danh từ 'pride' và tính từ 'proud' (đúng: 'felt really proud').",
+          "Dùng 'celebrate a party' (đúng: 'celebrate' đi thẳng hoặc 'had tasty food together to celebrate')."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Cảm xúc đầu tiên khi xem điểm)",
+                text: "When I saw my score, I felt really proud and excited."
+              },
+              {
+                label: "E (Ví dụ ăn mừng - tái sử dụng 'tasty food')",
+                text: "Gọi điện cho bố mẹ và cùng ăn món ngon: I called my parents right away, and we had tasty food together to celebrate."
+              },
+              {
+                label: "Kết quả cảm xúc (Tái sử dụng 'feel relaxed' ở quá khứ)",
+                text: "Lo lắng tan biến và cuối cùng thấy nhẹ nhõm: All my worry disappeared, and I finally felt relaxed."
+              }
+            ],
+            modelAnswer:
+              "When I saw my score, I felt <strong>really proud</strong> and excited. I called my parents right away, and we had <strong>tasty food</strong> together to celebrate. All my worry disappeared, and I finally <strong>felt relaxed</strong>.",
+            vocab: [
+              {
+                word: "really proud",
+                ipa: "/ˈriːəli praʊd/",
+                pos: "adj. phr.",
+                meaning: "thực sự tự hào",
+                example: "When I saw my exam score, I felt <strong>really proud</strong>."
+              },
+              {
+                word: "tasty food",
+                ipa: "/ˈteɪsti fuːd/",
+                pos: "n. phr.",
+                meaning: "đồ ăn ngon",
+                example: "My family had <strong>tasty food</strong> together to celebrate."
+              },
+              {
+                word: "felt relaxed",
+                ipa: "/felt rɪˈlækst/",
+                pos: "v. phr.",
+                meaning: "đã cảm thấy thư giãn, nhẹ nhõm",
+                example: "After the exam ended, I finally <strong>felt relaxed</strong>."
+              },
+              {
+                word: "excited",
+                ipa: "/ɪkˈsaɪtɪd/",
+                pos: "adj.",
+                meaning: "phấn khích, hào hứng",
+                example: "My classmates were super <strong>excited</strong> about the results."
+              },
+              {
+                word: "right away",
+                ipa: "/raɪt əˈweɪ/",
+                pos: "adv. phr.",
+                meaning: "ngay lập tức",
+                example: "I texted my best friend <strong>right away</strong>."
+              },
+              {
+                word: "celebrate",
+                ipa: "/ˈselɪbreɪt/",
+                pos: "v.",
+                meaning: "ăn mừng, kỷ niệm",
+                example: "We went out for dinner to <strong>celebrate</strong>."
+              },
+              {
+                word: "good score",
+                ipa: "/ɡʊd skɔːr/",
+                pos: "n. phr.",
+                meaning: "điểm số cao / tốt",
+                example: "Studying every evening brought me a <strong>good score</strong>."
+              },
+              {
+                word: "smile a lot",
+                ipa: "/smaɪl ə lɒt/",
+                pos: "v. phr.",
+                meaning: "cười rất nhiều",
+                example: "My mom started to <strong>smile a lot</strong> when I told her."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu tự nhiên - Honestly + over the moon + deeply relieved)",
+                text: "Cảm thấy sung sướng tột độ (over the moon) và nhẹ nhõm sâu sắc (deeply relieved) khi có kết quả."
+              },
+              {
+                label: "E (Ví dụ ăn mừng - tái sử dụng 'a little reward')",
+                text: "Sau nhiều tháng áp lực, ăn mừng cùng gia đình giống như một phần thưởng nhỏ (a little reward)."
+              },
+              {
+                label: "Kết quả (Tái sử dụng 'peace of mind' + boosted my confidence)",
+                text: "Mang lại sự an tâm thực sự và tăng thêm tự tin (boosted my confidence)."
+              }
+            ],
+            modelAnswer:
+              "<strong>Honestly,</strong> I felt <strong>over the moon</strong> and deeply <strong>relieved</strong> when the result came out. After months of pressure, celebrating with my family felt like <strong>a little reward</strong>. It gave me real <strong>peace of mind</strong> and <strong>boosted my confidence</strong>.",
+            vocab: [
+              {
+                word: "over the moon",
+                ipa: "/ˈoʊvər ðə muːn/",
+                pos: "idiom",
+                meaning: "vui sướng tột độ",
+                example: "I was <strong>over the moon</strong> when I saw my acceptance letter."
+              },
+              {
+                word: "relieved",
+                ipa: "/rɪˈliːvd/",
+                pos: "adj.",
+                meaning: "nhẹ nhõm, trút bỏ được lo âu",
+                example: "Everyone felt deeply <strong>relieved</strong> after the final score came out."
+              },
+              {
+                word: "a little reward",
+                ipa: "/ə ˈlɪtl rɪˈwɔːrd/",
+                pos: "n. phr.",
+                meaning: "một phần thưởng nhỏ xứng đáng",
+                example: "A cozy family dinner felt like <strong>a little reward</strong>."
+              },
+              {
+                word: "peace of mind",
+                ipa: "/piːs əv maɪnd/",
+                pos: "n. phr.",
+                meaning: "sự bình yên, nhẹ nhõm trong tâm trí",
+                example: "Knowing I passed gave me real <strong>peace of mind</strong>."
+              },
+              {
+                word: "boosted my confidence",
+                ipa: "/ˈbuːstɪd maɪ ˈkɒnfɪdəns/",
+                pos: "v. phr.",
+                meaning: "làm tăng sự tự tin của tôi",
+                example: "Reaching that goal <strong>boosted my confidence</strong> a lot."
+              },
+              {
+                word: "months of pressure",
+                ipa: "/mʌnθs əv ˈpreʃər/",
+                pos: "n. phr.",
+                meaning: "nhiều tháng chịu áp lực",
+                example: "After <strong>months of pressure</strong>, I could finally rest."
+              },
+              {
+                word: "unforgettable moment",
+                ipa: "/ˌʌnfərˈɡetəbl ˈmoʊmənt/",
+                pos: "n. phr.",
+                meaning: "khoảnh khắc khó quên",
+                example: "Hearing my mom cheer was an <strong>unforgettable moment</strong>."
+              },
+              {
+                word: "worth the effort",
+                ipa: "/wɜːrθ ði ˈefərt/",
+                pos: "adj. phr.",
+                meaning: "xứng đáng với công sức bỏ ra",
+                example: "Seeing the good result made everything <strong>worth the effort</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "achievement_q3",
+        num: 3,
+        prompt: "Who or what helped you to reach that achievement?",
+        analysis: {
+          questionType: "Câu hỏi về người/yếu tố hỗ trợ trong quá khứ ('Who or what helped you...'). Áp dụng A-R-E (Key people → Specific actions example → Feeling/Result).",
+          tense: "Quá khứ đơn ('helped', 'cooked', 'studied', 'made', 'guided', 'cheered').",
+          length: "3 câu ngắn gọn (~34–39 từ), nhắc đến cha mẹ, thầy cô và bạn thân."
+        },
+        pitfalls: [
+          "Quên 'to' hoặc V nguyên mẫu sau 'helped me' (đúng: 'helped me to reach' hoặc 'helped me reach').",
+          "Chia sai quá khứ của 'study' (đúng: 'studied') hoặc 'make' (đúng: 'made').",
+          "Chỉ nêu mỗi tên người ('My parents') mà thiếu ví dụ cụ thể họ đã làm gì."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "A (Người giúp đỡ nhiều nhất)",
+                text: "My parents and teachers helped me the most to reach my goal."
+              },
+              {
+                label: "E (Ví dụ cụ thể của mẹ và bạn bè - For example)",
+                text: "Mẹ nấu ăn ngon mỗi ngày, bạn bè cùng ôn bài trước kỳ thi: For example, my mom cooked healthy meals every day, and my friends studied with me before the exam."
+              },
+              {
+                label: "Cảm xúc / Kết quả",
+                text: "Sự ủng hộ của họ giúp mình tự tin: Their support made me feel confident."
+              }
+            ],
+            modelAnswer:
+              "My <strong>parents and teachers</strong> helped me the most to <strong>reach my goal</strong>. For example, my mom cooked healthy meals every day, and my friends studied with me before the exam. Their <strong>support</strong> made me feel confident.",
+            vocab: [
+              {
+                word: "parents and teachers",
+                ipa: "/ˈperənts ænd ˈtiːtʃərz/",
+                pos: "n. phr.",
+                meaning: "cha mẹ và thầy cô giáo",
+                example: "My <strong>parents and teachers</strong> always believed in me."
+              },
+              {
+                word: "reach my goal",
+                ipa: "/riːtʃ maɪ ɡoʊl/",
+                pos: "v. phr.",
+                meaning: "đạt được mục tiêu của tôi",
+                example: "Good advice helped me <strong>reach my goal</strong>."
+              },
+              {
+                word: "support",
+                ipa: "/səˈpɔːrt/",
+                pos: "n.",
+                meaning: "sự ủng hộ, hỗ trợ",
+                example: "Their warm <strong>support</strong> made me feel confident."
+              },
+              {
+                word: "healthy meals",
+                ipa: "/ˈhelθi miːlz/",
+                pos: "n. phr.",
+                meaning: "những bữa ăn lành mạnh, đủ chất",
+                example: "My mom cooked <strong>healthy meals</strong> for me every evening."
+              },
+              {
+                word: "study together",
+                ipa: "/ˈstʌdi təˈɡeðər/",
+                pos: "v. phr.",
+                meaning: "học bài cùng nhau",
+                example: "My friends and I used to <strong>study together</strong> at school."
+              },
+              {
+                word: "feel confident",
+                ipa: "/fiːl ˈkɒnfɪdənt/",
+                pos: "v. phr.",
+                meaning: "cảm thấy tự tin",
+                example: "Practicing with a teacher helped me <strong>feel confident</strong>."
+              },
+              {
+                word: "kind words",
+                ipa: "/kaɪnd wɜːrdz/",
+                pos: "n. phr.",
+                meaning: "những lời động viên tử tế",
+                example: "A few <strong>kind words</strong> from family meant a lot to me."
+              },
+              {
+                word: "never give up",
+                ipa: "/ˈnevər ɡɪv ʌp/",
+                pos: "v. phr.",
+                meaning: "không bao giờ bỏ cuộc",
+                example: "My father always told me to <strong>never give up</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "A (Mở đầu tự nhiên - To be honest + owe it to + close friends)",
+                text: "Thú thật mình có được thành công đó nhờ (owe it to) cha mẹ và những người bạn thân (close friends)."
+              },
+              {
+                label: "E (Ví dụ song song với 'while' - tái sử dụng 'feel at ease')",
+                text: "Mẹ luôn giúp mình thấy nhẹ nhõm (feel at ease), trong khi thầy cô hướng dẫn từng bước (guided me step by step)."
+              },
+              {
+                label: "Cảm xúc (Tái sử dụng 'cheered me up')",
+                text: "Sự động viên (encouragement) của họ luôn làm mình phấn chấn (cheered me up) vào những ngày khó khăn."
+              }
+            ],
+            modelAnswer:
+              "<strong>To be honest,</strong> I <strong>owe it to</strong> my parents and <strong>close friends</strong>. My mom always made me <strong>feel at ease</strong>, <strong>while</strong> my teachers <strong>guided me step by step</strong>. Their <strong>encouragement</strong> always <strong>cheered me up</strong> on tough days.",
+            vocab: [
+              {
+                word: "owe it to",
+                ipa: "/oʊ ɪt tuː/",
+                pos: "v. phr.",
+                meaning: "có được điều gì là nhờ vào ai",
+                example: "I <strong>owe it to</strong> my family for supporting me every day."
+              },
+              {
+                word: "close friends",
+                ipa: "/kloʊs frendz/",
+                pos: "n. phr.",
+                meaning: "những người bạn thân",
+                example: "My <strong>close friends</strong> reviewed practice tests with me."
+              },
+              {
+                word: "feel at ease",
+                ipa: "/fiːl æt iːz/",
+                pos: "v. phr.",
+                meaning: "cảm thấy thoải mái, bớt lo âu",
+                example: "My mom always made me <strong>feel at ease</strong> before exams."
+              },
+              {
+                word: "step by step",
+                ipa: "/step baɪ step/",
+                pos: "adv. phr.",
+                meaning: "từng bước một",
+                example: "My teachers guided me <strong>step by step</strong> through hard topics."
+              },
+              {
+                word: "encouragement",
+                ipa: "/ɪnˈkɜːrɪdʒmənt/",
+                pos: "n.",
+                meaning: "sự động viên, khích lệ",
+                example: "Their <strong>encouragement</strong> gave me strength to keep trying."
+              },
+              {
+                word: "cheered me up",
+                ipa: "/tʃɪrd miː ʌp/",
+                pos: "phr. v.",
+                meaning: "đã làm tôi vui lên, phấn chấn hơn",
+                example: "Funny jokes from friends <strong>cheered me up</strong> on tough days."
+              },
+              {
+                word: "tough days",
+                ipa: "/tʌf deɪz/",
+                pos: "n. phr.",
+                meaning: "những ngày khó khăn, mệt mỏi",
+                example: "Good study partners help you get through <strong>tough days</strong>."
+              },
+              {
+                word: "stay motivated",
+                ipa: "/steɪ ˈmoʊtɪveɪtɪd/",
+                pos: "v. phr.",
+                meaning: "giữ vững động lực",
+                example: "Having clear study habits helped me <strong>stay motivated</strong>."
               }
             ]
           }

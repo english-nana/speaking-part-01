@@ -26,7 +26,25 @@
     "affordable", "itinerary", "luggage", "suitcase", "camera", "charger", "flight", "bus",
     "train", "festival", "scenery", "sightseeing", "memorable", "unforgettable", "north",
     "south", "region", "countryside", "nature", "air", "fresh", "sunscreen", "medicine",
-    "mood", "affect", "affects", "daily", "activity", "activities", "rain", "rains", "noon", "evening", "outdoors"
+    "mood", "affect", "affects", "daily", "activity", "activities", "rain", "rains", "noon", "evening", "outdoors",
+    "ai", "app", "apps", "application", "applications", "tool", "tools", "chatgpt", "technology",
+    "smart", "grammar", "writing", "homework", "translate", "translation", "brainstorm", "summarize",
+    "student", "students", "popular", "office", "tasks", "digital",
+    "phone", "phones", "mobile", "smartphone", "screen", "screens", "text", "call", "chat",
+    "message", "messages", "messaging", "video", "videos", "social", "media", "internet", "online",
+    "battery", "scroll", "scrolling", "sleep", "contact", "connected",
+    "email", "emails", "inbox", "mail", "reply", "send", "receive", "received", "zalo", "messenger",
+    "spam", "promotion", "promotions", "promotional", "discount", "discounts", "voucher",
+    "newsletter", "update", "updates", "notice", "notices", "teacher", "teachers", "formal", "attachment",
+    "ad", "ads", "advertisement", "advertisements", "advertising", "commercial", "commercials",
+    "billboard", "billboards", "poster", "posters", "sign", "signs", "brand", "product", "products",
+    "shop", "shopping", "buy", "bought", "sale", "deal", "deals", "review", "reviews",
+    "tiktok", "youtube", "facebook", "creative", "funny", "catchy",
+    "achievement", "achievements", "achieve", "achieved", "goal", "goals", "success", "successful",
+    "pass", "passed", "passing", "exam", "exams", "university", "college", "school",
+    "scholarship", "certificate", "result", "results", "score", "proud", "excited", "happy",
+    "relieved", "confidence", "confident", "support", "encouragement", "parents", "effort", "hard",
+    "celebrate", "celebrated"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -58,7 +76,15 @@
     "in case", "although", "whereas", "instead of",
     "go-to", "usually go for", "go for", "tend to", "peace of mind",
     "feel at ease", "at ease", "cheer me up", "cheers me up",
-    "calm and recharged", "a little reward", "seafood"
+    "calm and recharged", "a little reward", "seafood",
+    "boosts my productivity", "boost my productivity", "boosted my confidence", "boost my confidence",
+    "daily routine", "brainstorm ideas", "rely on", "summarize", "widely used",
+    "essential item", "glued to", "messaging apps", "social media", "feel sluggish",
+    "ruin their sleep", "ruin my sleep", "stay organized", "check my schedule", "inbox",
+    "promotional emails", "discount alerts", "eye-catching", "pop up", "online platforms",
+    "ended up buying", "convincing", "turned out", "portable charger",
+    "proudest achievement", "over the moon", "deeply relieved", "relieved",
+    "owe it to", "step by step", "encouragement", "tight deadlines"
   ];
 
   function tokenize(text) {
@@ -212,7 +238,11 @@
       question &&
         (question.id === "trips_q1" ||
           question.id === "trips_q3" ||
-          /\blast\s+trip|\blast\s+vacation|\blast\s+time|\bhave\s+you\s+(?:ever\s+)?had|\bmemorable\s+trip|\bdid\s+you\b/i.test(promptText))
+          question.id === "ads_q3" ||
+          question.id === "achievement_q1" ||
+          question.id === "achievement_q2" ||
+          question.id === "achievement_q3" ||
+          /\blast\s+trip|\blast\s+vacation|\blast\s+time|\bhave\s+you\s+(?:ever\s+)?(?:had|bought|made)\b|\bhave\s+you\s+ever\b|\bmemorable\s+trip|\bachievement|\bachieved\b|\bhelped\s+you\b|\bdid\s+you\b/i.test(promptText))
     );
     const hasPastCue =
       isPastPrompt ||
@@ -358,6 +388,9 @@
     const aPluralRegex = /\b(an?\s+(?:[a-z]+\s+)?(friends|photos|pictures|places|clothes|things|trips|seasons|hotels|memories|dishes|plans|tickets|bags|items|mountains|beaches|luggage|baggage|information|advice|equipment|weather|money|food|scenery|accommodation|music|time))\b/gi;
     let m;
     while ((m = aPluralRegex.exec(raw)) !== null) {
+      if (/^an?\s+(?:long|short|good|great|hard|nice|wonderful|fun|busy|tough|difficult|free)\s+time$/i.test(m[1])) {
+        continue;
+      }
       if (!seenKeys.has("take_photos_a") || !/photos?/i.test(m[1])) {
         const noun = m[2].toLowerCase();
         const phraseNoArticle = m[1].replace(/^an?\s+/i, "");
