@@ -1041,6 +1041,15 @@
                             </div>
 
                             ${
+                              isSubmitted && window.SpeakingEvaluator
+                                ? window.SpeakingEvaluator.renderFeedbackCardHtml(
+                                    window.SpeakingEvaluator.evaluate(question, att),
+                                    escapeHtml
+                                  )
+                                : ""
+                            }
+
+                            ${
                               att.teacherFeedback || att.teacherScore
                                 ? `
                               <div style="margin-top:8px;padding:9px 12px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:6px;font-size:13px;color:#14532D;">
