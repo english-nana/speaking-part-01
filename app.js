@@ -25,6 +25,7 @@
     recordingSeconds: 0,
     liveTranscript: "",
     submitSuccessMsg: "",
+    submitErrorMsg: "",
     vocabModalOpen: false,
     vocabSearchQuery: ""
   };
@@ -217,17 +218,22 @@
     state.cloudSyncStatus = "☁️ Đang lưu bản ghi âm lên đám mây...";
     renderApp();
 
-    let audioPath = "";
-    if (audioBlob && audioBlob.size > 0) {
+    let audioPath = takeObj.audioPath || "";
+    if (!audioPath && audioBlob && audioBlob.size > 0) {
       const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, audioBlob);
-      if (!upRes.error && upRes.path) {
+      if (upRes.error) {
+        state.cloudSyncStatus = "⚠️ Chưa tải được file âm thanh: " + (upRes.error.message || "Lỗi quyền Storage");
+        renderApp();
+        return;
+      }
+      if (upRes.path) {
         audioPath = upRes.path;
         takeObj.audioPath = audioPath;
       }
     }
 
-    try {
-      await client.from("speaking_attempts").insert({
+    const { error } = await client.from("speaking_attempts").upsert(
+      {
         id: takeObj.id,
         user_id: currentAccount.id,
         topic_id: getTopicIdForQuestion(qId),
@@ -237,15 +243,22 @@
         transcript: takeObj.transcript || "",
         audio_path: audioPath,
         is_submitted: false
-      });
-      await client
-        .from("profiles")
-        .update({ last_active_at: new Date().toISOString() })
-        .eq("id", currentAccount.id);
-      state.cloudSyncStatus = "";
-    } catch (e) {
-      state.cloudSyncStatus = "⚠️ Lỗi đồng bộ bản ghi âm. Vui lòng thử lại.";
+      },
+      { onConflict: "id" }
+    );
+
+    if (error) {
+      state.cloudSyncStatus = "⚠️ Lỗi lưu bản ghi vào cơ sở dữ liệu: " + error.message;
+      renderApp();
+      return;
     }
+
+    await client
+      .from("profiles")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", currentAccount.id);
+
+    state.cloudSyncStatus = "";
     renderApp();
   }
 
@@ -260,28 +273,60 @@
     } catch (e) {}
   }
 
-  async function cloudSubmitAttempt(qId, chosenTakeId) {
+  async function cloudSubmitAttempt(qId, takeObj) {
     const client = CLOUD.getClient();
-    if (!client || !currentAccount) return;
+    if (!client || !currentAccount || !takeObj) {
+      return { ok: false, error: "Chưa kết nối tới hệ thống." };
+    }
+
+    // Ensure audio file is uploaded before submitting if rawBlob is still in memory
+    if (!takeObj.audioPath && takeObj.rawBlob && takeObj.rawBlob.size > 0) {
+      const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, takeObj.rawBlob);
+      if (upRes.error) {
+        return { ok: false, error: "Lỗi tải file âm thanh: " + (upRes.error.message || "Không xác định") };
+      }
+      if (upRes.path) {
+        takeObj.audioPath = upRes.path;
+      }
+    }
+
     const nowIso = new Date().toISOString();
-    try {
-      await client
-        .from("speaking_attempts")
-        .update({ is_submitted: false, submitted_at: null })
-        .eq("user_id", currentAccount.id)
-        .eq("question_id", qId);
+    const { error: resetErr } = await client
+      .from("speaking_attempts")
+      .update({ is_submitted: false, submitted_at: null })
+      .eq("user_id", currentAccount.id)
+      .eq("question_id", qId);
 
-      await client
-        .from("speaking_attempts")
-        .update({ is_submitted: true, submitted_at: nowIso })
-        .eq("id", chosenTakeId)
-        .eq("user_id", currentAccount.id);
+    if (resetErr) {
+      return { ok: false, error: resetErr.message };
+    }
 
-      await client
-        .from("profiles")
-        .update({ last_active_at: nowIso })
-        .eq("id", currentAccount.id);
-    } catch (e) {}
+    const { error: upsertErr } = await client.from("speaking_attempts").upsert(
+      {
+        id: takeObj.id,
+        user_id: currentAccount.id,
+        topic_id: getTopicIdForQuestion(qId),
+        question_id: qId,
+        take_number: takeObj.num,
+        duration_sec: takeObj.durationSec,
+        transcript: takeObj.transcript || "",
+        audio_path: takeObj.audioPath || "",
+        is_submitted: true,
+        submitted_at: nowIso
+      },
+      { onConflict: "id" }
+    );
+
+    if (upsertErr) {
+      return { ok: false, error: upsertErr.message };
+    }
+
+    await client
+      .from("profiles")
+      .update({ last_active_at: nowIso })
+      .eq("id", currentAccount.id);
+
+    return { ok: true };
   }
 
   // ==========================================================================
@@ -361,6 +406,7 @@
     state.recordingSeconds = 0;
     state.liveTranscript = "";
     state.submitSuccessMsg = "";
+    state.submitErrorMsg = "";
     finalTranscriptBuffer = "";
     audioChunks = [];
 
@@ -488,6 +534,7 @@
       durationSec: dur,
       audioDataUrl: audioUrl,
       audioPath: "",
+      rawBlob: rawBlob || null,
       transcript: recognizedText,
       teacherFeedback: "",
       teacherScore: ""
@@ -906,6 +953,11 @@
                             ? `<div style="font-size:12px;color:#15803D;font-weight:700;margin-top:2px;">${escapeHtml(state.submitSuccessMsg)}</div>`
                             : ""
                         }
+                        ${
+                          state.submitErrorMsg
+                            ? `<div style="font-size:12px;color:#B91C1C;font-weight:700;margin-top:2px;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                            : ""
+                        }
                       </div>
 
                       <button
@@ -1264,6 +1316,7 @@
     state.currentTopicId = topicId;
     state.currentQuestionIndex = 0;
     state.submitSuccessMsg = "";
+    state.submitErrorMsg = "";
     state.view = "practice";
     renderApp();
   }
@@ -1274,6 +1327,7 @@
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
     state.currentQuestionIndex = newIndex;
     state.submitSuccessMsg = "";
+    state.submitErrorMsg = "";
     renderApp();
     const lp = document.querySelector(".left-pane");
     const rp = document.querySelector(".right-pane");
@@ -1468,6 +1522,7 @@
         radio.onchange = () => {
           qData.selectedTakeId = radio.getAttribute("data-select-take");
           state.submitSuccessMsg = "";
+          state.submitErrorMsg = "";
           renderApp();
         };
       });
@@ -1496,14 +1551,29 @@
           const attempts = qData.attempts || [];
           const chosenId =
             qData.selectedTakeId || (attempts.length > 0 ? attempts[attempts.length - 1].id : null);
-          if (!chosenId) return;
-          qData.selectedTakeId = chosenId;
-          qData.submittedTakeId = chosenId;
+          const chosenObj = attempts.find(a => a.id === chosenId);
+          if (!chosenObj) return;
+
+          state.submitSuccessMsg = "";
+          state.submitErrorMsg = "";
+          state.cloudSyncStatus = "☁️ Đang nộp bài lên hệ thống cho Giáo viên...";
+          renderApp();
+
+          const res = await cloudSubmitAttempt(question.id, chosenObj);
+          state.cloudSyncStatus = "";
+
+          if (!res.ok) {
+            state.submitErrorMsg = "Không nộp được bài: " + (res.error || "Lỗi máy chủ");
+            renderApp();
+            return;
+          }
+
+          qData.selectedTakeId = chosenObj.id;
+          qData.submittedTakeId = chosenObj.id;
           qData.submittedAt = CLOUD.formatDateTime(new Date().toISOString());
-          const chosenIdx = attempts.findIndex(a => a.id === chosenId) + 1;
+          const chosenIdx = attempts.indexOf(chosenObj) + 1;
           state.submitSuccessMsg = `✓ Đã nộp Bản ghi âm #${chosenIdx} lên hệ thống cho Giáo viên!`;
           renderApp();
-          await cloudSubmitAttempt(question.id, chosenId);
         };
       }
 

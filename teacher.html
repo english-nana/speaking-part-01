@@ -32,6 +32,7 @@
         unauthorizedEmail: "",
         teacherEmail: "",
         authError: "",
+        dbError: "",
         activeTab: "submissions", // "submissions" | "students"
         students: [],
         submissions: [],
@@ -82,6 +83,7 @@
         if (!client) return;
 
         tState.loading = true;
+        tState.dbError = "";
         renderTeacherApp();
 
         const [profilesRes, vocabRes, notesRes, attemptsRes] = await Promise.all([
@@ -90,6 +92,15 @@
           client.from("question_notes").select("*"),
           client.from("speaking_attempts").select("*").order("created_at", { ascending: false })
         ]);
+
+        const firstErr = profilesRes.error || attemptsRes.error || vocabRes.error || notesRes.error;
+        if (firstErr) {
+          tState.dbError =
+            "Không thể đọc dữ liệu từ Supabase (" +
+            (firstErr.code ? firstErr.code + ": " : "") +
+            firstErr.message +
+            "). Vui lòng kiểm tra đã chạy đủ lệnh GRANT trong SQL Editor chưa.";
+        }
 
         const profiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
         const vocabRows = Array.isArray(vocabRes.data) ? vocabRes.data : [];
@@ -382,6 +393,11 @@
             </header>
 
             <main class="home-container">
+              ${
+                tState.dbError
+                  ? `<div style="padding:12px 16px;border:2px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:13.5px;font-weight:700;margin-bottom:18px;box-shadow:3px 3px 0px #DC2626;">⚠️ ${escapeHtml(tState.dbError)}</div>`
+                  : ""
+              }
               <div class="teacher-stats-grid">
                 <div class="teacher-stat-card">
                   <div class="teacher-stat-label">Tổng số học viên</div>
