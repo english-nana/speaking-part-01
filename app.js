@@ -30,6 +30,7 @@
     isRecording: false,
     recordingSeconds: 0,
     liveTranscript: "",
+    isSubmitting: false,
     submitSuccessMsg: "",
     submitErrorMsg: "",
     vocabModalOpen: false,
@@ -668,7 +669,6 @@
   }
 
   function renderProfileSetupView() {
-    const canCancel = Boolean(currentAccount && currentAccount.className);
     return `
       <div class="auth-wrapper">
         <div class="auth-card-box">
@@ -679,7 +679,7 @@
           </div>
 
           <h1 style="font-size:21px;font-weight:900;color:#18181B;margin-bottom:6px;">
-            ${canCancel ? "Cập nhật Họ tên & Lớp học" : "Hoàn tất thông tin học viên"}
+            Hoàn tất thông tin học viên
           </h1>
           <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:16px;">
             Vui lòng nhập đầy đủ <strong>Họ và tên</strong> và chọn đúng <strong>Lớp</strong> của bạn để Giáo viên nhận diện và chấm bài ghi âm chính xác.
@@ -735,27 +735,13 @@
               ${state.profileSaving ? "Đang lưu thông tin..." : "Lưu thông tin & Vào học →"}
             </button>
 
-            ${
-              canCancel
-                ? `
-              <button
-                type="button"
-                id="btn-cancel-profile-setup"
-                style="width:100%;height:38px;margin-top:8px;border:1.5px solid #D4D4D8;background:#FFFFFF;font-weight:700;font-size:13px;cursor:pointer;"
-              >
-                Quay lại
-              </button>
-            `
-                : `
-              <button
-                type="button"
-                id="btn-logout-account"
-                style="width:100%;height:36px;margin-top:8px;border:none;background:transparent;color:#71717A;font-weight:600;font-size:12.5px;cursor:pointer;"
-              >
-                Đăng xuất tài khoản khác
-              </button>
-            `
-            }
+            <button
+              type="button"
+              id="btn-logout-account"
+              style="width:100%;height:36px;margin-top:8px;border:none;background:transparent;color:#71717A;font-weight:600;font-size:12.5px;cursor:pointer;"
+            >
+              Đăng xuất tài khoản khác
+            </button>
           </form>
         </div>
       </div>
@@ -785,12 +771,9 @@
               <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
             </button>
 
-            <button type="button" class="edit-profile-mini-btn" id="btn-edit-profile" title="Đổi Họ tên hoặc Lớp">
-              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span> ` : ""}✎ Sửa tên/lớp
-            </button>
-
             <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
               <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
+              ${currentAccount.className ? `<span class="class-badge-pill">${escapeHtml(currentAccount.className)}</span>` : ""}
               <span>${escapeHtml(currentAccount.name)}</span>
               <span style="font-size:11px;color:#71717A;">· Đăng xuất</span>
             </button>
@@ -1074,45 +1057,63 @@
                       })
                       .join("")}
 
-                    <div class="submit-take-bar">
-                      <div>
-                        ${
-                          submittedTakeObj
-                            ? `<div class="submit-confirm-note">✓ Đã nộp bài: <strong>Bản ghi âm #${attempts.indexOf(submittedTakeObj) + 1}</strong> (Lúc ${escapeHtml(qData.submittedAt || "")})</div>`
-                            : `<div style="font-size:12.5px;color:#52525B;">Đang chọn <strong>Bản ghi âm #${selectedTakeObj ? attempts.indexOf(selectedTakeObj) + 1 : 1}</strong> để nộp.</div>`
-                        }
-                        ${
-                          state.cloudSyncStatus
-                            ? `<div style="font-size:12px;color:#1D4ED8;font-weight:700;margin-top:2px;">${escapeHtml(state.cloudSyncStatus)}</div>`
-                            : ""
-                        }
-                        ${
-                          state.submitSuccessMsg
-                            ? `<div style="font-size:12px;color:#15803D;font-weight:700;margin-top:2px;">${escapeHtml(state.submitSuccessMsg)}</div>`
-                            : ""
-                        }
-                        ${
-                          state.submitErrorMsg
-                            ? `<div style="font-size:12px;color:#B91C1C;font-weight:700;margin-top:2px;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
-                            : ""
-                        }
-                      </div>
+                    ${(() => {
+                      const selectedTakeNum = selectedTakeObj
+                        ? attempts.indexOf(selectedTakeObj) + 1
+                        : 1;
+                      const submittedTakeNum = submittedTakeObj
+                        ? attempts.indexOf(submittedTakeObj) + 1
+                        : 0;
+                      const isCurrentTakeSubmitted = Boolean(
+                        submittedTakeId && submittedTakeId === selectedTakeId
+                      );
+                      return `
+                        <div class="submit-take-bar">
+                          <div style="flex:1;min-width:220px;">
+                            ${
+                              isCurrentTakeSubmitted
+                                ? `<div class="submit-confirm-note">✓ Đã nộp thành công Bản ghi âm #${submittedTakeNum} cho Giáo viên (Lúc ${escapeHtml(qData.submittedAt || "")})</div>`
+                                : submittedTakeObj
+                                  ? `<div class="submit-pending-note">⚠️ Đang chọn <strong>Bản ghi âm #${selectedTakeNum}</strong> (chưa nộp) · Bản đã nộp trước đó: Bản #${submittedTakeNum}.</div>`
+                                  : `<div class="submit-pending-note">⚠️ Chưa nộp bài — Bấm nút <strong>"Bấm để nộp bài"</strong> bên phải để gửi Bản ghi âm #${selectedTakeNum} cho Giáo viên.</div>`
+                            }
+                            ${
+                              state.cloudSyncStatus
+                                ? `<div style="font-size:12px;color:#1D4ED8;font-weight:700;margin-top:2px;">${escapeHtml(state.cloudSyncStatus)}</div>`
+                                : ""
+                            }
+                            ${
+                              state.submitSuccessMsg
+                                ? `<div style="font-size:12px;color:#15803D;font-weight:700;margin-top:2px;">${escapeHtml(state.submitSuccessMsg)}</div>`
+                                : ""
+                            }
+                            ${
+                              state.submitErrorMsg
+                                ? `<div style="font-size:12px;color:#B91C1C;font-weight:700;margin-top:2px;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                                : ""
+                            }
+                          </div>
 
-                      <button
-                        type="button"
-                        class="submit-take-btn"
-                        id="btn-submit-selected-take"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>
-                          ${
-                            submittedTakeId === selectedTakeId && submittedTakeId
-                              ? `Đã nộp Bản ghi #${attempts.indexOf(selectedTakeObj) + 1}`
-                              : `Nộp bài (Bản ghi âm #${selectedTakeObj ? attempts.indexOf(selectedTakeObj) + 1 : 1})`
-                          }
-                        </span>
-                      </button>
-                    </div>
+                          <button
+                            type="button"
+                            class="submit-take-btn ${isCurrentTakeSubmitted ? "is-submitted" : ""}"
+                            id="btn-submit-selected-take"
+                            ${isCurrentTakeSubmitted || state.isSubmitting ? "disabled" : ""}
+                          >
+                            ${
+                              state.isSubmitting
+                                ? `<span>⏳ Đang gửi bài nộp...</span>`
+                                : isCurrentTakeSubmitted
+                                  ? `<span>✓ Đã nộp Bản ghi âm #${submittedTakeNum}</span>`
+                                  : `
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                <span>Bấm để nộp bài (Bản ghi âm #${selectedTakeNum}) →</span>
+                              `
+                            }
+                          </button>
+                        </div>
+                      `;
+                    })()}
                   </div>
                 `
                     : ""
@@ -1587,26 +1588,6 @@
       };
     }
 
-    const btnCancelSetup = document.getElementById("btn-cancel-profile-setup");
-    if (btnCancelSetup) {
-      btnCancelSetup.onclick = () => {
-        state.needsProfileSetup = false;
-        state.profileFormError = "";
-        renderApp();
-      };
-    }
-
-    const btnEditProfile = document.getElementById("btn-edit-profile");
-    if (btnEditProfile && currentAccount) {
-      btnEditProfile.onclick = () => {
-        state.profileFormName = currentAccount.name || "";
-        state.profileFormClass = currentAccount.className || CLOUD.CLASS_LIST[0];
-        state.profileFormError = "";
-        state.needsProfileSetup = true;
-        renderApp();
-      };
-    }
-
     const authForm = document.getElementById("auth-form");
     if (authForm) {
       authForm.onsubmit = async e => {
@@ -1794,14 +1775,16 @@
           const chosenId =
             qData.selectedTakeId || (attempts.length > 0 ? attempts[attempts.length - 1].id : null);
           const chosenObj = attempts.find(a => a.id === chosenId);
-          if (!chosenObj) return;
+          if (!chosenObj || state.isSubmitting) return;
 
+          state.isSubmitting = true;
           state.submitSuccessMsg = "";
           state.submitErrorMsg = "";
           state.cloudSyncStatus = "☁️ Đang nộp bài lên hệ thống cho Giáo viên...";
           renderApp();
 
           const res = await cloudSubmitAttempt(question.id, chosenObj);
+          state.isSubmitting = false;
           state.cloudSyncStatus = "";
 
           if (!res.ok) {
