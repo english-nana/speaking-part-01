@@ -1354,7 +1354,7 @@
                 title="${escapeHtml(t.number)}: ${escapeHtml(t.title)} (${escapeHtml(t.titleVi)})"
               >
                 <span class="vs-sb-num">${escapeHtml(t.number)}</span>
-                <span class="vs-sb-topic-text">${escapeHtml(t.titleVi || t.title)}</span>
+                <span class="vs-sb-topic-text">${escapeHtml(t.title)}</span>
                 ${
                   isDone
                     ? `<span class="vs-sb-mini-prog">✓</span>`
@@ -1575,11 +1575,6 @@
   }
 
   function renderHomeContent() {
-    const p1 = countSubmittedInPart("part1");
-    const p2 = countSubmittedInPart("part2");
-    const p1Pct = p1.totalQ > 0 ? Math.round((p1.doneQ / p1.totalQ) * 100) : 0;
-    const p2Pct = p2.totalQ > 0 ? Math.round((p2.doneQ / p2.totalQ) * 100) : 0;
-
     return `
       <main class="home-container">
         <div class="home-header-block">
@@ -1587,92 +1582,108 @@
             <div class="home-eyebrow">VSTEP SPEAKING PRACTICE · B1 &amp; B2</div>
             <h1 class="home-h1">CHỌN PHẦN LUYỆN NÓI VSTEP SPEAKING</h1>
             <p class="home-desc">
-              Chọn 1 trong 3 phần thi chính bên dưới để vào luyện tập theo bài học con, ghi âm câu trả lời và nhận bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
+              Chọn 1 trong 3 phần thi bên dưới để vào danh sách bài học con, luyện nói có dàn ý B1/B2, ghi âm nộp bài và nhận bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
             </p>
           </div>
         </div>
 
         <div class="parts-hub-grid">
-          <article class="part-hub-card" data-open-part="part1">
-            <div class="part-hub-top">
-              <span class="part-hub-badge p1">PART 1 · SOCIAL INTERACTION</span>
-              <span class="topic-progress-tag ${p1.doneQ === p1.totalQ && p1.totalQ > 0 ? "done" : ""}">
-                ${p1.doneQ}/${p1.totalQ} câu
-              </span>
+          <article class="topic-card" data-open-part="part1">
+            <div class="topic-card-top">
+              <div class="topic-num-badge">P1</div>
+              <span class="topic-progress-tag done">Đang mở</span>
             </div>
-            <h2 class="part-hub-title">Speaking Part 1</h2>
-            <div class="part-hub-sub">Giao tiếp xã hội · Trả lời ngắn 2–3 câu</div>
-            <p class="part-hub-desc">
-              Luyện trả lời nhanh theo công thức <strong>A–R–E</strong> (Answer + Reason → Example → Feeling) với 10 chủ đề quen thuộc gần gũi đời sống (mỗi câu tối đa 0:45).
+
+            <h2 class="topic-card-title">Speaking Part 1</h2>
+            <div class="topic-card-vi">Social Interaction · Giao tiếp xã hội</div>
+            <p class="topic-card-desc">
+              Trả lời các câu hỏi giao tiếp ngắn về bản thân, sở thích và thói quen hằng ngày. Yêu cầu đi thẳng vào câu hỏi trong 2–3 câu rõ ý theo mạch A–R–E và giữ nhịp nói tự nhiên.
             </p>
-            <div class="part-hub-meta">
-              <span>${p1.topicsCount} chủ đề</span>
-              <span>·</span>
-              <span>${p1.totalQ} câu hỏi</span>
-              <span>·</span>
+
+            <ul class="topic-questions-preview">
+              <li>
+                <span class="preview-q-num">01.</span>
+                <span>Trả lời trực tiếp, nêu lý do, ví dụ thực tế và cảm xúc.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">02.</span>
+                <span>Tập trung phát âm rõ âm cuối và ngữ điệu tự nhiên.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">03.</span>
+                <span>Thời lượng ngắn gọn, mỗi câu nói tối đa 0:45.</span>
+              </li>
+            </ul>
+
+            <div class="topic-card-footer">
               <span>Level B1 &amp; B2</span>
-            </div>
-            <div class="part-hub-prog-wrap">
-              <div class="vs-sb-progress-track">
-                <div class="vs-sb-progress-fill" style="width:${p1Pct}%;"></div>
-              </div>
-            </div>
-            <div class="part-hub-footer">
-              <span>Vào học Speaking Part 1 →</span>
+              <span>Vào học →</span>
             </div>
           </article>
 
-          <article class="part-hub-card" data-open-part="part2">
-            <div class="part-hub-top">
-              <span class="part-hub-badge p2">PART 2 · SOLUTION DISCUSSION</span>
-              <span class="topic-progress-tag ${p2.doneQ === p2.totalQ && p2.totalQ > 0 ? "done" : ""}">
-                ${p2.doneQ}/${p2.totalQ} tình huống
-              </span>
+          <article class="topic-card" data-open-part="part2">
+            <div class="topic-card-top">
+              <div class="topic-num-badge">P2</div>
+              <span class="topic-progress-tag done">Đang mở</span>
             </div>
-            <h2 class="part-hub-title">Speaking Part 2</h2>
-            <div class="part-hub-sub">Thảo luận giải pháp · Chọn 1 trong 3 phương án</div>
-            <p class="part-hub-desc">
-              Kèm <strong>Khung dàn ý 3 phần dùng chung</strong> (Mở bài → 2 lý do chọn + lý do bỏ 2 phương án còn lại → Kết bài). Bắt đầu với dạng <strong>Chọn yếu tố tốt nhất</strong> &amp; <strong>Chọn thể loại</strong>.
+
+            <h2 class="topic-card-title">Speaking Part 2</h2>
+            <div class="topic-card-vi">Solution Discussion · Thảo luận giải pháp</div>
+            <p class="topic-card-desc">
+              Xử lý một tình huống thực tế với 3 lựa chọn (1 phút chuẩn bị, tối đa 3 phút nói). Yêu cầu chọn 1 phương án phù hợp nhất, giải thích 2 lý do chọn và nói rõ vì sao không chọn 2 phương án còn lại.
             </p>
-            <div class="part-hub-meta">
-              <span>Khung dàn ý chung</span>
-              <span>·</span>
-              <span>${p2.topicsCount} dạng đề (${p2.totalQ} tình huống)</span>
-              <span>·</span>
+
+            <ul class="topic-questions-preview">
+              <li>
+                <span class="preview-q-num">01.</span>
+                <span>Mở bài: dẫn nhập tình huống và đưa ra lựa chọn.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">02.</span>
+                <span>Thân bài: 2 lý do chọn + lý do bỏ 2 phương án còn lại.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">03.</span>
+                <span>Kết bài: khẳng định lại lựa chọn (tối đa 3:00 / bài).</span>
+              </li>
+            </ul>
+
+            <div class="topic-card-footer">
               <span>Level B1 &amp; B2</span>
-            </div>
-            <div class="part-hub-prog-wrap">
-              <div class="vs-sb-progress-track">
-                <div class="vs-sb-progress-fill" style="width:${p2Pct}%;"></div>
-              </div>
-            </div>
-            <div class="part-hub-footer">
-              <span>Vào học Speaking Part 2 →</span>
+              <span>Vào học →</span>
             </div>
           </article>
 
-          <article class="part-hub-card part3-card" data-open-part="part3">
-            <div class="part-hub-top">
-              <span class="part-hub-badge p3">PART 3 · TOPIC DEVELOPMENT</span>
-              <span class="topic-progress-tag">Đang cập nhật</span>
+          <article class="topic-card" data-open-part="part3">
+            <div class="topic-card-top">
+              <div class="topic-num-badge" style="background:#F4F4F5;">P3</div>
+              <span class="topic-progress-tag">Sắp ra mắt</span>
             </div>
-            <h2 class="part-hub-title">Speaking Part 3</h2>
-            <div class="part-hub-sub">Phát triển chủ đề · Sơ đồ tư duy &amp; Câu hỏi mở rộng</div>
-            <p class="part-hub-desc">
-              Trình bày quan điểm theo sơ đồ 3 ý cho sẵn kèm quan điểm cá nhân và trả lời câu hỏi thảo luận nâng cao cùng giám khảo.
+
+            <h2 class="topic-card-title">Speaking Part 3</h2>
+            <div class="topic-card-vi">Topic Development · Phát triển chủ đề</div>
+            <p class="topic-card-desc">
+              Trình bày quan điểm về một chủ đề xã hội theo sơ đồ 3 ý gợi ý kết hợp thêm ý riêng của bản thân (1 phút chuẩn bị, tối đa 4 phút nói) và trả lời câu hỏi mở rộng.
             </p>
-            <div class="part-hub-meta">
-              <span>Sơ đồ 3 ý + Câu hỏi phụ</span>
-              <span>·</span>
+
+            <ul class="topic-questions-preview">
+              <li>
+                <span class="preview-q-num">01.</span>
+                <span>Mở bài giới thiệu chủ đề và hướng triển khai bài nói.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">02.</span>
+                <span>Phát triển mạch lạc 3 ý gợi ý kèm ý kiến cá nhân.</span>
+              </li>
+              <li>
+                <span class="preview-q-num">03.</span>
+                <span>Kết luận rõ ràng và trả lời thêm câu hỏi mở rộng.</span>
+              </li>
+            </ul>
+
+            <div class="topic-card-footer">
               <span>Level B1 &amp; B2</span>
-            </div>
-            <div class="part-hub-prog-wrap">
-              <div class="vs-sb-progress-track">
-                <div class="vs-sb-progress-fill" style="width:0%;"></div>
-              </div>
-            </div>
-            <div class="part-hub-footer">
-              <span>Xem thông tin Part 3 →</span>
+              <span>Xem thông tin →</span>
             </div>
           </article>
         </div>
@@ -1691,14 +1702,13 @@
       <section class="p2-outline-banner">
         <div class="p2-outline-head">
           <div>
-            <div class="p2-outline-eyebrow">KHUNG SƯỜN DÙNG CHUNG · ÁP DỤNG NHIỀU DẠNG ĐỀ PART 2</div>
-            <h2 class="p2-outline-title">${escapeHtml(outline.title)}</h2>
-            <p class="p2-outline-sub">${escapeHtml(outline.subtitle)} ${escapeHtml(outline.timingNote)}</p>
+            <h2 class="topic-card-title" style="margin-bottom:4px;">General Outline · Speaking Part 2</h2>
+            <div class="topic-card-vi" style="margin-bottom:0;">Khung dàn ý 3 phần dùng chung cho nhiều dạng đề (${escapeHtml(lvlData.wordTarget)})</div>
           </div>
           <div class="p2-outline-actions">
             <div class="level-switch-group" role="group" aria-label="Chọn khung dàn ý B1 hoặc B2">
-              <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-p2-outline-level="b1">Khung B1</button>
-              <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-p2-outline-level="b2">Khung B2</button>
+              <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-p2-outline-level="b1">Level B1</button>
+              <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-p2-outline-level="b2">Level B2</button>
             </div>
             <button type="button" class="top-pill-btn" id="btn-toggle-p2-outline">
               <span>${state.part2OutlineCollapsed ? "Mở dàn ý ▾" : "Thu gọn ▴"}</span>
@@ -1710,19 +1720,16 @@
           state.part2OutlineCollapsed
             ? ""
             : `
-            <div class="p2-outline-meta-row">
-              <span class="p2-outline-badge">${escapeHtml(lvlData.badge)}</span>
-              <span class="p2-outline-target">Độ dài gợi ý: <strong>${escapeHtml(lvlData.wordTarget)}</strong></span>
-            </div>
-            <div class="p2-outline-steps-grid">
+            <div class="p2-outline-list">
               ${lvlData.parts
                 .map(
                   p => `
-                  <div class="p2-outline-step-card">
-                    <div class="p2-step-chip">${escapeHtml(p.step)}</div>
-                    <div class="p2-step-goal">${escapeHtml(p.goal)}</div>
-                    <div class="p2-step-template">${p.templateHtml}</div>
-                    <div class="p2-step-note">${escapeHtml(p.note)}</div>
+                  <div class="p2-outline-row">
+                    <div class="p2-outline-row-head">
+                      <span class="p2-outline-step-label">${escapeHtml(p.step)}</span>
+                      <span class="p2-outline-step-goal">— ${escapeHtml(p.goal)}</span>
+                    </div>
+                    <div class="p2-outline-row-template">${p.templateHtml}</div>
                   </div>
                 `
                 )
@@ -1819,8 +1826,8 @@
                   </span>
                 </div>
 
-                <h2 class="topic-card-title">${escapeHtml(topic.titleVi || topic.title)}</h2>
-                <div class="topic-card-vi">${escapeHtml(topic.title)}</div>
+                <h2 class="topic-card-title">${escapeHtml(topic.title)}</h2>
+                <div class="topic-card-vi">${escapeHtml(topic.titleVi)}</div>
                 <p class="topic-card-desc">${escapeHtml(topic.description)}</p>
 
                 <ul class="topic-questions-preview">
@@ -1829,7 +1836,7 @@
                       const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
                       const qDone = Boolean(qd && qd.submittedTakeId);
                       const labelText = isPart2 && q.situationTitle ? q.situationTitle : q.prompt;
-                      const prefixText = isPart2 ? `TH${idx + 1}.` : `Q${idx + 1}.`;
+                      const prefixText = isPart2 ? `S${idx + 1}.` : `Q${idx + 1}.`;
                       return `
                         <li
                           class="topic-q-jump-item ${qDone ? "done" : ""}"
@@ -2075,25 +2082,20 @@
               ${isPart2 ? `SPEAKING PART 2 · SITUATION ${qIdx + 1} OF ${totalQ}` : `SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}`}
             </div>
 
-            <div class="question-topic-heading">${escapeHtml(isPart2 ? topic.titleVi || topic.title : topic.title)}</div>
+            <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
             <p class="examiner-instruction">
               ${
                 isPart2
-                  ? "Choose 1 of the 3 options and explain your choice clearly in 3 parts: Introduction → 2 Reasons for your choice & Why not the other 2 options → Conclusion."
+                  ? "Choose 1 of the 3 options and present your answer in 3 parts: Introduction → 2 Reasons for your choice & Why not the other 2 options → Conclusion."
                   : "The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences."
               }
             </p>
 
             <div class="question-prompt-card">
-              ${
-                isPart2 && question.situationTitle
-                  ? `<div style="font-size:11.5px;font-weight:800;color:#92400E;background:#FEF3C7;display:inline-block;padding:2px 8px;border-radius:4px;border:1px solid #F59E0B;margin-bottom:8px;">Tình huống ${qIdx + 1}: ${escapeHtml(question.situationTitle)}</div>`
-                  : ""
-              }
               <p class="question-prompt-text">${question.promptHtml || escapeHtml(question.prompt)}</p>
               ${
                 question.promptVi
-                  ? `<p class="prompt-vi-sub"><strong>Dịch tình huống:</strong> ${escapeHtml(question.promptVi)}</p>`
+                  ? `<p class="prompt-vi-sub"><strong>Tình huống:</strong> ${escapeHtml(question.promptVi)}</p>`
                   : ""
               }
             </div>

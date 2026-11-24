@@ -75,18 +75,18 @@ window.SPEAKING_PART2_TOPICS = [
   {
     part: "part2",
     id: "part2-best-factor",
-    number: "P2-01",
+    number: "01",
     title: "Choosing the Best Factor",
-    titleVi: "Dạng 1: Chọn yếu tố / phẩm chất tốt nhất",
+    titleVi: "Chọn yếu tố / phẩm chất tốt nhất",
     description:
-      "Luyện 3 tình huống chọn yếu tố quan trọng nhất khi chọn trường đại học (ID 1 & ID 20) và phẩm chất quan trọng nhất khi tuyển nhân viên mới (ID 22).",
+      "Luyện 3 tình huống chọn yếu tố quan trọng nhất khi chọn trường đại học và phẩm chất quan trọng nhất khi tuyển nhân viên mới.",
     questionsCount: 3,
     questions: [
       {
         part: "part2",
         id: "p2_factor_q1",
         num: 1,
-        situationTitle: "Choosing a University (Chất lượng đào tạo)",
+        situationTitle: "Choosing a university (ranking, distance, tuition fees)",
         prompt:
           "Your younger sister has just finished high school and is planning to study at a university. She wants to choose a university that provides high-quality education. There are three factors she should consider: the university’s ranking, the distance from her home, and the tuition fees. Which one do you think is the best choice for her?",
         promptHtml:
@@ -262,7 +262,7 @@ window.SPEAKING_PART2_TOPICS = [
         part: "part2",
         id: "p2_factor_q2",
         num: 2,
-        situationTitle: "Choosing the Right University (Tiêu chí thực tế)",
+        situationTitle: "Choosing the right university (fees, support, facilities)",
         prompt:
           "Your cousin is about to enter university and is confused about choosing the right one. There are three criteria for him or her to consider: affordable fees, student support, and campus facilities. Which factor do you think is the most important?",
         promptHtml:
@@ -438,7 +438,7 @@ window.SPEAKING_PART2_TOPICS = [
         part: "part2",
         id: "p2_factor_q3",
         num: 3,
-        situationTitle: "Hiring a New Employee (Phẩm chất nhân viên)",
+        situationTitle: "Hiring a new employee (communication, honesty, skills)",
         prompt:
           "You are a recruiter and you are going to hire a new employee. There are three qualities for you to consider: communication skills, honesty, and professional skills. Which quality do you think is the most important?",
         promptHtml:
@@ -619,18 +619,18 @@ window.SPEAKING_PART2_TOPICS = [
   {
     part: "part2",
     id: "part2-genre",
-    number: "P2-02",
+    number: "02",
     title: "Choosing a Type or Genre",
-    titleVi: "Dạng 2: Chọn thể loại / loại hình phù hợp",
+    titleVi: "Chọn thể loại / loại hình phù hợp",
     description:
-      "Luyện 2 tình huống chọn thể loại sách giúp rèn trí tưởng tượng (ID 4) và chọn loại hình trường tiểu học phù hợp cho trẻ (ID 11).",
+      "Luyện 2 tình huống chọn thể loại sách giúp phát triển trí tưởng tượng và chọn loại hình trường tiểu học phù hợp cho trẻ.",
     questionsCount: 2,
     questions: [
       {
         part: "part2",
         id: "p2_genre_q1",
         num: 1,
-        situationTitle: "Reading a Book to Improve Imagination (Chọn thể loại sách)",
+        situationTitle: "Reading a book to improve imagination (mystery, romance, action)",
         prompt:
           "Your friend wants to read a book to improve her imagination. She is considering three options: a mystery novel, a romance novel, and an action fiction book. Which one would you recommend?",
         promptHtml:
@@ -806,7 +806,7 @@ window.SPEAKING_PART2_TOPICS = [
         part: "part2",
         id: "p2_genre_q2",
         num: 2,
-        situationTitle: "Choosing a Primary School (Chọn loại hình trường tiểu học)",
+        situationTitle: "Choosing a primary school (public, international, private)",
         prompt:
           "A couple is choosing a primary school for their child. What kind of school would you recommend: a public school near her home, an international school, or a private school?",
         promptHtml:
