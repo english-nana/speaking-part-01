@@ -57,7 +57,9 @@
     "honesty", "honest", "communication", "professional", "trust", "mistake", "mistakes",
     "train", "trained", "training", "mystery", "novel", "romance", "action", "fiction",
     "imagination", "clues", "plot", "scenes", "primary", "public", "private",
-    "international", "neighborhood", "traffic", "pick", "parents", "child", "daughter", "factor", "options"
+    "international", "neighborhood", "traffic", "pick", "parents", "child", "daughter", "factor", "options",
+    "stable", "well-paid", "government", "foreign", "company", "companies", "business",
+    "salary", "salaries", "benefits", "insurance", "colleagues", "managers", "investment", "security"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -106,7 +108,10 @@
     "pays off in the long run", "financial burden", "living expenses",
     "freshman", "client data", "admit mistakes", "trained on the job",
     "unexpected twists", "mental imagery", "stay hooked",
-    "predictable", "daily commute", "solid foundation", "far too expensive"
+    "predictable", "daily commute", "solid foundation", "far too expensive",
+    "competitive salaries", "attractive benefits", "health insurance", "paid holidays",
+    "international colleagues", "self-confidence", "job security", "significant investment",
+    "practical experience", "satisfying", "experienced managers"
   ];
 
   function tokenize(text) {

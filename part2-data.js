@@ -1151,6 +1151,243 @@ window.SPEAKING_PART2_TOPICS = [
         }
       }
     ]
+  },
+
+  // ==========================================================================
+  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 1 TÌNH HUỐNG
+  // ==========================================================================
+  {
+    part: "part2",
+    id: "part2-career",
+    number: "03",
+    title: "Choosing a Career",
+    titleVi: "Chọn nghề nghiệp phù hợp",
+    description:
+      "Luyện tình huống lựa chọn công việc ổn định và lương cao sau tốt nghiệp (làm cơ quan nhà nước, công ty nước ngoài hay tự kinh doanh riêng).",
+    questionsCount: 1,
+    questions: [
+      {
+        part: "part2",
+        id: "p2_career_q1",
+        num: 1,
+        situationTitle: "Choosing a stable and well-paid job (government, foreign company, own business)",
+        prompt:
+          "Your younger sister wants a stable and well-paid job after graduation. She is considering three options: working for the government, working for a foreign company, or starting her own business. Which one would you suggest?",
+        promptHtml:
+          "Your younger sister wants a stable and well-paid job after graduation. She is considering three options: <strong>working for the government</strong>, <strong>working for a foreign company</strong>, or <strong>starting her own business</strong>. Which one would you suggest?",
+        promptSentences: [
+          {
+            enHtml: "Your younger sister wants a stable and well-paid job after graduation.",
+            vi: "Em gái bạn muốn một công việc ổn định và lương cao sau khi tốt nghiệp."
+          },
+          {
+            enHtml:
+              "She is considering three options: <strong>working for the government</strong>, <strong>working for a foreign company</strong>, or <strong>starting her own business</strong>.",
+            vi: "Em ấy đang cân nhắc ba lựa chọn: làm việc cho cơ quan nhà nước, làm cho công ty nước ngoài, hoặc tự mở kinh doanh riêng."
+          },
+          {
+            enHtml: "Which one would you suggest?",
+            vi: "Bạn sẽ gợi ý lựa chọn nào?"
+          }
+        ],
+        promptVi:
+          "Em gái bạn muốn một công việc ổn định và lương cao sau khi tốt nghiệp. Em ấy đang cân nhắc ba lựa chọn: làm việc cho cơ quan nhà nước, làm cho công ty nước ngoài, hoặc tự mở kinh doanh riêng. Bạn sẽ gợi ý lựa chọn nào?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Working for a foreign company (Làm công ty nước ngoài)",
+              reasons: [
+                "Mức lương cạnh tranh và phúc lợi tốt (bảo hiểm sức khỏe, ngày nghỉ có lương) giúp tự lo sinh hoạt và tiết kiệm.",
+                "Cải thiện tiếng Anh hằng ngày, học kỹ năng mới từ đồng nghiệp quốc tế và quản lý giàu kinh nghiệm.",
+                "Tăng sự tự tin và mở ra nhiều cơ hội nghề nghiệp trong tương lai."
+              ]
+            },
+            {
+              option: "Working for the government (Làm cơ quan nhà nước)",
+              reasons: [
+                "Tính ổn định và an toàn công việc cao, ít lo biến động hay cắt giảm nhân sự.",
+                "Giờ làm hành chính đều đặn, ít phải tăng ca nên dễ cân bằng cuộc sống.",
+                "Có chế độ bảo hiểm xã hội và hưu trí rõ ràng về lâu dài."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Working for the government (Làm cơ quan nhà nước)",
+              whyNot: "Tuy mang lại sự ổn định công việc nhưng mức lương thường chưa cao và chưa thật sự thỏa đáng so với nhu cầu."
+            },
+            {
+              option: "Starting her own business (Tự kinh doanh riêng)",
+              whyNot: "Đòi hỏi nguồn vốn đầu tư lớn và nhiều kinh nghiệm thực tế; sinh viên mới tốt nghiệp dễ gặp rủi ro cao."
+            }
+          ]
+        },
+        analysis: {
+          questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 hướng nghề nghiệp: government / foreign company / own business).",
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Triển khai theo khung 3 phần chung.",
+          length: "B1: ~140–160 từ · B2: ~170–195 từ."
+        },
+        pitfalls: [
+          "Quên giữ dạng V-ing cho cả 3 lựa chọn ('working for...', 'starting her own business') khi dùng làm chủ ngữ.",
+          "Phát âm thiếu âm cuối trong các từ khóa quan trọng như 'benefits', 'expenses', 'colleagues', 'experience'.",
+          "Chỉ khen công ty nước ngoài mà quên giải thích ngắn gọn lý do chưa chọn làm nhà nước (lương chưa cao) và tự kinh doanh (cần nhiều vốn & kinh nghiệm)."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my younger sister wants to find a stable and well-paid job after graduation. If I were her, I think I would choose to work for a foreign company."
+              },
+              {
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1: Lương thưởng và phúc lợi tốt giúp tự lo cuộc sống, tiết kiệm và nâng cao chất lượng sống. Lý do 2: Cải thiện tiếng Anh, học kỹ năng mới khi làm việc với người nước ngoài -> tự tin hơn và có kinh nghiệm quý giá. Phản biện: Làm nhà nước lương chưa đủ cao; tự kinh doanh cần nhiều tiền và kinh nghiệm."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe working for a foreign company is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my younger sister wants to find a <strong>stable and well-paid</strong> job after graduation. <strong>If I were her, I think I would</strong> choose to work for a <strong>foreign company</strong>. <strong>I think it is the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies usually offer good <strong>salaries and benefits</strong>. This means she can earn enough money to <strong>support herself</strong> and save some money for the future. <strong>Because of this,</strong> she can have a better <strong>quality of life</strong>.<br><br><strong>Another reason is that</strong> she can improve her English and learn new skills. She will have the chance to work with foreign people. <strong>This can help</strong> her become <strong>more confident</strong> and gain valuable <strong>work experience</strong>.<br><br><strong>Regarding the other two options, although</strong> working for the government is also a good choice, the salary is not high enough. <strong>As for</strong> <strong>starting her own business</strong>, <strong>I don't think it is a good idea because</strong> it requires a lot of money and experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "stable and well-paid",
+                ipa: "/ˈsteɪbl ænd wel peɪd/",
+                pos: "adj. phr.",
+                meaning: "ổn định và lương cao",
+                example: "My younger sister wants to find a <strong>stable and well-paid</strong> job after graduation."
+              },
+              {
+                word: "foreign company",
+                ipa: "/ˈfɔːrən ˈkʌmpəni/",
+                pos: "n. phr.",
+                meaning: "công ty nước ngoài",
+                example: "I think I would choose to work for a <strong>foreign company</strong>."
+              },
+              {
+                word: "salaries and benefits",
+                ipa: "/ˈsæləriz ænd ˈbenɪfɪts/",
+                pos: "n. phr.",
+                meaning: "lương thưởng và phúc lợi",
+                example: "Foreign companies usually offer good <strong>salaries and benefits</strong>."
+              },
+              {
+                word: "support herself",
+                ipa: "/səˈpɔːrt hɜːrˈself/",
+                pos: "v. phr.",
+                meaning: "tự trang trải cuộc sống cho bản thân",
+                example: "She can earn enough money to <strong>support herself</strong>."
+              },
+              {
+                word: "quality of life",
+                ipa: "/ˈkwɑːləti əv laɪf/",
+                pos: "n. phr.",
+                meaning: "chất lượng cuộc sống",
+                example: "Because of this, she can have a better <strong>quality of life</strong>."
+              },
+              {
+                word: "more confident",
+                ipa: "/mɔːr ˈkɑːnfɪdənt/",
+                pos: "adj. phr.",
+                meaning: "tự tin hơn",
+                example: "This can help her become <strong>more confident</strong> at work."
+              },
+              {
+                word: "work experience",
+                ipa: "/wɜːrk ɪkˈspɪriəns/",
+                pos: "n. phr.",
+                meaning: "kinh nghiệm làm việc",
+                example: "She can gain valuable <strong>work experience</strong> in an international environment."
+              },
+              {
+                word: "starting her own business",
+                ipa: "/ˈstɑːrtɪŋ hɜːr oʊn ˈbɪznəs/",
+                pos: "v. phr.",
+                meaning: "tự mở kinh doanh riêng",
+                example: "<strong>Starting her own business</strong> requires a lot of money and experience."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my younger sister wants to find a stable and well-paid job after graduation. If I were her, I think I would choose to work for a foreign company."
+              },
+              {
+                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
+                text: "Lý do 1: Mức lương cạnh tranh (competitive salaries) và phúc lợi hấp dẫn (attractive benefits: health insurance, paid holidays) giúp trang trải chi phí sinh hoạt (cover her living expenses) và tiết kiệm. Lý do 2: Cải thiện tiếng Anh với đồng nghiệp quốc tế (international colleagues) và học từ quản lý kinh nghiệm -> nâng cao sự tự tin (boost her self-confidence) và mở rộng cơ hội nghề nghiệp. Phản biện: Làm nhà nước có job security nhưng lương chưa thỏa đáng; tự khởi nghiệp cần vốn đầu tư lớn (significant investment) và kinh nghiệm thực tế."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe working for a foreign company is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my younger sister wants to find a stable and well-paid job after graduation. <strong>If I were her, I think I would</strong> choose to work for a foreign company. <strong>I think it is the best choice because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies usually offer <strong>competitive salaries</strong> and <strong>attractive benefits</strong>. <strong>For example,</strong> some foreign companies provide <strong>health insurance</strong> and <strong>paid holidays</strong>. <strong>As a result,</strong> she can <strong>cover her living expenses</strong> and save money for her future.<br><br><strong>Another reason is that</strong> she can improve her English and learn new skills. She will have many opportunities to work with <strong>international colleagues</strong>, use English in daily conversations, and learn from experienced managers. These experiences can <strong>boost her self-confidence</strong> and open up more <strong>career opportunities</strong> in the future.<br><br><strong>Regarding the other two options, although</strong> working for the government <strong>is worth considering</strong> because it offers <strong>job security</strong>, the salary is not very satisfying. <strong>As for</strong> starting her own business, <strong>I don't think it is a good idea because</strong> it requires <strong>significant investment</strong> and practical experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "competitive salaries",
+                ipa: "/kəmˈpetətɪv ˈsæləriz/",
+                pos: "n. phr.",
+                meaning: "mức lương cạnh tranh",
+                example: "Foreign companies usually offer <strong>competitive salaries</strong> and attractive benefits."
+              },
+              {
+                word: "attractive benefits",
+                ipa: "/əˈtræktɪv ˈbenɪfɪts/",
+                pos: "n. phr.",
+                meaning: "chế độ phúc lợi hấp dẫn",
+                example: "Many graduates look for jobs with <strong>attractive benefits</strong>."
+              },
+              {
+                word: "health insurance",
+                ipa: "/helθ ɪnˈʃʊrəns/",
+                pos: "n. phr.",
+                meaning: "bảo hiểm sức khỏe",
+                example: "Some foreign companies provide <strong>health insurance</strong> and paid holidays."
+              },
+              {
+                word: "paid holidays",
+                ipa: "/peɪd ˈhɑːlədeɪz/",
+                pos: "n. phr.",
+                meaning: "ngày nghỉ phép có hưởng lương",
+                example: "Employees enjoy <strong>paid holidays</strong> every year."
+              },
+              {
+                word: "cover her living expenses",
+                ipa: "/ˈkʌvər hɜːr ˈlɪvɪŋ ɪkˈspensɪz/",
+                pos: "v. phr.",
+                meaning: "trang trải chi phí sinh hoạt",
+                example: "As a result, she can <strong>cover her living expenses</strong> and save money."
+              },
+              {
+                word: "international colleagues",
+                ipa: "/ˌɪntərˈnæʃnəl ˈkɑːliːɡz/",
+                pos: "n. phr.",
+                meaning: "đồng nghiệp quốc tế",
+                example: "She will have many opportunities to work with <strong>international colleagues</strong>."
+              },
+              {
+                word: "boost her self-confidence",
+                ipa: "/buːst hɜːr self ˈkɑːnfɪdəns/",
+                pos: "v. phr.",
+                meaning: "nâng cao sự tự tin của bản thân",
+                example: "These experiences can <strong>boost her self-confidence</strong> and open up more opportunities."
+              },
+              {
+                word: "job security",
+                ipa: "/dʒɑːb sɪˈkjʊrəti/",
+                pos: "n. phr.",
+                meaning: "sự ổn định, an toàn trong công việc",
+                example: "Working for the government is worth considering because it offers <strong>job security</strong>."
+              }
+            ]
+          }
+        }
+      }
+    ]
   }
 ];
 
