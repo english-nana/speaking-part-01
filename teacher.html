@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124j" />
+  <link rel="stylesheet" href="./styles.css?v=20261124k" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124j"></script>
-  <script src="./supabase-client.js?v=20261124j"></script>
-  <script src="./travel-data.js?v=20261124j"></script>
-  <script src="./speaking-evaluator.js?v=20261124j"></script>
+  <script src="./supabase-config.js?v=20261124k"></script>
+  <script src="./supabase-client.js?v=20261124k"></script>
+  <script src="./travel-data.js?v=20261124k"></script>
+  <script src="./speaking-evaluator.js?v=20261124k"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -231,9 +231,14 @@
           parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
         });
 
-        // Chỉ ghi nhận bài đã nộp chính thức (bỏ qua bản ghi nháp chưa nộp)
+        // Chỉ ghi nhận bài đã nộp chính thức (bỏ qua bản ghi nháp chưa nộp).
+        // Đồng thời phục hồi các bài đã bấm nộp chính thức (có submitted_at hoặc đã có bài sửa)
+        // nhưng trước đây bị lỗi lưu nháp nền ghi đè is_submitted = false.
+        const isOfficiallySubmittedRow = a =>
+          Boolean(a && (a.is_submitted || a.submitted_at || reviewByAttemptId[a.id]));
+
         const studentAttemptRows = attemptRows.filter(
-          a => Boolean(a.is_submitted) && !hiddenAdminIds.has(a.user_id)
+          a => isOfficiallySubmittedRow(a) && !hiddenAdminIds.has(a.user_id)
         );
         const signedUrlMap = await CLOUD.getSignedAudioUrls(
           studentAttemptRows.map(a => a.audio_path).filter(Boolean)
@@ -252,7 +257,7 @@
 
         Object.keys(grouped).forEach(k => {
           const list = grouped[k];
-          const chosen = list.find(a => a.is_submitted);
+          const chosen = list.find(a => a.is_submitted) || list[0];
           if (!chosen) return;
           const prof = profileById[chosen.user_id] || {
             id: chosen.user_id,
@@ -302,7 +307,7 @@
             prompt: qMeta.prompt,
             targetLevel: String(chosen.target_level || (activeAiReview && activeAiReview.target_level) || "B1").toUpperCase(),
             evaluatedBand,
-            isOfficiallySubmitted: Boolean(chosen.is_submitted),
+            isOfficiallySubmitted: true,
             isReviewReleased,
             isReviewSeen,
             submittedAt: CLOUD.formatDateTime(chosen.submitted_at || chosen.created_at),
