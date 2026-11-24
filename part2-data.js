@@ -154,11 +154,11 @@ window.SPEAKING_PART2_TOPICS = [
                 example: "She can still live in a <strong>dormitory</strong> or take the bus."
               },
               {
-                word: "rent a room",
-                ipa: "/rent ə ruːm/",
-                pos: "v. phr.",
-                meaning: "thuê phòng trọ",
-                example: "Students often <strong>rent a room</strong> near their university."
+                word: "useful lessons",
+                ipa: "/ˈjuːsfl ˈlesnz/",
+                pos: "n. phr.",
+                meaning: "những bài học hữu ích",
+                example: "My sister can study in a big library and learn <strong>useful lessons</strong>."
               },
               {
                 word: "apply for scholarships",
