@@ -1,5 +1,5 @@
 // ==========================================================================
-// SPEAKING PART 1 — STUDENT APPLICATION ENGINE (SUPABASE CLOUD)
+// SPEAKING PART 1 — STUDENT APPLICATION ENGINE (SUPABASE CLOUD + 6H AI REVIEW)
 // ==========================================================================
 
 (function () {
@@ -7,11 +7,18 @@
   const CLOUD = window.SpeakingCloud;
   const escapeHtml = CLOUD.escapeHtml;
   const formatDuration = CLOUD.formatDuration;
+  const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
 
   let currentAccount = null;
 
+  let initialSidebarCollapsed = false;
+  try {
+    initialSidebarCollapsed = localStorage.getItem("speaking_sidebar_collapsed") === "1";
+  } catch (e) {}
+
   const state = {
-    view: "auth", // "auth" | "home" | "practice"
+    view: "auth", // "auth" | "home" | "my-submissions" | "practice"
+    prevDashboardView: "home",
     authMode: "login", // "login" | "register"
     authError: "",
     authInfo: "",
@@ -23,6 +30,13 @@
     profileFormError: "",
     profileSaving: false,
     regSelectedClass: CLOUD.CLASS_LIST[0],
+    sidebarCollapsed: initialSidebarCollapsed,
+    mobileSidebarOpen: false,
+    sbTopicsCollapsed: false,
+    quickSearchQuery: "",
+    quickSearchOpen: false,
+    notifOpen: false,
+    reviewsByQuestionId: {},
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
     selectedLevel: "b1", // "b1" | "b2"
@@ -40,11 +54,36 @@
   let recordingTimer = null;
   let speechRecognizer = null;
   let finalTranscriptBuffer = "";
+  let notifPollTimer = null;
+  let lastReviewsRefreshMs = 0;
+  let reviewsRefreshInFlight = false;
+  const noteSaveTimers = {};
+
+  // Build catalog of all questions for fast lookup & quick search
+  const QUESTION_CATALOG = [];
+  const QUESTION_META_BY_ID = {};
+  TOPICS.forEach(t => {
+    (t.questions || []).forEach((q, idx) => {
+      const meta = {
+        topicId: t.id,
+        topicNumber: t.number,
+        topicTitle: t.title,
+        topicTitleVi: t.titleVi,
+        questionId: q.id,
+        questionIndex: idx,
+        questionNum: q.num || idx + 1,
+        prompt: q.prompt
+      };
+      QUESTION_CATALOG.push(meta);
+      QUESTION_META_BY_ID[q.id] = meta;
+    });
+  });
 
   // ==========================================================================
   // SUPABASE CLOUD SYNC LAYER
   // ==========================================================================
   function getTopicIdForQuestion(qId) {
+    if (QUESTION_META_BY_ID[qId]) return QUESTION_META_BY_ID[qId].topicId;
     const found = TOPICS.find(t => (t.questions || []).some(q => q.id === qId));
     return found ? found.id : state.currentTopicId || "topic-travelling";
   }
@@ -56,6 +95,10 @@
         selectedTakeId: null,
         submittedTakeId: null,
         submittedAt: null,
+        submittedAtIso: "",
+        targetLevel: "B1",
+        aiStatus: "",
+        aiReleaseAt: "",
         attempts: []
       };
     }
@@ -81,16 +124,17 @@
 
     renderApp();
 
-    const [profileRes, vocabRes, attemptsRes, teacherRes] = await Promise.all([
+    const [profileRes, vocabRes, attemptsRes, notesRes, reviewsRes, teacherRes] = await Promise.all([
       client.from("profiles").select("*").eq("id", uid).maybeSingle(),
       client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+      client.from("question_notes").select("*").eq("user_id", uid),
+      client.from("speaking_ai_reviews").select("*").eq("user_id", uid),
       client.rpc("is_teacher")
     ]);
 
     state.isTeacher = Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
 
-    // Prefer existing full_name in profiles table so Google login metadata never overwrites student edits
     const rawStoredName =
       profileRes && profileRes.data && profileRes.data.full_name
         ? profileRes.data.full_name
@@ -128,6 +172,14 @@
 
     const questionsData = {};
 
+    const noteRows = Array.isArray(notesRes && notesRes.data) ? notesRes.data : [];
+    noteRows.forEach(n => {
+      if (n && n.question_id) {
+        const qd = ensureQuestionData(questionsData, n.question_id);
+        qd.ideaNote = n.idea_note || "";
+      }
+    });
+
     const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
     const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(r => r.audio_path).filter(Boolean));
 
@@ -141,12 +193,22 @@
         audioDataUrl: row.audio_path && signedUrlMap[row.audio_path] ? signedUrlMap[row.audio_path] : null,
         audioPath: row.audio_path || "",
         transcript: row.transcript || "",
+        targetLevel: String(row.target_level || "B1").toUpperCase(),
         teacherFeedback: row.teacher_feedback || "",
-        teacherScore: row.teacher_score || ""
+        teacherScore: row.teacher_score || "",
+        aiStatus: row.ai_status || "",
+        aiReleaseAt: row.ai_release_at || ""
       });
       if (row.is_submitted) {
+        const subIso = row.submitted_at || row.created_at || "";
         qd.submittedTakeId = row.id;
-        qd.submittedAt = CLOUD.formatDateTime(row.submitted_at || row.created_at);
+        qd.submittedAt = CLOUD.formatDateTime(subIso);
+        qd.submittedAtIso = subIso;
+        qd.targetLevel = String(row.target_level || "B1").toUpperCase();
+        qd.aiStatus = row.ai_status || "";
+        qd.aiReleaseAt =
+          row.ai_release_at ||
+          (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
         qd.selectedTakeId = row.id;
       }
     });
@@ -156,6 +218,16 @@
         qd.selectedTakeId = qd.attempts[qd.attempts.length - 1].id;
       }
     });
+
+    const reviewsMap = {};
+    const reviewRows = Array.isArray(reviewsRes && reviewsRes.data) ? reviewsRes.data : [];
+    reviewRows.forEach(r => {
+      if (r && r.question_id) {
+        reviewsMap[r.question_id] = r;
+      }
+    });
+    state.reviewsByQuestionId = reviewsMap;
+    lastReviewsRefreshMs = Date.now();
 
     currentAccount = {
       id: uid,
@@ -174,7 +246,155 @@
     state.authInfo = "";
     state.authLoading = false;
     if (state.view === "auth") state.view = "home";
+
+    startNotificationPolling();
     renderApp();
+  }
+
+  function scheduleSaveIdeaNote(qId, noteVal) {
+    if (noteSaveTimers[qId]) clearTimeout(noteSaveTimers[qId]);
+    noteSaveTimers[qId] = setTimeout(async () => {
+      const client = CLOUD.getClient();
+      if (!client || !currentAccount) return;
+      try {
+        await client.from("question_notes").upsert(
+          {
+            user_id: currentAccount.id,
+            question_id: qId,
+            idea_note: String(noteVal || ""),
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: "user_id,question_id" }
+        );
+      } catch (e) {}
+    }, 650);
+  }
+
+  function getReleasedReview(qId) {
+    const rev = (state.reviewsByQuestionId && state.reviewsByQuestionId[qId]) || null;
+    if (!rev || rev.status !== "ready" || !rev.review_json) return null;
+    const qData = currentAccount && currentAccount.questionsData ? currentAccount.questionsData[qId] : null;
+    if (qData && qData.submittedTakeId && rev.attempt_id && rev.attempt_id !== qData.submittedTakeId) {
+      return null;
+    }
+    const relMs = new Date(rev.release_at || 0).getTime();
+    if (!isNaN(relMs) && relMs > Date.now() && !state.isTeacher) return null;
+    return rev;
+  }
+
+  async function markReviewAsSeen(qId) {
+    const rev = getReleasedReview(qId);
+    if (!rev || rev.student_seen_at) return;
+    const client = CLOUD.getClient();
+    if (!client) return;
+    rev.student_seen_at = new Date().toISOString();
+    try {
+      await client.rpc("mark_speaking_review_seen", { p_review_id: rev.id || qId });
+    } catch (e) {}
+  }
+
+  async function refreshStudentReviews(force) {
+    const client = CLOUD.getClient();
+    if (!client || !currentAccount || reviewsRefreshInFlight || state.isRecording) return;
+    const now = Date.now();
+    if (!force && now - lastReviewsRefreshMs < 10000) return;
+
+    reviewsRefreshInFlight = true;
+    try {
+      const [revRes, subAttRes] = await Promise.all([
+        client.from("speaking_ai_reviews").select("*").eq("user_id", currentAccount.id),
+        client
+          .from("speaking_attempts")
+          .select("id, question_id, transcript, teacher_feedback, teacher_score, ai_status, ai_release_at, target_level")
+          .eq("user_id", currentAccount.id)
+          .eq("is_submitted", true)
+      ]);
+      lastReviewsRefreshMs = Date.now();
+
+      let changed = false;
+
+      if (Array.isArray(revRes.data)) {
+        const nextMap = {};
+        revRes.data.forEach(r => {
+          if (r && r.question_id) nextMap[r.question_id] = r;
+        });
+        if (JSON.stringify(Object.keys(nextMap)) !== JSON.stringify(Object.keys(state.reviewsByQuestionId))) {
+          changed = true;
+        } else {
+          Object.keys(nextMap).forEach(k => {
+            const oldR = state.reviewsByQuestionId[k];
+            const newR = nextMap[k];
+            if (
+              !oldR ||
+              oldR.updated_at !== newR.updated_at ||
+              oldR.release_at !== newR.release_at ||
+              oldR.student_seen_at !== newR.student_seen_at
+            ) {
+              changed = true;
+            }
+          });
+        }
+        state.reviewsByQuestionId = nextMap;
+      }
+
+      if (Array.isArray(subAttRes.data) && currentAccount.questionsData) {
+        subAttRes.data.forEach(row => {
+          const qd = currentAccount.questionsData[row.question_id];
+          if (!qd) return;
+          if (row.ai_release_at && qd.aiReleaseAt !== row.ai_release_at) {
+            qd.aiReleaseAt = row.ai_release_at;
+            changed = true;
+          }
+          if (row.ai_status && qd.aiStatus !== row.ai_status) {
+            qd.aiStatus = row.ai_status;
+            changed = true;
+          }
+          const attObj = (qd.attempts || []).find(a => a.id === row.id);
+          if (attObj) {
+            if (row.transcript && !attObj.transcript) {
+              attObj.transcript = row.transcript;
+              changed = true;
+            }
+            if (
+              attObj.teacherFeedback !== (row.teacher_feedback || "") ||
+              attObj.teacherScore !== (row.teacher_score || "")
+            ) {
+              attObj.teacherFeedback = row.teacher_feedback || "";
+              attObj.teacherScore = row.teacher_score || "";
+              changed = true;
+            }
+          }
+        });
+      }
+
+      const activeTag = document.activeElement ? document.activeElement.tagName : "";
+      const isTyping = activeTag === "INPUT" || activeTag === "TEXTAREA";
+      if ((changed || force) && !isTyping && !state.isRecording) {
+        renderApp();
+      }
+    } catch (e) {
+    } finally {
+      reviewsRefreshInFlight = false;
+    }
+  }
+
+  function startNotificationPolling() {
+    if (notifPollTimer) {
+      clearInterval(notifPollTimer);
+      notifPollTimer = null;
+    }
+    notifPollTimer = setInterval(() => {
+      if (currentAccount && document.visibilityState === "visible") {
+        refreshStudentReviews(false);
+      }
+    }, 60000);
+  }
+
+  function stopNotificationPolling() {
+    if (notifPollTimer) {
+      clearInterval(notifPollTimer);
+      notifPollTimer = null;
+    }
   }
 
   async function cloudAddVocab(item) {
@@ -266,13 +486,17 @@
     } catch (e) {}
   }
 
-  async function cloudSubmitAttempt(qId, takeObj) {
+  async function cloudSubmitAttempt(qId, takeObj, metaInfo) {
     const client = CLOUD.getClient();
     if (!client || !currentAccount || !takeObj) {
       return { ok: false, error: "Chưa kết nối tới hệ thống." };
     }
 
-    // Ensure audio file is uploaded before submitting if rawBlob is still in memory
+    const info = metaInfo || {};
+    const targetLevel = String(info.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
+    const topicTitle = info.topicTitle || "";
+    const promptText = info.promptText || "";
+
     if (!takeObj.audioPath && takeObj.rawBlob && takeObj.rawBlob.size > 0) {
       const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, takeObj.rawBlob);
       if (upRes.error) {
@@ -283,7 +507,10 @@
       }
     }
 
-    const nowIso = new Date().toISOString();
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const defaultReleaseIso = new Date(nowMs + RELEASE_HOURS * 3600 * 1000).toISOString();
+
     const { error: resetErr } = await client
       .from("speaking_attempts")
       .update({ is_submitted: false, submitted_at: null })
@@ -294,21 +521,37 @@
       return { ok: false, error: resetErr.message };
     }
 
-    const { error: upsertErr } = await client.from("speaking_attempts").upsert(
-      {
-        id: takeObj.id,
-        user_id: currentAccount.id,
-        topic_id: getTopicIdForQuestion(qId),
-        question_id: qId,
-        take_number: takeObj.num,
-        duration_sec: takeObj.durationSec,
-        transcript: takeObj.transcript || "",
-        audio_path: takeObj.audioPath || "",
-        is_submitted: true,
-        submitted_at: nowIso
-      },
-      { onConflict: "id" }
-    );
+    const basePayload = {
+      id: takeObj.id,
+      user_id: currentAccount.id,
+      topic_id: getTopicIdForQuestion(qId),
+      question_id: qId,
+      take_number: takeObj.num,
+      duration_sec: takeObj.durationSec,
+      transcript: takeObj.transcript || "",
+      audio_path: takeObj.audioPath || "",
+      is_submitted: true,
+      submitted_at: nowIso
+    };
+
+    const fullPayload = {
+      ...basePayload,
+      target_level: targetLevel,
+      topic_title: topicTitle,
+      prompt_text: promptText
+    };
+
+    let { error: upsertErr } = await client
+      .from("speaking_attempts")
+      .upsert(fullPayload, { onConflict: "id" });
+
+    // Backward-compatible fallback if new columns have not been added yet
+    if (upsertErr && /column|PGRST204/i.test(upsertErr.message || upsertErr.code || "")) {
+      const fallbackRes = await client
+        .from("speaking_attempts")
+        .upsert(basePayload, { onConflict: "id" });
+      upsertErr = fallbackRes.error;
+    }
 
     if (upsertErr) {
       return { ok: false, error: upsertErr.message };
@@ -319,25 +562,65 @@
       .update({ last_active_at: nowIso })
       .eq("id", currentAccount.id);
 
-    return { ok: true };
+    // Clear previous review cache for this question while new 6-hour AI review is scheduled
+    delete state.reviewsByQuestionId[qId];
+
+    // Trigger AI grading Edge Function asynchronously in the background
+    if (typeof CLOUD.invokeGradeSpeaking === "function") {
+      CLOUD.invokeGradeSpeaking(takeObj.id, {
+        promptText,
+        topicTitle,
+        targetLevel
+      })
+        .then(gradeRes => {
+          if (!currentAccount || !currentAccount.questionsData) return;
+          const qd = currentAccount.questionsData[qId];
+          if (gradeRes && gradeRes.ok) {
+            if (qd) {
+              qd.aiStatus = gradeRes.status || "scheduled";
+              if (gradeRes.release_at) qd.aiReleaseAt = gradeRes.release_at;
+            }
+            if (gradeRes.recognized_transcript && !takeObj.transcript) {
+              takeObj.transcript = gradeRes.recognized_transcript;
+            }
+            if (state.isTeacher) {
+              refreshStudentReviews(true);
+            } else if (!state.isRecording) {
+              renderApp();
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
+    return {
+      ok: true,
+      submittedAtIso: nowIso,
+      releaseAtIso: defaultReleaseIso,
+      targetLevel
+    };
   }
 
   // ==========================================================================
   // HELPERS & STATE ACCESSORS
   // ==========================================================================
   function getInitials(name) {
-    const parts = String(name || "HV")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    if (parts.length === 0) return "HV";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return CLOUD.getInitials ? CLOUD.getInitials(name) : "HV";
   }
 
   function getQuestionData(qId) {
     if (!currentAccount) {
-      return { ideaNote: "", selectedTakeId: null, submittedTakeId: null, attempts: [] };
+      return {
+        ideaNote: "",
+        selectedTakeId: null,
+        submittedTakeId: null,
+        submittedAt: null,
+        submittedAtIso: "",
+        targetLevel: "B1",
+        aiStatus: "",
+        aiReleaseAt: "",
+        attempts: []
+      };
     }
     if (!currentAccount.questionsData) currentAccount.questionsData = {};
     return ensureQuestionData(currentAccount.questionsData, qId);
@@ -354,8 +637,91 @@
     return topic.questions[idx];
   }
 
+  function getAllSubmittedItems() {
+    if (!currentAccount || !currentAccount.questionsData) return [];
+    const items = [];
+    Object.keys(currentAccount.questionsData).forEach(qId => {
+      const qd = currentAccount.questionsData[qId];
+      if (!qd || !qd.submittedTakeId) return;
+      const att = (qd.attempts || []).find(a => a.id === qd.submittedTakeId);
+      const qMeta = QUESTION_META_BY_ID[qId] || {
+        topicId: getTopicIdForQuestion(qId),
+        topicNumber: "",
+        topicTitle: "Speaking Part 1",
+        topicTitleVi: "",
+        questionId: qId,
+        questionIndex: 0,
+        questionNum: 1,
+        prompt: qId
+      };
+      const subIso = qd.submittedAtIso || "";
+      const relIso =
+        qd.aiReleaseAt ||
+        (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
+      items.push({
+        qId,
+        qMeta,
+        qd,
+        att: att || null,
+        submittedAtFormatted: qd.submittedAt || (att ? att.createdAt : ""),
+        submittedMs: subIso ? new Date(subIso).getTime() : 0,
+        targetLevel: qd.targetLevel || (att && att.targetLevel) || "B1",
+        aiReleaseAt: relIso,
+        releasedReview: getReleasedReview(qId)
+      });
+    });
+    items.sort((a, b) => (b.submittedMs || 0) - (a.submittedMs || 0));
+    return items;
+  }
+
+  function normalizeSearchText(str) {
+    return String(str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d");
+  }
+
+  function getQuickSearchMatches(query) {
+    const normQ = normalizeSearchText(query).trim();
+    if (!normQ) {
+      return TOPICS.slice(0, 8).map(t => ({
+        title: `Đề ${t.number}: ${t.title}`,
+        sub: `${t.titleVi} · ${t.questions.length} câu hỏi`,
+        tag: `Topic ${t.number}`,
+        topicId: t.id,
+        questionIndex: 0
+      }));
+    }
+    const results = [];
+    TOPICS.forEach(t => {
+      const topicMatch = normalizeSearchText(`${t.number} ${t.title} ${t.titleVi} ${t.description}`).includes(normQ);
+      if (topicMatch) {
+        results.push({
+          title: `Đề ${t.number}: ${t.title}`,
+          sub: t.titleVi,
+          tag: `Topic ${t.number}`,
+          topicId: t.id,
+          questionIndex: 0
+        });
+      }
+      (t.questions || []).forEach((q, idx) => {
+        if (normalizeSearchText(q.prompt).includes(normQ)) {
+          results.push({
+            title: `Q${idx + 1}: ${q.prompt}`,
+            sub: `Đề ${t.number} · ${t.title} (${t.titleVi})`,
+            tag: `Đề ${t.number} · Q${idx + 1}`,
+            topicId: t.id,
+            questionIndex: idx
+          });
+        }
+      });
+    });
+    return results.slice(0, 10);
+  }
+
   // ==========================================================================
-  // TEXT-TO-SPEECH (VOCABULARY PRONUNCIATION & MODEL ANSWERS)
+  // TEXT-TO-SPEECH (VOCABULARY PRONUNCIATION & MODEL / AI REVISED ANSWERS)
   // ==========================================================================
   function speakEnglishText(rawText) {
     const cleanText = String(rawText || "").replace(/<[^>]*>?/gm, "").trim();
@@ -528,6 +894,7 @@
       audioPath: "",
       rawBlob: rawBlob || null,
       transcript: recognizedText,
+      targetLevel: state.selectedLevel.toUpperCase(),
       teacherFeedback: "",
       teacherScore: ""
     };
@@ -540,7 +907,7 @@
   }
 
   // ==========================================================================
-  // VIEW 1: STUDENT ACCOUNT LOGIN / REGISTER
+  // VIEW 1: STUDENT ACCOUNT LOGIN / REGISTER & PROFILE SETUP
   // ==========================================================================
   function renderAuthView() {
     const isReg = state.authMode === "register";
@@ -560,8 +927,8 @@
           <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:16px;">
             ${
               isReg
-                ? "Đăng nhập nhanh bằng Google hoặc tạo tài khoản để lưu kho từ vựng của riêng bạn và nộp bài ghi âm."
-                : "Đăng nhập bằng tài khoản Google hoặc email của bạn để tiếp tục học và xây dựng kho từ vựng cá nhân."
+                ? "Đăng nhập nhanh bằng Google hoặc tạo tài khoản để lưu kho từ vựng, nộp bài ghi âm và nhận bài chấm AI chi tiết."
+                : "Đăng nhập bằng tài khoản Google hoặc email của bạn để tiếp tục luyện nói và nhận bài sửa chi tiết."
             }
           </p>
 
@@ -717,100 +1084,651 @@
   }
 
   // ==========================================================================
-  // VIEW 2: HOME VIEW — 4 STANDALONE TOPIC CARDS
+  // SIDEBAR, NOTIFICATION BELL & TOPBAR SHELL (MATCHING VSTEP-VIET-THU)
   // ==========================================================================
-  function renderHomeView() {
-    if (!currentAccount) return renderAuthView();
+  function renderNotificationBellHtml() {
+    if (!currentAccount) return "";
 
-    const vocabCount = (currentAccount.savedVocab || []).length;
+    const submittedItems = getAllSubmittedItems();
+    const releasedList = submittedItems
+      .filter(it => it.releasedReview)
+      .sort(
+        (a, b) =>
+          new Date(b.releasedReview.release_at || 0).getTime() -
+          new Date(a.releasedReview.release_at || 0).getTime()
+      );
+
+    const pendingList = submittedItems
+      .filter(
+        it =>
+          !it.releasedReview &&
+          it.aiReleaseAt &&
+          new Date(it.aiReleaseAt).getTime() > Date.now()
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.aiReleaseAt || 0).getTime() -
+          new Date(b.aiReleaseAt || 0).getTime()
+      );
+
+    const unreadCount = releasedList.filter(it => !it.releasedReview.student_seen_at).length;
+
+    let dropdownContentHtml = "";
+    if (releasedList.length === 0 && pendingList.length === 0) {
+      dropdownContentHtml = `
+        <div class="notif-empty-state">
+          Chưa có bài sửa nào.<br />Khi bạn ghi âm và nộp bài Speaking Part 1, bài chấm &amp; sửa chi tiết bằng AI sẽ tự động trả về đây sau ${RELEASE_HOURS} tiếng.
+        </div>
+      `;
+    } else {
+      const releasedHtml = releasedList
+        .map(it => {
+          const rev = it.releasedReview;
+          const rj = rev.review_json || {};
+          const isUnread = !rev.student_seen_at;
+          const fixCount =
+            (Array.isArray(rj.pronunciation_fixes) ? rj.pronunciation_fixes.length : 0) +
+            (Array.isArray(rj.language_corrections) ? rj.language_corrections.length : 0) +
+            (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0);
+          const bandText = rj.estimated_band ? ` · ${rj.estimated_band}` : "";
+          const title = `Đề ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · Câu ${it.qMeta.questionNum}`;
+          return `
+            <button
+              type="button"
+              class="notif-item-btn ${isUnread ? "unread" : ""}"
+              data-open-notif-question="${escapeHtml(it.qId)}"
+            >
+              <div class="notif-item-top">
+                <span class="notif-item-tag ${isUnread ? "new-dot" : ""}">
+                  ${isUnread ? "Mới · Đã có bài sửa" : "✓ Đã trả bài sửa"}
+                </span>
+                <span class="notif-item-time">${escapeHtml(CLOUD.formatDateTime(rev.release_at))}</span>
+              </div>
+              <div class="notif-item-title">${escapeHtml(title)}</div>
+              <div class="notif-item-sub">
+                Level ${escapeHtml(rev.target_level || it.targetLevel)}${escapeHtml(bandText)} · ${fixCount} mục góp ý · Xem chi tiết →
+              </div>
+            </button>
+          `;
+        })
+        .join("");
+
+      const pendingHtml = pendingList
+        .map(it => {
+          const remain = CLOUD.formatRemainingTime(it.aiReleaseAt);
+          const title = `Đề ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · Câu ${it.qMeta.questionNum}`;
+          return `
+            <button
+              type="button"
+              class="notif-item-btn"
+              data-open-notif-question="${escapeHtml(it.qId)}"
+            >
+              <div class="notif-item-top">
+                <span class="notif-item-tag" style="background:#FEF3C7;color:#92400E;">⏳ Đang chờ trả bài</span>
+                <span class="notif-item-time">Còn ${escapeHtml(remain)}</span>
+              </div>
+              <div class="notif-item-title">${escapeHtml(title)}</div>
+              <div class="notif-item-sub">Dự kiến trả lúc ${escapeHtml(CLOUD.formatDateTime(it.aiReleaseAt))}</div>
+            </button>
+          `;
+        })
+        .join("");
+
+      dropdownContentHtml = releasedHtml + pendingHtml;
+    }
 
     return `
-      <div class="home-shell">
-        <header class="home-topbar">
-          <div class="home-brand-title">SPEAKING PART 1</div>
+      <div class="notif-menu-wrap" id="topbar-notif-wrap">
+        <button
+          type="button"
+          class="notif-bell-btn ${unreadCount > 0 ? "has-unread" : ""}"
+          id="topbar-notif-btn"
+          title="Thông báo bài sửa AI"
+          aria-expanded="${state.notifOpen ? "true" : "false"}"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          ${
+            unreadCount > 0
+              ? `<span class="notif-unread-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>`
+              : ""
+          }
+        </button>
 
-          <div class="topbar-actions">
-            ${
-              state.isTeacher
-                ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 Quản lý &amp; Xem bài học viên</a>`
-                : ""
-            }
-            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
-              <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
-            </button>
-
-            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
-              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
-              <span>${escapeHtml(currentAccount.name)}</span>
-              <span style="font-size:11px;color:#71717A;">· Đăng xuất</span>
-            </button>
-          </div>
-        </header>
-
-        <main class="home-container">
-          <div class="home-header-block">
-            <div>
-              <div class="home-eyebrow">SPEAKING PART 1 · PRACTICE TOPICS</div>
-              <h1 class="home-h1">DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1</h1>
-              <p class="home-desc">
-                Chọn một thẻ chủ đề bên dưới để bắt đầu luyện nói. Bạn có thể ghi chú ý tưởng, ghi âm nhiều lần để chọn bản tốt nhất nộp bài, và lưu từ vựng vào kho từ vựng của riêng mình.
-              </p>
+        ${
+          state.notifOpen
+            ? `
+            <div class="notif-dropdown" id="topbar-notif-dropdown">
+              <div class="notif-dropdown-header">
+                <span>Thông báo bài sửa</span>
+                <span class="notif-header-sub">Trả sau ${RELEASE_HOURS} tiếng</span>
+              </div>
+              <div class="notif-dropdown-list">
+                ${dropdownContentHtml}
+              </div>
             </div>
-          </div>
-
-          <div class="topics-grid">
-            ${TOPICS.map(topic => {
-              const submittedCount = topic.questions.filter(q => {
-                const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
-                return qd && qd.submittedTakeId;
-              }).length;
-              const isAllDone = submittedCount === topic.questions.length;
-
-              return `
-                <article class="topic-card" data-open-topic="${topic.id}">
-                  <div class="topic-card-top">
-                    <div class="topic-num-badge">${topic.number}</div>
-                    <span class="topic-progress-tag ${isAllDone ? "done" : ""}">
-                      ${isAllDone ? "Đã hoàn thành 3/3 câu ✓" : `Đã nộp ${submittedCount}/${topic.questions.length} câu`}
-                    </span>
-                  </div>
-
-                  <h2 class="topic-card-title">${escapeHtml(topic.title)}</h2>
-                  <div class="topic-card-vi">${escapeHtml(topic.titleVi)}</div>
-                  <p class="topic-card-desc">${escapeHtml(topic.description)}</p>
-
-                  <ul class="topic-questions-preview">
-                    ${topic.questions
-                      .map(
-                        (q, idx) => `
-                        <li>
-                          <span class="preview-q-num">Q${idx + 1}.</span>
-                          <span>${escapeHtml(q.prompt)}</span>
-                        </li>
-                      `
-                      )
-                      .join("")}
-                  </ul>
-
-                  <div class="topic-card-footer">
-                    <span>${topic.questions.length} câu hỏi · Level B1 & B2</span>
-                    <span>Vào luyện đề →</span>
-                  </div>
-                </article>
-              `;
-            }).join("")}
-          </div>
-        </main>
+          `
+            : ""
+        }
       </div>
     `;
   }
 
-  // ==========================================================================
-  // VIEW 3: PRACTICE ROOM — 50/50 SPLIT-SCREEN
-  // ==========================================================================
-  function renderPracticeView() {
-    if (!currentAccount) return renderAuthView();
+  function renderSidebarHtml(submittedTotal, totalQuestions, vocabCount) {
+    const pct = totalQuestions > 0 ? Math.min(100, Math.round((submittedTotal / totalQuestions) * 100)) : 0;
 
+    return `
+      <div class="ej-sidebar-backdrop" id="ej-sidebar-backdrop"></div>
+
+      <aside class="ej-sidebar" id="ej-sidebar" aria-label="Điều hướng khóa học">
+        <div class="ej-sidebar-header">
+          <button type="button" class="ej-sb-logo-btn" data-sb-nav="home" title="Về Tổng quan">
+            <span class="ej-sb-logo-badge">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+              </svg>
+            </span>
+            <div class="ej-sb-logo-text">
+              <span class="ej-sb-logo-main">VSTEP Speaking</span>
+              <span class="ej-sb-logo-sub">Part 1 · B1–B2</span>
+            </div>
+          </button>
+        </div>
+
+        <nav class="ej-sidebar-nav">
+          <div class="ej-sb-group">
+            <button
+              type="button"
+              class="ej-sb-item ${state.view === "home" ? "active" : ""}"
+              data-sb-nav="home"
+              title="Tổng quan danh sách chủ đề"
+            >
+              <span class="ej-sb-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+              </span>
+              <span class="ej-sb-label">Tổng quan</span>
+            </button>
+
+            <button
+              type="button"
+              class="ej-sb-item ${state.view === "my-submissions" ? "active" : ""}"
+              data-sb-nav="my-submissions"
+              title="Bài nói đã nộp & Bài sửa AI"
+            >
+              <span class="ej-sb-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+              </span>
+              <span class="ej-sb-label">Bài nói đã nộp</span>
+              ${submittedTotal > 0 ? `<span class="ej-sb-count">${submittedTotal}</span>` : ""}
+            </button>
+
+            <button
+              type="button"
+              class="ej-sb-item"
+              id="btn-sb-vocab-bank"
+              title="Kho từ vựng của tôi"
+            >
+              <span class="ej-sb-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              </span>
+              <span class="ej-sb-label">Kho từ vựng của tôi</span>
+              ${vocabCount > 0 ? `<span class="ej-sb-count">${vocabCount}</span>` : ""}
+            </button>
+          </div>
+
+          <div class="vs-sb-card ${state.sbTopicsCollapsed ? "collapsed" : ""}">
+            <div class="vs-sb-card-head">
+              <button
+                type="button"
+                class="ej-sb-item vs-sb-head-btn"
+                data-sb-nav="home"
+                title="Speaking Part 1 · 10 Chủ đề"
+              >
+                <span class="vs-sb-task-pill">P1</span>
+                <span class="ej-sb-label">Chủ đề luyện nói</span>
+              </button>
+              <button
+                type="button"
+                class="vs-sb-acc-toggle"
+                id="btn-sb-topics-acc"
+                aria-expanded="${state.sbTopicsCollapsed ? "false" : "true"}"
+                title="Đóng / Mở danh sách chủ đề"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+
+            <div class="vs-sb-card-list">
+              ${TOPICS.map(t => {
+                const subCount = t.questions.filter(q => {
+                  const qd = currentAccount && currentAccount.questionsData && currentAccount.questionsData[q.id];
+                  return qd && qd.submittedTakeId;
+                }).length;
+                const isDone = subCount === t.questions.length;
+                return `
+                  <button
+                    type="button"
+                    class="vs-sb-lesson-btn ${isDone ? "submitted" : ""}"
+                    data-open-topic="${escapeHtml(t.id)}"
+                    title="Đề ${escapeHtml(t.number)}: ${escapeHtml(t.title)} (${escapeHtml(t.titleVi)})"
+                  >
+                    <span class="vs-sb-num">${escapeHtml(t.number)}</span>
+                    <span class="vs-sb-topic-text">${escapeHtml(t.title)}</span>
+                    ${
+                      isDone
+                        ? `<span class="vs-sb-mini-prog">✓</span>`
+                        : subCount > 0
+                          ? `<span class="vs-sb-mini-prog">${subCount}/${t.questions.length}</span>`
+                          : ""
+                    }
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </nav>
+
+        <div class="vs-sb-footer">
+          <div class="vs-sb-progress-card">
+            <div class="vs-sb-progress-top">
+              <span>Tiến độ nộp bài</span>
+              <strong>${submittedTotal}/${totalQuestions}</strong>
+            </div>
+            <div class="vs-sb-progress-track">
+              <div class="vs-sb-progress-fill" style="width:${pct}%;"></div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="vs-sb-collapse-footer-btn"
+            id="ej-sidebar-collapse-btn"
+            title="Thu gọn / Mở rộng thanh điều hướng"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+            <span class="ej-sb-label">Thu gọn menu</span>
+          </button>
+        </div>
+      </aside>
+    `;
+  }
+
+  function renderTopbarHtml(vocabCount) {
+    const isFocusLesson = state.view === "practice";
+    const topic = getCurrentTopic();
+    const searchMatches = state.quickSearchOpen ? getQuickSearchMatches(state.quickSearchQuery) : [];
+
+    return `
+      <header class="dt-topbar">
+        <div class="dt-topbar-inner">
+          <div class="dt-topbar-left-group">
+            ${
+              !isFocusLesson
+                ? `
+              <button
+                type="button"
+                class="ej-mobile-menu-btn"
+                id="ej-mobile-menu-btn"
+                title="Mở thanh điều hướng"
+                aria-label="Mở menu"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+
+              <div class="vs-dashboard-topbar-left" id="ej-topbar-search-wrap">
+                <span class="vs-section-crumb">
+                  ${
+                    state.view === "my-submissions"
+                      ? "Bài nói đã nộp"
+                      : `Part 1 · ${TOPICS.length} Chủ đề`
+                  }
+                </span>
+
+                <div class="ej-topbar-search-wrap">
+                  <span class="ej-search-ico">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="ej-quick-search-input"
+                    class="ej-quick-search-input"
+                    placeholder="Tìm chủ đề, câu hỏi... (⌘K)"
+                    value="${escapeHtml(state.quickSearchQuery)}"
+                    autocomplete="off"
+                  />
+                  ${
+                    state.quickSearchOpen
+                      ? `
+                      <div class="ej-search-dropdown" id="ej-search-dropdown">
+                        ${
+                          searchMatches.length === 0
+                            ? `<div class="ej-search-empty">Không tìm thấy chủ đề hoặc câu hỏi khớp với “${escapeHtml(state.quickSearchQuery)}”.</div>`
+                            : searchMatches
+                                .map(
+                                  m => `
+                                  <button
+                                    type="button"
+                                    class="ej-search-result-btn"
+                                    data-qs-topic="${escapeHtml(m.topicId)}"
+                                    data-qs-qidx="${m.questionIndex}"
+                                  >
+                                    <div>
+                                      <div class="ej-search-res-title">${escapeHtml(m.title)}</div>
+                                      <div class="ej-search-res-sub">${escapeHtml(m.sub)}</div>
+                                    </div>
+                                    <span class="ej-search-res-tag">${escapeHtml(m.tag)}</span>
+                                  </button>
+                                `
+                                )
+                                .join("")
+                        }
+                      </div>
+                    `
+                      : ""
+                  }
+                </div>
+              </div>
+            `
+                : `
+              <div class="ej-focus-nav-group">
+                <button type="button" class="nb-back-btn" id="btn-back-home">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                  <span>${state.prevDashboardView === "my-submissions" ? "Bài nói đã nộp" : "Danh sách chủ đề"}</span>
+                </button>
+                <h1 class="header-topic-name">${escapeHtml(topic.title)}</h1>
+                <span class="header-part-badge">Speaking Part 1</span>
+              </div>
+            `
+            }
+          </div>
+
+          <div class="dt-topbar-right-group">
+            ${
+              state.isTeacher
+                ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 <span class="topbar-vocab-label-full">Quản lý &amp; Xem bài học viên</span></a>`
+                : ""
+            }
+
+            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank" title="Kho từ vựng của tôi">
+              <span>📚 <span class="topbar-vocab-label-full">Kho từ vựng</span> (${vocabCount})</span>
+            </button>
+
+            ${renderNotificationBellHtml()}
+
+            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
+              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
+              <span>${escapeHtml(currentAccount.name)}</span>
+              <span class="topbar-vocab-label-full" style="font-size:11px;color:#71717A;">· Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  // ==========================================================================
+  // VIEW 2: HOME DASHBOARD — 10 TOPIC CARDS
+  // ==========================================================================
+  function renderHomeContent() {
+    return `
+      <main class="home-container">
+        <div class="home-header-block">
+          <div>
+            <div class="home-eyebrow">VSTEP SPEAKING PART 1 · PRACTICE TOPICS</div>
+            <h1 class="home-h1">DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1</h1>
+            <p class="home-desc">
+              Chọn một chủ đề bên dưới để bắt đầu luyện nói. Khi bạn nộp bản ghi âm, hệ thống AI sẽ nghe trực tiếp phát âm, ngữ điệu, ngữ pháp, lỗi "Vietlish", độ mạch lạc và gửi bài sửa chi tiết vào chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
+            </p>
+          </div>
+        </div>
+
+        <div class="topics-grid">
+          ${TOPICS.map(topic => {
+            const submittedCount = topic.questions.filter(q => {
+              const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
+              return qd && qd.submittedTakeId;
+            }).length;
+            const isAllDone = submittedCount === topic.questions.length;
+
+            return `
+              <article class="topic-card" data-open-topic="${topic.id}">
+                <div class="topic-card-top">
+                  <div class="topic-num-badge">${topic.number}</div>
+                  <span class="topic-progress-tag ${isAllDone ? "done" : ""}">
+                    ${isAllDone ? `Đã hoàn thành ${topic.questions.length}/${topic.questions.length} câu ✓` : `Đã nộp ${submittedCount}/${topic.questions.length} câu`}
+                  </span>
+                </div>
+
+                <h2 class="topic-card-title">${escapeHtml(topic.title)}</h2>
+                <div class="topic-card-vi">${escapeHtml(topic.titleVi)}</div>
+                <p class="topic-card-desc">${escapeHtml(topic.description)}</p>
+
+                <ul class="topic-questions-preview">
+                  ${topic.questions
+                    .map(
+                      (q, idx) => `
+                      <li>
+                        <span class="preview-q-num">Q${idx + 1}.</span>
+                        <span>${escapeHtml(q.prompt)}</span>
+                      </li>
+                    `
+                    )
+                    .join("")}
+                </ul>
+
+                <div class="topic-card-footer">
+                  <span>${topic.questions.length} câu hỏi · Level B1 &amp; B2</span>
+                  <span>Vào luyện đề →</span>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </main>
+    `;
+  }
+
+  // ==========================================================================
+  // VIEW 3: MY SUBMISSIONS HISTORY ("BÀI NÓI ĐÃ NỘP & BÀI SỬA AI")
+  // ==========================================================================
+  function renderMySubmissionsContent() {
+    const submittedItems = getAllSubmittedItems();
+
+    return `
+      <main class="home-container">
+        <div class="home-header-block">
+          <div>
+            <div class="home-eyebrow">VSTEP SPEAKING PART 1 · SUBMISSION HISTORY</div>
+            <h1 class="home-h1">LỊCH SỬ BÀI NÓI ĐÃ NỘP &amp; BÀI SỬA AI</h1>
+            <p class="home-desc">
+              Theo dõi toàn bộ các câu trả lời ghi âm bạn đã nộp, thời gian hẹn trả bài chấm AI sau ${RELEASE_HOURS} tiếng và xem lại chi tiết nhận xét phát âm, ngữ điệu, ngữ pháp, Vietlish &amp; mở rộng ý.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <h2 style="font-size:16px;font-weight:800;color:#18181B;">
+            Bài nói đã nộp · ${submittedItems.length} câu
+          </h2>
+          <span style="font-size:12.5px;color:#71717A;font-weight:600;">Tự động đồng bộ Supabase Cloud</span>
+        </div>
+
+        ${
+          submittedItems.length === 0
+            ? `
+            <div class="ej-history-empty">
+              <p style="font-size:15.5px;font-weight:700;color:#18181B;margin-bottom:6px;">
+                Bạn chưa nộp bản ghi âm nào.
+              </p>
+              <p style="font-size:13.5px;margin-bottom:16px;">
+                Hãy chọn một chủ đề ở mục <strong>Tổng quan</strong> để luyện nói, ghi âm và nộp bài nhé!
+              </p>
+              <button type="button" class="nb-back-btn" data-sb-nav="home">
+                <span>Chọn chủ đề luyện nói →</span>
+              </button>
+            </div>
+          `
+            : `
+            <div class="ej-history-list">
+              ${submittedItems
+                .map(it => {
+                  const rev = it.releasedReview;
+                  const att = it.att;
+                  const hasTeacherGrade = Boolean(
+                    att && ((att.teacherScore && att.teacherScore.trim()) || (att.teacherFeedback && att.teacherFeedback.trim()))
+                  );
+
+                  let statusPillHtml = "";
+                  if (rev) {
+                    const isUnread = !rev.student_seen_at;
+                    const band = rev.review_json && rev.review_json.estimated_band ? ` · ${rev.review_json.estimated_band}` : "";
+                    statusPillHtml = isUnread
+                      ? `<span class="notif-item-tag new-dot">Mới · Đã có bài sửa${escapeHtml(band)}</span>`
+                      : `<span class="notif-item-tag">✅ Đã có bài sửa${escapeHtml(band)}</span>`;
+                  } else {
+                    const remain = it.aiReleaseAt ? CLOUD.formatRemainingTime(it.aiReleaseAt) : "";
+                    statusPillHtml = remain
+                      ? `<span class="notif-item-tag" style="background:#FEF3C7;color:#92400E;">⏳ Trả bài sửa sau ${escapeHtml(remain)}</span>`
+                      : `<span class="notif-item-tag" style="background:#F4F4F5;color:#3F3F46;">Đang hoàn tất bài sửa</span>`;
+                  }
+
+                  return `
+                    <div class="ej-history-card">
+                      <div class="ej-history-left">
+                        <div class="ej-history-badges">
+                          <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;">
+                            Đề ${escapeHtml(it.qMeta.topicNumber)} · Câu ${it.qMeta.questionNum}
+                          </span>
+                          <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#F4F4F5;color:#18181B;">
+                            Mục tiêu Level ${escapeHtml(it.targetLevel)}${att ? ` · ${formatDuration(att.durationSec)}` : ""}
+                          </span>
+                          ${statusPillHtml}
+                          ${
+                            hasTeacherGrade
+                              ? `<span class="notif-item-tag">👨‍🏫 GV đã nhận xét${att.teacherScore ? ` (${escapeHtml(att.teacherScore)})` : ""}</span>`
+                              : ""
+                          }
+                        </div>
+
+                        <div class="ej-history-title">
+                          ${escapeHtml(it.qMeta.topicTitle)} — ${escapeHtml(it.qMeta.topicTitleVi)}
+                        </div>
+                        <div class="ej-history-prompt">“${escapeHtml(it.qMeta.prompt)}”</div>
+                        <div class="ej-history-meta">
+                          Đã nộp lúc ${escapeHtml(it.submittedAtFormatted || "—")}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="nb-back-btn"
+                        data-history-open-question="${escapeHtml(it.qId)}"
+                      >
+                        <span>${rev ? "Xem bài sửa AI →" : "Mở câu hỏi →"}</span>
+                      </button>
+                    </div>
+                  `;
+                })
+                .join("")}
+            </div>
+          `
+        }
+      </main>
+    `;
+  }
+
+  // ==========================================================================
+  // RENDER SUBMITTED TAKE FEEDBACK / 6-HOUR AI SCHEDULED BOX
+  // ==========================================================================
+  function renderSubmittedTakeAiAndTeacherSection(qId, qData, att) {
+    const blocks = [];
+
+    if (att.teacherFeedback || att.teacherScore) {
+      blocks.push(`
+        <div style="margin-top:10px;padding:10px 13px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:8px;font-size:13px;color:#14532D;">
+          <div style="font-weight:800;margin-bottom:3px;">
+            👨‍🏫 Nhận xét từ Giáo viên ${
+              att.teacherScore
+                ? `· <span style="background:#16A34A;color:#FFF;padding:1px 7px;border-radius:4px;font-size:11.5px;">${escapeHtml(att.teacherScore)}</span>`
+                : ""
+            }
+          </div>
+          ${att.teacherFeedback ? `<div>${escapeHtml(att.teacherFeedback)}</div>` : ""}
+        </div>
+      `);
+    }
+
+    const releasedReview = getReleasedReview(qId);
+    const targetLevel = (releasedReview && releasedReview.target_level) || qData.targetLevel || att.targetLevel || "B1";
+
+    if (releasedReview && typeof CLOUD.renderSpeakingReviewHtml === "function") {
+      const relTime = CLOUD.formatDateTime(releasedReview.release_at);
+      blocks.push(`
+        <div class="speaking-ready-banner">
+          <span style="font-weight:800;">
+            ✅ Bài chấm &amp; sửa Speaking chi tiết đã sẵn sàng${relTime ? ` · Trả lúc ${escapeHtml(relTime)}` : ""}
+          </span>
+          <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
+            Thời lượng ${formatDuration(att.durationSec)} · Level ${escapeHtml(targetLevel)}
+          </span>
+        </div>
+        ${CLOUD.renderSpeakingReviewHtml(att.transcript || "", releasedReview.review_json, {
+          targetLevel
+        })}
+      `);
+
+      if (state.view === "practice" && getCurrentQuestion().id === qId) {
+        markReviewAsSeen(qId);
+      }
+    } else {
+      const subIso = qData.submittedAtIso || "";
+      const releaseAt =
+        qData.aiReleaseAt ||
+        att.aiReleaseAt ||
+        (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
+      const remainText = releaseAt ? CLOUD.formatRemainingTime(releaseAt) : "";
+      const releaseFormatted = releaseAt ? CLOUD.formatDateTime(releaseAt) : "";
+
+      if (remainText) {
+        blocks.push(`
+          <div class="writing-schedule-box">
+            <div class="writing-schedule-head">
+              <span class="writing-schedule-title">
+                ⏳ Đã nộp bài thành công${qData.submittedAt ? ` lúc ${escapeHtml(qData.submittedAt)}` : ""} · Đang chờ trả bài sửa
+              </span>
+              <span class="writing-schedule-pill">Còn ${escapeHtml(remainText)}</span>
+            </div>
+            <p class="writing-schedule-desc">
+              Bài chấm &amp; sửa chi tiết bằng AI (độ dễ nghe &amp; ngữ điệu phát âm, ngữ pháp, dùng từ tự nhiên / lỗi "Vietlish", cách sắp xếp ý logic &amp; gợi ý mở rộng ý bị cụt theo chuẩn <strong>Level ${escapeHtml(targetLevel)}</strong>) sẽ được trả về tài khoản của bạn sau <strong>${RELEASE_HOURS} tiếng</strong> — dự kiến lúc <strong>${escapeHtml(releaseFormatted)}</strong>. Bạn sẽ nhận được thông báo ở biểu tượng chuông 🔔 trên góc phải khi có bài sửa.
+            </p>
+          </div>
+        `);
+      } else {
+        blocks.push(`
+          <div class="writing-schedule-box">
+            <div class="writing-schedule-head">
+              <span class="writing-schedule-title">✓ Đã gửi bản ghi âm thành công${qData.submittedAt ? ` lúc ${escapeHtml(qData.submittedAt)}` : ""}</span>
+              <span class="writing-schedule-pill">Level ${escapeHtml(targetLevel)}</span>
+            </div>
+            <p class="writing-schedule-desc">
+              Bài chấm &amp; sửa chi tiết của bạn đang được hệ thống hoàn tất. Thông báo sẽ tự động hiện ở biểu tượng chuông 🔔 trên góc phải ngay khi bài sửa sẵn sàng.
+            </p>
+          </div>
+        `);
+      }
+    }
+
+    return blocks.join("");
+  }
+
+  // ==========================================================================
+  // VIEW 4: PRACTICE ROOM — 50/50 SPLIT-SCREEN (FOCUS LESSON MODE)
+  // ==========================================================================
+  function renderPracticeContent() {
     const topic = getCurrentTopic();
     const question = getCurrentQuestion();
     const qId = question.id;
@@ -832,416 +1750,422 @@
       return qd && qd.submittedTakeId;
     }).length;
 
-    const vocabCount = (currentAccount.savedVocab || []).length;
-
     return `
-      <div class="practice-shell">
-        <header class="practice-header">
-          <div class="practice-header-left">
-            <button type="button" class="back-topics-btn" id="btn-back-home">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              <span>Danh sách chủ đề</span>
-            </button>
-            <h1 class="header-topic-name">${escapeHtml(topic.title)}</h1>
-            <span class="header-part-badge">Speaking Part 1</span>
-          </div>
+      <main class="practice-workspace" style="flex:1;min-height:0;">
+        <!-- LEFT PANE: QUESTION + IDEA NOTES + MULTI-TAKE RECORDER & SUBMIT -->
+        <section class="left-pane" aria-label="Câu hỏi và ghi âm">
+          <div class="left-pane-inner">
+            <div class="question-step-tag">
+              SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}
+            </div>
 
-          <div class="topbar-actions">
-            ${
-              state.isTeacher
-                ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 Trang Giáo viên</a>`
-                : ""
-            }
-            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank">
-              <span>📚 Kho từ vựng của tôi (${vocabCount})</span>
-            </button>
+            <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
+            <p class="examiner-instruction">
+              The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.
+            </p>
 
-            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
-              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
-              <span>${escapeHtml(currentAccount.name)}</span>
-            </button>
-          </div>
-        </header>
+            <div class="question-prompt-card">
+              <p class="question-prompt-text">${escapeHtml(question.prompt)}</p>
+            </div>
 
-        <main class="practice-workspace">
-          <!-- LEFT PANE: QUESTION + IDEA NOTES + MULTI-TAKE RECORDER & SUBMIT -->
-          <section class="left-pane" aria-label="Câu hỏi và ghi âm">
-            <div class="left-pane-inner">
-              <div class="question-step-tag">
-                SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}
+            <div class="idea-notes-card">
+              <div class="idea-notes-header">
+                <label class="idea-notes-title" for="idea-note-input">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  <span>Ghi chú ý tưởng / Từ khóa trước khi nói</span>
+                </label>
               </div>
+              <textarea
+                id="idea-note-input"
+                class="idea-notes-textarea"
+                placeholder="Ghi nhanh các từ khóa hoặc ý tưởng của bạn trước khi bấm ghi âm..."
+              >${escapeHtml(qData.ideaNote || "")}</textarea>
+            </div>
 
-              <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
-              <p class="examiner-instruction">
-                The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.
-              </p>
-
-              <div class="question-prompt-card">
-                <p class="question-prompt-text">${escapeHtml(question.prompt)}</p>
-              </div>
-
-              <div class="idea-notes-card">
-                <div class="idea-notes-header">
-                  <label class="idea-notes-title" for="idea-note-input">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                    <span>Ghi chú ý tưởng / Từ khóa trước khi nói</span>
-                  </label>
-                </div>
-                <textarea
-                  id="idea-note-input"
-                  class="idea-notes-textarea"
-                  placeholder="Ghi nhanh các từ khóa hoặc ý tưởng của bạn trước khi bấm ghi âm..."
-                >${escapeHtml(qData.ideaNote || "")}</textarea>
-              </div>
-
-              <div class="recorder-box-card">
-                <div class="recorder-controls-row">
-                  <button
-                    type="button"
-                    class="record-btn ${state.isRecording ? "recording" : ""}"
-                    id="btn-record-toggle"
-                  >
-                    ${
-                      state.isRecording
-                        ? `
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                      <span>Dừng ghi âm</span>
-                    `
-                        : `
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                      <span>${
-                        attempts.length > 0
-                          ? `Ghi âm thêm lần mới (Lần #${attempts.length + 1})`
-                          : "Bắt đầu ghi âm"
-                      }</span>
-                    `
-                    }
-                  </button>
-
+            <div class="recorder-box-card">
+              <div class="recorder-controls-row">
+                <button
+                  type="button"
+                  class="record-btn ${state.isRecording ? "recording" : ""}"
+                  id="btn-record-toggle"
+                >
                   ${
                     state.isRecording
                       ? `
-                    <div class="rec-timer-badge">
-                      <span class="rec-blink-dot"></span>
-                      <span id="rec-timer-text">${formatDuration(state.recordingSeconds)} / 0:45</span>
-                    </div>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                    <span>Dừng ghi âm</span>
                   `
-                      : ""
+                      : `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    <span>${
+                      attempts.length > 0
+                        ? `Ghi âm thêm lần mới (Lần #${attempts.length + 1})`
+                        : "Bắt đầu ghi âm"
+                    }</span>
+                  `
                   }
-                </div>
-
-                <p class="recorder-helper-note">
-                  Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
-                </p>
+                </button>
 
                 ${
                   state.isRecording
                     ? `
-                  <div class="takes-list-section">
-                    <div class="transcript-result-box">
-                      <div class="transcript-box-header">
-                        <span class="transcript-box-label">Đang nhận diện giọng nói (Transcript)...</span>
-                      </div>
-                      <p id="live-transcript-preview" class="transcript-text-content ${state.liveTranscript ? "" : "placeholder"}">
-                        ${escapeHtml(state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...")}
-                      </p>
-                    </div>
+                  <div class="rec-timer-badge">
+                    <span class="rec-blink-dot"></span>
+                    <span id="rec-timer-text">${formatDuration(state.recordingSeconds)} / 0:45</span>
                   </div>
                 `
                     : ""
                 }
+              </div>
 
-                ${
-                  !state.isRecording && attempts.length > 0
-                    ? `
-                  <div class="takes-list-section">
-                    <div class="takes-list-heading">
-                      <span>Danh sách bản ghi âm của bạn (${attempts.length} lần ghi)</span>
-                      <span style="font-size:11.5px;color:#52525B;font-weight:500;">Tích chọn 1 bản để nộp bài</span>
+              <p class="recorder-helper-note">
+                Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong> (AI sẽ trả bài sửa sau ${RELEASE_HOURS} tiếng).
+              </p>
+
+              ${
+                state.isRecording
+                  ? `
+                <div class="takes-list-section">
+                  <div class="transcript-result-box">
+                    <div class="transcript-box-header">
+                      <span class="transcript-box-label">Đang nhận diện giọng nói (Transcript)...</span>
                     </div>
+                    <p id="live-transcript-preview" class="transcript-text-content ${state.liveTranscript ? "" : "placeholder"}">
+                      ${escapeHtml(state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...")}
+                    </p>
+                  </div>
+                </div>
+              `
+                  : ""
+              }
 
-                    ${attempts
-                      .map((att, idx) => {
-                        const isSelected = att.id === selectedTakeId;
-                        const isSubmitted = att.id === submittedTakeId;
-                        return `
-                          <div class="take-item-card ${isSelected ? "selected-take" : ""} ${isSubmitted ? "submitted-take" : ""}">
-                            <div class="take-item-top">
-                              <label class="take-select-label">
-                                <input
-                                  type="radio"
-                                  name="select_take_${qId}"
-                                  value="${att.id}"
-                                  ${isSelected ? "checked" : ""}
-                                  data-select-take="${att.id}"
-                                />
-                                <span>Bản ghi âm #${idx + 1} (${formatDuration(att.durationSec)})</span>
-                                <span class="take-meta-time">· ${escapeHtml(att.createdAt || "")}</span>
-                              </label>
+              ${
+                !state.isRecording && attempts.length > 0
+                  ? `
+                <div class="takes-list-section">
+                  <div class="takes-list-heading">
+                    <span>Danh sách bản ghi âm của bạn (${attempts.length} lần ghi)</span>
+                    <span style="font-size:11.5px;color:#52525B;font-weight:500;">Tích chọn 1 bản để nộp bài</span>
+                  </div>
 
-                              <div style="display:flex;align-items:center;gap:6px;">
-                                ${isSubmitted ? `<span class="submitted-badge">✓ Bản đã nộp</span>` : ""}
-                                <button
-                                  type="button"
-                                  class="take-delete-btn"
-                                  data-delete-take="${att.id}"
-                                  title="Xóa bản ghi âm này"
-                                >Xóa</button>
-                              </div>
+                  ${attempts
+                    .map((att, idx) => {
+                      const isSelected = att.id === selectedTakeId;
+                      const isSubmitted = att.id === submittedTakeId;
+                      return `
+                        <div
+                          class="take-item-card ${isSelected ? "selected-take" : ""} ${isSubmitted ? "submitted-take" : ""}"
+                          ${isSubmitted ? 'id="submitted-take-anchor"' : ""}
+                        >
+                          <div class="take-item-top">
+                            <label class="take-select-label">
+                              <input
+                                type="radio"
+                                name="select_take_${qId}"
+                                value="${att.id}"
+                                ${isSelected ? "checked" : ""}
+                                data-select-take="${att.id}"
+                              />
+                              <span>Bản ghi âm #${idx + 1} (${formatDuration(att.durationSec)})</span>
+                              <span class="take-meta-time">· ${escapeHtml(att.createdAt || "")}</span>
+                            </label>
+
+                            <div style="display:flex;align-items:center;gap:6px;">
+                              ${isSubmitted ? `<span class="submitted-badge">✓ Bản đã nộp</span>` : ""}
+                              <button
+                                type="button"
+                                class="take-delete-btn"
+                                data-delete-take="${att.id}"
+                                title="Xóa bản ghi âm này"
+                              >Xóa</button>
                             </div>
+                          </div>
 
-                            ${att.audioDataUrl ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>` : ""}
+                          ${att.audioDataUrl ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>` : ""}
 
-                            <div class="transcript-result-box">
-                              <div class="transcript-box-header">
-                                <span class="transcript-box-label">Transcript câu trả lời (Bản #${idx + 1})</span>
-                              </div>
-                              ${
-                                att.transcript
-                                  ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
-                                  : `<p class="transcript-text-content placeholder">Chưa nhận diện được lời nói tiếng Anh trong lượt ghi âm này.</p>`
-                              }
+                          <div class="transcript-result-box">
+                            <div class="transcript-box-header">
+                              <span class="transcript-box-label">Transcript câu trả lời (Bản #${idx + 1})</span>
                             </div>
-
                             ${
-                              isSubmitted && window.SpeakingEvaluator
-                                ? window.SpeakingEvaluator.renderFeedbackCardHtml(
-                                    window.SpeakingEvaluator.evaluate(question, att),
-                                    escapeHtml
-                                  )
-                                : ""
-                            }
-
-                            ${
-                              att.teacherFeedback || att.teacherScore
-                                ? `
-                              <div style="margin-top:8px;padding:9px 12px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:6px;font-size:13px;color:#14532D;">
-                                <div style="font-weight:800;margin-bottom:2px;">
-                                  👨‍🏫 Nhận xét của Giáo viên ${att.teacherScore ? `· <span style="background:#16A34A;color:#FFF;padding:1px 7px;border-radius:4px;font-size:11.5px;">${escapeHtml(att.teacherScore)}</span>` : ""}
-                                </div>
-                                ${att.teacherFeedback ? `<div>${escapeHtml(att.teacherFeedback)}</div>` : ""}
-                              </div>
-                            `
-                                : ""
+                              att.transcript
+                                ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
+                                : `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — khi nộp bài, AI sẽ nghe trực tiếp file ghi âm của bạn để chấm.</p>`
                             }
                           </div>
+
+                          ${isSubmitted ? renderSubmittedTakeAiAndTeacherSection(qId, qData, att) : ""}
+                        </div>
+                      `;
+                    })
+                    .join("")}
+
+                  ${(() => {
+                    const selectedTakeNum = selectedTakeObj
+                      ? attempts.indexOf(selectedTakeObj) + 1
+                      : 1;
+                    const submittedTakeNum = submittedTakeObj
+                      ? attempts.indexOf(submittedTakeObj) + 1
+                      : 0;
+                    const chosenLevelUpper = state.selectedLevel.toUpperCase();
+                    const isSameTakeAndLevelSubmitted = Boolean(
+                      submittedTakeId &&
+                        submittedTakeId === selectedTakeId &&
+                        (qData.targetLevel || "B1").toUpperCase() === chosenLevelUpper
+                    );
+                    return `
+                      <div class="submit-take-bar">
+                        <div class="target-level-submit-row">
+                          <span>Mục tiêu chấm AI:</span>
+                          <button
+                            type="button"
+                            class="target-level-mini-pill ${lvl === "b1" ? "active" : ""}"
+                            data-level="b1"
+                          >Level B1</button>
+                          <button
+                            type="button"
+                            class="target-level-mini-pill ${lvl === "b2" ? "active" : ""}"
+                            data-level="b2"
+                          >Level B2</button>
+                        </div>
+
+                        ${
+                          state.submitErrorMsg
+                            ? `<div style="width:100%;font-size:12.5px;color:#B91C1C;font-weight:600;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                            : ""
+                        }
+
+                        <button
+                          type="button"
+                          class="submit-take-btn ${isSameTakeAndLevelSubmitted ? "is-submitted" : ""}"
+                          id="btn-submit-selected-take"
+                          ${isSameTakeAndLevelSubmitted || state.isSubmitting ? "disabled" : ""}
+                        >
+                          ${
+                            state.isSubmitting
+                              ? `<span>⏳ Đang tải âm thanh &amp; nộp bài...</span>`
+                              : isSameTakeAndLevelSubmitted
+                                ? `<span>✓ Đã nộp Bản ghi âm #${submittedTakeNum} (Level ${chosenLevelUpper})</span>`
+                                : `
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                              <span>Nộp Bản #${selectedTakeNum} chấm Level ${chosenLevelUpper} →</span>
+                            `
+                          }
+                        </button>
+                      </div>
+                    `;
+                  })()}
+                </div>
+              `
+                  : ""
+              }
+            </div>
+
+            <div class="stepper-row">
+              <button
+                type="button"
+                class="btn-prev-q"
+                id="btn-prev-q"
+                ${qIdx === 0 ? "disabled" : ""}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                <span>Câu trước</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-next-q"
+                id="btn-next-q"
+              >
+                <span>${qIdx < totalQ - 1 ? "Câu tiếp" : "Về danh sách chủ đề"}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT PANE: GỢI Ý DÀN BÀI (5 SECTIONS + CLICK-TO-HEAR VOCAB WITH IPA) -->
+        <aside class="right-pane" aria-label="Gợi ý dàn bài">
+          <div class="right-pane-inner">
+            <div class="guide-top-bar">
+              <div class="guide-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                <span>Gợi ý dàn bài</span>
+              </div>
+
+              <div class="level-switch-group" role="group" aria-label="Chọn Level B1 hoặc B2">
+                <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-level="b1">Level B1</button>
+                <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-level="b2">Level B2</button>
+              </div>
+            </div>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
+              </div>
+              <ul class="guide-bullets">
+                <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
+                <li><strong>Thì &amp; Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
+                <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
+              </ul>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h2 class="guide-section-title">II. Cách trả lời</h2>
+              </div>
+              <ol class="guide-numbered">
+                ${levelData.strategy
+                  .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>`)
+                  .join("")}
+              </ol>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h2 class="guide-section-title">III. Câu trả lời mẫu</h2>
+                <button type="button" class="listen-sample-btn" id="btn-listen-sample">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                  <span>Nghe câu trả lời mẫu</span>
+                </button>
+              </div>
+              <blockquote class="sample-answer-blockquote">
+                “${levelData.modelAnswer}”
+              </blockquote>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h2 class="guide-section-title">IV. Lỗi cần tránh</h2>
+              </div>
+              <ol class="guide-numbered">
+                ${question.pitfalls.map(p => `<li>${escapeHtml(p)}</li>`).join("")}
+              </ol>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h2 class="guide-section-title">V. Từ vựng nên dùng</h2>
+                <span style="font-size:11.5px;color:#71717A;">Bấm vào từ để nghe phát âm · Bấm +Lưu từ vào kho</span>
+              </div>
+              <div class="vocab-table-wrap">
+                <table class="vocab-table">
+                  <thead>
+                    <tr>
+                      <th>Từ / cụm từ</th>
+                      <th>Loại từ</th>
+                      <th>Nghĩa</th>
+                      <th>Ví dụ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${levelData.vocab
+                      .map(row => {
+                        const isSaved = (currentAccount.savedVocab || []).some(
+                          v => v.word.toLowerCase() === row.word.toLowerCase()
+                        );
+                        return `
+                          <tr>
+                            <td class="td-word">
+                              <button
+                                type="button"
+                                class="vocab-word-click-btn"
+                                data-speak-word="${escapeHtml(row.word)}"
+                                title="Bấm để nghe phát âm: ${escapeHtml(row.word)}"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                <span>${escapeHtml(row.word)}</span>
+                              </button>
+                              ${
+                                row.ipa
+                                  ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(row.word)}" title="Bấm để nghe phát âm">${escapeHtml(row.ipa)}</span>`
+                                  : ""
+                              }
+                              <button
+                                type="button"
+                                class="vocab-save-mini-btn ${isSaved ? "saved" : ""}"
+                                data-toggle-save-vocab="${escapeHtml(row.word)}"
+                                data-vocab-ipa="${escapeHtml(row.ipa || "")}"
+                                data-vocab-pos="${escapeHtml(row.pos || "")}"
+                                data-vocab-meaning="${escapeHtml(row.meaning || "")}"
+                                data-vocab-example="${escapeHtml((row.example || "").replace(/<[^>]*>?/gm, ""))}"
+                                data-vocab-topic="${escapeHtml(topic.title)}"
+                              >
+                                <span>${isSaved ? "✓ Đã lưu vào kho" : "+ Lưu vào kho từ"}</span>
+                              </button>
+                            </td>
+                            <td class="td-pos">${escapeHtml(row.pos)}</td>
+                            <td class="td-meaning">${escapeHtml(row.meaning)}</td>
+                            <td class="td-example">${row.example}</td>
+                          </tr>
                         `;
                       })
                       .join("")}
-
-                    ${(() => {
-                      const selectedTakeNum = selectedTakeObj
-                        ? attempts.indexOf(selectedTakeObj) + 1
-                        : 1;
-                      const submittedTakeNum = submittedTakeObj
-                        ? attempts.indexOf(submittedTakeObj) + 1
-                        : 0;
-                      const isCurrentTakeSubmitted = Boolean(
-                        submittedTakeId && submittedTakeId === selectedTakeId
-                      );
-                      return `
-                        <div class="submit-take-bar">
-                          ${
-                            state.submitErrorMsg
-                              ? `<div style="font-size:12.5px;color:#B91C1C;font-weight:600;margin-right:auto;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
-                              : ""
-                          }
-
-                          <button
-                            type="button"
-                            class="submit-take-btn ${isCurrentTakeSubmitted ? "is-submitted" : ""}"
-                            id="btn-submit-selected-take"
-                            ${isCurrentTakeSubmitted || state.isSubmitting ? "disabled" : ""}
-                          >
-                            ${
-                              state.isSubmitting
-                                ? `<span>⏳ Đang gửi bài nộp...</span>`
-                                : isCurrentTakeSubmitted
-                                  ? `<span>✓ Đã nộp Bản ghi âm #${submittedTakeNum}</span>`
-                                  : `
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                <span>Bấm để nộp bài (Bản ghi âm #${selectedTakeNum}) →</span>
-                              `
-                            }
-                          </button>
-                        </div>
-                      `;
-                    })()}
-                  </div>
-                `
-                    : ""
-                }
+                  </tbody>
+                </table>
               </div>
-
-              <div class="stepper-row">
-                <button
-                  type="button"
-                  class="btn-prev-q"
-                  id="btn-prev-q"
-                  ${qIdx === 0 ? "disabled" : ""}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                  <span>Câu trước</span>
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-next-q"
-                  id="btn-next-q"
-                >
-                  <span>${qIdx < totalQ - 1 ? "Câu tiếp" : "Về danh sách chủ đề"}</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <!-- RIGHT PANE: GỢI Ý DÀN BÀI (5 SECTIONS + CLICK-TO-HEAR VOCAB WITH IPA) -->
-          <aside class="right-pane" aria-label="Gợi ý dàn bài">
-            <div class="right-pane-inner">
-              <div class="guide-top-bar">
-                <div class="guide-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
-                  <span>Gợi ý dàn bài</span>
-                </div>
-
-                <div class="level-switch-group" role="group" aria-label="Chọn Level B1 hoặc B2">
-                  <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-level="b1">Level B1</button>
-                  <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-level="b2">Level B2</button>
-                </div>
-              </div>
-
-              <section class="guide-section">
-                <div class="guide-section-header">
-                  <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
-                </div>
-                <ul class="guide-bullets">
-                  <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
-                  <li><strong>Thì & Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
-                  <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
-                </ul>
-              </section>
-
-              <section class="guide-section">
-                <div class="guide-section-header">
-                  <h2 class="guide-section-title">II. Cách trả lời</h2>
-                </div>
-                <ol class="guide-numbered">
-                  ${levelData.strategy
-                    .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>`)
-                    .join("")}
-                </ol>
-              </section>
-
-              <section class="guide-section">
-                <div class="guide-section-header">
-                  <h2 class="guide-section-title">III. Câu trả lời mẫu</h2>
-                  <button type="button" class="listen-sample-btn" id="btn-listen-sample">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                    <span>Nghe câu trả lời mẫu</span>
-                  </button>
-                </div>
-                <blockquote class="sample-answer-blockquote">
-                  “${levelData.modelAnswer}”
-                </blockquote>
-              </section>
-
-              <section class="guide-section">
-                <div class="guide-section-header">
-                  <h2 class="guide-section-title">IV. Lỗi cần tránh</h2>
-                </div>
-                <ol class="guide-numbered">
-                  ${question.pitfalls.map(p => `<li>${escapeHtml(p)}</li>`).join("")}
-                </ol>
-              </section>
-
-              <section class="guide-section">
-                <div class="guide-section-header">
-                  <h2 class="guide-section-title">V. Từ vựng nên dùng</h2>
-                  <span style="font-size:11.5px;color:#71717A;">Bấm vào từ để nghe phát âm · Bấm +Lưu từ vào kho</span>
-                </div>
-                <div class="vocab-table-wrap">
-                  <table class="vocab-table">
-                    <thead>
-                      <tr>
-                        <th>Từ / cụm từ</th>
-                        <th>Loại từ</th>
-                        <th>Nghĩa</th>
-                        <th>Ví dụ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${levelData.vocab
-                        .map(row => {
-                          const isSaved = (currentAccount.savedVocab || []).some(
-                            v => v.word.toLowerCase() === row.word.toLowerCase()
-                          );
-                          return `
-                            <tr>
-                              <td class="td-word">
-                                <button
-                                  type="button"
-                                  class="vocab-word-click-btn"
-                                  data-speak-word="${escapeHtml(row.word)}"
-                                  title="Bấm để nghe phát âm: ${escapeHtml(row.word)}"
-                                >
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                                  <span>${escapeHtml(row.word)}</span>
-                                </button>
-                                ${
-                                  row.ipa
-                                    ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(row.word)}" title="Bấm để nghe phát âm">${escapeHtml(row.ipa)}</span>`
-                                    : ""
-                                }
-                                <button
-                                  type="button"
-                                  class="vocab-save-mini-btn ${isSaved ? "saved" : ""}"
-                                  data-toggle-save-vocab="${escapeHtml(row.word)}"
-                                  data-vocab-ipa="${escapeHtml(row.ipa || "")}"
-                                  data-vocab-pos="${escapeHtml(row.pos || "")}"
-                                  data-vocab-meaning="${escapeHtml(row.meaning || "")}"
-                                  data-vocab-example="${escapeHtml((row.example || "").replace(/<[^>]*>?/gm, ""))}"
-                                  data-vocab-topic="${escapeHtml(topic.title)}"
-                                >
-                                  <span>${isSaved ? "✓ Đã lưu vào kho" : "+ Lưu vào kho từ"}</span>
-                                </button>
-                              </td>
-                              <td class="td-pos">${escapeHtml(row.pos)}</td>
-                              <td class="td-meaning">${escapeHtml(row.meaning)}</td>
-                              <td class="td-example">${row.example}</td>
-                            </tr>
-                          `;
-                        })
-                        .join("")}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-          </aside>
-        </main>
-
-        <nav class="practice-bottom-nav" aria-label="Danh sách câu hỏi">
-          <div class="bottom-q-pills">
-            <span class="bottom-part-text">Part 1</span>
-            ${topic.questions
-              .map((qItem, idx) => {
-                const isActive = idx === qIdx;
-                const qd = currentAccount.questionsData && currentAccount.questionsData[qItem.id];
-                const isSubmitted = !!(qd && qd.submittedTakeId);
-                return `
-                  <button
-                    type="button"
-                    class="q-pill-btn ${isActive ? "active" : ""} ${isSubmitted ? "done" : ""}"
-                    data-jump-q="${idx}"
-                    title="Câu ${idx + 1}${isSubmitted ? " (Đã nộp bài)" : ""}"
-                  >${idx + 1}</button>
-                `;
-              })
-              .join("")}
-            <span class="bottom-q-counter">Đã nộp ${submittedInTopicCount}/${totalQ}</span>
+            </section>
           </div>
-        </nav>
+        </aside>
+      </main>
+
+      <nav class="practice-bottom-nav" aria-label="Danh sách câu hỏi">
+        <div class="bottom-q-pills">
+          <span class="bottom-part-text">Part 1</span>
+          ${topic.questions
+            .map((qItem, idx) => {
+              const isActive = idx === qIdx;
+              const qd = currentAccount.questionsData && currentAccount.questionsData[qItem.id];
+              const isSubmitted = !!(qd && qd.submittedTakeId);
+              return `
+                <button
+                  type="button"
+                  class="q-pill-btn ${isActive ? "active" : ""} ${isSubmitted ? "done" : ""}"
+                  data-jump-q="${idx}"
+                  title="Câu ${idx + 1}${isSubmitted ? " (Đã nộp bài)" : ""}"
+                >${idx + 1}</button>
+              `;
+            })
+            .join("")}
+          <span class="bottom-q-counter">Đã nộp ${submittedInTopicCount}/${totalQ}</span>
+        </div>
+      </nav>
+    `;
+  }
+
+  function renderWorkspaceLayout() {
+    if (!currentAccount) return renderAuthView();
+
+    const vocabCount = (currentAccount.savedVocab || []).length;
+    const totalQuestions = QUESTION_CATALOG.length;
+    const submittedTotal = getAllSubmittedItems().length;
+    const isPractice = state.view === "practice";
+
+    const layoutClasses = [
+      "app-layout",
+      state.sidebarCollapsed ? "sidebar-collapsed" : "",
+      state.mobileSidebarOpen ? "mobile-sidebar-open" : "",
+      isPractice ? "focus-lesson-mode split-tab-active" : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    let bodyHtml = "";
+    if (isPractice) {
+      bodyHtml = renderPracticeContent();
+    } else if (state.view === "my-submissions") {
+      bodyHtml = renderMySubmissionsContent();
+    } else {
+      bodyHtml = renderHomeContent();
+    }
+
+    return `
+      <div class="${layoutClasses}" id="main-app-layout">
+        ${renderSidebarHtml(submittedTotal, totalQuestions, vocabCount)}
+        <div class="ej-main-shell">
+          ${renderTopbarHtml(vocabCount)}
+          ${bodyHtml}
+        </div>
       </div>
     `;
   }
@@ -1318,7 +2242,7 @@
                         <th>Từ / cụm từ (Bấm để nghe)</th>
                         <th>Loại từ</th>
                         <th>Nghĩa</th>
-                        <th>Ví dụ & Chủ đề</th>
+                        <th>Ví dụ &amp; Chủ đề</th>
                         <th style="width:50px;">Xóa</th>
                       </tr>
                     </thead>
@@ -1381,37 +2305,75 @@
 
     const leftPane = document.querySelector(".left-pane");
     const rightPane = document.querySelector(".right-pane");
+    const sbNav = document.querySelector(".ej-sidebar-nav");
     const savedLeftScroll = leftPane ? leftPane.scrollTop : 0;
     const savedRightScroll = rightPane ? rightPane.scrollTop : 0;
+    const savedSbScroll = sbNav ? sbNav.scrollTop : 0;
 
     let mainHtml = "";
     if (state.view === "auth" || !currentAccount) {
       mainHtml = renderAuthView();
     } else if (state.needsProfileSetup) {
       mainHtml = renderProfileSetupView();
-    } else if (state.view === "home") {
-      mainHtml = renderHomeView();
     } else {
-      mainHtml = renderPracticeView();
+      mainHtml = renderWorkspaceLayout();
     }
 
     root.innerHTML = mainHtml + renderModals();
 
     const nextLeftPane = document.querySelector(".left-pane");
     const nextRightPane = document.querySelector(".right-pane");
+    const nextSbNav = document.querySelector(".ej-sidebar-nav");
     if (nextLeftPane) nextLeftPane.scrollTop = savedLeftScroll;
     if (nextRightPane) nextRightPane.scrollTop = savedRightScroll;
+    if (nextSbNav) nextSbNav.scrollTop = savedSbScroll;
 
     bindEvents();
   }
 
-  function openTopic(topicId) {
+  function openTopicAndQuestion(topicId, qIdx, scrollToSubmitted) {
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
+    if (state.view === "home" || state.view === "my-submissions") {
+      state.prevDashboardView = state.view;
+    }
     state.currentTopicId = topicId;
-    state.currentQuestionIndex = 0;
+    state.currentQuestionIndex = Math.max(0, qIdx || 0);
     state.submitErrorMsg = "";
+    state.mobileSidebarOpen = false;
+    state.quickSearchOpen = false;
+    state.notifOpen = false;
+
+    const qObj = getCurrentQuestion();
+    if (qObj && currentAccount && currentAccount.questionsData && currentAccount.questionsData[qObj.id]) {
+      const savedLvl = String(currentAccount.questionsData[qObj.id].targetLevel || "").toLowerCase();
+      if (savedLvl === "b1" || savedLvl === "b2") {
+        state.selectedLevel = savedLvl;
+      }
+    }
+
     state.view = "practice";
     renderApp();
+
+    if (scrollToSubmitted) {
+      setTimeout(() => {
+        const anchor = document.getElementById("submitted-take-anchor");
+        if (anchor) {
+          anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 90);
+    } else {
+      const lp = document.querySelector(".left-pane");
+      const rp = document.querySelector(".right-pane");
+      if (lp) lp.scrollTop = 0;
+      if (rp) rp.scrollTop = 0;
+    }
+  }
+
+  function openQuestionById(qId, scrollToSubmitted) {
+    const meta = QUESTION_META_BY_ID[qId];
+    if (!meta) return;
+    markReviewAsSeen(qId);
+    openTopicAndQuestion(meta.topicId, meta.questionIndex, scrollToSubmitted);
   }
 
   function switchQuestion(newIndex) {
@@ -1625,7 +2587,11 @@
     const btnLogout = document.getElementById("btn-logout-account");
     if (btnLogout) {
       btnLogout.onclick = async () => {
+        if (currentAccount && !state.needsProfileSetup) {
+          if (!confirm("Bạn có muốn đăng xuất khỏi tài khoản hiện tại?")) return;
+        }
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        stopNotificationPolling();
         const client = CLOUD.getClient();
         if (client) {
           try {
@@ -1635,6 +2601,9 @@
         currentAccount = null;
         state.isTeacher = false;
         state.needsProfileSetup = false;
+        state.reviewsByQuestionId = {};
+        state.notifOpen = false;
+        state.quickSearchOpen = false;
         state.view = "auth";
         state.authMode = "login";
         state.authError = "";
@@ -1643,23 +2612,158 @@
       };
     }
 
-    const btnOpenVocab = document.getElementById("btn-open-vocab-bank");
-    if (btnOpenVocab) {
-      btnOpenVocab.onclick = () => {
-        state.vocabModalOpen = true;
+    // Sidebar navigation & controls
+    document.querySelectorAll("[data-sb-nav]").forEach(btn => {
+      btn.onclick = () => {
+        const target = btn.getAttribute("data-sb-nav");
+        if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        state.view = target === "my-submissions" ? "my-submissions" : "home";
+        state.prevDashboardView = state.view;
+        state.mobileSidebarOpen = false;
+        state.notifOpen = false;
+        state.quickSearchOpen = false;
+        renderApp();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+    });
+
+    const btnSbCollapse = document.getElementById("ej-sidebar-collapse-btn");
+    if (btnSbCollapse) {
+      btnSbCollapse.onclick = () => {
+        state.sidebarCollapsed = !state.sidebarCollapsed;
+        try {
+          localStorage.setItem("speaking_sidebar_collapsed", state.sidebarCollapsed ? "1" : "0");
+        } catch (e) {}
         renderApp();
       };
     }
 
-    document.querySelectorAll("[data-open-topic]").forEach(card => {
-      card.onclick = () => openTopic(card.getAttribute("data-open-topic"));
+    const btnSbTopicsAcc = document.getElementById("btn-sb-topics-acc");
+    if (btnSbTopicsAcc) {
+      btnSbTopicsAcc.onclick = e => {
+        e.stopPropagation();
+        state.sbTopicsCollapsed = !state.sbTopicsCollapsed;
+        renderApp();
+      };
+    }
+
+    const btnMobileMenu = document.getElementById("ej-mobile-menu-btn");
+    if (btnMobileMenu) {
+      btnMobileMenu.onclick = () => {
+        state.mobileSidebarOpen = !state.mobileSidebarOpen;
+        renderApp();
+      };
+    }
+
+    const sbBackdrop = document.getElementById("ej-sidebar-backdrop");
+    if (sbBackdrop) {
+      sbBackdrop.onclick = () => {
+        state.mobileSidebarOpen = false;
+        renderApp();
+      };
+    }
+
+    // Quick Search in Topbar
+    const qsInput = document.getElementById("ej-quick-search-input");
+    if (qsInput) {
+      qsInput.onfocus = () => {
+        if (!state.quickSearchOpen) {
+          state.quickSearchOpen = true;
+          const pos = qsInput.selectionStart || 0;
+          renderApp();
+          const nextInp = document.getElementById("ej-quick-search-input");
+          if (nextInp) {
+            nextInp.focus();
+            nextInp.setSelectionRange(pos, pos);
+          }
+        }
+      };
+      qsInput.oninput = e => {
+        state.quickSearchQuery = e.target.value;
+        state.quickSearchOpen = true;
+        const pos = e.target.selectionStart || 0;
+        renderApp();
+        const nextInp = document.getElementById("ej-quick-search-input");
+        if (nextInp) {
+          nextInp.focus();
+          nextInp.setSelectionRange(pos, pos);
+        }
+      };
+      qsInput.onkeydown = e => {
+        if (e.key === "Escape") {
+          state.quickSearchOpen = false;
+          renderApp();
+        } else if (e.key === "Enter") {
+          const firstBtn = document.querySelector(".ej-search-result-btn");
+          if (firstBtn) {
+            e.preventDefault();
+            firstBtn.click();
+          }
+        }
+      };
+    }
+
+    document.querySelectorAll("[data-qs-topic]").forEach(btn => {
+      btn.onclick = () => {
+        const topicId = btn.getAttribute("data-qs-topic");
+        const qIdx = parseInt(btn.getAttribute("data-qs-qidx") || "0", 10);
+        state.quickSearchQuery = "";
+        state.quickSearchOpen = false;
+        openTopicAndQuestion(topicId, qIdx, false);
+      };
+    });
+
+    // Notification Bell & Items
+    const btnNotif = document.getElementById("topbar-notif-btn");
+    if (btnNotif) {
+      btnNotif.onclick = e => {
+        e.stopPropagation();
+        state.notifOpen = !state.notifOpen;
+        state.quickSearchOpen = false;
+        renderApp();
+        if (state.notifOpen) {
+          refreshStudentReviews(true);
+        }
+      };
+    }
+
+    document.querySelectorAll("[data-open-notif-question]").forEach(btn => {
+      btn.onclick = () => {
+        const qId = btn.getAttribute("data-open-notif-question");
+        state.notifOpen = false;
+        openQuestionById(qId, true);
+      };
+    });
+
+    document.querySelectorAll("[data-history-open-question]").forEach(btn => {
+      btn.onclick = () => {
+        const qId = btn.getAttribute("data-history-open-question");
+        openQuestionById(qId, true);
+      };
+    });
+
+    // Personal Vocab Modal triggers
+    ["btn-open-vocab-bank", "btn-sb-vocab-bank"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.onclick = () => {
+          state.vocabModalOpen = true;
+          state.mobileSidebarOpen = false;
+          state.notifOpen = false;
+          renderApp();
+        };
+      }
+    });
+
+    document.querySelectorAll("[data-open-topic]").forEach(el => {
+      el.onclick = () => openTopicAndQuestion(el.getAttribute("data-open-topic"), 0, false);
     });
 
     const btnBackHome = document.getElementById("btn-back-home");
     if (btnBackHome) {
       btnBackHome.onclick = () => {
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
-        state.view = "home";
+        state.view = state.prevDashboardView === "my-submissions" ? "my-submissions" : "home";
         renderApp();
       };
     }
@@ -1674,6 +2778,7 @@
       if (ideaInput) {
         ideaInput.oninput = e => {
           qData.ideaNote = e.target.value;
+          scheduleSaveIdeaNote(question.id, qData.ideaNote);
         };
       }
 
@@ -1702,6 +2807,10 @@
           if (qData.submittedTakeId === delId) {
             qData.submittedTakeId = null;
             qData.submittedAt = null;
+            qData.submittedAtIso = "";
+            qData.aiStatus = "";
+            qData.aiReleaseAt = "";
+            delete state.reviewsByQuestionId[question.id];
           }
           renderApp();
           await cloudDeleteAttempt(delObj);
@@ -1717,11 +2826,16 @@
           const chosenObj = attempts.find(a => a.id === chosenId);
           if (!chosenObj || state.isSubmitting) return;
 
+          const targetLevelUpper = state.selectedLevel.toUpperCase();
           state.isSubmitting = true;
           state.submitErrorMsg = "";
           renderApp();
 
-          const res = await cloudSubmitAttempt(question.id, chosenObj);
+          const res = await cloudSubmitAttempt(question.id, chosenObj, {
+            targetLevel: targetLevelUpper,
+            topicTitle: topic.title,
+            promptText: question.prompt
+          });
           state.isSubmitting = false;
 
           if (!res.ok) {
@@ -1730,9 +2844,14 @@
             return;
           }
 
+          chosenObj.targetLevel = targetLevelUpper;
           qData.selectedTakeId = chosenObj.id;
           qData.submittedTakeId = chosenObj.id;
-          qData.submittedAt = CLOUD.formatDateTime(new Date().toISOString());
+          qData.submittedAtIso = res.submittedAtIso;
+          qData.submittedAt = CLOUD.formatDateTime(res.submittedAtIso);
+          qData.targetLevel = targetLevelUpper;
+          qData.aiStatus = "scheduled";
+          qData.aiReleaseAt = res.releaseAtIso;
           renderApp();
         };
       }
@@ -1876,6 +2995,45 @@
     });
   }
 
+  // Global document listeners registered once (outside renderApp)
+  document.addEventListener("click", e => {
+    let changed = false;
+    if (state.notifOpen && !e.target.closest("#topbar-notif-wrap")) {
+      state.notifOpen = false;
+      changed = true;
+    }
+    if (state.quickSearchOpen && !e.target.closest("#ej-topbar-search-wrap")) {
+      state.quickSearchOpen = false;
+      changed = true;
+    }
+    if (changed) renderApp();
+  });
+
+  document.addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (currentAccount && !state.needsProfileSetup && state.view !== "practice") {
+        e.preventDefault();
+        state.quickSearchOpen = true;
+        renderApp();
+        const inp = document.getElementById("ej-quick-search-input");
+        if (inp) inp.focus();
+      }
+    } else if (e.key === "Escape") {
+      if (state.notifOpen || state.quickSearchOpen || state.vocabModalOpen) {
+        state.notifOpen = false;
+        state.quickSearchOpen = false;
+        state.vocabModalOpen = false;
+        renderApp();
+      }
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    if (currentAccount) {
+      refreshStudentReviews(false);
+    }
+  });
+
   window.addEventListener("DOMContentLoaded", async () => {
     const client = CLOUD.getClient();
     if (!client) {
@@ -1896,9 +3054,11 @@
           await loadCloudStudentData(session.user);
         }
       } else if (event === "SIGNED_OUT") {
+        stopNotificationPolling();
         currentAccount = null;
         state.isTeacher = false;
         state.needsProfileSetup = false;
+        state.reviewsByQuestionId = {};
         state.view = "auth";
         renderApp();
       }

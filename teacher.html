@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <title>Trang Giáo Viên — Quản lý Học viên & Bài làm (Speaking Part 1)</title>
+  <title>Trang Giáo Viên — Quản lý Học viên &amp; Bài làm (Speaking Part 1)</title>
   <link rel="icon" href="data:," />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,21 +12,22 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261121j" />
+  <link rel="stylesheet" href="./styles.css?v=20261124a" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261121j"></script>
-  <script src="./supabase-client.js?v=20261121j"></script>
-  <script src="./travel-data.js?v=20261121j"></script>
-  <script src="./speaking-evaluator.js?v=20261121j"></script>
+  <script src="./supabase-config.js?v=20261124a"></script>
+  <script src="./supabase-client.js?v=20261124a"></script>
+  <script src="./travel-data.js?v=20261124a"></script>
+  <script src="./speaking-evaluator.js?v=20261124a"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
       const CLOUD = window.SpeakingCloud;
       const escapeHtml = CLOUD.escapeHtml;
       const formatDuration = CLOUD.formatDuration;
+      const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
 
       const tState = {
         loading: false,
@@ -35,8 +36,12 @@
         teacherEmail: "",
         teacherUserId: "",
         deletingUserId: "",
+        gradingAttemptId: "",
+        releasingAttemptId: "",
+        flushingQueue: false,
         authError: "",
         dbError: "",
+        aiTableNotice: "",
         activeTab: "submissions", // "submissions" | "students"
         students: [],
         submissions: [],
@@ -56,6 +61,21 @@
           });
         });
         return map;
+      }
+
+      function speakEnglishText(rawText) {
+        const cleanText = String(rawText || "").replace(/<[^>]*>?/gm, "").trim();
+        if (!cleanText) return;
+        if ("speechSynthesis" in window) {
+          try {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(cleanText);
+            utter.lang = "en-US";
+            utter.rate = 0.92;
+            window.speechSynthesis.speak(utter);
+            return;
+          } catch (e) {}
+        }
       }
 
       // ======================================================================
@@ -91,12 +111,14 @@
 
         tState.loading = true;
         tState.dbError = "";
+        tState.aiTableNotice = "";
         renderTeacherApp();
 
-        const [profilesRes, vocabRes, attemptsRes] = await Promise.all([
+        const [profilesRes, vocabRes, attemptsRes, reviewsRes] = await Promise.all([
           client.from("profiles").select("*").order("last_active_at", { ascending: false }),
           client.from("student_vocab").select("user_id"),
-          client.from("speaking_attempts").select("*").order("created_at", { ascending: false })
+          client.from("speaking_attempts").select("*").order("created_at", { ascending: false }),
+          client.from("speaking_ai_reviews").select("*")
         ]);
 
         const firstErr = profilesRes.error || attemptsRes.error || vocabRes.error;
@@ -108,9 +130,22 @@
             "). Vui lòng kiểm tra đã chạy đủ lệnh GRANT trong SQL Editor chưa.";
         }
 
+        if (reviewsRes.error) {
+          tState.aiTableNotice =
+            "Chưa thấy bảng speaking_ai_reviews trên Supabase — hãy chạy file supabase-setup.sql mới nhất và deploy Edge Function grade-speaking để kích hoạt chấm AI tự động trả sau 6 tiếng.";
+        }
+
         const profiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
         const vocabRows = Array.isArray(vocabRes.data) ? vocabRes.data : [];
         const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
+        const reviewRows = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+
+        const reviewByKey = {};
+        const reviewByAttemptId = {};
+        reviewRows.forEach(r => {
+          if (r && r.id) reviewByKey[r.id] = r;
+          if (r && r.attempt_id) reviewByAttemptId[r.attempt_id] = r;
+        });
 
         const vocabCountByUser = {};
         vocabRows.forEach(v => {
@@ -149,8 +184,8 @@
           const parsedProf = parsedById[chosen.user_id] || CLOUD.parseFullNameAndClass(prof.full_name || "");
           const qMeta = qMetaMap[chosen.question_id] || {
             topicId: chosen.topic_id || "other",
-            topicTitle: chosen.topic_id || "Chủ đề",
-            prompt: chosen.question_id,
+            topicTitle: chosen.topic_title || chosen.topic_id || "Chủ đề",
+            prompt: chosen.prompt_text || chosen.question_id,
             num: 1
           };
 
@@ -158,8 +193,15 @@
             submittedCountByUser[chosen.user_id] = (submittedCountByUser[chosen.user_id] || 0) + 1;
           }
 
+          const matchedReview = reviewByAttemptId[chosen.id] || reviewByKey[k] || null;
+          const activeAiReview =
+            matchedReview && (!matchedReview.attempt_id || matchedReview.attempt_id === chosen.id)
+              ? matchedReview
+              : null;
+
           submissions.push({
             attemptId: chosen.id,
+            reviewKey: k,
             studentName: parsedProf.fullName || prof.email || "Học viên",
             studentClass: parsedProf.className || "",
             studentEmail: prof.email || "",
@@ -168,6 +210,7 @@
             topicTitle: qMeta.topicTitle,
             questionNum: qMeta.num,
             prompt: qMeta.prompt,
+            targetLevel: String(chosen.target_level || (activeAiReview && activeAiReview.target_level) || "B1").toUpperCase(),
             isOfficiallySubmitted: Boolean(chosen.is_submitted),
             submittedAt: CLOUD.formatDateTime(chosen.submitted_at || chosen.created_at),
             rawTime: new Date(chosen.submitted_at || chosen.created_at || 0).getTime(),
@@ -175,9 +218,17 @@
             takeNum: chosen.take_number || 1,
             totalAttemptsCount: list.length,
             audioUrl: chosen.audio_path ? signedUrlMap[chosen.audio_path] || "" : "",
-            transcript: chosen.transcript || "",
+            transcript:
+              chosen.transcript ||
+              (activeAiReview &&
+                activeAiReview.review_json &&
+                activeAiReview.review_json.recognized_transcript) ||
+              "",
             teacherFeedback: chosen.teacher_feedback || "",
-            teacherScore: chosen.teacher_score || ""
+            teacherScore: chosen.teacher_score || "",
+            aiStatus: chosen.ai_status || "",
+            aiReleaseAt: chosen.ai_release_at || "",
+            aiReview: activeAiReview
           });
         });
 
@@ -237,6 +288,67 @@
         }
       }
 
+      async function triggerTeacherAiGrade(attemptId) {
+        if (!attemptId || tState.gradingAttemptId) return;
+        const subObj = tState.submissions.find(s => s.attemptId === attemptId);
+        tState.gradingAttemptId = attemptId;
+        renderTeacherApp();
+
+        const res = await CLOUD.invokeGradeSpeaking(attemptId, {
+          forceTeacher: true,
+          releaseNow: false,
+          promptText: subObj ? subObj.prompt : "",
+          topicTitle: subObj ? subObj.topicTitle : "",
+          targetLevel: subObj ? subObj.targetLevel : "B1"
+        });
+        tState.gradingAttemptId = "";
+        if (!res.ok) {
+          renderTeacherApp();
+          alert(
+            "Không chạy được chấm sửa AI: " +
+              (res.error ||
+                "Vui lòng kiểm tra đã deploy Edge Function grade-speaking và cài GEMINI_API_KEY chưa.")
+          );
+          return;
+        }
+        await refreshCloudDashboardData();
+      }
+
+      async function releaseAiReviewNow(attemptId) {
+        const client = CLOUD.getClient();
+        if (!client || !attemptId || tState.releasingAttemptId) return;
+        tState.releasingAttemptId = attemptId;
+        renderTeacherApp();
+
+        const { error } = await client.rpc("teacher_release_speaking_review_now", {
+          p_attempt_id: attemptId
+        });
+        tState.releasingAttemptId = "";
+        if (error) {
+          renderTeacherApp();
+          alert("Không trả bài sớm được: " + error.message);
+          return;
+        }
+        await refreshCloudDashboardData();
+      }
+
+      async function flushPendingQueueNow() {
+        if (tState.flushingQueue) return;
+        tState.flushingQueue = true;
+        renderTeacherApp();
+        const res = await CLOUD.invokeProcessSpeakingQueue(5);
+        tState.flushingQueue = false;
+        if (!res.ok) {
+          renderTeacherApp();
+          alert("Không chạy được hàng đợi chấm bài: " + (res.error || "Lỗi không xác định"));
+          return;
+        }
+        await refreshCloudDashboardData();
+        alert(
+          `Đã xử lý ${res.processed || 0} bài nói chờ: thành công ${res.succeeded || 0} bài, còn chờ thử lại ${res.failed || 0} bài.`
+        );
+      }
+
       async function deleteStudentAccount(studentId, studentName, studentEmail) {
         const client = CLOUD.getClient();
         if (!client || !studentId || tState.deletingUserId) return;
@@ -245,7 +357,11 @@
           return;
         }
         const label = studentName ? `${studentName} (${studentEmail || ""})` : studentEmail || studentId;
-        if (!confirm(`Bạn có chắc muốn XOÁ VĨNH VIỄN tài khoản "${label}"?\n\nToàn bộ bài nộp, bản ghi âm và từ vựng của tài khoản này sẽ bị xoá khỏi hệ thống.`)) {
+        if (
+          !confirm(
+            `Bạn có chắc muốn XOÁ VĨNH VIỄN tài khoản "${label}"?\n\nToàn bộ bài nộp, bản ghi âm và từ vựng của tài khoản này sẽ bị xoá khỏi hệ thống.`
+          )
+        ) {
           return;
         }
 
@@ -297,15 +413,21 @@
           "Email",
           "Chủ đề",
           "Câu hỏi",
+          "Mục tiêu Level",
           "Trạng thái",
           "Thời gian nộp",
           "Thời lượng (giây)",
           "Transcript bài nói",
-          "Điểm / Band",
+          "Ước lượng AI",
+          "Điểm / Band GV",
           "Nhận xét giáo viên"
         ];
         const lines = [header.map(csvCell).join(",")];
         rows.forEach(sub => {
+          const aiBand =
+            sub.aiReview && sub.aiReview.review_json && sub.aiReview.review_json.estimated_band
+              ? sub.aiReview.review_json.estimated_band
+              : "";
           lines.push(
             [
               sub.studentName,
@@ -313,10 +435,12 @@
               sub.studentEmail,
               sub.topicTitle,
               `Q${sub.questionNum}: ${sub.prompt}`,
+              sub.targetLevel || "B1",
               sub.isOfficiallySubmitted ? "Đã nộp chính thức" : "Bản nháp",
               sub.submittedAt,
               sub.durationSec,
               sub.transcript,
+              aiBand,
               sub.teacherScore,
               sub.teacherFeedback
             ]
@@ -354,7 +478,7 @@
                 Tài khoản <strong>${escapeHtml(tState.unauthorizedEmail)}</strong> chưa có trong danh sách bảng <code>public.teachers</code> trên Supabase nên hệ thống tự động chặn quyền đọc dữ liệu học viên.
               </p>
               <button type="button" class="form-submit-btn" id="btn-teacher-logout">
-                Đăng xuất & Đăng nhập tài khoản Giáo viên →
+                Đăng xuất &amp; Đăng nhập tài khoản Giáo viên →
               </button>
             </div>
           </div>
@@ -374,7 +498,7 @@
                 Đăng nhập Quản trị Giáo viên
               </h1>
               <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
-                Đăng nhập bằng chính tài khoản <strong>Gmail Giáo viên</strong> đã khai báo trong Supabase để quản lý học viên, nghe lại bài ghi âm và ghi nhận xét.
+                Đăng nhập bằng chính tài khoản <strong>Gmail Giáo viên</strong> đã khai báo trong Supabase để quản lý học viên, nghe lại bài ghi âm, xem bài chấm AI và trả bài sớm.
               </p>
 
               ${
@@ -522,7 +646,12 @@
       function renderTeacherDashboard() {
         const filteredSubs = getFilteredSubmissions();
         const totalSubmitted = tState.submissions.filter(s => s.isOfficiallySubmitted).length;
-        const totalUngraded = tState.submissions.filter(s => s.isOfficiallySubmitted && !s.teacherFeedback && !s.teacherScore).length;
+        const totalUngraded = tState.submissions.filter(
+          s => s.isOfficiallySubmitted && !s.teacherFeedback && !s.teacherScore
+        ).length;
+        const pendingAiCount = tState.submissions.filter(
+          s => s.isOfficiallySubmitted && (!s.aiReview || s.aiReview.status !== "ready")
+        ).length;
         const totalVocab = tState.students.reduce((acc, s) => acc + (s.vocabCount || 0), 0);
         const totalQuestionsAllTopics = TOPICS.reduce((acc, t) => acc + (t.questions || []).length, 0);
 
@@ -531,11 +660,18 @@
             <header class="home-topbar" style="background:#F0FDF4;">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <div class="home-brand-title">👨‍🏫 TRANG GIÁO VIÊN · SPEAKING PART 1</div>
-                <span class="cloud-mode-pill">☁️ SUPABASE CLOUD</span>
+                <span class="cloud-mode-pill">☁️ SUPABASE CLOUD · AI ${RELEASE_HOURS}H</span>
               </div>
 
               <div class="topbar-actions">
                 <a href="./index.html" class="top-pill-btn" style="text-decoration:none;">← Về trang luyện tập</a>
+                ${
+                  pendingAiCount > 0 && !tState.aiTableNotice
+                    ? `<button type="button" class="top-pill-btn yellow" id="btn-flush-queue" ${tState.flushingQueue ? "disabled" : ""}>
+                        ${tState.flushingQueue ? "⏳ Đang chấm hàng đợi..." : `🔄 Chấm bài chờ (${pendingAiCount})`}
+                      </button>`
+                    : ""
+                }
                 <button type="button" class="top-pill-btn" id="btn-refresh-data">
                   ${tState.loading ? "⏳ Đang tải..." : "↻ Làm mới"}
                 </button>
@@ -552,6 +688,12 @@
                   ? `<div style="padding:12px 16px;border:2px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:13.5px;font-weight:700;margin-bottom:18px;box-shadow:3px 3px 0px #DC2626;">⚠️ ${escapeHtml(tState.dbError)}</div>`
                   : ""
               }
+              ${
+                tState.aiTableNotice
+                  ? `<div style="padding:12px 16px;border:2px solid #D97706;background:#FFFBEB;color:#92400E;font-size:13px;font-weight:600;margin-bottom:18px;box-shadow:3px 3px 0px #D97706;">💡 ${escapeHtml(tState.aiTableNotice)}</div>`
+                  : ""
+              }
+
               <div class="teacher-stats-grid">
                 <div class="teacher-stat-card">
                   <div class="teacher-stat-label">Tổng số học viên</div>
@@ -573,7 +715,7 @@
 
               <div class="teacher-tabs-bar">
                 <button type="button" class="teacher-tab-btn ${tState.activeTab === "submissions" ? "active" : ""}" data-teacher-tab="submissions">
-                  🎙️ Bài làm & Ghi âm (${tState.submissions.length})
+                  🎙️ Bài làm &amp; Ghi âm (${tState.submissions.length})
                 </button>
                 <button type="button" class="teacher-tab-btn ${tState.activeTab === "students" ? "active" : ""}" data-teacher-tab="students">
                   👥 Quản lý Tài khoản Học viên (${tState.students.length})
@@ -670,7 +812,6 @@
       }
 
       function renderSubmissionsTab(filteredSubs) {
-        const qMetaMap = buildQuestionMetaMap();
         return `
           ${renderSharedClassAndNameControls(`Đang hiển thị <strong>${filteredSubs.length}</strong> bài làm`)}
 
@@ -679,97 +820,145 @@
               ? `
               <div style="padding:36px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;">
                 <p style="font-size:16px;font-weight:700;margin-bottom:6px;">Chưa có bài làm nào khớp bộ lọc.</p>
-                <p style="font-size:13.5px;">Khi học viên ghi âm và bấm Nộp bài trên web, bản ghi âm và transcript sẽ tự động đồng bộ về đây.</p>
+                <p style="font-size:13.5px;">Khi học viên ghi âm và bấm Nộp bài trên web, bản ghi âm và bài chấm AI sẽ tự động đồng bộ về đây.</p>
               </div>
             `
               : filteredSubs
-                  .map(
-                    sub => `
-                    <div class="submission-review-card" style="border:2px solid #18181B;box-shadow:3px 3px 0px #18181B;">
-                      <div class="submission-review-top">
-                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
-                          <span style="font-size:14.5px;font-weight:800;color:#18181B;">
-                            👤 ${escapeHtml(sub.studentName)}
-                          </span>
-                          ${renderClassBadge(sub.studentClass)}
-                          <span style="font-size:12.5px;color:#71717A;">(${escapeHtml(sub.studentEmail)})</span>
-                          <span style="color:#D4D4D8;">|</span>
-                          <span style="font-size:12.5px;font-weight:700;color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:4px;">
-                            ${escapeHtml(sub.topicTitle)} · Câu ${sub.questionNum}
-                          </span>
-                        </div>
+                  .map(sub => {
+                    const rev = sub.aiReview;
+                    const isGrading = tState.gradingAttemptId === sub.attemptId;
+                    const isReleasing = tState.releasingAttemptId === sub.attemptId;
+                    const hasReadyReview = Boolean(rev && rev.status === "ready" && rev.review_json);
+                    const relMs = rev && rev.release_at ? new Date(rev.release_at).getTime() : 0;
+                    const isWaitingRelease = hasReadyReview && relMs > Date.now();
+                    const remain = isWaitingRelease ? CLOUD.formatRemainingTime(rev.release_at) : "";
+                    const rj = hasReadyReview ? rev.review_json : null;
+                    const totalFixCount = rj
+                      ? (Array.isArray(rj.pronunciation_fixes) ? rj.pronunciation_fixes.length : 0) +
+                        (Array.isArray(rj.language_corrections) ? rj.language_corrections.length : 0) +
+                        (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0)
+                      : 0;
 
-                        <div>
-                          ${
-                            sub.isOfficiallySubmitted
-                              ? `<span class="submitted-badge">✓ Đã nộp chính thức (${escapeHtml(sub.submittedAt || "")})</span>`
-                              : `<span style="font-size:11.5px;font-weight:600;color:#B45309;background:#FFFBEB;padding:2px 8px;border-radius:4px;">Bản ghi nháp (${sub.totalAttemptsCount} lần ghi)</span>`
-                          }
-                        </div>
-                      </div>
+                    let statusHtml = `<span style="font-size:12.5px;color:#52525B;">Chưa có bài chấm &amp; sửa AI.</span>`;
+                    if (hasReadyReview && isWaitingRelease) {
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Bài sửa AI đã sẵn sàng · Hẹn trả học viên lúc ${escapeHtml(CLOUD.formatDateTime(rev.release_at))} (còn ${escapeHtml(remain)})</span>`;
+                    } else if (hasReadyReview) {
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#166534;">✅ Đã trả bài sửa cho học viên (${escapeHtml(CLOUD.formatDateTime(rev.release_at))}) · ${rev.student_seen_at ? "Học viên đã xem" : "Học viên chưa xem"}</span>`;
+                    } else if (rev && rev.status === "error") {
+                      const tries = rev.retry_count || 1;
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B45309;">🔄 AI tạm quá tải (lần thử ${tries}/20) — hệ thống sẽ tự động chấm lại mỗi 5 phút trước giờ trả bài.</span>`;
+                    } else if (sub.aiStatus === "pending" || sub.aiStatus === "pending_retry" || sub.aiStatus === "grading") {
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đang nằm trong hàng đợi tự động chấm (hẹn trả sau ${RELEASE_HOURS} tiếng).</span>`;
+                    }
 
-                      <div style="font-size:15.5px;font-weight:700;color:#18181B;margin-bottom:10px;">
-                        Câu hỏi: “${escapeHtml(sub.prompt)}”
-                      </div>
-
-                      <div style="margin-bottom:10px;">
-                        ${
-                          sub.audioUrl
-                            ? `<audio controls preload="none" src="${sub.audioUrl}" class="student-audio-player"></audio>`
-                            : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm)</em></div>`
-                        }
-                        <div class="transcript-result-box">
-                          <div class="transcript-box-header">
-                            <span class="transcript-box-label">
-                              Transcript bài nói (Bản #${sub.takeNum} · ${formatDuration(sub.durationSec)} · Tổng ${sub.totalAttemptsCount} lần ghi)
+                    return `
+                      <div class="submission-review-card" style="border:2px solid #18181B;box-shadow:3px 3px 0px #18181B;">
+                        <div class="submission-review-top">
+                          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+                            <span style="font-size:14.5px;font-weight:800;color:#18181B;">
+                              👤 ${escapeHtml(sub.studentName)}
+                            </span>
+                            ${renderClassBadge(sub.studentClass)}
+                            <span style="font-size:12.5px;color:#71717A;">(${escapeHtml(sub.studentEmail)})</span>
+                            <span style="color:#D4D4D8;">|</span>
+                            <span style="font-size:12.5px;font-weight:700;color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:4px;">
+                              ${escapeHtml(sub.topicTitle)} · Câu ${sub.questionNum}
+                            </span>
+                            <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:#27272A;background:#F4F4F5;padding:2px 8px;border-radius:4px;">
+                              Level ${escapeHtml(sub.targetLevel)} · ${formatDuration(sub.durationSec)}
                             </span>
                           </div>
-                          <p class="transcript-text-content">
-                            ${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Không có transcript văn bản)</em>"}
-                          </p>
+
+                          <div>
+                            ${
+                              sub.isOfficiallySubmitted
+                                ? `<span class="submitted-badge">✓ Đã nộp chính thức (${escapeHtml(sub.submittedAt || "")})</span>`
+                                : `<span style="font-size:11.5px;font-weight:600;color:#B45309;background:#FFFBEB;padding:2px 8px;border-radius:4px;">Bản ghi nháp (${sub.totalAttemptsCount} lần ghi)</span>`
+                            }
+                          </div>
+                        </div>
+
+                        <div style="font-size:15.5px;font-weight:700;color:#18181B;margin-bottom:10px;">
+                          Câu hỏi: “${escapeHtml(sub.prompt)}”
+                        </div>
+
+                        <div style="margin-bottom:10px;">
+                          ${
+                            sub.audioUrl
+                              ? `<audio controls preload="none" src="${sub.audioUrl}" class="student-audio-player"></audio>`
+                              : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm)</em></div>`
+                          }
+                          <div class="transcript-result-box">
+                            <div class="transcript-box-header">
+                              <span class="transcript-box-label">
+                                Transcript bài nói (Bản #${sub.takeNum} · ${formatDuration(sub.durationSec)} · Tổng ${sub.totalAttemptsCount} lần ghi)
+                              </span>
+                            </div>
+                            <p class="transcript-text-content">
+                              ${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Chưa có transcript văn bản — bấm Tạo bài sửa AI để nhận diện từ file ghi âm)</em>"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="teacher-ai-bar">
+                          <div>${statusHtml}</div>
+                          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            ${
+                              isWaitingRelease
+                                ? `<button type="button" class="top-pill-btn yellow" data-release-now="${escapeHtml(sub.attemptId)}" ${isReleasing ? "disabled" : ""}>
+                                    ${isReleasing ? "Đang trả..." : "⚡ Trả bài sửa ngay"}
+                                  </button>`
+                                : ""
+                            }
+                            <button type="button" class="top-pill-btn" data-ai-grade="${escapeHtml(sub.attemptId)}" ${isGrading ? "disabled" : ""}>
+                              ${isGrading ? "⏳ Đang chấm AI..." : hasReadyReview ? "↻ Chấm lại AI" : "✨ Tạo bài sửa AI"}
+                            </button>
+                          </div>
                         </div>
 
                         ${
-                          window.SpeakingEvaluator
-                            ? window.SpeakingEvaluator.renderFeedbackCardHtml(
-                                window.SpeakingEvaluator.evaluate(
-                                  (qMetaMap[sub.qId] || {}).questionObj || { id: sub.qId, prompt: sub.prompt },
-                                  { transcript: sub.transcript, durationSec: sub.durationSec }
-                                ),
-                                escapeHtml
-                              )
+                          hasReadyReview
+                            ? `
+                              <details class="teacher-ai-details">
+                                <summary>
+                                  📝 Xem bài chấm &amp; sửa AI chi tiết (${totalFixCount} mục góp ý · Level ${escapeHtml(rev.target_level || sub.targetLevel)}${rj.estimated_band ? ` · ${escapeHtml(rj.estimated_band)}` : ""})
+                                </summary>
+                                ${CLOUD.renderSpeakingReviewHtml(sub.transcript || "", rj, {
+                                  targetLevel: rev.target_level || sub.targetLevel
+                                })}
+                              </details>
+                            `
                             : ""
                         }
-                      </div>
 
-                      <div class="grade-row">
-                        <input
-                          type="text"
-                          class="form-input"
-                          style="height:36px;font-size:13px;width:130px;font-weight:700;"
-                          placeholder="Điểm (VD: B1+)"
-                          value="${escapeHtml(sub.teacherScore)}"
-                          id="inp-score-${escapeHtml(sub.attemptId)}"
-                        />
-                        <input
-                          type="text"
-                          class="form-input"
-                          style="height:36px;font-size:13px;flex:1;min-width:220px;"
-                          placeholder="Nhận xét chấm bài của Giáo viên (học viên sẽ thấy ở bài đã nộp)..."
-                          value="${escapeHtml(sub.teacherFeedback)}"
-                          id="inp-fb-${escapeHtml(sub.attemptId)}"
-                        />
-                        <button
-                          type="button"
-                          class="save-grade-btn"
-                          data-save-grade="${escapeHtml(sub.attemptId)}"
-                        >
-                          ${tState.savedToastId === sub.attemptId ? "✓ Đã lưu!" : "Lưu nhận xét"}
-                        </button>
+                        <div class="grade-row">
+                          <input
+                            type="text"
+                            class="form-input"
+                            style="height:36px;font-size:13px;width:135px;font-weight:700;"
+                            placeholder="Điểm (VD: 6.5 / B2)"
+                            value="${escapeHtml(sub.teacherScore)}"
+                            id="inp-score-${escapeHtml(sub.attemptId)}"
+                          />
+                          <input
+                            type="text"
+                            class="form-input"
+                            style="height:36px;font-size:13px;flex:1;min-width:220px;"
+                            placeholder="Nhận xét thêm của Giáo viên (học viên sẽ thấy ngay dưới bài đã nộp)..."
+                            value="${escapeHtml(sub.teacherFeedback)}"
+                            id="inp-fb-${escapeHtml(sub.attemptId)}"
+                          />
+                          <button
+                            type="button"
+                            class="save-grade-btn"
+                            data-save-grade="${escapeHtml(sub.attemptId)}"
+                          >
+                            ${tState.savedToastId === sub.attemptId ? "✓ Đã lưu!" : "Lưu nhận xét"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  `
-                  )
+                    `;
+                  })
                   .join("")
           }
         `;
@@ -853,6 +1042,11 @@
           btnRefresh.onclick = () => refreshCloudDashboardData();
         }
 
+        const btnFlushQueue = document.getElementById("btn-flush-queue");
+        if (btnFlushQueue) {
+          btnFlushQueue.onclick = () => flushPendingQueueNow();
+        }
+
         const btnExportCsv = document.getElementById("btn-export-csv");
         if (btnExportCsv) {
           btnExportCsv.onclick = () => exportCsvReport(getFilteredSubmissions());
@@ -920,6 +1114,7 @@
             renderTeacherApp();
           };
         }
+
         const selTopic = document.getElementById("sel-filter-topic");
         if (selTopic) {
           selTopic.onchange = e => {
@@ -927,6 +1122,7 @@
             renderTeacherApp();
           };
         }
+
         const selStatus = document.getElementById("sel-filter-status");
         if (selStatus) {
           selStatus.onchange = e => {
@@ -937,14 +1133,29 @@
 
         document.querySelectorAll("[data-save-grade]").forEach(btn => {
           btn.onclick = async () => {
-            const attemptId = btn.getAttribute("data-save-grade");
-            const scoreInp = document.getElementById("inp-score-" + attemptId);
-            const fbInp = document.getElementById("inp-fb-" + attemptId);
+            const attId = btn.getAttribute("data-save-grade");
+            const scoreInp = document.getElementById("inp-score-" + attId);
+            const fbInp = document.getElementById("inp-fb-" + attId);
             await saveCloudGrade(
-              attemptId,
+              attId,
               scoreInp ? scoreInp.value.trim() : "",
               fbInp ? fbInp.value.trim() : ""
             );
+          };
+        });
+
+        document.querySelectorAll("[data-ai-grade]").forEach(btn => {
+          btn.onclick = () => triggerTeacherAiGrade(btn.getAttribute("data-ai-grade"));
+        });
+
+        document.querySelectorAll("[data-release-now]").forEach(btn => {
+          btn.onclick = () => releaseAiReviewNow(btn.getAttribute("data-release-now"));
+        });
+
+        document.querySelectorAll("[data-speak-word]").forEach(el => {
+          el.onclick = e => {
+            e.stopPropagation();
+            speakEnglishText(el.getAttribute("data-speak-word"));
           };
         });
       }
@@ -964,7 +1175,13 @@
         }
 
         client.auth.onAuthStateChange(async (event, session) => {
-          if (event === "SIGNED_IN" && session && session.user && !tState.authenticated && !tState.unauthorizedEmail) {
+          if (
+            event === "SIGNED_IN" &&
+            session &&
+            session.user &&
+            !tState.authenticated &&
+            !tState.unauthorizedEmail
+          ) {
             await verifyAndLoadCloudTeacher(session.user);
           } else if (event === "SIGNED_OUT") {
             tState.authenticated = false;
