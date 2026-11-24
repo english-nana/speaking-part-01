@@ -1879,9 +1879,7 @@
                     <div class="transcript-box-header">
                       <span class="transcript-box-label">Đang nhận diện giọng nói (Transcript)...</span>
                     </div>
-                    <p id="live-transcript-preview" class="transcript-text-content ${state.liveTranscript ? "" : "placeholder"}">
-                      ${escapeHtml(state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...")}
-                    </p>
+                    <p id="live-transcript-preview" class="transcript-text-content ${state.liveTranscript ? "" : "placeholder"}">${escapeHtml(state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...")}</p>
                   </div>
                 </div>
               `

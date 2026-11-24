@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124d" />
+  <link rel="stylesheet" href="./styles.css?v=20261124e" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124d"></script>
-  <script src="./supabase-client.js?v=20261124d"></script>
-  <script src="./travel-data.js?v=20261124d"></script>
-  <script src="./speaking-evaluator.js?v=20261124d"></script>
+  <script src="./supabase-config.js?v=20261124e"></script>
+  <script src="./supabase-client.js?v=20261124e"></script>
+  <script src="./travel-data.js?v=20261124e"></script>
+  <script src="./speaking-evaluator.js?v=20261124e"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -541,6 +541,18 @@
           .filter(st => (!hasContentFilter ? true : st.metrics.matchedTotal > 0));
       }
 
+      function hasAnyFeedbackOrReview(sub) {
+        if (!sub) return false;
+        const hasManual = Boolean(
+          (sub.teacherFeedback && sub.teacherFeedback.trim()) ||
+            (sub.teacherScore && sub.teacherScore.trim())
+        );
+        const hasReadyAi = Boolean(
+          sub.aiReview && sub.aiReview.status === "ready" && sub.aiReview.review_json
+        );
+        return hasManual || hasReadyAi;
+      }
+
       function getFilteredSubmissions() {
         return tState.submissions.filter(sub => {
           if (!matchesClassFilter(sub.studentClass)) return false;
@@ -551,8 +563,8 @@
           if (tState.filterStudent !== "all" && sub.studentEmail !== tState.filterStudent) return false;
           if (tState.filterStatus === "submitted" && !sub.isOfficiallySubmitted) return false;
           if (tState.filterStatus === "unread_review" && (!sub.isReviewReleased || sub.isReviewSeen)) return false;
-          if (tState.filterStatus === "ungraded" && (sub.teacherFeedback || sub.teacherScore)) return false;
-          if (tState.filterStatus === "graded" && !sub.teacherFeedback && !sub.teacherScore) return false;
+          if (tState.filterStatus === "ungraded" && hasAnyFeedbackOrReview(sub)) return false;
+          if (tState.filterStatus === "graded" && !hasAnyFeedbackOrReview(sub)) return false;
           return true;
         });
       }
@@ -814,8 +826,8 @@
                   <option value="all" ${tState.filterStatus === "all" ? "selected" : ""}>Mọi trạng thái</option>
                   <option value="submitted" ${tState.filterStatus === "submitted" ? "selected" : ""}>Chỉ bài đã nộp chính thức</option>
                   <option value="unread_review" ${tState.filterStatus === "unread_review" ? "selected" : ""}>Bài sửa học viên chưa đọc</option>
-                  <option value="ungraded" ${tState.filterStatus === "ungraded" ? "selected" : ""}>GV chưa nhận xét</option>
-                  <option value="graded" ${tState.filterStatus === "graded" ? "selected" : ""}>GV đã nhận xét</option>
+                  <option value="ungraded" ${tState.filterStatus === "ungraded" ? "selected" : ""}>Chưa có bài sửa / nhận xét</option>
+                  <option value="graded" ${tState.filterStatus === "graded" ? "selected" : ""}>Đã có bài sửa / nhận xét</option>
                 </select>
               `
                   : ""
@@ -829,7 +841,7 @@
         const filteredSubs = getFilteredSubmissions();
         const totalSubmitted = tState.submissions.filter(s => s.isOfficiallySubmitted).length;
         const totalUngraded = tState.submissions.filter(
-          s => s.isOfficiallySubmitted && !s.teacherFeedback && !s.teacherScore
+          s => s.isOfficiallySubmitted && !hasAnyFeedbackOrReview(s)
         ).length;
         const pendingAiCount = tState.submissions.filter(
           s => s.isOfficiallySubmitted && (!s.aiReview || s.aiReview.status !== "ready")
@@ -885,7 +897,7 @@
                   <div class="teacher-stat-value" style="color:#15803D;">${totalSubmitted}</div>
                 </div>
                 <div class="teacher-stat-card">
-                  <div class="teacher-stat-label">Bài chờ GV nhận xét</div>
+                  <div class="teacher-stat-label">Bài chờ chấm / nhận xét</div>
                   <div class="teacher-stat-value" style="color:#B45309;">${totalUngraded}</div>
                 </div>
                 <div class="teacher-stat-card">
@@ -1096,9 +1108,7 @@
                                 Transcript bài nói (Bản #${sub.takeNum} · ${formatDuration(sub.durationSec)} · Tổng ${sub.totalAttemptsCount} lần ghi)
                               </span>
                             </div>
-                            <p class="transcript-text-content">
-                              ${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Chưa có transcript văn bản — bấm Tạo bài sửa AI để nhận diện từ file ghi âm)</em>"}
-                            </p>
+                            <p class="transcript-text-content">${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Chưa có transcript văn bản — bấm Tạo bài sửa AI để nhận diện từ file ghi âm)</em>"}</p>
                           </div>
                         </div>
 
