@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124a" />
+  <link rel="stylesheet" href="./styles.css?v=20261124b" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124a"></script>
-  <script src="./supabase-client.js?v=20261124a"></script>
-  <script src="./travel-data.js?v=20261124a"></script>
-  <script src="./speaking-evaluator.js?v=20261124a"></script>
+  <script src="./supabase-config.js?v=20261124b"></script>
+  <script src="./supabase-client.js?v=20261124b"></script>
+  <script src="./travel-data.js?v=20261124b"></script>
+  <script src="./speaking-evaluator.js?v=20261124b"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -935,8 +935,8 @@
                           <input
                             type="text"
                             class="form-input"
-                            style="height:36px;font-size:13px;width:135px;font-weight:700;"
-                            placeholder="Điểm (VD: 6.5 / B2)"
+                            style="height:36px;font-size:13px;width:190px;font-weight:700;"
+                            placeholder="Mức đạt (VD: Xấp xỉ B2)"
                             value="${escapeHtml(sub.teacherScore)}"
                             id="inp-score-${escapeHtml(sub.attemptId)}"
                           />

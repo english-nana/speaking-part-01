@@ -79,10 +79,10 @@ function buildSpeakingGradingPrompt(params: {
 
   const levelGuidance =
     level === "B2"
-      ? `Mục tiêu của học viên là trình độ B2 (tương đương 6.0 - 8.0/10 VSTEP Speaking):
+      ? `Mục tiêu của học viên là trình độ B2:
 - Đánh giá và hướng dẫn cách nói tự nhiên ở chuẩn B2 giao tiếp thực tế (khoảng 3 câu mạch lạc ~35-48 từ theo hướng: Trả lời trực tiếp kèm discourse marker tự nhiên như "Honestly,", "I'd say", "Actually," + Lý do -> Ví dụ đời thực -> Cảm xúc/Kết quả).
 - Chỉ ra các chỗ diễn đạt còn đơn điệu hoặc bị "Vietlish", gợi ý collocations văn nói tự nhiên (như "hang out with close friends", "unwind", "clear my mind", "affordable", "convenient", "in advance", "boost my productivity", mệnh đề "which...") nhưng KHÔNG ép dùng từ C1/C2 sách vở cứng nhắc.`
-      : `Mục tiêu của học viên là trình độ B1 (tương đương 4.0 - 5.5/10 VSTEP Speaking):
+      : `Mục tiêu của học viên là trình độ B1:
 - Chỉ cần bài nói rõ ý, phát âm dễ nghe, đúng ngữ pháp cơ bản, dùng từ tự nhiên gần gũi đời sống (~28-38 từ, khoảng 2-3 câu ngắn gọn theo mạch: Trả lời + Lý do -> Ví dụ cụ thể -> Cảm xúc).
 - KHÔNG ép học viên dùng từ vựng phức tạp hay cấu trúc B2/C1. Nếu câu học viên nói đơn giản nhưng tự nhiên, đúng ngữ pháp ở mức B1 thì khen ngợi và GIỮ NGUYÊN.
 - Khi sửa lỗi "Vietlish" hoặc mở rộng ý bị "cụt", hãy gợi ý các câu tiếng Anh giao tiếp đời thường, dễ nhớ, dễ nói đối với học viên B1 Việt Nam.`;
@@ -90,10 +90,10 @@ function buildSpeakingGradingPrompt(params: {
   const audioContextNote = params.hasAudio
     ? `ĐÃ ĐÍNH KÈM FILE GHI ÂM THẬT CỦA HỌC VIÊN (thời lượng ~${params.durationSec || 0} giây).
 - Hãy NGHE KỸ file ghi âm đính kèm làm nguồn chính để:
-  1) Ghi lại chính xác những gì học viên thực sự nói vào trường "recognized_transcript" (transcript trình duyệt bên dưới chỉ để tham khảo vì đôi khi nhận diện nhầm).
-  2) Chấm trực tiếp PHÁT ÂM (có rõ chữ, dễ nghe không; có nuốt âm đuôi /s/, /z/, /t/, /d/, /ed/, sai trọng âm từ hay nhầm nguyên âm/phụ âm không) và NGỮ ĐIỆU (có nhấn nhá từ khóa, lên xuống giọng tự nhiên không, hay đang nói đều đều một tông / đọc chữ / ngập ngừng đứt quãng).`
+  1) Ghi lại ĐẦY ĐỦ, chính xác những gì học viên thực sự nói vào trường "recognized_transcript" (transcript trình duyệt bên dưới chỉ để tham khảo vì đôi khi bị thiếu hoặc nhận diện nhầm).
+  2) Chấm trực tiếp PHÁT ÂM (có rõ chữ, dễ nghe không; đặc biệt bắt lỗi mất final sound /s/, /z/ khi đó là âm cuối gốc của từ như nice, house, place, office, because, always, relax, stress, bus, class, famous...; âm cuối /t/, /d/; trọng âm từ) và NGỮ ĐIỆU (có nhấn nhá từ khóa, lên xuống giọng tự nhiên không, hay đang nói đều đều một tông / đọc chữ / ngập ngừng).`
     : `Không tải được file âm thanh gốc, chỉ có transcript văn bản (~${params.durationSec || 0} giây):
-- Dựa vào transcript và thời lượng nói để nhận xét tốc độ/độ trôi chảy và lưu ý phát âm/ngữ điệu những từ dễ sai trong câu trả lời.`;
+- Dựa vào transcript và thời lượng nói để nhận xét tốc độ/độ trôi chảy và lưu ý phát âm/ngữ điệu những từ có final sound dễ sai trong câu trả lời.`;
 
   return `Bạn là giám khảo và giáo viên hướng dẫn VSTEP Speaking tận tâm, giàu kinh nghiệm dạy học viên Việt Nam.
 
@@ -106,15 +106,24 @@ THÔNG TIN CÂU HỎI & BÀI NÓI:
 - Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Trình duyệt chưa nhận diện được văn bản - hãy nghe trực tiếp file âm thanh)"}"
 - Tình trạng âm thanh: ${audioContextNote}
 
-YÊU CẦU CHẤM & SỬA CHI TIẾT (BẮT BUỘC ĐẦY ĐỦ CÁC KHÍA CẠNH SAU):
+QUY TẮC ĐẶC BIỆT BẮT BUỘC PHẢI TUÂN THỦ:
+- QUY TẮC 1 (VỀ ÂM "s" CUỐI TỪ VS CHIA ĐỘNG TỪ):
+  + BỎ QUA HOÀN TOÀN lỗi quên thêm "s"/"es" khi chia động từ ngôi thứ 3 số ít ở hiện tại đơn (ví dụ: học viên nói "it help me", "he like", "my mother cook", "weather affect"... -> TUYỆT ĐỐI BỎ QUA, không bắt lỗi trong phần ngữ pháp, không bắt lỗi trong phần phát âm, không đưa vào "language_corrections" hay "pronunciation_fixes").
+  + NHƯNG VẪN PHẢI BẮT KỸ lỗi quên phát âm âm "s" (/s/, /z/, /ɪz/) khi đó là FINAL SOUND CỐ HỮU CỦA TỪ (ví dụ: nice /naɪs/, house /haʊs/, place /pleɪs/, price /praɪs/, office /ˈɔːfɪs/, because /bɪˈkɔːz/, always /ˈɔːlweɪz/, sometimes /ˈsʌmtaɪmz/, relax /rɪˈlæks/, stress /stres/, bus /bʌs/, class /klæs/, famous /ˈfeɪməs/, delicious /dɪˈlɪʃəs/... hoặc danh từ số nhiều cần thiết như friends). Nếu học viên nuốt mất final sound này trong file ghi âm thì phải chỉ rõ trong "criteria.pronunciation_intonation" và "pronunciation_fixes".
+- QUY TẮC 2 (KHÔNG CHẤM ĐIỂM SỐ CỤ THỂ):
+  + TUYỆT ĐỐI KHÔNG chấm điểm bằng con số (không ghi 5.0/10, 6.5, 7.0...).
+  + Trường "estimated_band" CHỈ ĐƯỢC NHẬN ĐÚNG 1 TRONG CÁC MỨC SAU (tùy năng lực thực tế của bài nói, kể cả vượt mục tiêu lên C1):
+    "Chưa đạt B1" | "Xấp xỉ B1" | "Đạt B1" | "Xấp xỉ B2" | "Đạt B2" | "Xấp xỉ C1" | "Đạt C1"
+
+YÊU CẦU CHẤM & SỬA CHI TIẾT:
 1. PHÁT ÂM CÓ DỄ NGHE KHÔNG & CÓ NGỮ ĐIỆU KHÔNG ("criteria.pronunciation_intonation" + "pronunciation_fixes"):
-   - Nhận xét thẳng thắn, dễ hiểu xem người nghe có dễ nghe, dễ nắm bắt lời học viên nói không.
-   - Nhận xét rõ về NGỮ ĐIỆU (intonation) & nhịp nói: giọng nói có sự lên xuống tự nhiên, biết nhấn vào từ mang nội dung (content words) và ngắt cụm hợp lý không, hay đang nói đều đều một tông (monotone như đọc bài viết), ngập ngừng hoặc nói quá nhanh/quá rời rạc?
-   - Liệt kê tối đa 4 từ cụ thể trong bài nói mà học viên phát âm chưa chuẩn hoặc dễ nhấn sai trọng âm vào mảng "pronunciation_fixes" (kèm phiên âm chuẩn US IPA và chỉ dẫn cách đọc đúng bằng tiếng Việt). Nếu phát âm mọi từ đều tốt, trả về mảng rỗng [].
+   - Nhận xét thẳng thắn, dễ hiểu xem người nghe có dễ nghe, dễ nắm bắt lời học viên nói không; chú ý các từ bị mất final sound gốc (đặc biệt là final sound /s/, /z/ của từ như nice, house, place, because, relax...).
+   - Nhận xét rõ về NGỮ ĐIỆU (intonation) & nhịp nói: giọng nói có sự lên xuống tự nhiên, biết nhấn vào từ mang nội dung (content words) và ngắt cụm hợp lý không, hay đang nói đều đều một tông (monotone), ngập ngừng?
+   - Liệt kê tối đa 4 từ cụ thể trong bài nói mà học viên phát âm chưa chuẩn (sai nguyên âm/phụ âm, sai trọng âm, hoặc mất final sound gốc của từ — KHÔNG liệt kê động từ thiếu -s ngôi thứ 3) vào mảng "pronunciation_fixes" kèm US IPA và mẹo sửa. Nếu phát âm tốt, trả về [].
 
 2. NGỮ PHÁP ("criteria.grammar" + "language_corrections"):
-   - Kiểm tra thì của động từ có khớp với câu hỏi không (hiện tại đơn cho thói quen, quá khứ đơn cho trải nghiệm đã qua, tương lai cho kế hoạch), chia động từ, số ít/số nhiều, giới từ, cấu trúc câu.
-   - Lưu ý đây là VĂN NÓI nên không bắt lỗi dấu câu/viết hoa; chỉ bắt lỗi ngữ pháp thực sự khi nói.
+   - Kiểm tra thì của động từ theo câu hỏi (quá khứ, tương lai, hiện tại), cấu trúc câu, giới từ, dạng từ (V-ing / to V).
+   - Nhắc lại: BỎ QUA lỗi quên chia "-s/-es" ở động từ ngôi thứ 3 số ít trong văn nói; không bắt lỗi dấu câu/viết hoa.
 
 3. DÙNG TỪ TỰ NHIÊN & PHÁT HIỆN LỖI "VIETLISH" ("criteria.vocabulary_vietlish" + "language_corrections"):
    - Đánh giá cách dùng từ đã tự nhiên như giao tiếp đời thực chưa.
@@ -126,37 +135,37 @@ YÊU CẦU CHẤM & SỬA CHI TIẾT (BẮT BUỘC ĐẦY ĐỦ CÁC KHÍA CẠN
      + "explanation_vi": giải thích ngắn gọn tại sao cách nói cũ bị sai ngữ pháp hoặc hơi "Vietlish", và cách nói mới tự nhiên hơn thế nào.
 
 4. SẮP XẾP CÁC Ý CÓ LOGIC, DỄ THEO DÕI KHÔNG ("criteria.coherence_logic"):
-   - Nhận xét xem câu trả lời có đi thẳng vào câu hỏi không, thứ tự các ý có logic, mạch lạc, dễ theo dõi không (mạch chuẩn Part 1: Trả lời trực tiếp + Lý do -> Ví dụ thực tế -> Cảm xúc/Kết quả), và đã có từ nối tự nhiên trong văn nói ("because", "for example", "so" hoặc "Honestly", "Actually", "which...") chưa, hay các ý đang bị nhảy cóc, liệt kê rời rạc, lặp ý.
+   - Nhận xét xem câu trả lời có đi thẳng vào câu hỏi không, thứ tự các ý có logic, mạch lạc, dễ theo dõi không (mạch chuẩn Part 1: Trả lời trực tiếp + Lý do -> Ví dụ thực tế -> Cảm xúc/Kết quả), và đã có từ nối tự nhiên trong văn nói chưa.
 
 5. Ý TƯỞNG HƠI "CỤT" — CẦN DIỄN ĐẠT LẠI & MỞ RỘNG NHƯ THẾ NÀO ("idea_expansions"):
-   - Kiểm tra xem bài nói có bị quá ngắn hoặc có ý nào nói ra rồi bỏ lửng, hơi "cụt" (chỉ trả lời Yes/No hoặc 1 câu ngắn, nêu ý chung chung mà thiếu lý do cụ thể, thiếu ví dụ gần gũi đời sống như chuyện học hành, bạn bè, gia đình, đi cà phê, dùng điện thoại..., hoặc kết thúc đột ngột).
+   - Kiểm tra xem bài nói có bị quá ngắn hoặc có ý nào nói ra rồi bỏ lửng, hơi "cụt" (chỉ trả lời 1 câu ngắn, thiếu lý do cụ thể, thiếu ví dụ đời sống gần gũi hoặc kết thúc đột ngột).
    - Trong mảng "idea_expansions" (tối đa 3 mục): chỉ rõ chỗ nào bị "cụt" ("where_vi"), giải thích hướng diễn đạt lại & mở rộng sao cho tự nhiên, logic ("issue_vi"), đưa ra 1-2 câu tiếng Anh mẫu đúng chuẩn Level ${level} ("suggested_en") và dịch nghĩa tiếng Việt ("meaning_vi"). Nếu bài nói đã đầy đủ, tròn trịa 3 câu chuẩn mức ${level}, trả về [].
 
 6. ${levelGuidance}
 
 7. PHIÊN BẢN BÀI NÓI HOÀN CHỈNH TỰ NHIÊN ("natural_spoken_version"):
-   - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên (nếu bài ghi âm quá ngắn/trống thì gợi ý câu trả lời gần gũi nhất với câu hỏi), hãy viết lại thành 1 câu trả lời nói hoàn chỉnh gồm 3 câu tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, sắp xếp logic và mở rộng vừa vặn ở đúng Level ${level} để học viên nghe và luyện nói theo.
+   - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên, hãy viết lại thành 1 câu trả lời nói hoàn chỉnh gồm 3 câu tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, sắp xếp logic và mở rộng vừa vặn ở đúng Level ${level} để học viên nghe và luyện nói theo.
 
 8. NẾU FILE GHI ÂM IM LẶNG HOẶC CHỈ CÓ TIẾNG ỒN / KHÔNG CÓ TIẾNG ANH:
-   - Vẫn trả về JSON hợp lệ, đặt "estimated_band": "Chưa đủ dữ liệu chấm", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
+   - Vẫn trả về JSON hợp lệ, đặt "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
 
 TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) theo đúng cấu trúc sau:
 {
   "recognized_transcript": "Lời nói tiếng Anh thực tế của học viên nghe được từ file âm thanh",
-  "level_assessment": "Đánh giá ngắn gọn so với mục tiêu Level ${level} (VD: Đạt mức B1 / Gần đạt mức B2 - cần tự nhiên hơn và mở rộng ý)",
-  "estimated_band": "Ước lượng mức (VD: B1 · 5.0/10 hoặc B2 · 6.5/10)",
+  "level_assessment": "Nhận xét ngắn gọn 1 cụm về mức độ đáp ứng (không ghi điểm số)",
+  "estimated_band": "Chỉ ghi đúng 1 trong các mức: Chưa đạt B1 | Xấp xỉ B1 | Đạt B1 | Xấp xỉ B2 | Đạt B2 | Xấp xỉ C1 | Đạt C1",
   "overall_comment": "2-3 câu nhận xét tổng quan bằng tiếng Việt: khen điểm tốt trước, sau đó chỉ rõ trọng tâm cần cải thiện.",
   "criteria": {
-    "pronunciation_intonation": "Nhận xét chi tiết về độ dễ nghe khi phát âm và ngữ điệu/nhịp nói",
-    "grammar": "Nhận xét ngắn gọn, rõ ràng về ngữ pháp & chia thì",
+    "pronunciation_intonation": "Nhận xét chi tiết về độ dễ nghe, final sound của từ và ngữ điệu/nhịp nói",
+    "grammar": "Nhận xét ngắn gọn, rõ ràng về ngữ pháp & chia thì (bỏ qua lỗi quên s khi chia động từ)",
     "vocabulary_vietlish": "Nhận xét về cách dùng từ tự nhiên và các chỗ hơi bị Vietlish (nếu có)",
     "coherence_logic": "Nhận xét về cách sắp xếp các ý có logic, mạch lạc, dễ theo dõi không"
   },
   "pronunciation_fixes": [
     {
-      "word": "từ phát âm chưa chuẩn",
+      "word": "từ phát âm chưa chuẩn hoặc mất final sound gốc",
       "ipa": "/phiên âm US IPA/",
-      "issue_vi": "Mô tả lỗi phát âm/trọng âm nghe được và mẹo đọc đúng"
+      "issue_vi": "Mô tả lỗi phát âm/final sound/trọng âm nghe được và mẹo đọc đúng"
     }
   ],
   "language_corrections": [
@@ -178,6 +187,73 @@ TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) 
   ],
   "natural_spoken_version": "Bài nói 3 câu hoàn chỉnh, tự nhiên, giữ nguyên ý học viên ở mức Level ${level}"
 }`;
+}
+
+function normalizeLevelBandLabel(rawBand: string, rawAssess: string): string {
+  const combined = `${rawBand || ""} ${rawAssess || ""}`.toLowerCase();
+  if (/xấp xỉ\s*c1|gần\s*(đạt\s*)?(mức\s*)?c1|c1-/.test(combined)) return "Xấp xỉ C1";
+  if (/đạt\s*(mức\s*)?c1|\bc1\b/.test(combined)) return "Đạt C1";
+  if (/xấp xỉ\s*b2|gần\s*(đạt\s*)?(mức\s*)?b2|b1\+|b2-/.test(combined)) return "Xấp xỉ B2";
+  if (/đạt\s*(mức\s*)?b2|\bb2\b/.test(combined)) return "Đạt B2";
+  if (/chưa\s*đạt\s*(mức\s*)?b1|dưới\s*b1|\ba1\b|\ba2\b/.test(combined)) return "Chưa đạt B1";
+  if (/xấp xỉ\s*b1|gần\s*(đạt\s*)?(mức\s*)?b1|b1-/.test(combined)) return "Xấp xỉ B1";
+  if (/đạt\s*(mức\s*)?b1|\bb1\b/.test(combined)) return "Đạt B1";
+  return "Xấp xỉ B1";
+}
+
+const PLURAL_DETERMINERS = new Set([
+  "many", "two", "three", "four", "five", "some", "several", "few", "both",
+  "these", "those", "all", "other", "different", "various", "lots", "lot"
+]);
+
+function isThirdPersonVerbSOnlyFix(original: string, corrected: string, category: string, explanation: string): boolean {
+  const expLower = String(explanation || "").toLowerCase();
+  if (
+    (expLower.includes("chia động từ") || expLower.includes("ngôi thứ 3") || expLower.includes("chủ ngữ số ít")) &&
+    (expLower.includes("thêm s") || expLower.includes("thêm -s") || expLower.includes("thêm es") || expLower.includes("thiếu s"))
+  ) {
+    return true;
+  }
+  if (!String(category || "").toLowerCase().includes("ngữ pháp")) return false;
+
+  const cleanTokens = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9'\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+
+  const origWords = cleanTokens(original);
+  const corrWords = cleanTokens(corrected);
+  if (origWords.length === 0 || origWords.length !== corrWords.length) return false;
+
+  let diffIdx = -1;
+  for (let i = 0; i < origWords.length; i++) {
+    if (origWords[i] !== corrWords[i]) {
+      if (diffIdx !== -1) return false;
+      diffIdx = i;
+    }
+  }
+  if (diffIdx === -1) return false;
+
+  const wOrig = origWords[diffIdx];
+  const wCorr = corrWords[diffIdx];
+  const isAddingVerbS =
+    wCorr === wOrig + "s" ||
+    wCorr === wOrig + "es" ||
+    (wOrig.endsWith("y") && wCorr === wOrig.slice(0, -1) + "ies");
+
+  if (!isAddingVerbS) return false;
+
+  const prevWord = diffIdx > 0 ? origWords[diffIdx - 1] : "";
+  if (PLURAL_DETERMINERS.has(prevWord)) return false;
+
+  const singularSubjects = new Set([
+    "he", "she", "it", "this", "that", "which", "who", "everyone", "everybody",
+    "someone", "somebody", "nobody", "nothing", "everything", "weather", "mother",
+    "father", "mom", "dad", "friend", "brother", "sister", "teacher", "music", "travel", "travelling"
+  ]);
+  return singularSubjects.has(prevWord);
 }
 
 function parseModelJson(rawText: string) {
@@ -401,10 +477,15 @@ async function gradeSingleAttempt(
 
   const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
 
+  const cleanBandLabel = normalizeLevelBandLabel(
+    String(parsedReview?.estimated_band || ""),
+    String(parsedReview?.level_assessment || "")
+  );
+
   const normalizedReview = {
     recognized_transcript: recognizedTranscript,
-    level_assessment: String(parsedReview?.level_assessment || ""),
-    estimated_band: String(parsedReview?.estimated_band || ""),
+    level_assessment: String(parsedReview?.level_assessment || "").replace(/\d+(\.\d+)?\s*\/\s*10/g, "").trim(),
+    estimated_band: cleanBandLabel,
     overall_comment: String(parsedReview?.overall_comment || ""),
     criteria: {
       pronunciation_intonation: String(parsedReview?.criteria?.pronunciation_intonation || ""),
@@ -423,17 +504,23 @@ async function gradeSingleAttempt(
       : [],
     language_corrections: Array.isArray(parsedReview?.language_corrections)
       ? parsedReview.language_corrections
-          .map((c: Record<string, unknown>, idx: number) => ({
-            id: Number(c?.id) || idx + 1,
+          .map((c: Record<string, unknown>) => ({
             original: String(c?.original || "").trim(),
             corrected: String(c?.corrected || "").trim(),
             category: String(c?.category || "Từ vựng tự nhiên").trim(),
             explanation_vi: String(c?.explanation_vi || "").trim()
           }))
           .filter(
-            (c: { original: string; corrected: string }) =>
-              c.original && c.corrected && c.original.toLowerCase() !== c.corrected.toLowerCase()
+            (c: { original: string; corrected: string; category: string; explanation_vi: string }) =>
+              c.original &&
+              c.corrected &&
+              c.original.toLowerCase() !== c.corrected.toLowerCase() &&
+              !isThirdPersonVerbSOnlyFix(c.original, c.corrected, c.category, c.explanation_vi)
           )
+          .map((c: { original: string; corrected: string; category: string; explanation_vi: string }, idx: number) => ({
+            id: idx + 1,
+            ...c
+          }))
       : [],
     idea_expansions: Array.isArray(parsedReview?.idea_expansions)
       ? parsedReview.idea_expansions
@@ -485,7 +572,7 @@ async function gradeSingleAttempt(
     ai_status: isAlreadyReleased ? "ready" : "scheduled",
     ai_release_at: releaseAtIso
   };
-  if (!browserTranscript && recognizedTranscript) {
+  if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
     attemptUpdatePayload.transcript = recognizedTranscript;
   }
 

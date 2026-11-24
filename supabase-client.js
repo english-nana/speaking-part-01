@@ -372,6 +372,28 @@
     `;
   }
 
+  function formatCleanBandLabel(rawBand, rawAssess) {
+    const cleaned = String(rawBand || "")
+      .replace(/[·\-–—]?\s*\d+(\.\d+)?\s*\/\s*10/g, "")
+      .trim();
+    const combined = `${cleaned} ${rawAssess || ""}`.toLowerCase();
+    if (/xấp xỉ\s*c1|gần\s*(đạt\s*)?(mức\s*)?c1/.test(combined)) return "Xấp xỉ C1";
+    if (/đạt\s*(mức\s*)?c1|\bc1\b/.test(combined)) return "Đạt C1";
+    if (/xấp xỉ\s*b2|gần\s*(đạt\s*)?(mức\s*)?b2|b1\+/.test(combined)) return "Xấp xỉ B2";
+    if (/đạt\s*(mức\s*)?b2|\bb2\b/.test(combined)) return "Đạt B2";
+    if (/chưa\s*đạt\s*(mức\s*)?b1|dưới\s*b1|\ba1\b|\ba2\b/.test(combined)) return "Chưa đạt B1";
+    if (/xấp xỉ\s*b1|gần\s*(đạt\s*)?(mức\s*)?b1/.test(combined)) return "Xấp xỉ B1";
+    if (/đạt\s*(mức\s*)?b1|\bb1\b/.test(combined)) return "Đạt B1";
+    return cleaned || "";
+  }
+
+  function getBandToneClass(bandLabel) {
+    const lower = String(bandLabel || "").toLowerCase();
+    if (lower.includes("chưa đạt")) return "band-below";
+    if (lower.includes("xấp xỉ")) return "band-approx";
+    return "band-achieved";
+  }
+
   function renderSpeakingReviewHtml(originalTranscript, reviewJson, meta) {
     if (!reviewJson || typeof reviewJson !== "object") return "";
     const info = meta || {};
@@ -390,6 +412,14 @@
         : [];
     const criteria = reviewJson.criteria || {};
     const naturalVersion = String(reviewJson.natural_spoken_version || reviewJson.revised_version || "").trim();
+    const cleanBand = formatCleanBandLabel(reviewJson.estimated_band, reviewJson.level_assessment);
+    const rawAssessClean = String(reviewJson.level_assessment || "")
+      .replace(/[·\-–—]?\s*\d+(\.\d+)?\s*\/\s*10/g, "")
+      .trim();
+    const showAssessNote =
+      rawAssessClean &&
+      rawAssessClean.toLowerCase() !== cleanBand.toLowerCase() &&
+      rawAssessClean.length > cleanBand.length + 4;
 
     const criteriaItems = [
       { key: "pronunciation_intonation", label: "🎙️ Phát âm & Ngữ điệu" },
@@ -403,8 +433,8 @@
         <div class="ai-review-summary">
           <div class="ai-review-badges">
             <span class="ai-level-badge">Mục tiêu Level ${escapeHtml(targetLevel)}</span>
-            ${reviewJson.estimated_band ? `<span class="ai-band-badge">${escapeHtml(reviewJson.estimated_band)}</span>` : ""}
-            ${reviewJson.level_assessment ? `<span class="ai-assess-text">${escapeHtml(reviewJson.level_assessment)}</span>` : ""}
+            ${cleanBand ? `<span class="ai-band-badge ${getBandToneClass(cleanBand)}">Đánh giá: ${escapeHtml(cleanBand)}</span>` : ""}
+            ${showAssessNote ? `<span class="ai-assess-text">${escapeHtml(rawAssessClean)}</span>` : ""}
           </div>
           ${reviewJson.overall_comment ? `<p class="ai-overall-comment">${escapeHtml(reviewJson.overall_comment)}</p>` : ""}
 

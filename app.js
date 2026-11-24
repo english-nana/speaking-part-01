@@ -53,7 +53,10 @@
   let audioChunks = [];
   let recordingTimer = null;
   let speechRecognizer = null;
-  let finalTranscriptBuffer = "";
+  let persistedTranscript = "";
+  let sessionFinalText = "";
+  let sessionInterimText = "";
+  let latestCreatedTake = null;
   let notifPollTimer = null;
   let lastReviewsRefreshMs = 0;
   let reviewsRefreshInFlight = false;
@@ -351,7 +354,7 @@
           }
           const attObj = (qd.attempts || []).find(a => a.id === row.id);
           if (attObj) {
-            if (row.transcript && !attObj.transcript) {
+            if (row.transcript && row.transcript.trim().length > (attObj.transcript || "").trim().length) {
               attObj.transcript = row.transcript;
               changed = true;
             }
@@ -580,7 +583,10 @@
               qd.aiStatus = gradeRes.status || "scheduled";
               if (gradeRes.release_at) qd.aiReleaseAt = gradeRes.release_at;
             }
-            if (gradeRes.recognized_transcript && !takeObj.transcript) {
+            if (
+              gradeRes.recognized_transcript &&
+              gradeRes.recognized_transcript.trim().length > (takeObj.transcript || "").trim().length
+            ) {
               takeObj.transcript = gradeRes.recognized_transcript;
             }
             if (state.isTeacher) {
@@ -755,6 +761,90 @@
   // ==========================================================================
   // MULTI-TAKE AUDIO RECORDING + LIVE SPEECH-TO-TEXT
   // ==========================================================================
+  function composeCurrentTranscript() {
+    return [persistedTranscript, sessionFinalText, sessionInterimText]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function initSpeechRecognitionForSession() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      speechRecognizer = null;
+      return;
+    }
+    try {
+      const rec = new SpeechRec();
+      rec.lang = "en-US";
+      rec.continuous = true;
+      rec.interimResults = true;
+
+      rec.onresult = event => {
+        let sFinal = "";
+        let sInterim = "";
+        for (let i = 0; i < event.results.length; i++) {
+          const piece = String((event.results[i][0] && event.results[i][0].transcript) || "").trim();
+          if (!piece) continue;
+          if (event.results[i].isFinal) {
+            sFinal += (sFinal ? " " : "") + piece;
+          } else {
+            sInterim += (sInterim ? " " : "") + piece;
+          }
+        }
+        sessionFinalText = sFinal;
+        sessionInterimText = sInterim;
+        const fullText = composeCurrentTranscript();
+        state.liveTranscript = fullText;
+
+        const liveEl = document.getElementById("live-transcript-preview");
+        if (liveEl) {
+          liveEl.textContent = fullText || "Đang lắng nghe giọng nói tiếng Anh của bạn...";
+          liveEl.classList.toggle("placeholder", !fullText);
+        }
+
+        // If final words arrive right after clicking Stop, append them into the newly created take
+        if (!state.isRecording && latestCreatedTake && fullText.length > (latestCreatedTake.transcript || "").length) {
+          latestCreatedTake.transcript = fullText;
+          const client = CLOUD.getClient();
+          if (client && currentAccount) {
+            client
+              .from("speaking_attempts")
+              .update({ transcript: fullText })
+              .eq("id", latestCreatedTake.id)
+              .eq("user_id", currentAccount.id)
+              .then(() => {})
+              .catch(() => {});
+          }
+          renderApp();
+        }
+      };
+
+      rec.onerror = () => {};
+      rec.onend = () => {
+        const uncommitted = [sessionFinalText, sessionInterimText].filter(Boolean).join(" ").trim();
+        if (uncommitted) {
+          persistedTranscript = [persistedTranscript, uncommitted].filter(Boolean).join(" ").trim();
+        }
+        sessionFinalText = "";
+        sessionInterimText = "";
+        state.liveTranscript = persistedTranscript;
+
+        if (state.isRecording && speechRecognizer === rec) {
+          try {
+            rec.start();
+          } catch (e) {}
+        }
+      };
+
+      speechRecognizer = rec;
+      rec.start();
+    } catch (e) {
+      speechRecognizer = null;
+    }
+  }
+
   function startRecording(qId) {
     if (state.isRecording) {
       stopRecording(qId);
@@ -765,49 +855,13 @@
     state.recordingSeconds = 0;
     state.liveTranscript = "";
     state.submitErrorMsg = "";
-    finalTranscriptBuffer = "";
+    persistedTranscript = "";
+    sessionFinalText = "";
+    sessionInterimText = "";
+    latestCreatedTake = null;
     audioChunks = [];
 
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRec) {
-      try {
-        speechRecognizer = new SpeechRec();
-        speechRecognizer.lang = "en-US";
-        speechRecognizer.continuous = true;
-        speechRecognizer.interimResults = true;
-
-        speechRecognizer.onresult = event => {
-          let interim = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const piece = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscriptBuffer += piece + " ";
-            } else {
-              interim += piece;
-            }
-          }
-          state.liveTranscript = (finalTranscriptBuffer + interim).trim();
-          const liveEl = document.getElementById("live-transcript-preview");
-          if (liveEl) {
-            liveEl.textContent =
-              state.liveTranscript || "Đang lắng nghe giọng nói tiếng Anh của bạn...";
-            liveEl.classList.toggle("placeholder", !state.liveTranscript);
-          }
-        };
-
-        speechRecognizer.onerror = () => {};
-        speechRecognizer.onend = () => {
-          if (state.isRecording && speechRecognizer) {
-            try {
-              speechRecognizer.start();
-            } catch (e) {}
-          }
-        };
-        speechRecognizer.start();
-      } catch (e) {
-        speechRecognizer = null;
-      }
-    }
+    renderApp();
 
     if (recordingTimer) clearInterval(recordingTimer);
     recordingTimer = setInterval(() => {
@@ -838,17 +892,23 @@
             const mimeType = mediaRecorder.mimeType || "audio/webm";
             const blob = new Blob(audioChunks, { type: mimeType });
             const previewUrl = URL.createObjectURL(blob);
-            finalizeNewTake(qId, previewUrl, blob);
+            // Allow Web Speech API 350ms to flush the last spoken phrase before finalizing take
+            setTimeout(() => {
+              finalizeNewTake(qId, previewUrl, blob);
+            }, 350);
           };
           mediaRecorder.start();
+          initSpeechRecognitionForSession();
           renderApp();
         })
         .catch(() => {
           mediaRecorder = null;
+          initSpeechRecognitionForSession();
           renderApp();
         });
     } else {
       mediaRecorder = null;
+      initSpeechRecognitionForSession();
       renderApp();
     }
   }
@@ -861,11 +921,11 @@
     state.isRecording = false;
 
     if (speechRecognizer) {
-      try {
-        speechRecognizer.onend = null;
-        speechRecognizer.stop();
-      } catch (e) {}
+      const activeRec = speechRecognizer;
       speechRecognizer = null;
+      try {
+        activeRec.stop();
+      } catch (e) {}
     }
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
@@ -875,12 +935,14 @@
       } catch (e) {}
     }
 
-    finalizeNewTake(qId, null, null);
+    setTimeout(() => {
+      finalizeNewTake(qId, null, null);
+    }, 350);
   }
 
   function finalizeNewTake(qId, audioUrl, rawBlob) {
     const dur = Math.max(1, state.recordingSeconds);
-    const recognizedText = (state.liveTranscript || finalTranscriptBuffer || "").trim();
+    const recognizedText = (composeCurrentTranscript() || state.liveTranscript || "").trim();
     const qData = getQuestionData(qId);
     const nextNum = qData.attempts.length + 1;
     const takeId = "take_" + Date.now() + "_" + nextNum;
@@ -899,6 +961,7 @@
       teacherScore: ""
     };
 
+    latestCreatedTake = newTake;
     qData.attempts.push(newTake);
     qData.selectedTakeId = takeId;
 
@@ -1693,30 +1756,16 @@
       const remainText = releaseAt ? CLOUD.formatRemainingTime(releaseAt) : "";
       const releaseFormatted = releaseAt ? CLOUD.formatDateTime(releaseAt) : "";
 
-      if (remainText) {
+      if (releaseFormatted) {
         blocks.push(`
           <div class="writing-schedule-box">
-            <div class="writing-schedule-head">
-              <span class="writing-schedule-title">
-                ⏳ Đã nộp bài thành công${qData.submittedAt ? ` lúc ${escapeHtml(qData.submittedAt)}` : ""} · Đang chờ trả bài sửa
-              </span>
-              <span class="writing-schedule-pill">Còn ${escapeHtml(remainText)}</span>
-            </div>
-            <p class="writing-schedule-desc">
-              Bài chấm &amp; sửa chi tiết bằng AI (độ dễ nghe &amp; ngữ điệu phát âm, ngữ pháp, dùng từ tự nhiên / lỗi "Vietlish", cách sắp xếp ý logic &amp; gợi ý mở rộng ý bị cụt theo chuẩn <strong>Level ${escapeHtml(targetLevel)}</strong>) sẽ được trả về tài khoản của bạn sau <strong>${RELEASE_HOURS} tiếng</strong> — dự kiến lúc <strong>${escapeHtml(releaseFormatted)}</strong>. Bạn sẽ nhận được thông báo ở biểu tượng chuông 🔔 trên góc phải khi có bài sửa.
-            </p>
+            Đã nộp bài thành công. Dự kiến có kết quả bài sửa lúc ${escapeHtml(releaseFormatted)}${remainText ? ` (còn ${escapeHtml(remainText)})` : ""} và hệ thống sẽ báo qua chuông thông báo 🔔.
           </div>
         `);
       } else {
         blocks.push(`
           <div class="writing-schedule-box">
-            <div class="writing-schedule-head">
-              <span class="writing-schedule-title">✓ Đã gửi bản ghi âm thành công${qData.submittedAt ? ` lúc ${escapeHtml(qData.submittedAt)}` : ""}</span>
-              <span class="writing-schedule-pill">Level ${escapeHtml(targetLevel)}</span>
-            </div>
-            <p class="writing-schedule-desc">
-              Bài chấm &amp; sửa chi tiết của bạn đang được hệ thống hoàn tất. Thông báo sẽ tự động hiện ở biểu tượng chuông 🔔 trên góc phải ngay khi bài sửa sẵn sàng.
-            </p>
+            Đã nộp bài thành công. Kết quả bài sửa đang được hoàn tất và sẽ báo qua chuông thông báo 🔔 ngay khi sẵn sàng.
           </div>
         `);
       }
