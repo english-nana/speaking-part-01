@@ -12,15 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124k" />
+  <link rel="stylesheet" href="./styles.css?v=20261124l" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124k"></script>
-  <script src="./supabase-client.js?v=20261124k"></script>
-  <script src="./travel-data.js?v=20261124k"></script>
-  <script src="./speaking-evaluator.js?v=20261124k"></script>
+  <script src="./supabase-config.js?v=20261124l"></script>
+  <script src="./supabase-client.js?v=20261124l"></script>
+  <script src="./travel-data.js?v=20261124l"></script>
+  <script src="./part2-data.js?v=20261124l"></script>
+  <script src="./speaking-evaluator.js?v=20261124l"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -30,10 +31,10 @@
       const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
       const ADMIN_EMAIL = "mtung0208@gmail.com";
 
-      // Danh mục phần thi Speaking (hiện tại là Part 1, sẵn sàng mở rộng Part 2 & Part 3)
+      // Danh mục phần thi Speaking (Part 1, Part 2 đã mở, sẵn sàng bổ sung Part 3)
       const PARTS_CATALOG = [
         { id: "part1", label: "Part 1 · Social Interaction", shortLabel: "Part 1", ready: true },
-        { id: "part2", label: "Part 2 · Solution Discussion (Sắp có)", shortLabel: "Part 2", ready: false },
+        { id: "part2", label: "Part 2 · Solution Discussion", shortLabel: "Part 2", ready: true },
         { id: "part3", label: "Part 3 · Topic Development (Sắp có)", shortLabel: "Part 3", ready: false }
       ];
 
@@ -578,7 +579,7 @@
         const hasContentFilter =
           tState.filterLevel !== "all" ||
           tState.filterTopic !== "all" ||
-          (tState.filterPart !== "all" && tState.filterPart !== "part1");
+          tState.filterPart !== "all";
 
         return tState.students
           .filter(st => matchesClassFilter(st.className))

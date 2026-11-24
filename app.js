@@ -18,7 +18,8 @@
   } catch (e) {}
 
   const state = {
-    view: "auth", // "auth" | "home" | "my-submissions" | "practice"
+    view: "auth", // "auth" | "home" | "part-topics" | "my-submissions" | "practice"
+    selectedPart: "part1", // "part1" | "part2" | "part3"
     prevDashboardView: "home",
     authMode: "login", // "login" | "register"
     authError: "",
@@ -33,7 +34,10 @@
     regSelectedClass: CLOUD.CLASS_LIST[0],
     sidebarCollapsed: initialSidebarCollapsed,
     mobileSidebarOpen: false,
-    sbTopicsCollapsed: false,
+    sbPart1Collapsed: false,
+    sbPart2Collapsed: false,
+    part2OutlineLevel: "b1", // "b1" | "b2"
+    part2OutlineCollapsed: false,
     notifOpen: false,
     accountMenuOpen: false,
     reviewsByQuestionId: {},
@@ -67,8 +71,12 @@
   const QUESTION_CATALOG = [];
   const QUESTION_META_BY_ID = {};
   TOPICS.forEach(t => {
+    const partId = t.part || "part1";
+    const partLabel = partId === "part2" ? "Part 2" : partId === "part3" ? "Part 3" : "Part 1";
     (t.questions || []).forEach((q, idx) => {
       const meta = {
+        part: partId,
+        partLabel,
         topicId: t.id,
         topicNumber: t.number,
         topicTitle: t.title,
@@ -76,12 +84,24 @@
         questionId: q.id,
         questionIndex: idx,
         questionNum: q.num || idx + 1,
+        situationTitle: q.situationTitle || "",
         prompt: q.prompt
       };
       QUESTION_CATALOG.push(meta);
       QUESTION_META_BY_ID[q.id] = meta;
     });
   });
+
+  function getTopicsByPart(partId) {
+    return TOPICS.filter(t => (t.part || "part1") === partId);
+  }
+
+  function getMaxRecordingSeconds(topicObj) {
+    const partId = topicObj && topicObj.part ? topicObj.part : "part1";
+    if (partId === "part2") return 180;
+    if (partId === "part3") return 240;
+    return 45;
+  }
 
   // ==========================================================================
   // SUPABASE CLOUD SYNC LAYER
@@ -698,13 +718,16 @@
       if (!qd || !qd.submittedTakeId) return;
       const att = (qd.attempts || []).find(a => a.id === qd.submittedTakeId);
       const qMeta = QUESTION_META_BY_ID[qId] || {
+        part: "part1",
+        partLabel: "Part 1",
         topicId: getTopicIdForQuestion(qId),
         topicNumber: "",
-        topicTitle: "Speaking Part 1",
+        topicTitle: "VSTEP Speaking",
         topicTitleVi: "",
         questionId: qId,
         questionIndex: 0,
         questionNum: 1,
+        situationTitle: "",
         prompt: qId
       };
       const subIso = qd.submittedAtIso || "";
@@ -731,7 +754,11 @@
   // TEXT-TO-SPEECH (VOCABULARY PRONUNCIATION & MODEL / AI REVISED ANSWERS)
   // ==========================================================================
   function speakEnglishText(rawText) {
-    const cleanText = String(rawText || "").replace(/<[^>]*>?/gm, "").trim();
+    const cleanText = String(rawText || "")
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<[^>]*>?/gm, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!cleanText) return;
 
     if (window.currentTtsAudio) {
@@ -865,13 +892,16 @@
     renderApp();
 
     if (recordingTimer) clearInterval(recordingTimer);
+    const recTopic = TOPICS.find(t => (t.questions || []).some(q => q.id === qId)) || getCurrentTopic();
+    const maxRecSec = getMaxRecordingSeconds(recTopic);
+
     recordingTimer = setInterval(() => {
       state.recordingSeconds++;
       const timerEl = document.getElementById("rec-timer-text");
       if (timerEl) {
-        timerEl.textContent = `${formatDuration(state.recordingSeconds)} / 0:45`;
+        timerEl.textContent = `${formatDuration(state.recordingSeconds)} / ${formatDuration(maxRecSec)}`;
       }
-      if (state.recordingSeconds >= 45) {
+      if (state.recordingSeconds >= maxRecSec) {
         stopRecording(qId);
       }
     }, 1000);
@@ -981,7 +1011,7 @@
         <div class="auth-card-box">
           <div style="margin-bottom:10px;">
             <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:var(--accent-yellow);padding:3px 9px;border:1.5px solid #18181B;">
-              SPEAKING PART 1 · TÀI KHOẢN HỌC VIÊN
+              VSTEP SPEAKING · TÀI KHOẢN HỌC VIÊN
             </span>
           </div>
 
@@ -1181,7 +1211,7 @@
     if (releasedList.length === 0 && pendingList.length === 0) {
       dropdownContentHtml = `
         <div class="notif-empty-state">
-          Chưa có bài sửa nào.<br />Khi bạn ghi âm và nộp bài Speaking Part 1, bài sửa chi tiết sẽ tự động được gửi về đây sau ${RELEASE_HOURS} tiếng.
+          Chưa có bài sửa nào.<br />Khi bạn ghi âm và nộp bài Speaking, bài sửa chi tiết sẽ tự động được gửi về đây sau ${RELEASE_HOURS} tiếng.
         </div>
       `;
     } else {
@@ -1196,7 +1226,7 @@
             (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0);
           const cleanBand = CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score);
           const bandText = cleanBand ? ` · ${cleanBand}` : "";
-          const title = `Đề ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · Câu ${it.qMeta.questionNum}`;
+          const title = `${it.qMeta.partLabel} · ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · ${it.qMeta.part === "part2" ? "TH" : "Câu"} ${it.qMeta.questionNum}`;
           return `
             <button
               type="button"
@@ -1281,15 +1311,76 @@
     `;
   }
 
+  function renderSidebarPartCardHtml(partId, pillText, cardTitle, topicsList, isCollapsed, toggleBtnId) {
+    const isActivePart =
+      (state.view === "part-topics" && state.selectedPart === partId) ||
+      (state.view === "practice" && (getCurrentTopic().part || "part1") === partId);
+
+    return `
+      <div class="vs-sb-card ${isCollapsed ? "collapsed" : ""}">
+        <div class="vs-sb-card-head">
+          <button
+            type="button"
+            class="ej-sb-item vs-sb-head-btn ${isActivePart ? "active" : ""}"
+            data-open-part="${partId}"
+            title="${escapeHtml(cardTitle)}"
+          >
+            <span class="vs-sb-task-pill">${escapeHtml(pillText)}</span>
+            <span class="ej-sb-label">${escapeHtml(cardTitle)}</span>
+          </button>
+          <button
+            type="button"
+            class="vs-sb-acc-toggle"
+            id="${escapeHtml(toggleBtnId)}"
+            aria-expanded="${isCollapsed ? "false" : "true"}"
+            title="Đóng / Mở danh sách ${escapeHtml(cardTitle)}"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <div class="vs-sb-card-list">
+          ${topicsList.map(t => {
+            const subCount = t.questions.filter(q => {
+              const qd = currentAccount && currentAccount.questionsData && currentAccount.questionsData[q.id];
+              return qd && qd.submittedTakeId;
+            }).length;
+            const isDone = subCount === t.questions.length;
+            return `
+              <button
+                type="button"
+                class="vs-sb-lesson-btn ${isDone ? "submitted" : ""}"
+                data-open-topic="${escapeHtml(t.id)}"
+                title="${escapeHtml(t.number)}: ${escapeHtml(t.title)} (${escapeHtml(t.titleVi)})"
+              >
+                <span class="vs-sb-num">${escapeHtml(t.number)}</span>
+                <span class="vs-sb-topic-text">${escapeHtml(t.titleVi || t.title)}</span>
+                ${
+                  isDone
+                    ? `<span class="vs-sb-mini-prog">✓</span>`
+                    : subCount > 0
+                      ? `<span class="vs-sb-mini-prog">${subCount}/${t.questions.length}</span>`
+                      : ""
+                }
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderSidebarHtml(submittedTotal, totalQuestions, vocabCount) {
     const pct = totalQuestions > 0 ? Math.min(100, Math.round((submittedTotal / totalQuestions) * 100)) : 0;
+    const part1Topics = getTopicsByPart("part1");
+    const part2Topics = getTopicsByPart("part2");
 
     return `
       <div class="ej-sidebar-backdrop" id="ej-sidebar-backdrop"></div>
 
       <aside class="ej-sidebar" id="ej-sidebar" aria-label="Điều hướng khóa học">
         <div class="ej-sidebar-header">
-          <button type="button" class="ej-sb-logo-btn" data-sb-nav="home" title="Về Tổng quan">
+          <button type="button" class="ej-sb-logo-btn" data-sb-nav="home" title="Về trang 3 phần chính">
             <span class="ej-sb-logo-badge">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
@@ -1299,7 +1390,7 @@
             </span>
             <div class="ej-sb-logo-text">
               <span class="ej-sb-logo-main">VSTEP Speaking</span>
-              <span class="ej-sb-logo-sub">Part 1 · B1–B2</span>
+              <span class="ej-sb-logo-sub">Part 1–3 · B1–B2</span>
             </div>
           </button>
         </div>
@@ -1310,12 +1401,12 @@
               type="button"
               class="ej-sb-item ${state.view === "home" ? "active" : ""}"
               data-sb-nav="home"
-              title="Tổng quan danh sách chủ đề"
+              title="3 phần thi chính (Part 1, Part 2, Part 3)"
             >
               <span class="ej-sb-ico">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
               </span>
-              <span class="ej-sb-label">Tổng quan</span>
+              <span class="ej-sb-label">3 Phần Chính</span>
             </button>
 
             <button
@@ -1332,55 +1423,20 @@
             </button>
           </div>
 
-          <div class="vs-sb-card ${state.sbTopicsCollapsed ? "collapsed" : ""}">
-            <div class="vs-sb-card-head">
-              <button
-                type="button"
-                class="ej-sb-item vs-sb-head-btn"
-                data-sb-nav="home"
-                title="Speaking Part 1 · 10 Chủ đề"
-              >
-                <span class="vs-sb-task-pill">P1</span>
-                <span class="ej-sb-label">Chủ đề luyện nói</span>
-              </button>
-              <button
-                type="button"
-                class="vs-sb-acc-toggle"
-                id="btn-sb-topics-acc"
-                aria-expanded="${state.sbTopicsCollapsed ? "false" : "true"}"
-                title="Đóng / Mở danh sách chủ đề"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-            </div>
+          ${renderSidebarPartCardHtml("part1", "P1", "Speaking Part 1", part1Topics, state.sbPart1Collapsed, "btn-sb-p1-acc")}
+          ${renderSidebarPartCardHtml("part2", "P2", "Speaking Part 2", part2Topics, state.sbPart2Collapsed, "btn-sb-p2-acc")}
 
-            <div class="vs-sb-card-list">
-              ${TOPICS.map(t => {
-                const subCount = t.questions.filter(q => {
-                  const qd = currentAccount && currentAccount.questionsData && currentAccount.questionsData[q.id];
-                  return qd && qd.submittedTakeId;
-                }).length;
-                const isDone = subCount === t.questions.length;
-                return `
-                  <button
-                    type="button"
-                    class="vs-sb-lesson-btn ${isDone ? "submitted" : ""}"
-                    data-open-topic="${escapeHtml(t.id)}"
-                    title="Đề ${escapeHtml(t.number)}: ${escapeHtml(t.title)} (${escapeHtml(t.titleVi)})"
-                  >
-                    <span class="vs-sb-num">${escapeHtml(t.number)}</span>
-                    <span class="vs-sb-topic-text">${escapeHtml(t.title)}</span>
-                    ${
-                      isDone
-                        ? `<span class="vs-sb-mini-prog">✓</span>`
-                        : subCount > 0
-                          ? `<span class="vs-sb-mini-prog">${subCount}/${t.questions.length}</span>`
-                          : ""
-                    }
-                  </button>
-                `;
-              }).join("")}
-            </div>
+          <div class="ej-sb-group" style="margin-top:8px;">
+            <button
+              type="button"
+              class="ej-sb-item ${state.view === "part-topics" && state.selectedPart === "part3" ? "active" : ""}"
+              data-open-part="part3"
+              title="Speaking Part 3 · Topic Development"
+            >
+              <span class="vs-sb-task-pill">P3</span>
+              <span class="ej-sb-label">Speaking Part 3</span>
+              <span class="ej-sb-count">Sắp có</span>
+            </button>
           </div>
         </nav>
 
@@ -1412,6 +1468,14 @@
   function renderTopbarHtml(vocabCount) {
     const isFocusLesson = state.view === "practice";
     const topic = getCurrentTopic();
+    const topicPart = topic && topic.part ? topic.part : "part1";
+    const partDisplay = topicPart === "part2" ? "Speaking Part 2" : topicPart === "part3" ? "Speaking Part 3" : "Speaking Part 1";
+    const backLabel =
+      state.prevDashboardView === "my-submissions"
+        ? "Bài nói đã nộp"
+        : topicPart === "part2"
+          ? "Danh sách Part 2"
+          : "Danh sách Part 1";
 
     return `
       <header class="dt-topbar">
@@ -1434,10 +1498,10 @@
               <div class="ej-focus-nav-group">
                 <button type="button" class="nb-back-btn" id="btn-back-home">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                  <span>${state.prevDashboardView === "my-submissions" ? "Bài nói đã nộp" : "Danh sách chủ đề"}</span>
+                  <span>${escapeHtml(backLabel)}</span>
                 </button>
                 <h1 class="header-topic-name">${escapeHtml(topic.title)}</h1>
-                <span class="header-part-badge">Speaking Part 1</span>
+                <span class="header-part-badge">${escapeHtml(partDisplay)}</span>
               </div>
             `
             }
@@ -1494,57 +1558,295 @@
   }
 
   // ==========================================================================
-  // VIEW 2: HOME DASHBOARD — 10 TOPIC CARDS
+  // VIEW 2A: HOME HUB — 3 MAIN PARTS (SPEAKING PART 1, PART 2, PART 3)
   // ==========================================================================
+  function countSubmittedInPart(partId) {
+    const list = getTopicsByPart(partId);
+    let totalQ = 0;
+    let doneQ = 0;
+    list.forEach(t => {
+      (t.questions || []).forEach(q => {
+        totalQ++;
+        const qd = currentAccount && currentAccount.questionsData && currentAccount.questionsData[q.id];
+        if (qd && qd.submittedTakeId) doneQ++;
+      });
+    });
+    return { topicsCount: list.length, totalQ, doneQ };
+  }
+
   function renderHomeContent() {
+    const p1 = countSubmittedInPart("part1");
+    const p2 = countSubmittedInPart("part2");
+    const p1Pct = p1.totalQ > 0 ? Math.round((p1.doneQ / p1.totalQ) * 100) : 0;
+    const p2Pct = p2.totalQ > 0 ? Math.round((p2.doneQ / p2.totalQ) * 100) : 0;
+
     return `
       <main class="home-container">
         <div class="home-header-block">
           <div>
-            <div class="home-eyebrow">VSTEP SPEAKING PART 1 · PRACTICE TOPICS</div>
-            <h1 class="home-h1">DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1</h1>
+            <div class="home-eyebrow">VSTEP SPEAKING PRACTICE · B1 &amp; B2</div>
+            <h1 class="home-h1">CHỌN PHẦN LUYỆN NÓI VSTEP SPEAKING</h1>
             <p class="home-desc">
-              Chọn một chủ đề bên dưới để bắt đầu luyện nói. Bạn có thể ghi chú ý tưởng, ghi âm nhiều lần để chọn bản tốt nhất nộp bài, và xem bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
+              Chọn 1 trong 3 phần thi chính bên dưới để vào luyện tập theo bài học con, ghi âm câu trả lời và nhận bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
             </p>
           </div>
         </div>
 
+        <div class="parts-hub-grid">
+          <article class="part-hub-card" data-open-part="part1">
+            <div class="part-hub-top">
+              <span class="part-hub-badge p1">PART 1 · SOCIAL INTERACTION</span>
+              <span class="topic-progress-tag ${p1.doneQ === p1.totalQ && p1.totalQ > 0 ? "done" : ""}">
+                ${p1.doneQ}/${p1.totalQ} câu
+              </span>
+            </div>
+            <h2 class="part-hub-title">Speaking Part 1</h2>
+            <div class="part-hub-sub">Giao tiếp xã hội · Trả lời ngắn 2–3 câu</div>
+            <p class="part-hub-desc">
+              Luyện trả lời nhanh theo công thức <strong>A–R–E</strong> (Answer + Reason → Example → Feeling) với 10 chủ đề quen thuộc gần gũi đời sống (mỗi câu tối đa 0:45).
+            </p>
+            <div class="part-hub-meta">
+              <span>${p1.topicsCount} chủ đề</span>
+              <span>·</span>
+              <span>${p1.totalQ} câu hỏi</span>
+              <span>·</span>
+              <span>Level B1 &amp; B2</span>
+            </div>
+            <div class="part-hub-prog-wrap">
+              <div class="vs-sb-progress-track">
+                <div class="vs-sb-progress-fill" style="width:${p1Pct}%;"></div>
+              </div>
+            </div>
+            <div class="part-hub-footer">
+              <span>Vào học Speaking Part 1 →</span>
+            </div>
+          </article>
+
+          <article class="part-hub-card" data-open-part="part2">
+            <div class="part-hub-top">
+              <span class="part-hub-badge p2">PART 2 · SOLUTION DISCUSSION</span>
+              <span class="topic-progress-tag ${p2.doneQ === p2.totalQ && p2.totalQ > 0 ? "done" : ""}">
+                ${p2.doneQ}/${p2.totalQ} tình huống
+              </span>
+            </div>
+            <h2 class="part-hub-title">Speaking Part 2</h2>
+            <div class="part-hub-sub">Thảo luận giải pháp · Chọn 1 trong 3 phương án</div>
+            <p class="part-hub-desc">
+              Kèm <strong>Khung dàn ý 3 phần dùng chung</strong> (Mở bài → 2 lý do chọn + lý do bỏ 2 phương án còn lại → Kết bài). Bắt đầu với dạng <strong>Chọn yếu tố tốt nhất</strong> &amp; <strong>Chọn thể loại</strong>.
+            </p>
+            <div class="part-hub-meta">
+              <span>Khung dàn ý chung</span>
+              <span>·</span>
+              <span>${p2.topicsCount} dạng đề (${p2.totalQ} tình huống)</span>
+              <span>·</span>
+              <span>Level B1 &amp; B2</span>
+            </div>
+            <div class="part-hub-prog-wrap">
+              <div class="vs-sb-progress-track">
+                <div class="vs-sb-progress-fill" style="width:${p2Pct}%;"></div>
+              </div>
+            </div>
+            <div class="part-hub-footer">
+              <span>Vào học Speaking Part 2 →</span>
+            </div>
+          </article>
+
+          <article class="part-hub-card part3-card" data-open-part="part3">
+            <div class="part-hub-top">
+              <span class="part-hub-badge p3">PART 3 · TOPIC DEVELOPMENT</span>
+              <span class="topic-progress-tag">Đang cập nhật</span>
+            </div>
+            <h2 class="part-hub-title">Speaking Part 3</h2>
+            <div class="part-hub-sub">Phát triển chủ đề · Sơ đồ tư duy &amp; Câu hỏi mở rộng</div>
+            <p class="part-hub-desc">
+              Trình bày quan điểm theo sơ đồ 3 ý cho sẵn kèm quan điểm cá nhân và trả lời câu hỏi thảo luận nâng cao cùng giám khảo.
+            </p>
+            <div class="part-hub-meta">
+              <span>Sơ đồ 3 ý + Câu hỏi phụ</span>
+              <span>·</span>
+              <span>Level B1 &amp; B2</span>
+            </div>
+            <div class="part-hub-prog-wrap">
+              <div class="vs-sb-progress-track">
+                <div class="vs-sb-progress-fill" style="width:0%;"></div>
+              </div>
+            </div>
+            <div class="part-hub-footer">
+              <span>Xem thông tin Part 3 →</span>
+            </div>
+          </article>
+        </div>
+      </main>
+    `;
+  }
+
+  function renderPart2OutlineCardHtml() {
+    const outline = window.SPEAKING_PART2_OUTLINE;
+    if (!outline) return "";
+    const lvl = state.part2OutlineLevel === "b2" ? "b2" : "b1";
+    const lvlData = outline.levels && outline.levels[lvl];
+    if (!lvlData) return "";
+
+    return `
+      <section class="p2-outline-banner">
+        <div class="p2-outline-head">
+          <div>
+            <div class="p2-outline-eyebrow">KHUNG SƯỜN DÙNG CHUNG · ÁP DỤNG NHIỀU DẠNG ĐỀ PART 2</div>
+            <h2 class="p2-outline-title">${escapeHtml(outline.title)}</h2>
+            <p class="p2-outline-sub">${escapeHtml(outline.subtitle)} ${escapeHtml(outline.timingNote)}</p>
+          </div>
+          <div class="p2-outline-actions">
+            <div class="level-switch-group" role="group" aria-label="Chọn khung dàn ý B1 hoặc B2">
+              <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-p2-outline-level="b1">Khung B1</button>
+              <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-p2-outline-level="b2">Khung B2</button>
+            </div>
+            <button type="button" class="top-pill-btn" id="btn-toggle-p2-outline">
+              <span>${state.part2OutlineCollapsed ? "Mở dàn ý ▾" : "Thu gọn ▴"}</span>
+            </button>
+          </div>
+        </div>
+
+        ${
+          state.part2OutlineCollapsed
+            ? ""
+            : `
+            <div class="p2-outline-meta-row">
+              <span class="p2-outline-badge">${escapeHtml(lvlData.badge)}</span>
+              <span class="p2-outline-target">Độ dài gợi ý: <strong>${escapeHtml(lvlData.wordTarget)}</strong></span>
+            </div>
+            <div class="p2-outline-steps-grid">
+              ${lvlData.parts
+                .map(
+                  p => `
+                  <div class="p2-outline-step-card">
+                    <div class="p2-step-chip">${escapeHtml(p.step)}</div>
+                    <div class="p2-step-goal">${escapeHtml(p.goal)}</div>
+                    <div class="p2-step-template">${p.templateHtml}</div>
+                    <div class="p2-step-note">${escapeHtml(p.note)}</div>
+                  </div>
+                `
+                )
+                .join("")}
+            </div>
+          `
+        }
+      </section>
+    `;
+  }
+
+  // ==========================================================================
+  // VIEW 2B: SUB-LESSONS INSIDE SELECTED PART ("part1" | "part2" | "part3")
+  // ==========================================================================
+  function renderPartTopicsContent() {
+    const partId = state.selectedPart || "part1";
+    const partTopics = getTopicsByPart(partId);
+
+    if (partId === "part3") {
+      return `
+        <main class="home-container">
+          <div style="margin-bottom:14px;">
+            <button type="button" class="nb-back-btn" data-sb-nav="home">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <span>Quay lại 3 phần chính</span>
+            </button>
+          </div>
+          <div class="home-header-block">
+            <div>
+              <div class="home-eyebrow">VSTEP SPEAKING PART 3 · TOPIC DEVELOPMENT</div>
+              <h1 class="home-h1">SPEAKING PART 3 · ĐANG CẬP NHẬT</h1>
+              <p class="home-desc">
+                Nội dung chi tiết, dàn ý mẫu B1/B2 và các chủ đề luyện nói Speaking Part 3 sẽ được bổ sung trong bản cập nhật tiếp theo. Hiện bạn có thể luyện tập đầy đủ các đề <strong>Speaking Part 1</strong> và <strong>Speaking Part 2</strong> ngay hôm nay.
+              </p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                <button type="button" class="top-pill-btn yellow" data-open-part="part2">
+                  <span>Vào học Speaking Part 2 →</span>
+                </button>
+                <button type="button" class="top-pill-btn" data-open-part="part1">
+                  <span>Vào học Speaking Part 1 →</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      `;
+    }
+
+    const isPart2 = partId === "part2";
+    const eyebrowText = isPart2
+      ? "VSTEP SPEAKING PART 2 · SOLUTION DISCUSSION"
+      : "VSTEP SPEAKING PART 1 · PRACTICE TOPICS";
+    const headingText = isPart2
+      ? "SPEAKING PART 2 · THẢO LUẬN GIẢI PHÁP (3 LỰA CHỌN)"
+      : "DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1";
+    const descText = isPart2
+      ? `Ôn kỹ khung dàn ý 3 phần ở trên rồi chọn dạng đề & tình huống bên dưới để luyện nói (tối đa 3:00/bài) và nhận bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.`
+      : `Chọn một chủ đề bên dưới để bắt đầu luyện nói. Bạn có thể ghi chú ý tưởng, ghi âm nhiều lần để chọn bản tốt nhất nộp bài, và xem bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.`;
+
+    return `
+      <main class="home-container">
+        <div style="margin-bottom:14px;">
+          <button type="button" class="nb-back-btn" data-sb-nav="home">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Quay lại 3 phần chính</span>
+          </button>
+        </div>
+
+        <div class="home-header-block">
+          <div>
+            <div class="home-eyebrow">${eyebrowText}</div>
+            <h1 class="home-h1">${headingText}</h1>
+            <p class="home-desc">${descText}</p>
+          </div>
+        </div>
+
+        ${isPart2 ? renderPart2OutlineCardHtml() : ""}
+
         <div class="topics-grid">
-          ${TOPICS.map(topic => {
+          ${partTopics.map(topic => {
             const submittedCount = topic.questions.filter(q => {
               const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
               return qd && qd.submittedTakeId;
             }).length;
             const isAllDone = submittedCount === topic.questions.length;
+            const unitLabel = isPart2 ? "tình huống" : "câu hỏi";
 
             return `
               <article class="topic-card" data-open-topic="${topic.id}">
                 <div class="topic-card-top">
                   <div class="topic-num-badge">${topic.number}</div>
                   <span class="topic-progress-tag ${isAllDone ? "done" : ""}">
-                    ${isAllDone ? `Đã hoàn thành ${topic.questions.length}/${topic.questions.length} câu ✓` : `Đã nộp ${submittedCount}/${topic.questions.length} câu`}
+                    ${isAllDone ? `Đã hoàn thành ${topic.questions.length}/${topic.questions.length} ✓` : `Đã nộp ${submittedCount}/${topic.questions.length} ${isPart2 ? "bài" : "câu"}`}
                   </span>
                 </div>
 
-                <h2 class="topic-card-title">${escapeHtml(topic.title)}</h2>
-                <div class="topic-card-vi">${escapeHtml(topic.titleVi)}</div>
+                <h2 class="topic-card-title">${escapeHtml(topic.titleVi || topic.title)}</h2>
+                <div class="topic-card-vi">${escapeHtml(topic.title)}</div>
                 <p class="topic-card-desc">${escapeHtml(topic.description)}</p>
 
                 <ul class="topic-questions-preview">
                   ${topic.questions
-                    .map(
-                      (q, idx) => `
-                      <li>
-                        <span class="preview-q-num">Q${idx + 1}.</span>
-                        <span>${escapeHtml(q.prompt)}</span>
-                      </li>
-                    `
-                    )
+                    .map((q, idx) => {
+                      const qd = currentAccount.questionsData && currentAccount.questionsData[q.id];
+                      const qDone = Boolean(qd && qd.submittedTakeId);
+                      const labelText = isPart2 && q.situationTitle ? q.situationTitle : q.prompt;
+                      const prefixText = isPart2 ? `TH${idx + 1}.` : `Q${idx + 1}.`;
+                      return `
+                        <li
+                          class="topic-q-jump-item ${qDone ? "done" : ""}"
+                          data-open-topic="${escapeHtml(topic.id)}"
+                          data-open-qidx="${idx}"
+                        >
+                          <span class="preview-q-num">${prefixText}</span>
+                          <span style="flex:1;">${escapeHtml(labelText)}</span>
+                          ${qDone ? `<span class="preview-q-done-tag">✓</span>` : ""}
+                        </li>
+                      `;
+                    })
                     .join("")}
                 </ul>
 
                 <div class="topic-card-footer">
-                  <span>${topic.questions.length} câu hỏi · Level B1 &amp; B2</span>
+                  <span>${topic.questions.length} ${unitLabel} · Level B1 &amp; B2</span>
                   <span>Vào luyện đề →</span>
                 </div>
               </article>
@@ -1565,7 +1867,7 @@
       <main class="home-container">
         <div class="home-header-block">
           <div>
-            <div class="home-eyebrow">VSTEP SPEAKING PART 1 · SUBMISSION HISTORY</div>
+            <div class="home-eyebrow">VSTEP SPEAKING · SUBMISSION HISTORY</div>
             <h1 class="home-h1">LỊCH SỬ BÀI NÓI ĐÃ NỘP &amp; BÀI SỬA</h1>
             <p class="home-desc">
               Theo dõi toàn bộ các câu trả lời ghi âm bạn đã nộp, thời gian trả bài sửa sau ${RELEASE_HOURS} tiếng và xem lại chi tiết nhận xét phát âm, ngữ điệu, ngữ pháp, cách diễn đạt &amp; mở rộng ý.
@@ -1626,7 +1928,7 @@
                       <div class="ej-history-left">
                         <div class="ej-history-badges">
                           <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;">
-                            Đề ${escapeHtml(it.qMeta.topicNumber)} · Câu ${it.qMeta.questionNum}
+                            ${escapeHtml(it.qMeta.partLabel || "Part 1")} · ${escapeHtml(it.qMeta.topicNumber)} · ${it.qMeta.part === "part2" ? "Tình huống" : "Câu"} ${it.qMeta.questionNum}
                           </span>
                           <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#F4F4F5;color:#18181B;">
                             Mục tiêu Level ${escapeHtml(it.targetLevel)}${att ? ` · ${formatDuration(att.durationSec)}` : ""}
@@ -1741,10 +2043,13 @@
   // ==========================================================================
   function renderPracticeContent() {
     const topic = getCurrentTopic();
+    const isPart2 = (topic && topic.part) === "part2";
     const question = getCurrentQuestion();
     const qId = question.id;
     const qIdx = state.currentQuestionIndex;
     const totalQ = topic.questions.length;
+    const maxRecSec = getMaxRecordingSeconds(topic);
+    const maxRecLabel = formatDuration(maxRecSec);
     const lvl = state.selectedLevel;
     const levelData = question.levels[lvl] || question.levels.b1;
 
@@ -1767,16 +2072,30 @@
         <section class="left-pane" aria-label="Câu hỏi và ghi âm">
           <div class="left-pane-inner">
             <div class="question-step-tag">
-              SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}
+              ${isPart2 ? `SPEAKING PART 2 · SITUATION ${qIdx + 1} OF ${totalQ}` : `SPEAKING PART 1 · QUESTION ${qIdx + 1} OF ${totalQ}`}
             </div>
 
-            <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
+            <div class="question-topic-heading">${escapeHtml(isPart2 ? topic.titleVi || topic.title : topic.title)}</div>
             <p class="examiner-instruction">
-              The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.
+              ${
+                isPart2
+                  ? "Choose 1 of the 3 options and explain your choice clearly in 3 parts: Introduction → 2 Reasons for your choice & Why not the other 2 options → Conclusion."
+                  : "The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences."
+              }
             </p>
 
             <div class="question-prompt-card">
-              <p class="question-prompt-text">${escapeHtml(question.prompt)}</p>
+              ${
+                isPart2 && question.situationTitle
+                  ? `<div style="font-size:11.5px;font-weight:800;color:#92400E;background:#FEF3C7;display:inline-block;padding:2px 8px;border-radius:4px;border:1px solid #F59E0B;margin-bottom:8px;">Tình huống ${qIdx + 1}: ${escapeHtml(question.situationTitle)}</div>`
+                  : ""
+              }
+              <p class="question-prompt-text">${question.promptHtml || escapeHtml(question.prompt)}</p>
+              ${
+                question.promptVi
+                  ? `<p class="prompt-vi-sub"><strong>Dịch tình huống:</strong> ${escapeHtml(question.promptVi)}</p>`
+                  : ""
+              }
             </div>
 
             <div class="idea-notes-card">
@@ -1822,7 +2141,7 @@
                     ? `
                   <div class="rec-timer-badge">
                     <span class="rec-blink-dot"></span>
-                    <span id="rec-timer-text">${formatDuration(state.recordingSeconds)} / 0:45</span>
+                    <span id="rec-timer-text">${formatDuration(state.recordingSeconds)} / ${maxRecLabel}</span>
                   </div>
                 `
                     : ""
@@ -1830,7 +2149,7 @@
               </div>
 
               <p class="recorder-helper-note">
-                Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
+                Nói tối đa ${maxRecLabel}; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
               </p>
 
               ${
@@ -1961,7 +2280,7 @@
                 ${qIdx === 0 ? "disabled" : ""}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                <span>Câu trước</span>
+                <span>${isPart2 ? "Tình huống trước" : "Câu trước"}</span>
               </button>
 
               <button
@@ -1969,7 +2288,7 @@
                 class="btn-next-q"
                 id="btn-next-q"
               >
-                <span>${qIdx < totalQ - 1 ? "Câu tiếp" : "Về danh sách chủ đề"}</span>
+                <span>${qIdx < totalQ - 1 ? (isPart2 ? "Tình huống tiếp" : "Câu tiếp") : (isPart2 ? "Về danh sách Part 2" : "Về danh sách Part 1")}</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
             </div>
@@ -2015,14 +2334,14 @@
 
             <section class="guide-section">
               <div class="guide-section-header">
-                <h2 class="guide-section-title">III. Câu trả lời mẫu</h2>
+                <h2 class="guide-section-title">${isPart2 ? "III. Bài nói mẫu (Mở bài – Thân bài – Kết bài)" : "III. Câu trả lời mẫu"}</h2>
                 <button type="button" class="listen-sample-btn" id="btn-listen-sample">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                  <span>Nghe câu trả lời mẫu</span>
+                  <span>${isPart2 ? "Nghe bài nói mẫu" : "Nghe câu trả lời mẫu"}</span>
                 </button>
               </div>
               <blockquote class="sample-answer-blockquote">
-                “${levelData.modelAnswer}”
+                ${levelData.modelAnswer}
               </blockquote>
             </section>
 
@@ -2103,7 +2422,7 @@
 
       <nav class="practice-bottom-nav" aria-label="Danh sách câu hỏi">
         <div class="bottom-q-pills">
-          <span class="bottom-part-text">Part 1</span>
+          <span class="bottom-part-text">${isPart2 ? "Part 2" : "Part 1"}</span>
           ${topic.questions
             .map((qItem, idx) => {
               const isActive = idx === qIdx;
@@ -2114,7 +2433,7 @@
                   type="button"
                   class="q-pill-btn ${isActive ? "active" : ""} ${isSubmitted ? "done" : ""}"
                   data-jump-q="${idx}"
-                  title="Câu ${idx + 1}${isSubmitted ? " (Đã nộp bài)" : ""}"
+                  title="${isPart2 ? "Tình huống" : "Câu"} ${idx + 1}${isSubmitted ? " (Đã nộp bài)" : ""}"
                 >${idx + 1}</button>
               `;
             })
@@ -2147,6 +2466,8 @@
       bodyHtml = renderPracticeContent();
     } else if (state.view === "my-submissions") {
       bodyHtml = renderMySubmissionsContent();
+    } else if (state.view === "part-topics") {
+      bodyHtml = renderPartTopicsContent();
     } else {
       bodyHtml = renderHomeContent();
     }
@@ -2325,8 +2646,12 @@
 
   function openTopicAndQuestion(topicId, qIdx, scrollToSubmitted) {
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
-    if (state.view === "home" || state.view === "my-submissions") {
+    if (state.view === "home" || state.view === "part-topics" || state.view === "my-submissions") {
       state.prevDashboardView = state.view;
+    }
+    const targetTopic = TOPICS.find(t => t.id === topicId);
+    if (targetTopic && targetTopic.part) {
+      state.selectedPart = targetTopic.part;
     }
     state.currentTopicId = topicId;
     state.currentQuestionIndex = Math.max(0, qIdx || 0);
@@ -2642,11 +2967,50 @@
       };
     }
 
-    const btnSbTopicsAcc = document.getElementById("btn-sb-topics-acc");
-    if (btnSbTopicsAcc) {
-      btnSbTopicsAcc.onclick = e => {
+    const btnSbP1Acc = document.getElementById("btn-sb-p1-acc");
+    if (btnSbP1Acc) {
+      btnSbP1Acc.onclick = e => {
         e.stopPropagation();
-        state.sbTopicsCollapsed = !state.sbTopicsCollapsed;
+        state.sbPart1Collapsed = !state.sbPart1Collapsed;
+        renderApp();
+      };
+    }
+
+    const btnSbP2Acc = document.getElementById("btn-sb-p2-acc");
+    if (btnSbP2Acc) {
+      btnSbP2Acc.onclick = e => {
+        e.stopPropagation();
+        state.sbPart2Collapsed = !state.sbPart2Collapsed;
+        renderApp();
+      };
+    }
+
+    document.querySelectorAll("[data-open-part]").forEach(btn => {
+      btn.onclick = () => {
+        const partId = btn.getAttribute("data-open-part") || "part1";
+        if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        state.selectedPart = partId;
+        state.view = "part-topics";
+        state.prevDashboardView = "part-topics";
+        state.mobileSidebarOpen = false;
+        state.notifOpen = false;
+        state.accountMenuOpen = false;
+        renderApp();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+    });
+
+    document.querySelectorAll("[data-p2-outline-level]").forEach(btn => {
+      btn.onclick = () => {
+        state.part2OutlineLevel = btn.getAttribute("data-p2-outline-level") === "b2" ? "b2" : "b1";
+        renderApp();
+      };
+    });
+
+    const btnToggleP2Outline = document.getElementById("btn-toggle-p2-outline");
+    if (btnToggleP2Outline) {
+      btnToggleP2Outline.onclick = () => {
+        state.part2OutlineCollapsed = !state.part2OutlineCollapsed;
         renderApp();
       };
     }
@@ -2709,14 +3073,26 @@
     }
 
     document.querySelectorAll("[data-open-topic]").forEach(el => {
-      el.onclick = () => openTopicAndQuestion(el.getAttribute("data-open-topic"), 0, false);
+      el.onclick = e => {
+        e.stopPropagation();
+        const topicId = el.getAttribute("data-open-topic");
+        const qIdxRaw = el.getAttribute("data-open-qidx");
+        const qIdx = qIdxRaw !== null ? parseInt(qIdxRaw, 10) || 0 : 0;
+        openTopicAndQuestion(topicId, qIdx, false);
+      };
     });
 
     const btnBackHome = document.getElementById("btn-back-home");
     if (btnBackHome) {
       btnBackHome.onclick = () => {
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
-        state.view = state.prevDashboardView === "my-submissions" ? "my-submissions" : "home";
+        if (state.prevDashboardView === "my-submissions") {
+          state.view = "my-submissions";
+        } else {
+          const curTopic = getCurrentTopic();
+          state.selectedPart = (curTopic && curTopic.part) || "part1";
+          state.view = "part-topics";
+        }
         renderApp();
       };
     }
@@ -2823,7 +3199,8 @@
             switchQuestion(state.currentQuestionIndex + 1);
           } else {
             if (state.isRecording) stopRecording(question.id);
-            state.view = "home";
+            state.selectedPart = (topic && topic.part) || "part1";
+            state.view = "part-topics";
             renderApp();
           }
         };

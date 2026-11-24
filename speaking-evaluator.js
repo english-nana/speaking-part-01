@@ -50,7 +50,14 @@
     "pass", "passed", "passing", "exam", "exams", "university", "college", "school",
     "scholarship", "certificate", "result", "results", "score", "proud", "excited", "happy",
     "relieved", "confidence", "confident", "support", "encouragement", "parents", "effort", "hard",
-    "celebrate", "celebrated"
+    "celebrate", "celebrated",
+    "ranking", "tuition", "fees", "scholarship", "scholarships", "dormitory", "dorm",
+    "campus", "facilities", "library", "libraries", "degree", "graduate", "graduates", "graduation",
+    "cousin", "support", "pressure", "recruiter", "hire", "hiring", "employee", "employees",
+    "honesty", "honest", "communication", "professional", "trust", "mistake", "mistakes",
+    "train", "trained", "training", "mystery", "novel", "romance", "action", "fiction",
+    "imagination", "clues", "plot", "scenes", "primary", "public", "private",
+    "international", "neighborhood", "traffic", "pick", "parents", "child", "daughter", "factor", "options"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -90,7 +97,16 @@
     "promotional emails", "discount alerts", "eye-catching", "pop up", "online platforms",
     "ended up buying", "convincing", "turned out", "portable charger",
     "proudest achievement", "over the moon", "deeply relieved", "relieved",
-    "owe it to", "step by step", "encouragement", "tight deadlines"
+    "owe it to", "step by step", "encouragement", "tight deadlines",
+    "considering the situation", "go for", "out of the three options",
+    "the main reason is that", "on top of that", "as a result",
+    "regarding the other two options", "wouldn't pick", "as for",
+    "all in all", "practical and suitable", "well-structured curriculum",
+    "experienced lecturers", "reputable", "career opportunities",
+    "pays off in the long run", "financial burden", "living expenses",
+    "freshman", "client data", "admit mistakes", "trained on the job",
+    "unexpected twists", "mental imagery", "stay hooked",
+    "predictable", "daily commute", "solid foundation", "far too expensive"
   ];
 
   function tokenize(text) {
@@ -1072,8 +1088,112 @@
     const errorTypeCount = distinctErrorTypes.length;
     const correctedSentence = buildCorrectedTranscript(transcript, errors);
 
+    const isPart2 = Boolean(question && (question.part === "part2" || /^p2_/.test(question.id || "")));
+    const isOffTopic = matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0;
+    let rawScore = 0;
+
+    if (isPart2) {
+      // ------------------------------------------------------------------
+      // CHẤM ĐIỂM SPEAKING PART 2 (SOLUTION DISCUSSION · LÀM TRÒN 0.25)
+      // ------------------------------------------------------------------
+      let devPts2 = 0.4;
+      if (wordCount >= 210) devPts2 = 2.75;
+      else if (wordCount >= 155) devPts2 = 2.45;
+      else if (wordCount >= 115) devPts2 = 2.0;
+      else if (wordCount >= 85) devPts2 = 1.65;
+      else if (wordCount >= 70) devPts2 = 1.35;
+      else if (wordCount >= 45) devPts2 = 0.9;
+
+      let vocabPts2 = matchedDomainCount === 0 ? 0.4 : 0.95 + Math.min(0.65, uniqueDomainWords.length * 0.06);
+      if (b1SampleHits.length > 0) vocabPts2 += Math.min(0.3, b1SampleHits.length * 0.08);
+      vocabPts2 += Math.min(1.4, allB2Lexis.length * 0.22);
+      vocabPts2 = Math.min(2.8, vocabPts2);
+
+      let gramPts2 = wordCount >= 70 ? 1.1 : 0.8;
+      if (usedCompound.length > 0) gramPts2 += 0.2;
+      if (usedComplex.length >= 1) gramPts2 += 0.3;
+      if (usedComplex.length >= 2) gramPts2 += 0.2;
+      if (usedRelative.length >= 1) gramPts2 += 0.45;
+      if (usedDiscourse.length >= 1) gramPts2 += 0.25;
+      if (usedDiscourse.length >= 2) gramPts2 += 0.2;
+
+      let fluPts2 = 0.4;
+      if (wordCount >= 150) fluPts2 = 1.45;
+      else if (wordCount >= 110) fluPts2 = 1.15;
+      else if (wordCount >= 70) fluPts2 = 0.85;
+      if (usedDiscourse.length >= 2 && wordCount >= 150) fluPts2 = Math.min(1.65, fluPts2 + 0.2);
+
+      rawScore = devPts2 + vocabPts2 + gramPts2 + fluPts2 - errorTypeCount * 0.55;
+
+      const b2MarkerCount2 = allB2Lexis.length + usedDiscourse.length;
+      const hasB2Lexis2 = b2MarkerCount2 >= 4;
+      const hasB2Grammar2 = usedRelative.length > 0 || usedComplex.length >= 2 || usedDiscourse.length >= 2;
+      const hasC1Profile2 =
+        errorTypeCount === 0 &&
+        wordCount >= 220 &&
+        allB2Lexis.length >= 7 &&
+        usedRelative.length >= 1 &&
+        usedComplex.length >= 2;
+
+      if (isOffTopic) {
+        rawScore = Math.min(rawScore, 2.5);
+      } else if (wordCount < 45) {
+        rawScore = Math.min(rawScore, 2.5);
+      } else if (wordCount < 70 || errorTypeCount >= 3) {
+        rawScore = Math.min(rawScore, 3.5);
+      } else if (wordCount < 148 || !hasB2Lexis2 || !hasB2Grammar2 || errorTypeCount >= 2 || matchedDomainCount < 4) {
+        // Khung B1 (4.0 - 5.5)
+        rawScore = Math.min(rawScore, wordCount < 95 ? 4.5 : 5.5);
+      } else if (hasC1Profile2) {
+        rawScore = Math.max(rawScore, 9.0);
+      } else {
+        // Khung B2 (6.0 - 8.5)
+        if (errorTypeCount === 0) {
+          rawScore = Math.max(rawScore, 6.75);
+        } else {
+          rawScore = Math.min(rawScore, 6.5);
+        }
+        rawScore = Math.min(rawScore, 8.5);
+      }
+
+      const finalScore = roundQuarterStep(Math.max(0, Math.min(10, rawScore)));
+      const { levelLabel, badgeTone } = scoreToBandInfo(finalScore);
+      const timeNote = durationSec ? ` / ${durationSec} giây` : "";
+      const notes = [];
+      if (errorTypeCount === 0) {
+        notes.push(`Không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
+      }
+      if (isOffTopic) {
+        notes.push("Nội dung chưa bám sát tình huống; hãy nêu rõ lựa chọn trong 3 phương án của đề.");
+      } else if (wordCount < 70) {
+        notes.push(`Bài nói Part 2 còn ngắn (${wordCount} từ${timeNote}). Hãy triển khai đủ 3 phần: Mở bài → Thân bài (2 lý do chọn + lý do bỏ 2 phương án còn lại) → Kết bài (~115+ từ) để đạt mức B1.`);
+      } else if (badgeTone === "below") {
+        notes.push(`Bài nói còn ${errorTypeCount} dạng lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); hãy sửa các lỗi trên để đạt mức B1.`);
+      } else if (badgeTone === "b1" || levelLabel === "Xấp xỉ B1") {
+        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Giữ đủ 3 phần Mở – Thân – Kết và nâng cấp thêm từ vựng ở Mục V để lên B2.`);
+      } else if (badgeTone === "c1") {
+        notes.push(`Đạt C1 (${wordCount} từ${timeNote}), triển khai tự nhiên, giàu từ vựng và cấu trúc linh hoạt.`);
+      } else {
+        notes.push(`${levelLabel} (${wordCount} từ${timeNote}), trình bày mạch lạc đủ 3 phần với cụm từ vựng tự nhiên.`);
+      }
+
+      return {
+        hasTranscript: true,
+        score: finalScore,
+        scoreText: finalScore.toFixed(2),
+        levelLabel,
+        badgeTone,
+        errorTypeCount,
+        wordCount,
+        durationSec,
+        errors,
+        correctedSentence,
+        notes
+      };
+    }
+
     // ------------------------------------------------------------------
-    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP (LÀM TRÒN 0.25 · TÍNH THEO DẠNG LỖI)
+    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP (PART 1 · LÀM TRÒN 0.25 · TÍNH THEO DẠNG LỖI)
     // - 0.00 - 3.50 : Chưa đạt B1
     // - 3.75        : Xấp xỉ B1
     // - 4.00 - 5.50 : Đạt B1
@@ -1119,9 +1239,8 @@
     }
 
     // Trừ trực tiếp 0.55 điểm cho mỗi DẠNG LỖI khác nhau phát hiện được
-    let rawScore = devPts + vocabPts + gramPts + fluPts - errorTypeCount * 0.55;
+    rawScore = devPts + vocabPts + gramPts + fluPts - errorTypeCount * 0.55;
 
-    const isOffTopic = matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0;
     const hasB2Lexis = allB2Lexis.length >= 3 || (allB2Lexis.length >= 2 && (usedRelative.length > 0 || usedDiscourse.length > 0));
     const hasB2Grammar = usedRelative.length > 0 || usedDiscourse.length > 0;
     const hasC1Profile =

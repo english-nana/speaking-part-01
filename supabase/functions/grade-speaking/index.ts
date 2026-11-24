@@ -68,6 +68,8 @@ function resolveCleanAudioMimeType(audioPath: string, blobType?: string): string
 }
 
 function buildSpeakingGradingPrompt(params: {
+  topicId: string;
+  questionId: string;
   topicTitle: string;
   promptText: string;
   browserTranscript: string;
@@ -76,9 +78,22 @@ function buildSpeakingGradingPrompt(params: {
   hasAudio: boolean;
 }) {
   const level = String(params.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
+  const isPart2 =
+    /^part2[-_]/i.test(params.topicId || "") || /^p2_/i.test(params.questionId || "");
 
-  const levelGuidance =
-    level === "B2"
+  const partLabel = isPart2
+    ? "VSTEP Speaking Part 2 (Solution Discussion — chọn 1 trong 3 phương án theo bố cục 3 phần: Mở bài dẫn nhập & chọn phương án -> Thân bài nêu 2 lý do chọn & lý do không chọn 2 phương án còn lại -> Kết bài khẳng định lại lựa chọn)"
+    : "VSTEP Speaking Part 1 (Social Interaction — trả lời ngắn gọn, tự nhiên trong 2-3 câu)";
+
+  const levelGuidance = isPart2
+    ? level === "B2"
+      ? `Mục tiêu của học viên là trình độ B2 (Speaking Part 2):
+- Đánh giá theo đúng bố cục 3 phần (~150-200 từ): Mở bài ("Well, considering the situation where..., I'd definitely go for...") -> Thân bài nêu 2 lý do thuyết phục có ví dụ & collocations tự nhiên + phản biện 2 phương án còn lại ("Regarding the other two options, I wouldn't pick... As for..., although...") -> Kết bài ("All in all, ... is definitely the most practical and suitable choice here.").
+- Chỉ ra các chỗ bị "Vietlish" hoặc lập luận chưa chặt, gợi ý diễn đạt tự nhiên mức B2 chứ KHÔNG ép từ C1/C2 cứng nhắc.`
+      : `Mục tiêu của học viên là trình độ B1 (Speaking Part 2):
+- Chỉ cần bài nói đủ 3 phần (~110-145 từ): Mở bài nêu tình huống & chọn 1 phương án -> Thân bài giải thích 2 lý do đời thường (First... For example... Second... So...) và nói gọn lý do không chọn 2 phương án còn lại (On the other hand, I don't choose... because... Also, ... is not suitable because...) -> Kết bài khẳng định lại ("For these reasons, I believe...").
+- KHÔNG ép học viên dùng từ vựng phức tạp. Nếu nói rõ ý, tự nhiên ở mức B1 thì khen ngợi và giữ nguyên.`
+    : level === "B2"
       ? `Mục tiêu của học viên là trình độ B2:
 - Đánh giá và hướng dẫn cách nói tự nhiên ở chuẩn B2 giao tiếp thực tế (khoảng 3 câu mạch lạc ~35-48 từ theo hướng: Trả lời trực tiếp kèm discourse marker tự nhiên như "Honestly,", "I'd say", "Actually," + Lý do -> Ví dụ đời thực -> Cảm xúc/Kết quả).
 - Chỉ ra các chỗ diễn đạt còn đơn điệu hoặc bị "Vietlish", gợi ý collocations văn nói tự nhiên (như "hang out with close friends", "unwind", "clear my mind", "affordable", "convenient", "in advance", "boost my productivity", mệnh đề "which...") nhưng KHÔNG ép dùng từ C1/C2 sách vở cứng nhắc.`
@@ -98,9 +113,9 @@ function buildSpeakingGradingPrompt(params: {
   return `Bạn là giám khảo và giáo viên hướng dẫn VSTEP Speaking tận tâm, giàu kinh nghiệm dạy học viên Việt Nam.
 
 THÔNG TIN CÂU HỎI & BÀI NÓI:
-- Phần thi: VSTEP Speaking Part 1 (Social Interaction - trả lời ngắn gọn, tự nhiên trong 2-3 câu)
-- Chủ đề: ${params.topicTitle || "Speaking Part 1"}
-- Câu hỏi của giám khảo: "${params.promptText || "(Không có câu hỏi)"}"
+- Phần thi: ${partLabel}
+- Chủ đề: ${params.topicTitle || (isPart2 ? "Speaking Part 2" : "Speaking Part 1")}
+- Câu hỏi / Tình huống của giám khảo: "${params.promptText || "(Không có câu hỏi)"}"
 - Trình độ mục tiêu học viên chọn: Level ${level}
 - Thời lượng ghi âm: ${params.durationSec || 0} giây
 - Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Trình duyệt chưa nhận diện được văn bản - hãy nghe trực tiếp file âm thanh)"}"
@@ -146,16 +161,16 @@ YÊU CẦU CHẤM & SỬA CHI TIẾT:
      + "explanation_vi": giải thích ngắn gọn tại sao cách nói cũ bị sai ngữ pháp hoặc hơi "Vietlish", và cách nói mới tự nhiên hơn thế nào.
 
 4. SẮP XẾP CÁC Ý CÓ LOGIC, DỄ THEO DÕI KHÔNG ("criteria.coherence_logic"):
-   - Nhận xét xem câu trả lời có đi thẳng vào câu hỏi không, thứ tự các ý có logic, mạch lạc, dễ theo dõi không (mạch chuẩn Part 1: Trả lời trực tiếp + Lý do -> Ví dụ thực tế -> Cảm xúc/Kết quả), và đã có từ nối tự nhiên trong văn nói chưa.
+   - Nhận xét xem bài nói có đi thẳng vào tình huống/câu hỏi không, thứ tự các ý có logic, mạch lạc, dễ theo dõi không (${isPart2 ? "mạch chuẩn Part 2: Mở bài dẫn nhập & chọn phương án -> Thân bài nêu 2 lý do chọn + giải thích tại sao không chọn 2 phương án còn lại -> Kết bài khẳng định lại lựa chọn" : "mạch chuẩn Part 1: Trả lời trực tiếp + Lý do -> Ví dụ thực tế -> Cảm xúc/Kết quả"}), và đã có từ nối tự nhiên trong văn nói chưa.
 
 5. Ý TƯỞNG HƠI "CỤT" — CẦN DIỄN ĐẠT LẠI & MỞ RỘNG NHƯ THẾ NÀO ("idea_expansions"):
-   - Kiểm tra xem bài nói có bị quá ngắn hoặc có ý nào nói ra rồi bỏ lửng, hơi "cụt" (chỉ trả lời 1 câu ngắn, thiếu lý do cụ thể, thiếu ví dụ đời sống gần gũi hoặc kết thúc đột ngột).
-   - Trong mảng "idea_expansions" (tối đa 3 mục): chỉ rõ chỗ nào bị "cụt" ("where_vi"), giải thích hướng diễn đạt lại & mở rộng sao cho tự nhiên, logic ("issue_vi"), đưa ra 1-2 câu tiếng Anh mẫu đúng chuẩn Level ${level} ("suggested_en") và dịch nghĩa tiếng Việt ("meaning_vi"). Nếu bài nói đã đầy đủ, tròn trịa 3 câu chuẩn mức ${level}, trả về [].
+   - Kiểm tra xem bài nói có bị quá ngắn hoặc thiếu phần nào (chẳng hạn ở Part 2 bị thiếu lý do giải thích tại sao không chọn 2 phương án còn lại, thiếu Mở/Kết bài, hoặc ý đưa ra còn chung chung chưa có ví dụ).
+   - Trong mảng "idea_expansions" (tối đa 3 mục): chỉ rõ chỗ nào bị "cụt" ("where_vi"), giải thích hướng diễn đạt lại & mở rộng sao cho tự nhiên, logic ("issue_vi"), đưa ra 1-2 câu tiếng Anh mẫu đúng chuẩn Level ${level} ("suggested_en") và dịch nghĩa tiếng Việt ("meaning_vi"). Nếu bài nói đã đầy đủ, tròn trịa chuẩn mức ${level}, trả về [].
 
 6. ${levelGuidance}
 
 7. PHIÊN BẢN BÀI NÓI HOÀN CHỈNH TỰ NHIÊN ("natural_spoken_version"):
-   - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên, hãy viết lại thành 1 câu trả lời nói hoàn chỉnh gồm 3 câu tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, sắp xếp logic và mở rộng vừa vặn ở đúng Level ${level} để học viên nghe và luyện nói theo.
+   - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên, hãy viết lại thành 1 bài nói hoàn chỉnh tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, ${isPart2 ? "đủ 3 phần Mở bài – Thân bài (2 lý do chọn + lý do bỏ 2 phương án kia) – Kết bài" : "gồm 3 câu gọn gàng"} ở đúng Level ${level} để học viên nghe và luyện nói theo.
 
 8. NẾU FILE GHI ÂM IM LẶNG HOẶC CHỈ CÓ TIẾNG ỒN / KHÔNG CÓ TIẾNG ANH:
    - Vẫn trả về JSON hợp lệ, đặt "internal_score": 0, "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
@@ -443,6 +458,8 @@ async function gradeSingleAttempt(
     .eq("id", att.id);
 
   const prompt = buildSpeakingGradingPrompt({
+    topicId: att.topic_id || "",
+    questionId: att.question_id || "",
     topicTitle,
     promptText,
     browserTranscript,
