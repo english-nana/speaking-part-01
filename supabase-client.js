@@ -372,10 +372,39 @@
     `;
   }
 
-  function formatCleanBandLabel(rawBand, rawAssess) {
-    const cleaned = String(rawBand || "")
-      .replace(/[·\-–—]?\s*\d+(\.\d+)?\s*\/\s*10/g, "")
+  function roundQuarterStep(score) {
+    const n = Number(score);
+    if (!Number.isFinite(n)) return null;
+    const clamped = Math.max(0, Math.min(10, n));
+    return Math.round(clamped * 4) / 4;
+  }
+
+  function scoreToBandLabel(score) {
+    const r = roundQuarterStep(score);
+    if (r === null) return "";
+    if (r >= 9.0) return "Đạt C1";
+    if (r >= 8.75) return "Xấp xỉ C1";
+    if (r >= 6.0) return "Đạt B2";
+    if (r >= 5.75) return "Xấp xỉ B2";
+    if (r >= 4.0) return "Đạt B1";
+    if (r >= 3.75) return "Xấp xỉ B1";
+    return "Chưa đạt B1";
+  }
+
+  function stripNumericScores(text) {
+    return String(text || "")
+      .replace(/[·\-–—]?\s*\(?\s*\d+([.,]\d+)?\s*\/\s*10\s*\)?/gi, "")
+      .replace(/\(\s*\d+([.,]\d+)?\s*(?:điểm|đ|pts?)\s*\)/gi, "")
+      .replace(/\s{2,}/g, " ")
       .trim();
+  }
+
+  function formatCleanBandLabel(rawBand, rawAssess, rawScore) {
+    if (rawScore !== null && rawScore !== undefined && rawScore !== "") {
+      const fromScore = scoreToBandLabel(rawScore);
+      if (fromScore) return fromScore;
+    }
+    const cleaned = stripNumericScores(rawBand);
     const combined = `${cleaned} ${rawAssess || ""}`.toLowerCase();
     if (/xấp xỉ\s*c1|gần\s*(đạt\s*)?(mức\s*)?c1/.test(combined)) return "Xấp xỉ C1";
     if (/đạt\s*(mức\s*)?c1|\bc1\b/.test(combined)) return "Đạt C1";
@@ -397,6 +426,7 @@
   function renderSpeakingReviewHtml(originalTranscript, reviewJson, meta) {
     if (!reviewJson || typeof reviewJson !== "object") return "";
     const info = meta || {};
+    const isTeacherView = Boolean(info.isTeacherView);
     const targetLevel = String(info.targetLevel || "B1").toUpperCase();
     const spokenText = String(reviewJson.recognized_transcript || originalTranscript || "").trim();
     const pronFixes = Array.isArray(reviewJson.pronunciation_fixes) ? reviewJson.pronunciation_fixes : [];
@@ -412,10 +442,19 @@
         : [];
     const criteria = reviewJson.criteria || {};
     const naturalVersion = String(reviewJson.natural_spoken_version || reviewJson.revised_version || "").trim();
-    const cleanBand = formatCleanBandLabel(reviewJson.estimated_band, reviewJson.level_assessment);
-    const rawAssessClean = String(reviewJson.level_assessment || "")
-      .replace(/[·\-–—]?\s*\d+(\.\d+)?\s*\/\s*10/g, "")
-      .trim();
+    const roundedInternalScore =
+      reviewJson.internal_score !== null &&
+      reviewJson.internal_score !== undefined &&
+      reviewJson.internal_score !== ""
+        ? roundQuarterStep(reviewJson.internal_score)
+        : null;
+    const cleanBand = formatCleanBandLabel(
+      reviewJson.estimated_band,
+      reviewJson.level_assessment,
+      roundedInternalScore
+    );
+    const rawAssessClean = stripNumericScores(reviewJson.level_assessment);
+    const cleanOverallComment = stripNumericScores(reviewJson.overall_comment);
     const showAssessNote =
       rawAssessClean &&
       rawAssessClean.toLowerCase() !== cleanBand.toLowerCase() &&
@@ -434,9 +473,14 @@
           <div class="ai-review-badges">
             <span class="ai-level-badge">Mục tiêu Level ${escapeHtml(targetLevel)}</span>
             ${cleanBand ? `<span class="ai-band-badge ${getBandToneClass(cleanBand)}">Đánh giá: ${escapeHtml(cleanBand)}</span>` : ""}
+            ${
+              isTeacherView && roundedInternalScore !== null
+                ? `<span class="ai-level-badge" style="background:#FEF3C7;color:#92400E;border-color:#D97706;">Điểm quy đổi (GV): ${escapeHtml(roundedInternalScore.toFixed(2))}/10</span>`
+                : ""
+            }
             ${showAssessNote ? `<span class="ai-assess-text">${escapeHtml(rawAssessClean)}</span>` : ""}
           </div>
-          ${reviewJson.overall_comment ? `<p class="ai-overall-comment">${escapeHtml(reviewJson.overall_comment)}</p>` : ""}
+          ${cleanOverallComment ? `<p class="ai-overall-comment">${escapeHtml(cleanOverallComment)}</p>` : ""}
 
           ${
             criteriaItems.length > 0
@@ -447,7 +491,7 @@
                     item => `
                     <div class="ai-criteria-item">
                       <div class="ai-criteria-label">${escapeHtml(item.label)}</div>
-                      <div class="ai-criteria-text">${escapeHtml(criteria[item.key])}</div>
+                      <div class="ai-criteria-text">${escapeHtml(stripNumericScores(criteria[item.key]))}</div>
                     </div>
                   `
                   )

@@ -1159,7 +1159,8 @@
             (Array.isArray(rj.pronunciation_fixes) ? rj.pronunciation_fixes.length : 0) +
             (Array.isArray(rj.language_corrections) ? rj.language_corrections.length : 0) +
             (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0);
-          const bandText = rj.estimated_band ? ` · ${rj.estimated_band}` : "";
+          const cleanBand = CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score);
+          const bandText = cleanBand ? ` · ${cleanBand}` : "";
           const title = `Đề ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · Câu ${it.qMeta.questionNum}`;
           return `
             <button
@@ -1572,7 +1573,9 @@
                   let statusPillHtml = "";
                   if (rev) {
                     const isUnread = !rev.student_seen_at;
-                    const band = rev.review_json && rev.review_json.estimated_band ? ` · ${rev.review_json.estimated_band}` : "";
+                    const rjHist = rev.review_json || {};
+                    const cleanBandHist = CLOUD.formatCleanBandLabel(rjHist.estimated_band, rjHist.level_assessment, rjHist.internal_score);
+                    const band = cleanBandHist ? ` · ${cleanBandHist}` : "";
                     statusPillHtml = isUnread
                       ? `<span class="notif-item-tag new-dot">Mới · Đã có bài sửa${escapeHtml(band)}</span>`
                       : `<span class="notif-item-tag">✅ Đã có bài sửa${escapeHtml(band)}</span>`;

@@ -107,23 +107,34 @@ THÔNG TIN CÂU HỎI & BÀI NÓI:
 - Tình trạng âm thanh: ${audioContextNote}
 
 QUY TẮC ĐẶC BIỆT BẮT BUỘC PHẢI TUÂN THỦ:
-- QUY TẮC 1 (VỀ ÂM "s" CUỐI TỪ VS CHIA ĐỘNG TỪ):
-  + BỎ QUA HOÀN TOÀN lỗi quên thêm "s"/"es" khi chia động từ ngôi thứ 3 số ít ở hiện tại đơn (ví dụ: học viên nói "it help me", "he like", "my mother cook", "weather affect"... -> TUYỆT ĐỐI BỎ QUA, không bắt lỗi trong phần ngữ pháp, không bắt lỗi trong phần phát âm, không đưa vào "language_corrections" hay "pronunciation_fixes").
-  + NHƯNG VẪN PHẢI BẮT KỸ lỗi quên phát âm âm "s" (/s/, /z/, /ɪz/) khi đó là FINAL SOUND CỐ HỮU CỦA TỪ (ví dụ: nice /naɪs/, house /haʊs/, place /pleɪs/, price /praɪs/, office /ˈɔːfɪs/, because /bɪˈkɔːz/, always /ˈɔːlweɪz/, sometimes /ˈsʌmtaɪmz/, relax /rɪˈlæks/, stress /stres/, bus /bʌs/, class /klæs/, famous /ˈfeɪməs/, delicious /dɪˈlɪʃəs/... hoặc danh từ số nhiều cần thiết như friends). Nếu học viên nuốt mất final sound này trong file ghi âm thì phải chỉ rõ trong "criteria.pronunciation_intonation" và "pronunciation_fixes".
-- QUY TẮC 2 (KHÔNG CHẤM ĐIỂM SỐ CỤ THỂ):
-  + TUYỆT ĐỐI KHÔNG chấm điểm bằng con số (không ghi 5.0/10, 6.5, 7.0...).
-  + Trường "estimated_band" CHỈ ĐƯỢC NHẬN ĐÚNG 1 TRONG CÁC MỨC SAU (tùy năng lực thực tế của bài nói, kể cả vượt mục tiêu lên C1):
-    "Chưa đạt B1" | "Xấp xỉ B1" | "Đạt B1" | "Xấp xỉ B2" | "Đạt B2" | "Xấp xỉ C1" | "Đạt C1"
+- QUY TẮC 1 (BỎ QUA ĐUÔI CHIA ĐỘNG TỪ "-s", "-es", "-ed" — CHỈ BẮT FINAL SOUND CỐ HỮU CỦA TỪ):
+  + BỎ QUA HOÀN TOÀN lỗi thiếu hoặc phát âm thiếu đuôi "-s", "-es", "-ed" khi chia động từ (bao gồm quên thêm "-s/-es" ở động từ ngôi thứ 3 số ít hiện tại đơn như "it help", "he like", "my mother cook", "weather affect" VÀ phát âm thiếu âm cuối "-s/-es/-ed" của động từ chia thì như "worked", "played", "visited", "watched", "helped", "makes"...). TUYỆT ĐỐI không trừ điểm, không bắt lỗi trong phần ngữ pháp hay phát âm, không đưa vào "language_corrections" hay "pronunciation_fixes".
+  + NHƯNG VẪN PHẢI BẮT KỸ lỗi quên phát âm âm "s" (/s/, /z/, /ɪz/) khi đó là FINAL SOUND CỐ HỮU CỦA TỪ GỐC (ví dụ: nice /naɪs/, house /haʊs/, place /pleɪs/, price /praɪs/, office /ˈɔːfɪs/, because /bɪˈkɔːz/, always /ˈɔːlweɪz/, sometimes /ˈsʌmtaɪmz/, relax /rɪˈlæks/, stress /stres/, bus /bʌs/, class /klæs/, famous /ˈfeɪməs/, delicious /dɪˈlɪʃəs/... hoặc danh từ số nhiều cần thiết như friends). Nếu học viên nuốt mất final sound gốc này trong file ghi âm thì chỉ rõ trong "criteria.pronunciation_intonation" và "pronunciation_fixes".
+- QUY TẮC 2 (TÍNH THEO DẠNG LỖI — KHÔNG TÍNH TỔNG SỐ LẦN LẶP LỖI):
+  + KHÔNG cộng dồn tổng số lần lặp lại của cùng một lỗi khi trừ điểm.
+  + Ví dụ: nếu trong bài nói học viên phát âm sai cùng 1 từ 3 lần (ví dụ đọc sai từ "because" hoặc "comfortable" 3 lần) thì VẪN CHỈ TÍNH LÀ 1 LỖI DUY NHẤT và chỉ liệt kê 1 lần trong "pronunciation_fixes".
+  + Tương tự, nếu bài nói lặp cùng 1 dạng lỗi ngữ pháp hoặc cùng 1 dạng diễn đạt Vietlish nhiều lần thì chỉ tính là 1 dạng lỗi khi tính điểm, không trừ điểm lặp lại nhiều lần cho cùng 1 dạng lỗi.
+- QUY TẮC 3 (TÍNH ĐIỂM NỘI BỘ LÀM TRÒN 0.25 & QUY ĐỔI MỨC — KHÔNG HIỆN SỐ CHO HỌC VIÊN):
+  + Tính điểm tổng nội bộ trên thang 10 và làm tròn theo bước 0.25 (0.00, 0.25, 0.50, 0.75, ..., 10.00) vào trường số "internal_score" dựa trên chất lượng tổng thể (phát âm/ngữ điệu, ngữ pháp, từ vựng/Vietlish, độ mạch lạc/mở rộng ý) và số DẠNG LỖI khác nhau.
+  + Quy đổi "internal_score" sang "estimated_band" theo đúng thang sau:
+    * 0.00 – 3.50 : "Chưa đạt B1"
+    * 3.75        : "Xấp xỉ B1"
+    * 4.00 – 5.50 : "Đạt B1"
+    * 5.75        : "Xấp xỉ B2"
+    * 6.00 – 8.50 : "Đạt B2"
+    * 8.75        : "Xấp xỉ C1"
+    * 9.00 – 10.00: "Đạt C1"
+  + TUYỆT ĐỐI KHÔNG viết con số điểm (ví dụ 5.5/10, 6.25 điểm, 7.0...) trong "overall_comment", "level_assessment", hay "criteria" vì học viên chỉ được xem kết quả theo mức.
 
 YÊU CẦU CHẤM & SỬA CHI TIẾT:
 1. PHÁT ÂM CÓ DỄ NGHE KHÔNG & CÓ NGỮ ĐIỆU KHÔNG ("criteria.pronunciation_intonation" + "pronunciation_fixes"):
    - Nhận xét thẳng thắn, dễ hiểu xem người nghe có dễ nghe, dễ nắm bắt lời học viên nói không; chú ý các từ bị mất final sound gốc (đặc biệt là final sound /s/, /z/ của từ như nice, house, place, because, relax...).
    - Nhận xét rõ về NGỮ ĐIỆU (intonation) & nhịp nói: giọng nói có sự lên xuống tự nhiên, biết nhấn vào từ mang nội dung (content words) và ngắt cụm hợp lý không, hay đang nói đều đều một tông (monotone), ngập ngừng?
-   - Liệt kê tối đa 4 từ cụ thể trong bài nói mà học viên phát âm chưa chuẩn (sai nguyên âm/phụ âm, sai trọng âm, hoặc mất final sound gốc của từ — KHÔNG liệt kê động từ thiếu -s ngôi thứ 3) vào mảng "pronunciation_fixes" kèm US IPA và mẹo sửa. Nếu phát âm tốt, trả về [].
+   - Liệt kê tối đa 4 TỪ KHÁC NHAU trong bài nói mà học viên phát âm chưa chuẩn (sai nguyên âm/phụ âm, sai trọng âm, hoặc mất final sound gốc của từ — KHÔNG liệt kê lỗi thiếu đuôi -s/-es/-ed chia động từ; mỗi từ chỉ liệt kê đúng 1 lần dù bị sai nhiều lần trong bài) vào mảng "pronunciation_fixes" kèm US IPA và mẹo sửa. Nếu phát âm tốt, trả về [].
 
 2. NGỮ PHÁP ("criteria.grammar" + "language_corrections"):
    - Kiểm tra thì của động từ theo câu hỏi (quá khứ, tương lai, hiện tại), cấu trúc câu, giới từ, dạng từ (V-ing / to V).
-   - Nhắc lại: BỎ QUA lỗi quên chia "-s/-es" ở động từ ngôi thứ 3 số ít trong văn nói; không bắt lỗi dấu câu/viết hoa.
+   - Nhắc lại: BỎ QUA lỗi thiếu đuôi "-s", "-es", "-ed" khi chia động từ (cả phát âm lẫn ngữ pháp); không bắt lỗi dấu câu/viết hoa; mỗi dạng lỗi lặp lại nhiều lần chỉ tính 1 dạng lỗi khi đánh giá.
 
 3. DÙNG TỪ TỰ NHIÊN & PHÁT HIỆN LỖI "VIETLISH" ("criteria.vocabulary_vietlish" + "language_corrections"):
    - Đánh giá cách dùng từ đã tự nhiên như giao tiếp đời thực chưa.
@@ -147,14 +158,15 @@ YÊU CẦU CHẤM & SỬA CHI TIẾT:
    - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên, hãy viết lại thành 1 câu trả lời nói hoàn chỉnh gồm 3 câu tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, sắp xếp logic và mở rộng vừa vặn ở đúng Level ${level} để học viên nghe và luyện nói theo.
 
 8. NẾU FILE GHI ÂM IM LẶNG HOẶC CHỈ CÓ TIẾNG ỒN / KHÔNG CÓ TIẾNG ANH:
-   - Vẫn trả về JSON hợp lệ, đặt "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
+   - Vẫn trả về JSON hợp lệ, đặt "internal_score": 0, "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
 
 TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) theo đúng cấu trúc sau:
 {
   "recognized_transcript": "Lời nói tiếng Anh thực tế của học viên nghe được từ file âm thanh",
-  "level_assessment": "Nhận xét ngắn gọn 1 cụm về mức độ đáp ứng (không ghi điểm số)",
-  "estimated_band": "Chỉ ghi đúng 1 trong các mức: Chưa đạt B1 | Xấp xỉ B1 | Đạt B1 | Xấp xỉ B2 | Đạt B2 | Xấp xỉ C1 | Đạt C1",
-  "overall_comment": "2-3 câu nhận xét tổng quan bằng tiếng Việt: khen điểm tốt trước, sau đó chỉ rõ trọng tâm cần cải thiện.",
+  "internal_score": 5.5,
+  "level_assessment": "Nhận xét ngắn gọn 1 cụm về mức độ đáp ứng (TUYỆT ĐỐI không ghi điểm số)",
+  "estimated_band": "Quy đổi từ internal_score (0-3.5: Chưa đạt B1 | 3.75: Xấp xỉ B1 | 4.0-5.5: Đạt B1 | 5.75: Xấp xỉ B2 | 6.0-8.5: Đạt B2 | 8.75: Xấp xỉ C1 | 9.0-10: Đạt C1)",
+  "overall_comment": "2-3 câu nhận xét tổng quan bằng tiếng Việt (TUYỆT ĐỐI không ghi con số điểm): khen điểm tốt trước, sau đó chỉ rõ trọng tâm cần cải thiện.",
   "criteria": {
     "pronunciation_intonation": "Nhận xét chi tiết về độ dễ nghe, final sound của từ và ngữ điệu/nhịp nói",
     "grammar": "Nhận xét ngắn gọn, rõ ràng về ngữ pháp & chia thì (bỏ qua lỗi quên s khi chia động từ)",
@@ -189,6 +201,31 @@ TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) 
 }`;
 }
 
+function roundQuarterStep(score: number): number {
+  if (!Number.isFinite(score)) return 0;
+  const clamped = Math.max(0, Math.min(10, score));
+  return Math.round(clamped * 4) / 4;
+}
+
+function scoreToBandLabel(score: number): string {
+  const r = roundQuarterStep(score);
+  if (r >= 9.0) return "Đạt C1";
+  if (r >= 8.75) return "Xấp xỉ C1";
+  if (r >= 6.0) return "Đạt B2";
+  if (r >= 5.75) return "Xấp xỉ B2";
+  if (r >= 4.0) return "Đạt B1";
+  if (r >= 3.75) return "Xấp xỉ B1";
+  return "Chưa đạt B1";
+}
+
+function stripNumericScores(text: string): string {
+  return String(text || "")
+    .replace(/[·\-–—]?\s*\(?\s*\d+([.,]\d+)?\s*\/\s*10\s*\)?/gi, "")
+    .replace(/\(\s*\d+([.,]\d+)?\s*(?:điểm|đ|pts?)\s*\)/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function normalizeLevelBandLabel(rawBand: string, rawAssess: string): string {
   const combined = `${rawBand || ""} ${rawAssess || ""}`.toLowerCase();
   if (/xấp xỉ\s*c1|gần\s*(đạt\s*)?(mức\s*)?c1|c1-/.test(combined)) return "Xấp xỉ C1";
@@ -206,11 +243,27 @@ const PLURAL_DETERMINERS = new Set([
   "these", "those", "all", "other", "different", "various", "lots", "lot"
 ]);
 
-function isThirdPersonVerbSOnlyFix(original: string, corrected: string, category: string, explanation: string): boolean {
+function isIgnoredVerbInflectionPronFix(word: string, issueVi: string): boolean {
+  const wLower = String(word || "").trim().toLowerCase().replace(/[^a-z']/g, "");
+  const issueLower = String(issueVi || "").toLowerCase();
+  const mentionsVerbInflection =
+    /(?:đuôi|âm cuối|phát âm thiếu|nuốt âm|quên)\s*(?:chữ\s*)?["']?-?(?:ed|es|s)["']?/.test(issueLower) &&
+    /(?:chia động từ|động từ|quá khứ|ngôi thứ 3|chủ ngữ số ít|đuôi\s*["']?-?ed["']?|âm\s*["']?-?ed["']?)/.test(issueLower);
+  if (mentionsVerbInflection) return true;
+  if (
+    wLower.endsWith("ed") &&
+    /(?:đuôi\s*["']?-?ed["']?|thiếu\s*["']?-?ed["']?|âm\s*\/?[tdɪd]+\/?\s*cuối|chia\s*quá\s*khứ)/.test(issueLower)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isIgnoredVerbInflectionFix(original: string, corrected: string, category: string, explanation: string): boolean {
   const expLower = String(explanation || "").toLowerCase();
   if (
     (expLower.includes("chia động từ") || expLower.includes("ngôi thứ 3") || expLower.includes("chủ ngữ số ít")) &&
-    (expLower.includes("thêm s") || expLower.includes("thêm -s") || expLower.includes("thêm es") || expLower.includes("thiếu s"))
+    /(?:thêm|thiếu|quên|đuôi)\s*["']?-?(?:s|es|ed)["']?/.test(expLower)
   ) {
     return true;
   }
@@ -242,6 +295,14 @@ function isThirdPersonVerbSOnlyFix(original: string, corrected: string, category
     wCorr === wOrig + "s" ||
     wCorr === wOrig + "es" ||
     (wOrig.endsWith("y") && wCorr === wOrig.slice(0, -1) + "ies");
+  const isAddingVerbEd =
+    wCorr === wOrig + "ed" ||
+    wCorr === wOrig + "d" ||
+    (wOrig.endsWith("y") && wCorr === wOrig.slice(0, -1) + "ied");
+
+  if (isAddingVerbEd && /(?:phát âm|đuôi\s*["']?-?ed["']?|chia động từ)/.test(expLower)) {
+    return true;
+  }
 
   if (!isAddingVerbS) return false;
 
@@ -477,51 +538,77 @@ async function gradeSingleAttempt(
 
   const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
 
-  const cleanBandLabel = normalizeLevelBandLabel(
-    String(parsedReview?.estimated_band || ""),
-    String(parsedReview?.level_assessment || "")
-  );
+  const rawInternalScore = Number(parsedReview?.internal_score);
+  const hasValidScore = Number.isFinite(rawInternalScore) && parsedReview?.internal_score !== "" && parsedReview?.internal_score !== null && parsedReview?.internal_score !== undefined;
+  const roundedScore = hasValidScore ? roundQuarterStep(rawInternalScore) : null;
+
+  const cleanBandLabel =
+    roundedScore !== null
+      ? scoreToBandLabel(roundedScore)
+      : normalizeLevelBandLabel(
+          String(parsedReview?.estimated_band || ""),
+          String(parsedReview?.level_assessment || "")
+        );
+
+  // Deduplicate pronunciation fixes by unique word (sai 1 từ 3 lần vẫn chỉ tính 1 lỗi)
+  // và loại bỏ các mục phát âm thiếu đuôi -s/-es/-ed chia động từ
+  const seenPronWords = new Set<string>();
+  const dedupedPronFixes = Array.isArray(parsedReview?.pronunciation_fixes)
+    ? parsedReview.pronunciation_fixes
+        .map((p: Record<string, unknown>) => ({
+          word: String(p?.word || "").trim(),
+          ipa: String(p?.ipa || "").trim(),
+          issue_vi: String(p?.issue_vi || "").trim()
+        }))
+        .filter((p: { word: string; issue_vi: string }) => {
+          if (!p.word || !p.issue_vi) return false;
+          if (isIgnoredVerbInflectionPronFix(p.word, p.issue_vi)) return false;
+          const normKey = p.word.toLowerCase().replace(/[^a-z0-9']/g, "");
+          if (!normKey || seenPronWords.has(normKey)) return false;
+          seenPronWords.add(normKey);
+          return true;
+        })
+    : [];
+
+  // Deduplicate language corrections by (category + normalized original)
+  const seenLangKeys = new Set<string>();
+  const dedupedLangCorrections = Array.isArray(parsedReview?.language_corrections)
+    ? parsedReview.language_corrections
+        .map((c: Record<string, unknown>) => ({
+          original: String(c?.original || "").trim(),
+          corrected: String(c?.corrected || "").trim(),
+          category: String(c?.category || "Từ vựng tự nhiên").trim(),
+          explanation_vi: String(c?.explanation_vi || "").trim()
+        }))
+        .filter((c: { original: string; corrected: string; category: string; explanation_vi: string }) => {
+          if (!c.original || !c.corrected) return false;
+          if (c.original.toLowerCase() === c.corrected.toLowerCase()) return false;
+          if (isIgnoredVerbInflectionFix(c.original, c.corrected, c.category, c.explanation_vi)) return false;
+          const normKey = `${c.category.toLowerCase()}__${c.original.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim()}`;
+          if (seenLangKeys.has(normKey)) return false;
+          seenLangKeys.add(normKey);
+          return true;
+        })
+        .map((c: { original: string; corrected: string; category: string; explanation_vi: string }, idx: number) => ({
+          id: idx + 1,
+          ...c
+        }))
+    : [];
 
   const normalizedReview = {
     recognized_transcript: recognizedTranscript,
-    level_assessment: String(parsedReview?.level_assessment || "").replace(/\d+(\.\d+)?\s*\/\s*10/g, "").trim(),
+    internal_score: roundedScore,
+    level_assessment: stripNumericScores(String(parsedReview?.level_assessment || "")),
     estimated_band: cleanBandLabel,
-    overall_comment: String(parsedReview?.overall_comment || ""),
+    overall_comment: stripNumericScores(String(parsedReview?.overall_comment || "")),
     criteria: {
-      pronunciation_intonation: String(parsedReview?.criteria?.pronunciation_intonation || ""),
-      grammar: String(parsedReview?.criteria?.grammar || ""),
-      vocabulary_vietlish: String(parsedReview?.criteria?.vocabulary_vietlish || ""),
-      coherence_logic: String(parsedReview?.criteria?.coherence_logic || "")
+      pronunciation_intonation: stripNumericScores(String(parsedReview?.criteria?.pronunciation_intonation || "")),
+      grammar: stripNumericScores(String(parsedReview?.criteria?.grammar || "")),
+      vocabulary_vietlish: stripNumericScores(String(parsedReview?.criteria?.vocabulary_vietlish || "")),
+      coherence_logic: stripNumericScores(String(parsedReview?.criteria?.coherence_logic || ""))
     },
-    pronunciation_fixes: Array.isArray(parsedReview?.pronunciation_fixes)
-      ? parsedReview.pronunciation_fixes
-          .map((p: Record<string, unknown>) => ({
-            word: String(p?.word || "").trim(),
-            ipa: String(p?.ipa || "").trim(),
-            issue_vi: String(p?.issue_vi || "").trim()
-          }))
-          .filter((p: { word: string; issue_vi: string }) => p.word && p.issue_vi)
-      : [],
-    language_corrections: Array.isArray(parsedReview?.language_corrections)
-      ? parsedReview.language_corrections
-          .map((c: Record<string, unknown>) => ({
-            original: String(c?.original || "").trim(),
-            corrected: String(c?.corrected || "").trim(),
-            category: String(c?.category || "Từ vựng tự nhiên").trim(),
-            explanation_vi: String(c?.explanation_vi || "").trim()
-          }))
-          .filter(
-            (c: { original: string; corrected: string; category: string; explanation_vi: string }) =>
-              c.original &&
-              c.corrected &&
-              c.original.toLowerCase() !== c.corrected.toLowerCase() &&
-              !isThirdPersonVerbSOnlyFix(c.original, c.corrected, c.category, c.explanation_vi)
-          )
-          .map((c: { original: string; corrected: string; category: string; explanation_vi: string }, idx: number) => ({
-            id: idx + 1,
-            ...c
-          }))
-      : [],
+    pronunciation_fixes: dedupedPronFixes,
+    language_corrections: dedupedLangCorrections,
     idea_expansions: Array.isArray(parsedReview?.idea_expansions)
       ? parsedReview.idea_expansions
           .map((it: Record<string, unknown>) => ({

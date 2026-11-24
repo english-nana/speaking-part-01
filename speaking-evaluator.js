@@ -1,8 +1,14 @@
 // ============================================================================
-// SPEAKING PART 1 — AUTO ERROR CORRECTION & VSTEP REFERENCE SCORING (THANG 10)
-// - 4.0 - 5.5: Đạt mức B1
-// - 6.0 - 8.5: Đạt mức B2
-// - < 4.0    : Chưa đạt B1
+// SPEAKING PART 1 — AUTO ERROR CORRECTION & VSTEP REFERENCE SCORING
+// - 0.00 - 3.50 : Chưa đạt B1
+// - 3.75        : Xấp xỉ B1
+// - 4.00 - 5.50 : Đạt B1
+// - 5.75        : Xấp xỉ B2
+// - 6.00 - 8.50 : Đạt B2
+// - 8.75        : Xấp xỉ C1
+// - 9.00 - 10.0 : Đạt C1
+// - Làm tròn bước 0.25 · Tính theo DẠNG LỖI (không cộng dồn lặp lỗi)
+// - Bỏ qua lỗi thiếu đuôi -s, -es, -ed khi chia động từ
 // ============================================================================
 
 (function () {
@@ -248,10 +254,23 @@
       isPastPrompt ||
       /\b(yesterday|last\s+(?:year|summer|month|week|trip)|two\s+years?\s+ago|\d+\s+years?\s+ago|was|were|went|visited|stayed|had\s+a\s+great\s+time)\b/i.test(lower);
 
+    function canonicalErrorType(key) {
+      const k = String(key || "");
+      if (k.startsWith("missing_article_")) return "missing_article";
+      if (k.startsWith("a_plural_")) return "a_plural";
+      if (k.startsWith("make_help_obj_")) return "make_help_obj";
+      if (k.startsWith("modal_")) return "modal_verb_form";
+      if (k.startsWith("prep_")) return "preposition";
+      if (k.startsWith("stt_")) return k; // mỗi từ sai phát âm là 1 lỗi riêng, lặp cùng từ vẫn chỉ tính 1
+      return k;
+    }
+
     function addIssue(key, wrong, fix, reason, replaceTarget, rewriteText) {
       if (seenKeys.has(key) || issues.length >= 6) return;
       seenKeys.add(key);
       issues.push({
+        key,
+        errorType: canonicalErrorType(key),
         wrong,
         fix,
         reason,
@@ -880,32 +899,7 @@
       );
     }
 
-    // 10. Lỗi chia động từ ngôi thứ 3 số ít ("it help", "the weather affect", "my hometown have")
-    const thirdSgRegex = /\b(the\s+weather|my\s+hometown|my\s+city|my\s+country|my\s+family|it|this|that|which|he|she)\s+(help|make|give|bring|take|need|cost|have|affect|rain|get|feel|keep|cheer|depend|like|love|want|go|do)\b/gi;
-    let tsg;
-    while ((tsg = thirdSgRegex.exec(raw)) !== null) {
-      const beforeTsg = raw.slice(Math.max(0, tsg.index - 24), tsg.index).toLowerCase();
-      if (/\b(can|could|will|would|should|must|may|might|does|doesn't|do|don't|did|didn't|to|make|makes|made|help|helps|helped|let|lets)\s+$/.test(beforeTsg)) {
-        continue;
-      }
-      if (tsg[1].toLowerCase() === "which" && /\b[a-z]+s\s+$/.test(beforeTsg)) {
-        continue;
-      }
-      if (seenKeys.has("bare_have_there_are") || seenKeys.has("hometown_have_there_are")) {
-        continue;
-      }
-      const fixed3 = toThirdSg(tsg[2]);
-      const fixed3Sg = `${tsg[1]} ${fixed3}`;
-      addIssue(
-        "third_sg",
-        tsg[0],
-        fixed3Sg,
-        `Chủ ngữ số ít "${tsg[1]}" cần chia động từ thêm "-s/-es" ("${fixed3Sg}").`,
-        tsg[0],
-        fixed3Sg
-      );
-      break;
-    }
+    // 10. Bỏ qua lỗi quên thêm / phát âm thiếu đuôi -s, -es, -ed khi chia động từ theo quy tắc chấm văn nói
 
     // 11. Lỗi "because of + mệnh đề"
     const becClause = raw.match(/\bbecause\s+of\s+(i|we|they|it|you)\s+(can|like|love|have|want|need|is|are|am)\b/i);
@@ -994,8 +988,20 @@
     return rewritten;
   }
 
-  function roundHalfStep(score) {
-    return Math.round(score * 2) / 2;
+  function roundQuarterStep(score) {
+    const clamped = Math.max(0, Math.min(10, Number(score) || 0));
+    return Math.round(clamped * 4) / 4;
+  }
+
+  function scoreToBandInfo(score) {
+    const r = roundQuarterStep(score);
+    if (r >= 9.0) return { levelLabel: "Đạt C1", badgeTone: "c1" };
+    if (r >= 8.75) return { levelLabel: "Xấp xỉ C1", badgeTone: "approx" };
+    if (r >= 6.0) return { levelLabel: "Đạt B2", badgeTone: "b2" };
+    if (r >= 5.75) return { levelLabel: "Xấp xỉ B2", badgeTone: "approx" };
+    if (r >= 4.0) return { levelLabel: "Đạt B1", badgeTone: "b1" };
+    if (r >= 3.75) return { levelLabel: "Xấp xỉ B1", badgeTone: "approx" };
+    return { levelLabel: "Chưa đạt B1", badgeTone: "below" };
   }
 
   function evaluate(question, takeObj) {
@@ -1061,121 +1067,136 @@
     const usedCompound = COMPOUND_MARKERS.filter(m => hasWholeWordOrPhrase(lower, m));
 
     const errors = detectMainErrors(transcript, question);
+    // Tính theo DẠNG LỖI (không tính tổng số lần lặp lại của cùng một dạng lỗi / cùng 1 từ sai phát âm)
+    const distinctErrorTypes = Array.from(new Set(errors.map(e => e.errorType || e.key || e.wrong)));
+    const errorTypeCount = distinctErrorTypes.length;
     const correctedSentence = buildCorrectedTranscript(transcript, errors);
 
     // ------------------------------------------------------------------
-    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP SPEAKING PART 1 (NGHIÊM TÚC & SÁT THỰC TẾ)
-    // - < 4.0     : Chưa đạt B1
-    // - 4.0 - 5.5 : Đạt mức B1 (tối thiểu >= 22 từ, đúng trọng tâm, <= 2 lỗi)
-    // - 6.0 - 8.5 : Đạt mức B2 (>= 34 từ, đủ từ vựng & ngữ pháp B2, <= 1 lỗi)
+    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP (LÀM TRÒN 0.25 · TÍNH THEO DẠNG LỖI)
+    // - 0.00 - 3.50 : Chưa đạt B1
+    // - 3.75        : Xấp xỉ B1
+    // - 4.00 - 5.50 : Đạt B1
+    // - 5.75        : Xấp xỉ B2
+    // - 6.00 - 8.50 : Đạt B2
+    // - 8.75        : Xấp xỉ C1
+    // - 9.00 - 10.0 : Đạt C1
     // ------------------------------------------------------------------
-    // 1. Task Development & Length (0.3 - 2.5 pts)
+    // 1. Task Development & Length (0.3 - 2.6 pts)
     let devPts = 0.3;
-    if (wordCount >= 45) devPts = 2.5;
+    if (wordCount >= 55) devPts = 2.6;
+    else if (wordCount >= 45) devPts = 2.5;
     else if (wordCount >= 34) devPts = 2.15;
     else if (wordCount >= 28) devPts = 1.8;
     else if (wordCount >= 22) devPts = 1.5;
     else if (wordCount >= 15) devPts = 1.0;
     else if (wordCount >= 10) devPts = 0.65;
 
-    // 2. Vocabulary & Topic Lexical Resource (0.4 - 2.5 pts)
+    // 2. Vocabulary & Topic Lexical Resource (0.4 - 2.7 pts)
     let vocabPts = matchedDomainCount === 0 ? 0.4 : 0.85 + Math.min(0.45, uniqueDomainWords.length * 0.08);
     if (b1SampleHits.length > 0) vocabPts += Math.min(0.25, b1SampleHits.length * 0.09);
-    vocabPts += Math.min(1.0, allB2Lexis.length * 0.28);
-    vocabPts = Math.min(2.5, vocabPts);
+    vocabPts += Math.min(1.2, allB2Lexis.length * 0.28);
+    vocabPts = Math.min(2.7, vocabPts);
 
-    // 3. Grammar Range (0.8 - 2.35 pts; lỗi trừ trực tiếp bên dưới)
+    // 3. Grammar Range (0.8 - 2.6 pts; lỗi trừ theo dạng lỗi bên dưới)
     let gramPts = wordCount >= 22 ? 1.05 : 0.8;
     if (usedCompound.length > 0) gramPts += 0.15;
     if (usedComplex.length > 0 && wordCount >= 20) gramPts += 0.25;
     if (usedRelative.length > 0) gramPts += 0.45;
     if (usedDiscourse.length >= 1) gramPts += 0.25;
-    if (usedDiscourse.length >= 2) gramPts += 0.15;
+    if (usedDiscourse.length >= 2) gramPts += 0.2;
+    if (usedComplex.length >= 2 && usedRelative.length >= 1) gramPts += 0.25;
 
-    // 4. Fluency & Delivery Pacing (0.25 - 1.2 pts)
+    // 4. Fluency & Delivery Pacing (0.25 - 1.5 pts)
     let fluPts = 0.35;
-    if (wordCount >= 34) fluPts = 1.05;
+    if (wordCount >= 45) fluPts = 1.3;
+    else if (wordCount >= 34) fluPts = 1.05;
     else if (wordCount >= 22) fluPts = 0.85;
     else if (wordCount >= 15) fluPts = 0.55;
-    if (usedDiscourse.length >= 1 && wordCount >= 36) fluPts = Math.min(1.2, fluPts + 0.15);
+    if (usedDiscourse.length >= 1 && wordCount >= 36) fluPts = Math.min(1.5, fluPts + 0.2);
     if (durationSec >= 12 && wordCount / durationSec < 0.75) {
       fluPts = Math.max(0.25, fluPts - 0.2);
     }
 
-    // Trừ trực tiếp 0.55 điểm cho mỗi lỗi phát hiện được
-    let rawScore = devPts + vocabPts + gramPts + fluPts - errors.length * 0.55;
+    // Trừ trực tiếp 0.55 điểm cho mỗi DẠNG LỖI khác nhau phát hiện được
+    let rawScore = devPts + vocabPts + gramPts + fluPts - errorTypeCount * 0.55;
 
     const isOffTopic = matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0;
     const hasB2Lexis = allB2Lexis.length >= 3 || (allB2Lexis.length >= 2 && (usedRelative.length > 0 || usedDiscourse.length > 0));
     const hasB2Grammar = usedRelative.length > 0 || usedDiscourse.length > 0;
+    const hasC1Profile =
+      errorTypeCount === 0 &&
+      wordCount >= 55 &&
+      allB2Lexis.length >= 5 &&
+      usedRelative.length >= 1 &&
+      usedComplex.length >= 1 &&
+      usedDiscourse.length >= 2;
 
     if (isOffTopic) {
       rawScore = Math.min(rawScore, 2.5);
     } else if (wordCount < 15) {
       rawScore = Math.min(rawScore, 2.5);
     } else if (wordCount < 22) {
-      rawScore = Math.min(rawScore, errors.length >= 2 ? 2.5 : 3.5);
-    } else if (errors.length >= 3) {
+      rawScore = Math.min(rawScore, errorTypeCount >= 2 ? 2.5 : 3.5);
+    } else if (errorTypeCount >= 3) {
       rawScore = Math.min(rawScore, 3.5);
-    } else if (errors.length >= 2 || wordCount < 34 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
+    } else if (errorTypeCount >= 2 || wordCount < 34 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
       // Khung B1 tối đa 5.5 (bài ngắn 22-27 từ tối đa 4.5)
       rawScore = Math.min(rawScore, wordCount < 28 ? 4.5 : 5.5);
+    } else if (hasC1Profile) {
+      rawScore = Math.max(rawScore, 9.0);
     } else {
       // Đủ chuẩn vào khung B2 (6.0 - 8.5)
-      if (errors.length === 0) {
+      if (errorTypeCount === 0) {
         rawScore = Math.max(rawScore, 6.5);
       } else {
         rawScore = Math.min(rawScore, 6.5);
       }
       if (wordCount < 45 && allB2Lexis.length < 4) {
         rawScore = Math.min(rawScore, 7.5);
+      } else {
+        rawScore = Math.min(rawScore, 8.5);
       }
     }
 
-    const finalScore = roundHalfStep(Math.max(1.5, Math.min(8.5, rawScore)));
-
-    let levelLabel = "Chưa đạt B1";
-    let badgeTone = "below";
-    if (finalScore >= 6.0) {
-      levelLabel = "Đạt mức B2";
-      badgeTone = "b2";
-    } else if (finalScore >= 4.0) {
-      levelLabel = "Đạt mức B1";
-      badgeTone = "b1";
-    }
+    const finalScore = roundQuarterStep(Math.max(0, Math.min(10, rawScore)));
+    const { levelLabel, badgeTone } = scoreToBandInfo(finalScore);
 
     const timeNote = durationSec ? ` / ${durationSec} giây` : "";
     const notes = [];
-    if (errors.length === 0) {
+    if (errorTypeCount === 0) {
       notes.push(`Không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
     }
 
     if (isOffTopic) {
       notes.push("Nội dung chưa bám sát từ khóa câu hỏi; cần trả lời trực tiếp vào trọng tâm đề bài.");
     } else if (wordCount < 22) {
-      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 22–35 từ (3 câu ngắn gọn theo công thức A-R-E: Trả lời + Lý do → Ví dụ → Cảm xúc) để đạt mức B1 (4.0+).`);
+      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 22–35 từ (3 câu ngắn gọn theo công thức A-R-E: Trả lời + Lý do → Ví dụ → Cảm xúc) để đạt mức B1.`);
     } else if (badgeTone === "below") {
-      notes.push(`Bài nói còn ${errors.length} lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); cần sửa các lỗi trên để đạt mức B1 (4.0+).`);
-    } else if (badgeTone === "b1") {
+      notes.push(`Bài nói còn ${errorTypeCount} dạng lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); cần sửa các lỗi trên để đạt mức B1.`);
+    } else if (badgeTone === "b1" || levelLabel === "Xấp xỉ B1") {
       if (wordCount < 34) {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy giữ 3 câu theo A-R-E khoảng 35+ từ, thêm cụm từ vựng tự nhiên ở Mục V và từ nối/mệnh đề quan hệ.`);
-      } else if (errors.length > 0) {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Hãy sửa lỗi trên và dùng thêm từ nối/cụm tự nhiên B2 để hướng tới mức 6.0+.`);
+        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Để lên B2, hãy giữ 3 câu theo A-R-E khoảng 35+ từ, thêm cụm từ vựng tự nhiên ở Mục V và từ nối/mệnh đề quan hệ.`);
+      } else if (errorTypeCount > 0) {
+        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Hãy sửa dạng lỗi trên và dùng thêm từ nối/cụm tự nhiên B2 để hướng tới mức B2.`);
       } else {
-        notes.push(`Đạt mức B1 (${wordCount} từ${timeNote}). Để lên B2 (6.0+), hãy dùng thêm các cụm tự nhiên ở Mục V (Honestly / tend to / unwind / , which...).`);
+        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Để lên B2, hãy dùng thêm các cụm tự nhiên ở Mục V (Honestly / tend to / unwind / , which...).`);
       }
-    } else if (errors.length > 0) {
-      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}). Khắc phục lỗi nhỏ bên trên để giữ chắc mức 7.0–8.0.`);
+    } else if (badgeTone === "c1") {
+      notes.push(`Đạt C1 (${wordCount} từ${timeNote}), triển khai tự nhiên, giàu từ vựng và cấu trúc linh hoạt.`);
+    } else if (errorTypeCount > 0) {
+      notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Khắc phục lỗi nhỏ bên trên để giữ vững phong độ B2.`);
     } else {
-      notes.push(`Đạt mức B2 (${wordCount} từ${timeNote}), triển khai tự nhiên đúng cấu trúc A-R-E và dùng được cụm từ nâng cao.`);
+      notes.push(`${levelLabel} (${wordCount} từ${timeNote}), triển khai tự nhiên đúng cấu trúc A-R-E và dùng được cụm từ nâng cao.`);
     }
 
     return {
       hasTranscript: true,
       score: finalScore,
-      scoreText: finalScore.toFixed(1),
+      scoreText: finalScore.toFixed(2),
       levelLabel,
       badgeTone,
+      errorTypeCount,
       wordCount,
       durationSec,
       errors,
@@ -1187,9 +1208,10 @@
   function renderFeedbackCardHtml(res, escFn) {
     if (!res) return "";
     const esc = escFn || (s => String(s || ""));
+    // Chỉ hiển thị mức đánh giá cho học viên, không hiển thị điểm số cụ thể
     const scorePill =
-      res.hasTranscript && res.score !== null
-        ? `<span class="ai-eval-score-pill tone-${esc(res.badgeTone)}">${esc(res.scoreText)} / 10 · ${esc(res.levelLabel)}</span>`
+      res.hasTranscript && res.levelLabel
+        ? `<span class="ai-eval-score-pill tone-${esc(res.badgeTone)}">${esc(res.levelLabel)}</span>`
         : `<span class="ai-eval-score-pill tone-neutral">${esc(res.levelLabel)}</span>`;
 
     if (!res.hasTranscript) {
@@ -1200,8 +1222,7 @@
         <div class="ai-eval-card">
           <div class="ai-eval-header">
             <div class="ai-eval-title-wrap">
-              <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
-              <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
+              <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói</span>
             </div>
             ${scorePill}
           </div>
@@ -1256,8 +1277,7 @@
       <div class="ai-eval-card">
         <div class="ai-eval-header">
           <div class="ai-eval-title-wrap">
-            <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói (Thang VSTEP 10)</span>
-            <span class="ai-eval-band-note">4.0–5.5: Đạt B1 · 6.0–8.5: Đạt B2</span>
+            <span class="ai-eval-title">Nhận xét &amp; Sửa lỗi bài nói</span>
           </div>
           ${scorePill}
         </div>
