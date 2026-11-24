@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124g" />
+  <link rel="stylesheet" href="./styles.css?v=20261124h" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124g"></script>
-  <script src="./supabase-client.js?v=20261124g"></script>
-  <script src="./travel-data.js?v=20261124g"></script>
-  <script src="./speaking-evaluator.js?v=20261124g"></script>
+  <script src="./supabase-config.js?v=20261124h"></script>
+  <script src="./supabase-client.js?v=20261124h"></script>
+  <script src="./travel-data.js?v=20261124h"></script>
+  <script src="./speaking-evaluator.js?v=20261124h"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -38,15 +38,8 @@
 
       const LEVEL_FILTER_OPTIONS = [
         { value: "all", label: "Tất cả trình độ" },
-        { value: "B1", label: "Mục tiêu Level B1" },
-        { value: "B2", label: "Mục tiêu Level B2" },
-        { value: "Chưa đạt B1", label: "Đánh giá: Chưa đạt B1" },
-        { value: "Xấp xỉ B1", label: "Đánh giá: Xấp xỉ B1" },
-        { value: "Đạt B1", label: "Đánh giá: Đạt B1" },
-        { value: "Xấp xỉ B2", label: "Đánh giá: Xấp xỉ B2" },
-        { value: "Đạt B2", label: "Đánh giá: Đạt B2" },
-        { value: "Xấp xỉ C1", label: "Đánh giá: Xấp xỉ C1" },
-        { value: "Đạt C1", label: "Đánh giá: Đạt C1" }
+        { value: "B1", label: "Mục tiêu B1" },
+        { value: "B2", label: "Mục tiêu B2" }
       ];
 
       const tState = {
@@ -67,9 +60,8 @@
         aiTableNotice: "",
         students: [],
         submissions: [],
-        searchNameQuery: "",
         filterClass: "all", // "all" | "ONB204" | "CB221" | "unassigned"
-        filterLevel: "all",
+        filterLevel: "all", // "all" | "B1" | "B2"
         filterPart: "all", // "all" | "part1" | "part2" | "part3"
         filterTopic: "all",
         filterStatus: "all", // "all" | "submitted" | "unread_review" | "ungraded" | "graded"
@@ -507,15 +499,6 @@
         return clsName === tState.filterClass;
       }
 
-      function matchesNameFilter(name, email) {
-        const q = tState.searchNameQuery.trim().toLowerCase();
-        if (!q) return true;
-        return (
-          String(name || "").toLowerCase().includes(q) ||
-          String(email || "").toLowerCase().includes(q)
-        );
-      }
-
       function matchesPartFilter(partId) {
         if (tState.filterPart === "all") return true;
         return (partId || "part1") === tState.filterPart;
@@ -528,13 +511,7 @@
 
       function matchesLevelFilter(sub) {
         if (tState.filterLevel === "all") return true;
-        if (tState.filterLevel === "B1" || tState.filterLevel === "B2") {
-          return (sub.targetLevel || "B1").toUpperCase() === tState.filterLevel;
-        }
-        const evalBand = String(sub.evaluatedBand || "").toLowerCase();
-        const teacherBand = String(sub.teacherScore || "").toLowerCase();
-        const wanted = tState.filterLevel.toLowerCase();
-        return evalBand === wanted || teacherBand.includes(wanted);
+        return (sub.targetLevel || "B1").toUpperCase() === tState.filterLevel;
       }
 
       function hasAnyFeedbackOrReview(sub) {
@@ -592,7 +569,7 @@
           (tState.filterPart !== "all" && tState.filterPart !== "part1");
 
         return tState.students
-          .filter(st => matchesClassFilter(st.className) && matchesNameFilter(st.name, st.email))
+          .filter(st => matchesClassFilter(st.className))
           .map(st => ({
             ...st,
             metrics: getStudentScopedMetrics(st.id)
@@ -604,7 +581,6 @@
         return tState.submissions.filter(sub => {
           if (studentId && sub.studentId !== studentId) return false;
           if (!matchesClassFilter(sub.studentClass)) return false;
-          if (!matchesNameFilter(sub.studentName, sub.studentEmail)) return false;
           if (!matchesPartFilter(sub.partId)) return false;
           if (!matchesTopicFilter(sub.topicId)) return false;
           if (!matchesLevelFilter(sub)) return false;
@@ -618,7 +594,6 @@
 
       function hasActiveFilters() {
         return (
-          tState.searchNameQuery.trim() !== "" ||
           tState.filterClass !== "all" ||
           tState.filterLevel !== "all" ||
           tState.filterPart !== "all" ||
@@ -807,14 +782,6 @@
             </div>
 
             <div class="teacher-filter-controls">
-              <input
-                type="text"
-                id="inp-filter-name"
-                class="form-input teacher-filter-item"
-                placeholder="🔍 Tìm theo họ tên..."
-                value="${escapeHtml(tState.searchNameQuery)}"
-              />
-
               <select id="sel-filter-class" class="form-input teacher-filter-item" aria-label="Lọc theo lớp">
                 <option value="all" ${tState.filterClass === "all" ? "selected" : ""}>Tất cả lớp</option>
                 ${CLOUD.CLASS_LIST.map(
@@ -1471,7 +1438,6 @@
         const btnResetFilters = document.getElementById("btn-reset-filters");
         if (btnResetFilters) {
           btnResetFilters.onclick = () => {
-            tState.searchNameQuery = "";
             tState.filterClass = "all";
             tState.filterLevel = "all";
             tState.filterPart = "all";
@@ -1516,20 +1482,6 @@
             );
           };
         });
-
-        const inpFilterName = document.getElementById("inp-filter-name");
-        if (inpFilterName) {
-          inpFilterName.oninput = e => {
-            tState.searchNameQuery = e.target.value;
-            const pos = e.target.selectionStart;
-            renderTeacherApp();
-            const nextInp = document.getElementById("inp-filter-name");
-            if (nextInp) {
-              nextInp.focus();
-              nextInp.setSelectionRange(pos, pos);
-            }
-          };
-        }
 
         const selFilterClass = document.getElementById("sel-filter-class");
         if (selFilterClass) {

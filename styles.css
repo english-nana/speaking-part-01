@@ -3589,41 +3589,15 @@ button, input, select, textarea {
     display: none;
   }
 
-  /* Dashboard topbar: row 1 = menu + right controls, row 2 = full-width search bar */
+  /* Dashboard topbar: clean single row = menu left + right controls */
   .app-layout:not(.focus-lesson-mode) .dt-topbar-inner {
-    flex-wrap: wrap;
-    row-gap: 8px;
+    flex-wrap: nowrap;
+    gap: 8px;
     padding: 8px 12px !important;
   }
 
-  .app-layout:not(.focus-lesson-mode) .dt-topbar-left-group {
-    display: contents;
-  }
-
-  .app-layout:not(.focus-lesson-mode) .ej-mobile-menu-btn {
-    order: 1;
-  }
-
   .app-layout:not(.focus-lesson-mode) .dt-topbar-right-group {
-    order: 2;
     margin-left: auto;
-  }
-
-  .app-layout:not(.focus-lesson-mode) .vs-dashboard-topbar-left {
-    order: 3;
-    flex: 1 0 100%;
-    width: 100%;
-  }
-
-  .app-layout:not(.focus-lesson-mode) .ej-topbar-search-wrap {
-    width: 100%;
-  }
-
-  .ej-search-dropdown {
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: none;
   }
 
   /* Focus Lesson topbar compact on phone */
@@ -3819,7 +3793,7 @@ button, input, select, textarea {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 210px;
+  min-width: 235px;
   max-width: calc(100vw - 24px);
   background: #FFFFFF;
   border: 2px solid #18181B;
@@ -3846,6 +3820,39 @@ button, input, select, textarea {
   color: #71717A;
   margin-top: 2px;
   word-break: break-all;
+}
+
+.account-menu-item {
+  width: 100%;
+  padding: 10px 13px;
+  border: none;
+  border-bottom: 1px solid #F4F4F5;
+  background: #FFFFFF;
+  color: #18181B;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+
+.account-menu-item:hover {
+  background: #FAF8F3;
+}
+
+.account-menu-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
 }
 
 .account-logout-item {

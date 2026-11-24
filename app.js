@@ -33,8 +33,6 @@
     sidebarCollapsed: initialSidebarCollapsed,
     mobileSidebarOpen: false,
     sbTopicsCollapsed: false,
-    quickSearchQuery: "",
-    quickSearchOpen: false,
     notifOpen: false,
     accountMenuOpen: false,
     reviewsByQuestionId: {},
@@ -686,52 +684,6 @@
     return items;
   }
 
-  function normalizeSearchText(str) {
-    return String(str || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d");
-  }
-
-  function getQuickSearchMatches(query) {
-    const normQ = normalizeSearchText(query).trim();
-    if (!normQ) {
-      return TOPICS.slice(0, 8).map(t => ({
-        title: `Đề ${t.number}: ${t.title}`,
-        sub: `${t.titleVi} · ${t.questions.length} câu hỏi`,
-        tag: `Topic ${t.number}`,
-        topicId: t.id,
-        questionIndex: 0
-      }));
-    }
-    const results = [];
-    TOPICS.forEach(t => {
-      const topicMatch = normalizeSearchText(`${t.number} ${t.title} ${t.titleVi} ${t.description}`).includes(normQ);
-      if (topicMatch) {
-        results.push({
-          title: `Đề ${t.number}: ${t.title}`,
-          sub: t.titleVi,
-          tag: `Topic ${t.number}`,
-          topicId: t.id,
-          questionIndex: 0
-        });
-      }
-      (t.questions || []).forEach((q, idx) => {
-        if (normalizeSearchText(q.prompt).includes(normQ)) {
-          results.push({
-            title: `Q${idx + 1}: ${q.prompt}`,
-            sub: `Đề ${t.number} · ${t.title} (${t.titleVi})`,
-            tag: `Đề ${t.number} · Q${idx + 1}`,
-            topicId: t.id,
-            questionIndex: idx
-          });
-        }
-      });
-    });
-    return results.slice(0, 10);
-  }
-
   // ==========================================================================
   // TEXT-TO-SPEECH (VOCABULARY PRONUNCIATION & MODEL / AI REVISED ANSWERS)
   // ==========================================================================
@@ -1334,19 +1286,6 @@
               <span class="ej-sb-label">Bài nói đã nộp</span>
               ${submittedTotal > 0 ? `<span class="ej-sb-count">${submittedTotal}</span>` : ""}
             </button>
-
-            <button
-              type="button"
-              class="ej-sb-item"
-              id="btn-sb-vocab-bank"
-              title="Kho từ vựng của tôi"
-            >
-              <span class="ej-sb-ico">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-              </span>
-              <span class="ej-sb-label">Kho từ vựng của tôi</span>
-              ${vocabCount > 0 ? `<span class="ej-sb-count">${vocabCount}</span>` : ""}
-            </button>
           </div>
 
           <div class="vs-sb-card ${state.sbTopicsCollapsed ? "collapsed" : ""}">
@@ -1429,7 +1368,6 @@
   function renderTopbarHtml(vocabCount) {
     const isFocusLesson = state.view === "practice";
     const topic = getCurrentTopic();
-    const searchMatches = state.quickSearchOpen ? getQuickSearchMatches(state.quickSearchQuery) : [];
 
     return `
       <header class="dt-topbar">
@@ -1447,60 +1385,6 @@
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
               </button>
-
-              <div class="vs-dashboard-topbar-left" id="ej-topbar-search-wrap">
-                <span class="vs-section-crumb">
-                  ${
-                    state.view === "my-submissions"
-                      ? "Bài nói đã nộp"
-                      : `Part 1 · ${TOPICS.length} Chủ đề`
-                  }
-                </span>
-
-                <div class="ej-topbar-search-wrap">
-                  <span class="ej-search-ico">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  </span>
-                  <input
-                    type="text"
-                    id="ej-quick-search-input"
-                    class="ej-quick-search-input"
-                    placeholder="Tìm chủ đề, câu hỏi... (⌘K)"
-                    value="${escapeHtml(state.quickSearchQuery)}"
-                    autocomplete="off"
-                  />
-                  ${
-                    state.quickSearchOpen
-                      ? `
-                      <div class="ej-search-dropdown" id="ej-search-dropdown">
-                        ${
-                          searchMatches.length === 0
-                            ? `<div class="ej-search-empty">Không tìm thấy chủ đề hoặc câu hỏi khớp với “${escapeHtml(state.quickSearchQuery)}”.</div>`
-                            : searchMatches
-                                .map(
-                                  m => `
-                                  <button
-                                    type="button"
-                                    class="ej-search-result-btn"
-                                    data-qs-topic="${escapeHtml(m.topicId)}"
-                                    data-qs-qidx="${m.questionIndex}"
-                                  >
-                                    <div>
-                                      <div class="ej-search-res-title">${escapeHtml(m.title)}</div>
-                                      <div class="ej-search-res-sub">${escapeHtml(m.sub)}</div>
-                                    </div>
-                                    <span class="ej-search-res-tag">${escapeHtml(m.tag)}</span>
-                                  </button>
-                                `
-                                )
-                                .join("")
-                        }
-                      </div>
-                    `
-                      : ""
-                  }
-                </div>
-              </div>
             `
                 : `
               <div class="ej-focus-nav-group">
@@ -1521,10 +1405,6 @@
                 ? `<a href="./teacher.html" class="top-pill-btn teacher-nav-pill">👨‍🏫 <span class="topbar-vocab-label-full">Quản lý &amp; Xem bài học viên</span></a>`
                 : ""
             }
-
-            <button type="button" class="top-pill-btn yellow" id="btn-open-vocab-bank" title="Kho từ vựng của tôi">
-              <span>📚 <span class="topbar-vocab-label-full">Kho từ vựng</span> (${vocabCount})</span>
-            </button>
 
             ${renderNotificationBellHtml()}
 
@@ -1549,6 +1429,11 @@
                       <div class="account-dropdown-role">${escapeHtml(currentAccount.name)}${currentAccount.className && !currentAccount.isAdmin ? ` · ${escapeHtml(currentAccount.className)}` : ""}</div>
                       <div class="account-dropdown-email">${escapeHtml(currentAccount.email || "")}</div>
                     </div>
+                    <button type="button" class="account-menu-item" id="btn-open-vocab-bank">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                      <span>Kho từ vựng của tôi</span>
+                      <span class="account-menu-count">${vocabCount}</span>
+                    </button>
                     <button type="button" class="account-logout-item" id="btn-logout-account">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                       <span>Đăng xuất</span>
@@ -2401,8 +2286,8 @@
     state.currentQuestionIndex = Math.max(0, qIdx || 0);
     state.submitErrorMsg = "";
     state.mobileSidebarOpen = false;
-    state.quickSearchOpen = false;
     state.notifOpen = false;
+    state.accountMenuOpen = false;
 
     const qObj = getCurrentQuestion();
     if (qObj && currentAccount && currentAccount.questionsData && currentAccount.questionsData[qObj.id]) {
@@ -2651,7 +2536,6 @@
         e.stopPropagation();
         state.accountMenuOpen = !state.accountMenuOpen;
         state.notifOpen = false;
-        state.quickSearchOpen = false;
         renderApp();
       };
     }
@@ -2673,7 +2557,6 @@
         state.needsProfileSetup = false;
         state.reviewsByQuestionId = {};
         state.notifOpen = false;
-        state.quickSearchOpen = false;
         state.view = "auth";
         state.authMode = "login";
         state.authError = "";
@@ -2691,7 +2574,7 @@
         state.prevDashboardView = state.view;
         state.mobileSidebarOpen = false;
         state.notifOpen = false;
-        state.quickSearchOpen = false;
+        state.accountMenuOpen = false;
         renderApp();
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
@@ -2733,56 +2616,6 @@
       };
     }
 
-    // Quick Search in Topbar
-    const qsInput = document.getElementById("ej-quick-search-input");
-    if (qsInput) {
-      qsInput.onfocus = () => {
-        if (!state.quickSearchOpen) {
-          state.quickSearchOpen = true;
-          const pos = qsInput.selectionStart || 0;
-          renderApp();
-          const nextInp = document.getElementById("ej-quick-search-input");
-          if (nextInp) {
-            nextInp.focus();
-            nextInp.setSelectionRange(pos, pos);
-          }
-        }
-      };
-      qsInput.oninput = e => {
-        state.quickSearchQuery = e.target.value;
-        state.quickSearchOpen = true;
-        const pos = e.target.selectionStart || 0;
-        renderApp();
-        const nextInp = document.getElementById("ej-quick-search-input");
-        if (nextInp) {
-          nextInp.focus();
-          nextInp.setSelectionRange(pos, pos);
-        }
-      };
-      qsInput.onkeydown = e => {
-        if (e.key === "Escape") {
-          state.quickSearchOpen = false;
-          renderApp();
-        } else if (e.key === "Enter") {
-          const firstBtn = document.querySelector(".ej-search-result-btn");
-          if (firstBtn) {
-            e.preventDefault();
-            firstBtn.click();
-          }
-        }
-      };
-    }
-
-    document.querySelectorAll("[data-qs-topic]").forEach(btn => {
-      btn.onclick = () => {
-        const topicId = btn.getAttribute("data-qs-topic");
-        const qIdx = parseInt(btn.getAttribute("data-qs-qidx") || "0", 10);
-        state.quickSearchQuery = "";
-        state.quickSearchOpen = false;
-        openTopicAndQuestion(topicId, qIdx, false);
-      };
-    });
-
     // Notification Bell & Items
     const btnNotif = document.getElementById("topbar-notif-btn");
     if (btnNotif) {
@@ -2790,7 +2623,6 @@
         e.stopPropagation();
         state.notifOpen = !state.notifOpen;
         state.accountMenuOpen = false;
-        state.quickSearchOpen = false;
         renderApp();
         if (state.notifOpen) {
           refreshStudentReviews(true);
@@ -2813,18 +2645,17 @@
       };
     });
 
-    // Personal Vocab Modal triggers
-    ["btn-open-vocab-bank", "btn-sb-vocab-bank"].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) {
-        btn.onclick = () => {
-          state.vocabModalOpen = true;
-          state.mobileSidebarOpen = false;
-          state.notifOpen = false;
-          renderApp();
-        };
-      }
-    });
+    // Personal Vocab Modal trigger (inside account dropdown)
+    const btnVocabBank = document.getElementById("btn-open-vocab-bank");
+    if (btnVocabBank) {
+      btnVocabBank.onclick = () => {
+        state.vocabModalOpen = true;
+        state.accountMenuOpen = false;
+        state.mobileSidebarOpen = false;
+        state.notifOpen = false;
+        renderApp();
+      };
+    }
 
     document.querySelectorAll("[data-open-topic]").forEach(el => {
       el.onclick = () => openTopicAndQuestion(el.getAttribute("data-open-topic"), 0, false);
@@ -3077,27 +2908,14 @@
       state.accountMenuOpen = false;
       changed = true;
     }
-    if (state.quickSearchOpen && !e.target.closest("#ej-topbar-search-wrap")) {
-      state.quickSearchOpen = false;
-      changed = true;
-    }
     if (changed) renderApp();
   });
 
   document.addEventListener("keydown", e => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-      if (currentAccount && !state.needsProfileSetup && state.view !== "practice") {
-        e.preventDefault();
-        state.quickSearchOpen = true;
-        renderApp();
-        const inp = document.getElementById("ej-quick-search-input");
-        if (inp) inp.focus();
-      }
-    } else if (e.key === "Escape") {
-      if (state.notifOpen || state.accountMenuOpen || state.quickSearchOpen || state.vocabModalOpen) {
+    if (e.key === "Escape") {
+      if (state.notifOpen || state.accountMenuOpen || state.vocabModalOpen) {
         state.notifOpen = false;
         state.accountMenuOpen = false;
-        state.quickSearchOpen = false;
         state.vocabModalOpen = false;
         renderApp();
       }
