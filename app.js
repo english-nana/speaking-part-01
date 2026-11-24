@@ -2131,13 +2131,12 @@
                       .map((sent, sIdx) => {
                         const sentKey = `${qId}__${sIdx}`;
                         const isRevealed = Boolean(state.revealedPromptSentences[sentKey]);
-                        return `<span class="p2-prompt-sentence ${isRevealed ? "revealed" : ""}" data-toggle-prompt-sent="${escapeHtml(sentKey)}" title="Bấm để xem / ẩn nghĩa tiếng Việt">${sent.enHtml}${
-                          isRevealed ? ` <span class="p2-sent-vi">(${escapeHtml(sent.vi)})</span>` : ""
+                        return `<span class="p2-prompt-sentence ${isRevealed ? "revealed" : ""}" data-toggle-prompt-sent="${escapeHtml(sentKey)}">${sent.enHtml}${
+                          isRevealed ? ` <span class="p2-sent-vi">${escapeHtml(sent.vi)}</span>` : ""
                         }</span>`;
                       })
                       .join(" ")}
                   </div>
-                  <div class="p2-prompt-hint">Bấm vào từng câu để xem / ẩn nghĩa tiếng Việt</div>
                 `
                   : `<p class="question-prompt-text">${escapeHtml(question.prompt)}</p>`
               }
