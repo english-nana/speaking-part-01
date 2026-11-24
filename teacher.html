@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124h" />
+  <link rel="stylesheet" href="./styles.css?v=20261124i" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124h"></script>
-  <script src="./supabase-client.js?v=20261124h"></script>
-  <script src="./travel-data.js?v=20261124h"></script>
-  <script src="./speaking-evaluator.js?v=20261124h"></script>
+  <script src="./supabase-config.js?v=20261124i"></script>
+  <script src="./supabase-client.js?v=20261124i"></script>
+  <script src="./travel-data.js?v=20261124i"></script>
+  <script src="./speaking-evaluator.js?v=20261124i"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -28,6 +28,7 @@
       const escapeHtml = CLOUD.escapeHtml;
       const formatDuration = CLOUD.formatDuration;
       const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
+      const ADMIN_EMAIL = "mtung0208@gmail.com";
 
       // Danh mục phần thi Speaking (hiện tại là Part 1, sẵn sàng mở rộng Part 2 & Part 3)
       const PARTS_CATALOG = [
@@ -133,7 +134,16 @@
       // ======================================================================
       async function verifyAndLoadCloudTeacher(user) {
         const client = CLOUD.getClient();
-        if (!client || !user) return;
+        if (!client || !user) {
+          window.location.replace("./index.html");
+          return;
+        }
+
+        const userEmail = String(user.email || "").trim().toLowerCase();
+        if (userEmail !== ADMIN_EMAIL) {
+          window.location.replace("./index.html");
+          return;
+        }
 
         tState.loading = true;
         tState.authError = "";
@@ -142,10 +152,7 @@
 
         const { data: isTeacherFlag, error: rpcError } = await client.rpc("is_teacher");
         if (rpcError || !isTeacherFlag) {
-          tState.loading = false;
-          tState.authenticated = false;
-          tState.unauthorizedEmail = user.email || "";
-          renderTeacherApp();
+          window.location.replace("./index.html");
           return;
         }
 
@@ -669,73 +676,13 @@
       // ======================================================================
       // RENDERING VIEWS
       // ======================================================================
-      function renderUnauthorizedView() {
+      function renderCheckingAuthView() {
         return `
           <div class="auth-wrapper">
-            <div class="auth-card-box">
-              <div style="margin-bottom:10px;">
-                <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#FEE2E2;color:#991B1B;padding:3px 9px;border:1.5px solid #18181B;">
-                  KHÔNG CÓ QUYỀN TRUY CẬP
-                </span>
+            <div class="auth-card-box" style="text-align:center;padding:28px 22px;">
+              <div style="font-size:14px;font-weight:700;color:#52525B;">
+                Đang xác thực tài khoản...
               </div>
-              <h1 style="font-size:21px;font-weight:900;color:#18181B;margin-bottom:8px;">
-                Tài khoản không phải Giáo viên
-              </h1>
-              <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
-                Tài khoản <strong>${escapeHtml(tState.unauthorizedEmail)}</strong> chưa có trong danh sách bảng <code>public.teachers</code> trên Supabase nên hệ thống tự động chặn quyền đọc dữ liệu học viên.
-              </p>
-              <button type="button" class="form-submit-btn" id="btn-teacher-logout">
-                Đăng xuất &amp; Đăng nhập tài khoản Quản trị →
-              </button>
-            </div>
-          </div>
-        `;
-      }
-
-      function renderTeacherLogin() {
-        return `
-          <div class="auth-wrapper">
-            <div class="auth-card-box">
-              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-                <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#DCFCE7;color:#166534;padding:3px 9px;border:1.5px solid #18181B;">
-                  TRANG QUẢN TRỊ · VSTEP SPEAKING
-                </span>
-              </div>
-              <h1 style="font-size:22px;font-weight:900;color:#18181B;margin-bottom:6px;">
-                Đăng nhập Quản lý Học viên
-              </h1>
-              <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
-                Đăng nhập bằng tài khoản quản trị đã khai báo trong Supabase để quản lý học viên, nghe bài ghi âm và duyệt trả bài sửa.
-              </p>
-
-              ${
-                tState.authError
-                  ? `<div style="padding:8px 12px;border:1.5px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:12.5px;font-weight:700;margin-bottom:12px;">⚠️ ${escapeHtml(tState.authError)}</div>`
-                  : ""
-              }
-
-              <button type="button" class="google-auth-btn" id="btn-teacher-google-login" ${tState.loading ? "disabled" : ""}>
-                ${CLOUD.renderGoogleIconSvg(19)}
-                <span>${tState.loading ? "Đang xác thực..." : "Đăng nhập bằng Google"}</span>
-              </button>
-
-              <div class="auth-or-divider">
-                <span>Hoặc đăng nhập Email</span>
-              </div>
-
-              <form id="teacher-cloud-email-form" onsubmit="return false;">
-                <div class="form-field">
-                  <label class="form-label" for="inp-teacher-email">Email quản trị</label>
-                  <input type="email" id="inp-teacher-email" class="form-input" placeholder="admin@gmail.com" required />
-                </div>
-                <div class="form-field">
-                  <label class="form-label" for="inp-teacher-pass">Mật khẩu</label>
-                  <input type="password" id="inp-teacher-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
-                </div>
-                <button type="submit" class="form-submit-btn" ${tState.loading ? "disabled" : ""}>
-                  Đăng nhập →
-                </button>
-              </form>
             </div>
           </div>
         `;
@@ -1254,7 +1201,7 @@
                 </div>
 
                 <div class="dt-topbar-right-group teacher-topbar-right">
-                  <a href="./index.html" class="top-pill-btn" style="text-decoration:none;" title="Về trang luyện tập">
+                  <a href="./index.html?view=student" class="top-pill-btn" style="text-decoration:none;" title="Xem giao diện luyện tập của học viên">
                     <span>← <span class="topbar-vocab-label-full">Trang học</span></span>
                   </a>
 
@@ -1320,58 +1267,15 @@
       function renderTeacherApp() {
         const root = document.getElementById("teacher-app");
         if (!root) return;
-        if (tState.unauthorizedEmail) {
-          root.innerHTML = renderUnauthorizedView();
-        } else if (tState.authenticated) {
+        if (tState.authenticated) {
           root.innerHTML = renderTeacherDashboard();
         } else {
-          root.innerHTML = renderTeacherLogin();
+          root.innerHTML = renderCheckingAuthView();
         }
         bindTeacherEvents();
       }
 
       function bindTeacherEvents() {
-        const btnGoogle = document.getElementById("btn-teacher-google-login");
-        if (btnGoogle) {
-          btnGoogle.onclick = async () => {
-            tState.loading = true;
-            tState.authError = "";
-            renderTeacherApp();
-            const { error } = await CLOUD.signInWithGoogle();
-            if (error) {
-              tState.loading = false;
-              tState.authError = "Lỗi đăng nhập Google: " + error.message;
-              renderTeacherApp();
-            }
-          };
-        }
-
-        const cloudEmailForm = document.getElementById("teacher-cloud-email-form");
-        if (cloudEmailForm) {
-          cloudEmailForm.onsubmit = async e => {
-            e.preventDefault();
-            const client = CLOUD.getClient();
-            if (!client) {
-              tState.authError = "Chưa cấu hình kết nối Supabase.";
-              renderTeacherApp();
-              return;
-            }
-            const email = (document.getElementById("inp-teacher-email").value || "").trim().toLowerCase();
-            const password = (document.getElementById("inp-teacher-pass").value || "").trim();
-            tState.loading = true;
-            tState.authError = "";
-            renderTeacherApp();
-            const { data, error } = await client.auth.signInWithPassword({ email, password });
-            if (error || !data || !data.user) {
-              tState.loading = false;
-              tState.authError = "Email hoặc mật khẩu chưa đúng.";
-              renderTeacherApp();
-              return;
-            }
-            await verifyAndLoadCloudTeacher(data.user);
-          };
-        }
-
         const btnToggleAcc = document.getElementById("btn-toggle-account-menu");
         if (btnToggleAcc) {
           btnToggleAcc.onclick = e => {
@@ -1391,14 +1295,7 @@
                 await client.auth.signOut();
               } catch (e) {}
             }
-            tState.authenticated = false;
-            tState.unauthorizedEmail = "";
-            tState.teacherEmail = "";
-            tState.teacherUserId = "";
-            tState.selectedStudentId = "";
-            tState.infoModalStudentId = "";
-            tState.deletingUserId = "";
-            renderTeacherApp();
+            window.location.replace("./index.html");
           };
         }
 
@@ -1574,35 +1471,23 @@
       window.addEventListener("DOMContentLoaded", async () => {
         const client = CLOUD.getClient();
         if (!client) {
-          tState.authError = "Chưa cấu hình kết nối Supabase.";
-          renderTeacherApp();
+          window.location.replace("./index.html");
           return;
         }
 
         renderTeacherApp();
         const { data } = await client.auth.getSession();
-        if (data && data.session && data.session.user) {
-          await verifyAndLoadCloudTeacher(data.session.user);
+        if (!data || !data.session || !data.session.user) {
+          window.location.replace("./index.html");
+          return;
         }
+        await verifyAndLoadCloudTeacher(data.session.user);
 
         client.auth.onAuthStateChange(async (event, session) => {
-          if (
-            event === "SIGNED_IN" &&
-            session &&
-            session.user &&
-            !tState.authenticated &&
-            !tState.unauthorizedEmail
-          ) {
+          if (event === "SIGNED_IN" && session && session.user && !tState.authenticated) {
             await verifyAndLoadCloudTeacher(session.user);
           } else if (event === "SIGNED_OUT") {
-            tState.authenticated = false;
-            tState.unauthorizedEmail = "";
-            tState.teacherEmail = "";
-            tState.teacherUserId = "";
-            tState.selectedStudentId = "";
-            tState.infoModalStudentId = "";
-            tState.deletingUserId = "";
-            renderTeacherApp();
+            window.location.replace("./index.html");
           }
         });
       });

@@ -8,6 +8,7 @@
   const escapeHtml = CLOUD.escapeHtml;
   const formatDuration = CLOUD.formatDuration;
   const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
+  const ADMIN_EMAIL = "mtung0208@gmail.com";
 
   let currentAccount = null;
 
@@ -113,6 +114,15 @@
 
     const uid = sessionUser.id;
     const email = String(sessionUser.email || "").trim().toLowerCase();
+    const isAdminEmail = email === ADMIN_EMAIL;
+    const isStudentPreview = new URLSearchParams(window.location.search).get("view") === "student";
+
+    // Tự động nhận diện tài khoản admin (mtung0208@gmail.com) và chuyển thẳng vào trang quản trị
+    if (isAdminEmail && !isStudentPreview) {
+      window.location.replace("./teacher.html");
+      return;
+    }
+
     const meta = sessionUser.user_metadata || {};
     const appMeta = sessionUser.app_metadata || {};
     const fallbackName =
@@ -135,7 +145,7 @@
       client.rpc("is_teacher")
     ]);
 
-    state.isTeacher = Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
+    state.isTeacher = isAdminEmail && Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
 
     const rawStoredName =
       profileRes && profileRes.data && profileRes.data.full_name
@@ -231,8 +241,6 @@
     state.reviewsByQuestionId = reviewsMap;
     lastReviewsRefreshMs = Date.now();
 
-    const isAdminEmail =
-      email === "mtung0208@gmail.com" || email.startsWith("mtung0208@");
     const displayUserName = isAdminEmail ? "admin" : resolvedName;
 
     currentAccount = {
@@ -2561,6 +2569,11 @@
         state.authMode = "login";
         state.authError = "";
         state.authInfo = "";
+        if (window.location.search) {
+          try {
+            window.history.replaceState({}, "", "./index.html");
+          } catch (e) {}
+        }
         renderApp();
       };
     }
@@ -2954,6 +2967,11 @@
         state.needsProfileSetup = false;
         state.reviewsByQuestionId = {};
         state.view = "auth";
+        if (window.location.search) {
+          try {
+            window.history.replaceState({}, "", "./index.html");
+          } catch (e) {}
+        }
         renderApp();
       }
     });
