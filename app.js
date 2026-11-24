@@ -36,6 +36,7 @@
     quickSearchQuery: "",
     quickSearchOpen: false,
     notifOpen: false,
+    accountMenuOpen: false,
     reviewsByQuestionId: {},
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
@@ -232,16 +233,21 @@
     state.reviewsByQuestionId = reviewsMap;
     lastReviewsRefreshMs = Date.now();
 
+    const isAdminEmail =
+      email === "mtung0208@gmail.com" || email.startsWith("mtung0208@");
+    const displayUserName = isAdminEmail ? "admin" : resolvedName;
+
     currentAccount = {
       id: uid,
-      name: resolvedName,
+      name: displayUserName,
       className: resolvedClass,
       email: email,
+      isAdmin: isAdminEmail,
       savedVocab: savedVocab,
       questionsData: questionsData
     };
 
-    state.needsProfileSetup = !resolvedClass;
+    state.needsProfileSetup = !resolvedClass && !state.isTeacher && !isAdminEmail;
     state.profileFormName = resolvedName;
     state.profileFormClass = resolvedClass || CLOUD.CLASS_LIST[0];
     state.profileFormError = "";
@@ -1522,11 +1528,36 @@
 
             ${renderNotificationBellHtml()}
 
-            <button type="button" class="user-account-pill" id="btn-logout-account" title="Đăng xuất tài khoản">
-              <span class="user-initials">${escapeHtml(getInitials(currentAccount.name))}</span>
-              <span>${escapeHtml(currentAccount.name)}</span>
-              <span class="topbar-vocab-label-full" style="font-size:11px;color:#71717A;">· Đăng xuất</span>
-            </button>
+            <div class="account-menu-wrap" id="topbar-account-menu-wrap">
+              <button
+                type="button"
+                class="user-account-pill"
+                id="btn-toggle-account-menu"
+                aria-expanded="${state.accountMenuOpen ? "true" : "false"}"
+                title="Tài khoản của bạn"
+              >
+                <span class="user-initials">${escapeHtml(currentAccount.isAdmin ? "AD" : getInitials(currentAccount.name))}</span>
+                <span>${escapeHtml(currentAccount.name)}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+
+              ${
+                state.accountMenuOpen
+                  ? `
+                  <div class="account-dropdown" id="topbar-account-dropdown">
+                    <div class="account-dropdown-meta">
+                      <div class="account-dropdown-role">${escapeHtml(currentAccount.name)}${currentAccount.className && !currentAccount.isAdmin ? ` · ${escapeHtml(currentAccount.className)}` : ""}</div>
+                      <div class="account-dropdown-email">${escapeHtml(currentAccount.email || "")}</div>
+                    </div>
+                    <button type="button" class="account-logout-item" id="btn-logout-account">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
+                `
+                  : ""
+              }
+            </div>
           </div>
         </div>
       </header>
@@ -2614,12 +2645,21 @@
       };
     }
 
+    const btnToggleAccMenu = document.getElementById("btn-toggle-account-menu");
+    if (btnToggleAccMenu) {
+      btnToggleAccMenu.onclick = e => {
+        e.stopPropagation();
+        state.accountMenuOpen = !state.accountMenuOpen;
+        state.notifOpen = false;
+        state.quickSearchOpen = false;
+        renderApp();
+      };
+    }
+
     const btnLogout = document.getElementById("btn-logout-account");
     if (btnLogout) {
       btnLogout.onclick = async () => {
-        if (currentAccount && !state.needsProfileSetup) {
-          if (!confirm("Bạn có muốn đăng xuất khỏi tài khoản hiện tại?")) return;
-        }
+        state.accountMenuOpen = false;
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
         stopNotificationPolling();
         const client = CLOUD.getClient();
@@ -2749,6 +2789,7 @@
       btnNotif.onclick = e => {
         e.stopPropagation();
         state.notifOpen = !state.notifOpen;
+        state.accountMenuOpen = false;
         state.quickSearchOpen = false;
         renderApp();
         if (state.notifOpen) {
@@ -3032,6 +3073,10 @@
       state.notifOpen = false;
       changed = true;
     }
+    if (state.accountMenuOpen && !e.target.closest("#topbar-account-menu-wrap")) {
+      state.accountMenuOpen = false;
+      changed = true;
+    }
     if (state.quickSearchOpen && !e.target.closest("#ej-topbar-search-wrap")) {
       state.quickSearchOpen = false;
       changed = true;
@@ -3049,8 +3094,9 @@
         if (inp) inp.focus();
       }
     } else if (e.key === "Escape") {
-      if (state.notifOpen || state.quickSearchOpen || state.vocabModalOpen) {
+      if (state.notifOpen || state.accountMenuOpen || state.quickSearchOpen || state.vocabModalOpen) {
         state.notifOpen = false;
+        state.accountMenuOpen = false;
         state.quickSearchOpen = false;
         state.vocabModalOpen = false;
         renderApp();

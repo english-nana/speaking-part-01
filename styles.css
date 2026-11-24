@@ -3803,3 +3803,311 @@ button, input, select, textarea {
     padding: 20px 16px;
   }
 }
+
+
+/* ==========================================================================
+   10. REDESIGNED STREAMLINED TEACHER PORTAL, STUDENT INFO MODAL & ACCOUNT MENU
+   ========================================================================== */
+
+.account-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 210px;
+  max-width: calc(100vw - 24px);
+  background: #FFFFFF;
+  border: 2px solid #18181B;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0px #18181B;
+  z-index: 620;
+  overflow: hidden;
+}
+
+.account-dropdown-meta {
+  padding: 10px 13px;
+  background: #FAF8F3;
+  border-bottom: 1.5px solid #E4E4E7;
+}
+
+.account-dropdown-role {
+  font-size: 13px;
+  font-weight: 800;
+  color: #18181B;
+}
+
+.account-dropdown-email {
+  font-size: 11.5px;
+  color: #71717A;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.account-logout-item {
+  width: 100%;
+  padding: 10px 13px;
+  border: none;
+  background: #FFFFFF;
+  color: #DC2626;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+
+.account-logout-item:hover {
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+/* Streamlined Teacher Layout */
+.teacher-clean-topbar {
+  background: #F4F1EA;
+}
+
+.teacher-compact-container {
+  max-width: 1040px;
+  padding-top: 24px;
+}
+
+.teacher-stats-3col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.teacher-stats-3col .teacher-stat-card {
+  border-radius: 10px;
+  padding: 13px 16px;
+}
+
+.teacher-filter-bar {
+  border-radius: 10px;
+}
+
+.teacher-students-table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.student-name-with-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.student-name-text {
+  font-weight: 800;
+  font-size: 14px;
+  color: #18181B;
+}
+
+.student-info-icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1.5px solid #D4D4D8;
+  background: #FAFAFA;
+  color: #52525B;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.12s ease;
+}
+
+.student-info-icon-btn:hover {
+  background: #FFE55C;
+  border-color: #18181B;
+  color: #18181B;
+}
+
+.td-actions-right {
+  text-align: right;
+}
+
+.student-view-subs-btn {
+  height: 32px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* Drill-down Bar When Viewing a Student's Submissions */
+.student-drilldown-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 2px solid #18181B;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0px #18181B;
+}
+
+.student-drilldown-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Student Info Modal (ⓘ) */
+.student-info-modal-panel {
+  max-width: 460px;
+}
+
+.student-info-list {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid #E4E4E7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.student-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #F4F4F5;
+  font-size: 13.5px;
+}
+
+.student-info-row:last-child {
+  border-bottom: none;
+}
+
+.student-info-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #71717A;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.student-info-value {
+  color: #18181B;
+  text-align: right;
+  font-weight: 500;
+}
+
+.student-vocab-peek {
+  margin-top: 12px;
+  border: 1px solid #E4E4E7;
+  border-radius: 8px;
+  background: #FAFAFA;
+  padding: 9px 12px;
+}
+
+.student-vocab-peek > summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #18181B;
+  user-select: none;
+}
+
+.student-vocab-peek-list {
+  margin-top: 8px;
+  max-height: 170px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: #3F3F46;
+}
+
+.student-info-danger-box {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed #E4E4E7;
+}
+
+@media (max-width: 768px) {
+  .teacher-clean-topbar {
+    height: auto !important;
+  }
+
+  .teacher-clean-topbar .dt-topbar-inner {
+    flex-wrap: wrap !important;
+    padding: 8px 12px !important;
+    gap: 8px;
+  }
+
+  .teacher-topbar-right {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .teacher-stats-3col {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .teacher-stats-3col .teacher-stat-card {
+    padding: 10px 10px;
+  }
+
+  .teacher-stats-3col .teacher-stat-label {
+    font-size: 10.5px;
+    line-height: 1.3;
+  }
+
+  .teacher-stats-3col .teacher-stat-value {
+    font-size: 20px;
+  }
+
+  .td-actions-right {
+    justify-content: flex-end;
+  }
+
+  .student-view-subs-btn {
+    width: 100%;
+    justify-content: center;
+    height: 36px;
+  }
+
+  .teacher-students-table td[data-label="Thao tác"]::before {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .teacher-clean-topbar .user-account-pill {
+    padding: 0 9px;
+    gap: 6px;
+  }
+
+  .teacher-clean-topbar .user-account-pill > span {
+    display: inline !important;
+    font-size: 12px;
+  }
+
+  .student-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .student-info-value {
+    text-align: left;
+  }
+}

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <title>Trang Giáo Viên — Quản lý Học viên &amp; Bài làm (VSTEP Speaking)</title>
+  <title>Trang Giáo Viên — Quản lý Học viên (VSTEP Speaking)</title>
   <link rel="icon" href="data:," />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124e" />
+  <link rel="stylesheet" href="./styles.css?v=20261124f" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124e"></script>
-  <script src="./supabase-client.js?v=20261124e"></script>
-  <script src="./travel-data.js?v=20261124e"></script>
-  <script src="./speaking-evaluator.js?v=20261124e"></script>
+  <script src="./supabase-config.js?v=20261124f"></script>
+  <script src="./supabase-client.js?v=20261124f"></script>
+  <script src="./travel-data.js?v=20261124f"></script>
+  <script src="./speaking-evaluator.js?v=20261124f"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -29,11 +29,11 @@
       const formatDuration = CLOUD.formatDuration;
       const RELEASE_HOURS = CLOUD.RELEASE_DELAY_HOURS || 6;
 
-      // Danh mục các phần thi Speaking (hiện có Part 1, sẵn sàng mở rộng Part 2 & Part 3)
+      // Danh mục phần thi Speaking (hiện tại là Part 1, sẵn sàng mở rộng Part 2 & Part 3)
       const PARTS_CATALOG = [
         { id: "part1", label: "Part 1 · Social Interaction", shortLabel: "Part 1", ready: true },
-        { id: "part2", label: "Part 2 · Solution Discussion (Sắp bổ sung)", shortLabel: "Part 2", ready: false },
-        { id: "part3", label: "Part 3 · Topic Development (Sắp bổ sung)", shortLabel: "Part 3", ready: false }
+        { id: "part2", label: "Part 2 · Solution Discussion (Sắp có)", shortLabel: "Part 2", ready: false },
+        { id: "part3", label: "Part 3 · Topic Development (Sắp có)", shortLabel: "Part 3", ready: false }
       ];
 
       const LEVEL_FILTER_OPTIONS = [
@@ -55,6 +55,9 @@
         unauthorizedEmail: "",
         teacherEmail: "",
         teacherUserId: "",
+        accountMenuOpen: false,
+        infoModalStudentId: "",
+        selectedStudentId: "", // "" = danh sách học viên | "<uuid>" = xem bài làm của học viên đó
         deletingUserId: "",
         gradingAttemptId: "",
         releasingAttemptId: "",
@@ -62,18 +65,34 @@
         authError: "",
         dbError: "",
         aiTableNotice: "",
-        activeTab: "submissions", // "submissions" | "students"
         students: [],
         submissions: [],
         searchNameQuery: "",
         filterClass: "all", // "all" | "ONB204" | "CB221" | "unassigned"
-        filterLevel: "all", // "all" | "B1" | "B2" | "Chưa đạt B1" | ... | "Đạt C1"
+        filterLevel: "all",
         filterPart: "all", // "all" | "part1" | "part2" | "part3"
         filterTopic: "all",
-        filterStudent: "all",
         filterStatus: "all", // "all" | "submitted" | "unread_review" | "ungraded" | "graded"
         savedToastId: ""
       };
+
+      function isHiddenAdminAccount(email, rawName) {
+        const lowerEmail = String(email || "").trim().toLowerCase();
+        const lowerName = String(rawName || "").trim().toLowerCase();
+        return (
+          lowerEmail === "mtung0208@gmail.com" ||
+          lowerEmail.startsWith("mtung0208@") ||
+          lowerName === "mtung0208"
+        );
+      }
+
+      function getTeacherDisplayName(email) {
+        const lower = String(email || "").trim().toLowerCase();
+        if (lower === "mtung0208@gmail.com" || lower.startsWith("mtung0208@")) {
+          return "admin";
+        }
+        return email ? email.split("@")[0] : "admin";
+      }
 
       function getTopicPartId(topicObj) {
         return (topicObj && topicObj.part) || "part1";
@@ -155,7 +174,7 @@
 
         const [profilesRes, vocabRes, attemptsRes, reviewsRes] = await Promise.all([
           client.from("profiles").select("*").order("last_active_at", { ascending: false }),
-          client.from("student_vocab").select("user_id"),
+          client.from("student_vocab").select("user_id, word, meaning, topic").order("created_at", { ascending: false }),
           client.from("speaking_attempts").select("*").order("created_at", { ascending: false }),
           client.from("speaking_ai_reviews").select("*")
         ]);
@@ -171,13 +190,22 @@
 
         if (reviewsRes.error) {
           tState.aiTableNotice =
-            "Chưa thấy bảng speaking_ai_reviews trên Supabase — hãy chạy file supabase-setup.sql mới nhất và deploy Edge Function grade-speaking để kích hoạt chấm AI tự động trả sau 6 tiếng.";
+            "Chưa thấy bảng speaking_ai_reviews trên Supabase — hãy chạy file supabase-setup.sql mới nhất và deploy Edge Function grade-speaking để bật chấm tự động trả sau 6 tiếng.";
         }
 
-        const profiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
+        const rawProfiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
         const vocabRows = Array.isArray(vocabRes.data) ? vocabRes.data : [];
         const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
         const reviewRows = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+
+        // Loại bỏ tài khoản admin (mtung0208) khỏi danh sách học viên & thống kê
+        const hiddenAdminIds = new Set();
+        rawProfiles.forEach(p => {
+          if (isHiddenAdminAccount(p.email, p.full_name)) {
+            hiddenAdminIds.add(p.id);
+          }
+        });
+        const profiles = rawProfiles.filter(p => !hiddenAdminIds.has(p.id));
 
         const reviewByKey = {};
         const reviewByAttemptId = {};
@@ -186,9 +214,15 @@
           if (r && r.attempt_id) reviewByAttemptId[r.attempt_id] = r;
         });
 
-        const vocabCountByUser = {};
+        const vocabListByUser = {};
         vocabRows.forEach(v => {
-          vocabCountByUser[v.user_id] = (vocabCountByUser[v.user_id] || 0) + 1;
+          if (!v || !v.user_id || hiddenAdminIds.has(v.user_id)) return;
+          if (!vocabListByUser[v.user_id]) vocabListByUser[v.user_id] = [];
+          vocabListByUser[v.user_id].push({
+            word: v.word || "",
+            meaning: v.meaning || "",
+            topic: v.topic || ""
+          });
         });
 
         const profileById = {};
@@ -198,10 +232,13 @@
           parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
         });
 
-        const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(a => a.audio_path).filter(Boolean));
+        const studentAttemptRows = attemptRows.filter(a => !hiddenAdminIds.has(a.user_id));
+        const signedUrlMap = await CLOUD.getSignedAudioUrls(
+          studentAttemptRows.map(a => a.audio_path).filter(Boolean)
+        );
 
         const grouped = {};
-        attemptRows.forEach(att => {
+        studentAttemptRows.forEach(att => {
           const k = `${att.user_id}__${att.question_id}`;
           if (!grouped[k]) grouped[k] = [];
           grouped[k].push(att);
@@ -217,9 +254,10 @@
           const prof = profileById[chosen.user_id] || {
             id: chosen.user_id,
             full_name: "Học viên",
-            email: "",
-            auth_provider: "email"
+            email: ""
           };
+          if (isHiddenAdminAccount(prof.email, prof.full_name)) return;
+
           const parsedProf = parsedById[chosen.user_id] || CLOUD.parseFullNameAndClass(prof.full_name || "");
           const qMeta = qMetaMap[chosen.question_id] || {
             partId: "part1",
@@ -270,10 +308,7 @@
             takeNum: chosen.take_number || 1,
             totalAttemptsCount: list.length,
             audioUrl: chosen.audio_path ? signedUrlMap[chosen.audio_path] || "" : "",
-            transcript:
-              chosen.transcript ||
-              (rj && rj.recognized_transcript) ||
-              "",
+            transcript: chosen.transcript || (rj && rj.recognized_transcript) || "",
             teacherFeedback: chosen.teacher_feedback || "",
             teacherScore: chosen.teacher_score || "",
             aiStatus: chosen.ai_status || "",
@@ -291,19 +326,26 @@
 
         tState.students = profiles.map(p => {
           const parsedProf = parsedById[p.id] || CLOUD.parseFullNameAndClass(p.full_name || "");
+          const vocabItems = vocabListByUser[p.id] || [];
           return {
             id: p.id,
             name: parsedProf.fullName || p.email,
             className: parsedProf.className || "",
             email: p.email,
-            authProvider: p.auth_provider || "email",
             createdAt: CLOUD.formatDateTime(p.created_at),
             lastActiveAt: CLOUD.formatDateTime(p.last_active_at),
-            vocabCount: vocabCountByUser[p.id] || 0
+            vocabCount: vocabItems.length,
+            vocabItems
           };
         });
 
         tState.submissions = submissions;
+        if (tState.selectedStudentId && !tState.students.some(s => s.id === tState.selectedStudentId)) {
+          tState.selectedStudentId = "";
+        }
+        if (tState.infoModalStudentId && !tState.students.some(s => s.id === tState.infoModalStudentId)) {
+          tState.infoModalStudentId = "";
+        }
         tState.loading = false;
         renderTeacherApp();
       }
@@ -354,7 +396,7 @@
         if (!res.ok) {
           renderTeacherApp();
           alert(
-            "Không chạy được chấm sửa AI: " +
+            "Không chạy được chấm bài: " +
               (res.error ||
                 "Vui lòng kiểm tra đã deploy Edge Function grade-speaking và cài GEMINI_API_KEY chưa.")
           );
@@ -402,7 +444,7 @@
         const client = CLOUD.getClient();
         if (!client || !studentId || tState.deletingUserId) return;
         if (studentId === tState.teacherUserId) {
-          alert("Không thể tự xoá tài khoản Giáo viên đang đăng nhập.");
+          alert("Không thể tự xoá tài khoản đang đăng nhập.");
           return;
         }
         const label = studentName ? `${studentName} (${studentEmail || ""})` : studentEmail || studentId;
@@ -439,9 +481,10 @@
             return;
           }
 
-          if (tState.filterStudent && studentEmail && tState.filterStudent === studentEmail) {
-            tState.filterStudent = "all";
+          if (tState.selectedStudentId === studentId) {
+            tState.selectedStudentId = "";
           }
+          tState.infoModalStudentId = "";
           tState.deletingUserId = "";
           await refreshCloudDashboardData();
         } catch (err) {
@@ -452,7 +495,7 @@
       }
 
       // ======================================================================
-      // FILTERING LOGIC (HỌ TÊN, LỚP, TRÌNH ĐỘ, PHẦN, CHỦ ĐỀ, TRẠNG THÁI)
+      // FILTERING LOGIC (HỌ TÊN, LỚP, TRÌNH ĐỘ, PHẦN, CHỦ ĐỀ)
       // ======================================================================
       function matchesClassFilter(clsName) {
         if (tState.filterClass === "all") return true;
@@ -488,6 +531,18 @@
         const teacherBand = String(sub.teacherScore || "").toLowerCase();
         const wanted = tState.filterLevel.toLowerCase();
         return evalBand === wanted || teacherBand.includes(wanted);
+      }
+
+      function hasAnyFeedbackOrReview(sub) {
+        if (!sub) return false;
+        const hasManual = Boolean(
+          (sub.teacherFeedback && sub.teacherFeedback.trim()) ||
+            (sub.teacherScore && sub.teacherScore.trim())
+        );
+        const hasReadyAi = Boolean(
+          sub.aiReview && sub.aiReview.status === "ready" && sub.aiReview.review_json
+        );
+        return hasManual || hasReadyAi;
       }
 
       function getVisibleTopicsForPart() {
@@ -541,26 +596,14 @@
           .filter(st => (!hasContentFilter ? true : st.metrics.matchedTotal > 0));
       }
 
-      function hasAnyFeedbackOrReview(sub) {
-        if (!sub) return false;
-        const hasManual = Boolean(
-          (sub.teacherFeedback && sub.teacherFeedback.trim()) ||
-            (sub.teacherScore && sub.teacherScore.trim())
-        );
-        const hasReadyAi = Boolean(
-          sub.aiReview && sub.aiReview.status === "ready" && sub.aiReview.review_json
-        );
-        return hasManual || hasReadyAi;
-      }
-
-      function getFilteredSubmissions() {
+      function getFilteredSubmissionsForStudent(studentId) {
         return tState.submissions.filter(sub => {
+          if (studentId && sub.studentId !== studentId) return false;
           if (!matchesClassFilter(sub.studentClass)) return false;
           if (!matchesNameFilter(sub.studentName, sub.studentEmail)) return false;
           if (!matchesPartFilter(sub.partId)) return false;
           if (!matchesTopicFilter(sub.topicId)) return false;
           if (!matchesLevelFilter(sub)) return false;
-          if (tState.filterStudent !== "all" && sub.studentEmail !== tState.filterStudent) return false;
           if (tState.filterStatus === "submitted" && !sub.isOfficiallySubmitted) return false;
           if (tState.filterStatus === "unread_review" && (!sub.isReviewReleased || sub.isReviewSeen)) return false;
           if (tState.filterStatus === "ungraded" && hasAnyFeedbackOrReview(sub)) return false;
@@ -576,7 +619,6 @@
           tState.filterLevel !== "all" ||
           tState.filterPart !== "all" ||
           tState.filterTopic !== "all" ||
-          tState.filterStudent !== "all" ||
           tState.filterStatus !== "all"
         );
       }
@@ -594,7 +636,7 @@
           "Chủ đề",
           "Câu hỏi",
           "Mục tiêu Level",
-          "Đánh giá mức AI",
+          "Đánh giá mức",
           "Đã đọc bài sửa",
           "Trạng thái nộp",
           "Thời gian nộp",
@@ -615,7 +657,7 @@
           lines.push(
             [
               sub.studentName,
-              sub.studentClass || "Chưa chọn",
+              sub.studentClass || "—",
               sub.studentEmail,
               sub.partLabel,
               sub.topicTitle,
@@ -664,7 +706,7 @@
                 Tài khoản <strong>${escapeHtml(tState.unauthorizedEmail)}</strong> chưa có trong danh sách bảng <code>public.teachers</code> trên Supabase nên hệ thống tự động chặn quyền đọc dữ liệu học viên.
               </p>
               <button type="button" class="form-submit-btn" id="btn-teacher-logout">
-                Đăng xuất &amp; Đăng nhập tài khoản Giáo viên →
+                Đăng xuất &amp; Đăng nhập tài khoản Quản trị →
               </button>
             </div>
           </div>
@@ -677,14 +719,14 @@
             <div class="auth-card-box">
               <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
                 <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:800;background:#DCFCE7;color:#166534;padding:3px 9px;border:1.5px solid #18181B;">
-                  TRANG GIÁO VIÊN · SUPABASE CLOUD
+                  TRANG QUẢN TRỊ · VSTEP SPEAKING
                 </span>
               </div>
               <h1 style="font-size:22px;font-weight:900;color:#18181B;margin-bottom:6px;">
-                Đăng nhập Quản trị Giáo viên
+                Đăng nhập Quản lý Học viên
               </h1>
               <p style="font-size:13.5px;color:#52525B;line-height:1.55;margin-bottom:16px;">
-                Đăng nhập bằng chính tài khoản <strong>Gmail Giáo viên</strong> đã khai báo trong Supabase để quản lý học viên, nghe lại bài ghi âm, xem bài chấm và trả bài sớm.
+                Đăng nhập bằng tài khoản quản trị đã khai báo trong Supabase để quản lý học viên, nghe bài ghi âm và duyệt trả bài sửa.
               </p>
 
               ${
@@ -695,24 +737,24 @@
 
               <button type="button" class="google-auth-btn" id="btn-teacher-google-login" ${tState.loading ? "disabled" : ""}>
                 ${CLOUD.renderGoogleIconSvg(19)}
-                <span>${tState.loading ? "Đang xác thực quyền Giáo viên..." : "Đăng nhập Giáo viên bằng Google"}</span>
+                <span>${tState.loading ? "Đang xác thực..." : "Đăng nhập bằng Google"}</span>
               </button>
 
               <div class="auth-or-divider">
-                <span>Hoặc đăng nhập Email Giáo viên</span>
+                <span>Hoặc đăng nhập Email</span>
               </div>
 
               <form id="teacher-cloud-email-form" onsubmit="return false;">
                 <div class="form-field">
-                  <label class="form-label" for="inp-teacher-email">Email Giáo viên</label>
-                  <input type="email" id="inp-teacher-email" class="form-input" placeholder="giaovien@gmail.com" required />
+                  <label class="form-label" for="inp-teacher-email">Email quản trị</label>
+                  <input type="email" id="inp-teacher-email" class="form-input" placeholder="admin@gmail.com" required />
                 </div>
                 <div class="form-field">
                   <label class="form-label" for="inp-teacher-pass">Mật khẩu</label>
                   <input type="password" id="inp-teacher-pass" class="form-input" placeholder="Nhập mật khẩu..." required />
                 </div>
                 <button type="submit" class="form-submit-btn" ${tState.loading ? "disabled" : ""}>
-                  Đăng nhập trang Giáo viên →
+                  Đăng nhập →
                 </button>
               </form>
             </div>
@@ -720,10 +762,11 @@
         `;
       }
 
+      // Chỉ hiện mã lớp gọn gàng (ONB204 / CB221), không kèm chữ "Lớp"
       function renderClassBadge(className) {
         return className
-          ? `<span class="class-badge-pill">Lớp ${escapeHtml(className)}</span>`
-          : `<span class="class-badge-pill unassigned">Chưa chọn lớp</span>`;
+          ? `<span class="class-badge-pill">${escapeHtml(className)}</span>`
+          : `<span class="class-badge-pill unassigned">—</span>`;
       }
 
       function renderReadReviewBadge(metrics) {
@@ -739,12 +782,10 @@
         if (metrics.seenCount === 0) {
           return `<span class="review-read-pill unread">● Chưa đọc (0/${metrics.releasedCount})</span>`;
         }
-        const unreadLeft = metrics.releasedCount - metrics.seenCount;
-        return `<span class="review-read-pill partial">Đã đọc ${metrics.seenCount}/${metrics.releasedCount} (còn ${unreadLeft} chưa đọc)</span>`;
+        return `<span class="review-read-pill partial">Đã đọc ${metrics.seenCount}/${metrics.releasedCount}</span>`;
       }
 
-      function renderSharedFilterBar(countLabel) {
-        const classStudents = tState.students.filter(st => matchesClassFilter(st.className));
+      function renderSharedFilterBar(countLabel, includeSubmissionStatus) {
         const visibleTopics = getVisibleTopicsForPart();
         const showReset = hasActiveFilters();
 
@@ -766,14 +807,14 @@
                 type="text"
                 id="inp-filter-name"
                 class="form-input teacher-filter-item"
-                placeholder="🔍 Tìm theo họ tên học viên..."
+                placeholder="🔍 Tìm theo họ tên..."
                 value="${escapeHtml(tState.searchNameQuery)}"
               />
 
               <select id="sel-filter-class" class="form-input teacher-filter-item" aria-label="Lọc theo lớp">
-                <option value="all" ${tState.filterClass === "all" ? "selected" : ""}>Tất cả các lớp</option>
+                <option value="all" ${tState.filterClass === "all" ? "selected" : ""}>Tất cả lớp</option>
                 ${CLOUD.CLASS_LIST.map(
-                  cls => `<option value="${cls}" ${tState.filterClass === cls ? "selected" : ""}>Lớp ${cls}</option>`
+                  cls => `<option value="${cls}" ${tState.filterClass === cls ? "selected" : ""}>${cls}</option>`
                 ).join("")}
                 <option value="unassigned" ${tState.filterClass === "unassigned" ? "selected" : ""}>Chưa chọn lớp</option>
               </select>
@@ -785,7 +826,7 @@
               </select>
 
               <select id="sel-filter-part" class="form-input teacher-filter-item" aria-label="Lọc theo phần thi">
-                <option value="all" ${tState.filterPart === "all" ? "selected" : ""}>Tất cả các phần (Part 1–3)</option>
+                <option value="all" ${tState.filterPart === "all" ? "selected" : ""}>Tất cả phần (Part 1–3)</option>
                 ${PARTS_CATALOG.map(
                   p => `<option value="${p.id}" ${tState.filterPart === p.id ? "selected" : ""}>${escapeHtml(p.label)}</option>`
                 ).join("")}
@@ -807,21 +848,8 @@
               </select>
 
               ${
-                tState.activeTab === "submissions"
+                includeSubmissionStatus
                   ? `
-                <select id="sel-filter-student" class="form-input teacher-filter-item" aria-label="Lọc theo học viên">
-                  <option value="all">Tất cả học viên (${classStudents.length})</option>
-                  ${classStudents
-                    .map(
-                      a => `
-                      <option value="${escapeHtml(a.email)}" ${tState.filterStudent === a.email ? "selected" : ""}>
-                        ${a.className ? `[${escapeHtml(a.className)}] ` : ""}${escapeHtml(a.name)}
-                      </option>
-                    `
-                    )
-                    .join("")}
-                </select>
-
                 <select id="sel-filter-status" class="form-input teacher-filter-item" aria-label="Lọc theo trạng thái">
                   <option value="all" ${tState.filterStatus === "all" ? "selected" : ""}>Mọi trạng thái</option>
                   <option value="submitted" ${tState.filterStatus === "submitted" ? "selected" : ""}>Chỉ bài đã nộp chính thức</option>
@@ -837,109 +865,60 @@
         `;
       }
 
-      function renderTeacherDashboard() {
-        const filteredSubs = getFilteredSubmissions();
-        const totalSubmitted = tState.submissions.filter(s => s.isOfficiallySubmitted).length;
-        const totalUngraded = tState.submissions.filter(
-          s => s.isOfficiallySubmitted && !hasAnyFeedbackOrReview(s)
-        ).length;
-        const pendingAiCount = tState.submissions.filter(
-          s => s.isOfficiallySubmitted && (!s.aiReview || s.aiReview.status !== "ready")
-        ).length;
-        const totalVocab = tState.students.reduce((acc, s) => acc + (s.vocabCount || 0), 0);
+      function renderAccountMenuHtml() {
+        const displayName = getTeacherDisplayName(tState.teacherEmail);
+        const initials = displayName === "admin" ? "AD" : CLOUD.getInitials(displayName);
 
         return `
-          <div class="home-shell">
-            <header class="home-topbar teacher-home-topbar" style="background:#F0FDF4;">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <div class="home-brand-title">👨‍🏫 TRANG GIÁO VIÊN · VSTEP SPEAKING</div>
-                <span class="cloud-mode-pill">☁️ SUPABASE CLOUD · ${RELEASE_HOURS}H</span>
-              </div>
+          <div class="account-menu-wrap" id="teacher-account-menu-wrap">
+            <button
+              type="button"
+              class="user-account-pill"
+              id="btn-toggle-account-menu"
+              aria-expanded="${tState.accountMenuOpen ? "true" : "false"}"
+              title="Tài khoản quản trị"
+            >
+              <span class="user-initials">${escapeHtml(initials)}</span>
+              <span>${escapeHtml(displayName)}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
 
-              <div class="topbar-actions teacher-topbar-actions-mobile">
-                <a href="./index.html" class="top-pill-btn" style="text-decoration:none;">← Về trang học</a>
-                ${
-                  pendingAiCount > 0 && !tState.aiTableNotice
-                    ? `<button type="button" class="top-pill-btn yellow" id="btn-flush-queue" ${tState.flushingQueue ? "disabled" : ""}>
-                        ${tState.flushingQueue ? "⏳ Đang chấm..." : `🔄 Chấm bài chờ (${pendingAiCount})`}
-                      </button>`
-                    : ""
-                }
-                <button type="button" class="top-pill-btn" id="btn-refresh-data">
-                  ${tState.loading ? "⏳ Đang tải..." : "↻ Làm mới"}
-                </button>
-                <button type="button" class="top-pill-btn yellow" id="btn-export-csv">📊 Xuất Excel</button>
-                <button type="button" class="user-account-pill" id="btn-teacher-logout">
-                  <span>${escapeHtml(tState.teacherEmail || "Giáo viên")} · Đăng xuất</span>
-                </button>
-              </div>
-            </header>
-
-            <main class="home-container">
-              ${
-                tState.dbError
-                  ? `<div style="padding:12px 16px;border:2px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:13.5px;font-weight:700;margin-bottom:18px;box-shadow:3px 3px 0px #DC2626;">⚠️ ${escapeHtml(tState.dbError)}</div>`
-                  : ""
-              }
-              ${
-                tState.aiTableNotice
-                  ? `<div style="padding:12px 16px;border:2px solid #D97706;background:#FFFBEB;color:#92400E;font-size:13px;font-weight:600;margin-bottom:18px;box-shadow:3px 3px 0px #D97706;">💡 ${escapeHtml(tState.aiTableNotice)}</div>`
-                  : ""
-              }
-
-              <div class="teacher-stats-grid">
-                <div class="teacher-stat-card">
-                  <div class="teacher-stat-label">Tổng số học viên</div>
-                  <div class="teacher-stat-value">${tState.students.length}</div>
+            ${
+              tState.accountMenuOpen
+                ? `
+                <div class="account-dropdown" id="teacher-account-dropdown">
+                  <div class="account-dropdown-meta">
+                    <div class="account-dropdown-role">${escapeHtml(displayName)}</div>
+                    <div class="account-dropdown-email">${escapeHtml(tState.teacherEmail || "")}</div>
+                  </div>
+                  <button type="button" class="account-logout-item" id="btn-teacher-logout">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span>Đăng xuất</span>
+                  </button>
                 </div>
-                <div class="teacher-stat-card">
-                  <div class="teacher-stat-label">Bài đã nộp chính thức</div>
-                  <div class="teacher-stat-value" style="color:#15803D;">${totalSubmitted}</div>
-                </div>
-                <div class="teacher-stat-card">
-                  <div class="teacher-stat-label">Bài chờ chấm / nhận xét</div>
-                  <div class="teacher-stat-value" style="color:#B45309;">${totalUngraded}</div>
-                </div>
-                <div class="teacher-stat-card">
-                  <div class="teacher-stat-label">Tổng từ vựng học viên lưu</div>
-                  <div class="teacher-stat-value">${totalVocab}</div>
-                </div>
-              </div>
-
-              <div class="teacher-tabs-bar">
-                <button type="button" class="teacher-tab-btn ${tState.activeTab === "submissions" ? "active" : ""}" data-teacher-tab="submissions">
-                  🎙️ Bài làm &amp; Ghi âm (${tState.submissions.length})
-                </button>
-                <button type="button" class="teacher-tab-btn ${tState.activeTab === "students" ? "active" : ""}" data-teacher-tab="students">
-                  👥 Quản lý Học viên (${tState.students.length})
-                </button>
-              </div>
-
-              ${
-                tState.activeTab === "students"
-                  ? renderStudentsManagementTab()
-                  : renderSubmissionsTab(filteredSubs)
-              }
-            </main>
+              `
+                : ""
+            }
           </div>
         `;
       }
 
-      function renderStudentsManagementTab() {
+      function renderStudentsTableSection() {
         const filteredStudents = getFilteredStudents();
         const totalQuestionsInScope = getQuestionsTotalForScope();
         const filterBarHtml = renderSharedFilterBar(
-          `Đang hiển thị <strong>${filteredStudents.length}</strong> / ${tState.students.length} học viên`
+          `Danh sách học viên · <strong>${filteredStudents.length}</strong> / ${tState.students.length}`,
+          false
         );
 
         if (filteredStudents.length === 0) {
           return `
             ${filterBarHtml}
-            <div style="padding:36px 20px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;border-radius:8px;">
-              <p style="font-size:15.5px;font-weight:700;margin-bottom:4px;">Chưa có học viên nào khớp bộ lọc hiện tại.</p>
+            <div style="padding:36px 20px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;border-radius:10px;">
+              <p style="font-size:15px;font-weight:700;margin-bottom:4px;">Chưa có học viên nào khớp bộ lọc hiện tại.</p>
               ${
                 tState.filterPart === "part2" || tState.filterPart === "part3"
-                  ? `<p style="font-size:13px;">Nội dung ${escapeHtml(getPartShortLabel(tState.filterPart))} sẽ sớm được bổ sung trong bản cập nhật tiếp theo.</p>`
+                  ? `<p style="font-size:13px;">Nội dung ${escapeHtml(getPartShortLabel(tState.filterPart))} sẽ sớm được bổ sung.</p>`
                   : ""
               }
             </div>
@@ -954,12 +933,9 @@
                 <tr>
                   <th>Học viên</th>
                   <th>Lớp</th>
-                  <th>Đăng nhập qua</th>
                   <th>Tiến độ nộp bài</th>
-                  <th>Kho từ vựng</th>
                   <th>Đã đọc bài sửa</th>
-                  <th>Hoạt động gần nhất</th>
-                  <th>Thao tác</th>
+                  <th style="text-align:right;">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -967,41 +943,36 @@
                   .map(st => `
                     <tr>
                       <td data-label="Học viên">
-                        <div class="td-student-name-cell">
-                          <div style="font-weight:800;color:#18181B;">${escapeHtml(st.name)}</div>
-                          <div style="font-size:12px;color:#71717A;word-break:break-all;">${escapeHtml(st.email)}</div>
+                        <div class="student-name-with-info">
+                          <span class="student-name-text">${escapeHtml(st.name)}</span>
+                          <button
+                            type="button"
+                            class="student-info-icon-btn"
+                            data-open-student-info="${escapeHtml(st.id)}"
+                            title="Xem thông tin chi tiết học viên"
+                            aria-label="Thông tin học viên ${escapeHtml(st.name)}"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="12" y1="16" x2="12" y2="12"/>
+                              <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                          </button>
                         </div>
                       </td>
                       <td data-label="Lớp">${renderClassBadge(st.className)}</td>
-                      <td data-label="Đăng nhập qua">
-                        <span class="provider-pill ${st.authProvider === "google" ? "google" : ""}">
-                          ${st.authProvider === "google" ? "Google" : "Email"}
-                        </span>
-                      </td>
                       <td data-label="Tiến độ nộp bài">
                         <strong>${st.metrics.submittedCount}</strong> / ${totalQuestionsInScope} câu
                       </td>
-                      <td data-label="Kho từ vựng">${st.vocabCount} từ</td>
                       <td data-label="Đã đọc bài sửa">${renderReadReviewBadge(st.metrics)}</td>
-                      <td data-label="Hoạt động gần nhất" style="font-size:12.5px;color:#52525B;">${escapeHtml(st.lastActiveAt || "—")}</td>
-                      <td data-label="Thao tác">
-                        <div class="teacher-row-actions">
-                          <button type="button" class="top-pill-btn" data-view-student-subs="${escapeHtml(st.email)}">
-                            Xem bài làm →
-                          </button>
-                          ${
-                            st.id !== tState.teacherUserId
-                              ? `<button
-                                  type="button"
-                                  class="btn-danger-outline"
-                                  data-delete-student="${escapeHtml(st.id)}"
-                                  data-delete-student-name="${escapeHtml(st.name)}"
-                                  data-delete-student-email="${escapeHtml(st.email)}"
-                                  ${tState.deletingUserId === st.id ? "disabled" : ""}
-                                >${tState.deletingUserId === st.id ? "Đang xoá..." : "Xoá"}</button>`
-                              : ""
-                          }
-                        </div>
+                      <td data-label="Thao tác" class="td-actions-right">
+                        <button
+                          type="button"
+                          class="top-pill-btn student-view-subs-btn"
+                          data-view-student-subs="${escapeHtml(st.id)}"
+                        >
+                          <span>Xem bài làm (${st.metrics.matchedTotal}) →</span>
+                        </button>
                       </td>
                     </tr>
                   `)
@@ -1012,25 +983,47 @@
         `;
       }
 
-      function renderSubmissionsTab(filteredSubs) {
+      function renderStudentSubmissionsSection(studentObj) {
+        const studentSubs = getFilteredSubmissionsForStudent(studentObj.id);
+
         return `
-          ${renderSharedFilterBar(`Đang hiển thị <strong>${filteredSubs.length}</strong> bài làm`)}
+          <div class="student-drilldown-bar">
+            <button type="button" class="nb-back-btn" id="btn-back-to-students">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <span>Danh sách học viên</span>
+            </button>
+
+            <div class="student-drilldown-meta">
+              <span style="font-size:15.5px;font-weight:800;color:#18181B;">${escapeHtml(studentObj.name)}</span>
+              ${renderClassBadge(studentObj.className)}
+              <button
+                type="button"
+                class="student-info-icon-btn"
+                data-open-student-info="${escapeHtml(studentObj.id)}"
+                title="Thông tin học viên"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          ${renderSharedFilterBar(
+            `Bài làm của <strong>${escapeHtml(studentObj.name)}</strong> · <strong>${studentSubs.length}</strong> bài`,
+            true
+          )}
 
           ${
-            filteredSubs.length === 0
+            studentSubs.length === 0
               ? `
-              <div style="padding:36px 20px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;border-radius:8px;">
-                <p style="font-size:16px;font-weight:700;margin-bottom:6px;">Chưa có bài làm nào khớp bộ lọc.</p>
-                <p style="font-size:13.5px;">
-                  ${
-                    tState.filterPart === "part2" || tState.filterPart === "part3"
-                      ? `Nội dung ${escapeHtml(getPartShortLabel(tState.filterPart))} sẽ sớm được bổ sung.`
-                      : "Khi học viên ghi âm và bấm Nộp bài trên web, bản ghi âm và bài sửa sẽ tự động đồng bộ về đây."
-                  }
-                </p>
+              <div style="padding:36px 20px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;border-radius:10px;">
+                <p style="font-size:15px;font-weight:700;margin-bottom:4px;">Học viên chưa có bài ghi âm nào khớp bộ lọc.</p>
               </div>
             `
-              : filteredSubs
+              : studentSubs
                   .map(sub => {
                     const rev = sub.aiReview;
                     const isGrading = tState.gradingAttemptId === sub.attemptId;
@@ -1046,27 +1039,22 @@
                         (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0)
                       : 0;
 
-                    let statusHtml = `<span style="font-size:12.5px;color:#52525B;">Chưa có bài chấm &amp; sửa AI.</span>`;
+                    let statusHtml = `<span style="font-size:12.5px;color:#52525B;">Chưa có bài sửa chi tiết.</span>`;
                     if (hasReadyReview && isWaitingRelease) {
-                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Bài sửa AI đã sẵn sàng · Hẹn trả học viên lúc ${escapeHtml(CLOUD.formatDateTime(rev.release_at))} (còn ${escapeHtml(remain)})</span>`;
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đã chấm xong · Hẹn trả lúc ${escapeHtml(CLOUD.formatDateTime(rev.release_at))} (còn ${escapeHtml(remain)})</span>`;
                     } else if (hasReadyReview) {
                       statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#166534;">✅ Đã trả bài sửa (${escapeHtml(CLOUD.formatDateTime(rev.release_at))}) · ${rev.student_seen_at ? "✓ Học viên đã đọc" : "● Học viên chưa đọc"}</span>`;
                     } else if (rev && rev.status === "error") {
                       const tries = rev.retry_count || 1;
-                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B45309;">🔄 AI tạm quá tải (lần thử ${tries}/20) — hệ thống sẽ tự động chấm lại mỗi 5 phút trước giờ trả bài.</span>`;
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B45309;">🔄 Hệ thống đang chờ chấm lại (lần thử ${tries}/20).</span>`;
                     } else if (sub.aiStatus === "pending" || sub.aiStatus === "pending_retry" || sub.aiStatus === "grading") {
-                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đang nằm trong hàng đợi tự động chấm (hẹn trả sau ${RELEASE_HOURS} tiếng).</span>`;
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đang trong hàng đợi chấm tự động (trả sau ${RELEASE_HOURS} tiếng).</span>`;
                     }
 
                     return `
                       <div class="submission-review-card" style="border:2px solid #18181B;box-shadow:3px 3px 0px #18181B;">
                         <div class="submission-review-top">
                           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
-                            <span style="font-size:14.5px;font-weight:800;color:#18181B;">
-                              👤 ${escapeHtml(sub.studentName)}
-                            </span>
-                            ${renderClassBadge(sub.studentClass)}
-                            <span style="font-size:12.5px;color:#71717A;word-break:break-all;">(${escapeHtml(sub.studentEmail)})</span>
                             <span style="font-size:11.5px;font-weight:700;color:#1D4ED8;background:#EFF6FF;border:1px solid #BFDBFE;padding:2px 7px;border-radius:4px;">
                               ${escapeHtml(sub.partLabel)}
                             </span>
@@ -1087,7 +1075,7 @@
                             ${
                               sub.isOfficiallySubmitted
                                 ? `<span class="submitted-badge">✓ Đã nộp (${escapeHtml(sub.submittedAt || "")})</span>`
-                                : `<span style="font-size:11.5px;font-weight:600;color:#B45309;background:#FFFBEB;padding:2px 8px;border-radius:4px;">Bản ghi nháp (${sub.totalAttemptsCount} lần ghi)</span>`
+                                : `<span style="font-size:11.5px;font-weight:600;color:#B45309;background:#FFFBEB;padding:2px 8px;border-radius:4px;">Bản nháp (${sub.totalAttemptsCount} lần ghi)</span>`
                             }
                           </div>
                         </div>
@@ -1105,10 +1093,10 @@
                           <div class="transcript-result-box">
                             <div class="transcript-box-header">
                               <span class="transcript-box-label">
-                                Transcript bài nói (Bản #${sub.takeNum} · ${formatDuration(sub.durationSec)} · Tổng ${sub.totalAttemptsCount} lần ghi)
+                                Transcript bài nói (Bản #${sub.takeNum} · ${formatDuration(sub.durationSec)})
                               </span>
                             </div>
-                            <p class="transcript-text-content">${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Chưa có transcript văn bản — bấm Tạo bài sửa AI để nhận diện từ file ghi âm)</em>"}</p>
+                            <p class="transcript-text-content">${sub.transcript ? `“${escapeHtml(sub.transcript)}”` : "<em>(Chưa có transcript văn bản)</em>"}</p>
                           </div>
                         </div>
 
@@ -1123,7 +1111,7 @@
                                 : ""
                             }
                             <button type="button" class="top-pill-btn" data-ai-grade="${escapeHtml(sub.attemptId)}" ${isGrading ? "disabled" : ""}>
-                              ${isGrading ? "⏳ Đang chấm AI..." : hasReadyReview ? "↻ Chấm lại AI" : "✨ Tạo bài sửa AI"}
+                              ${isGrading ? "⏳ Đang chấm..." : hasReadyReview ? "↻ Chấm lại" : "✨ Tạo bài sửa"}
                             </button>
                           </div>
                         </div>
@@ -1133,7 +1121,7 @@
                             ? `
                               <details class="teacher-ai-details">
                                 <summary>
-                                  📝 Xem bài chấm &amp; sửa AI chi tiết (${totalFixCount} mục góp ý · Level ${escapeHtml(rev.target_level || sub.targetLevel)}${sub.evaluatedBand ? ` · ${escapeHtml(sub.evaluatedBand)}` : ""})
+                                  📝 Xem chi tiết bài sửa (${totalFixCount} mục góp ý · Level ${escapeHtml(rev.target_level || sub.targetLevel)}${sub.evaluatedBand ? ` · ${escapeHtml(sub.evaluatedBand)}` : ""})
                                 </summary>
                                 ${CLOUD.renderSpeakingReviewHtml(sub.transcript || "", rj, {
                                   targetLevel: rev.target_level || sub.targetLevel
@@ -1154,7 +1142,7 @@
                           <input
                             type="text"
                             class="form-input grade-fb-input"
-                            placeholder="Nhận xét thêm của Giáo viên (học viên sẽ thấy ngay dưới bài đã nộp)..."
+                            placeholder="Nhận xét thêm của Giáo viên..."
                             value="${escapeHtml(sub.teacherFeedback)}"
                             id="inp-fb-${escapeHtml(sub.attemptId)}"
                           />
@@ -1171,6 +1159,191 @@
                   })
                   .join("")
           }
+        `;
+      }
+
+      function renderStudentInfoModal() {
+        if (!tState.infoModalStudentId) return "";
+        const st = tState.students.find(s => s.id === tState.infoModalStudentId);
+        if (!st) return "";
+
+        const vocabItems = st.vocabItems || [];
+
+        return `
+          <div class="modal-backdrop" id="student-info-backdrop">
+            <div class="modal-panel student-info-modal-panel" onclick="event.stopPropagation()">
+              <div class="modal-header" style="background:#FAF8F3;">
+                <div>
+                  <h2 style="font-size:16.5px;font-weight:900;color:#18181B;">
+                    Thông tin học viên
+                  </h2>
+                </div>
+                <button type="button" class="close-modal-btn" id="btn-close-student-info">✕</button>
+              </div>
+
+              <div class="modal-body">
+                <div class="student-info-list">
+                  <div class="student-info-row">
+                    <span class="student-info-label">Họ và tên</span>
+                    <span class="student-info-value">
+                      <strong>${escapeHtml(st.name)}</strong>
+                      ${st.className ? ` ${renderClassBadge(st.className)}` : ""}
+                    </span>
+                  </div>
+
+                  <div class="student-info-row">
+                    <span class="student-info-label">Địa chỉ Email</span>
+                    <span class="student-info-value" style="word-break:break-all;">${escapeHtml(st.email || "—")}</span>
+                  </div>
+
+                  <div class="student-info-row">
+                    <span class="student-info-label">Hoạt động gần nhất</span>
+                    <span class="student-info-value">${escapeHtml(st.lastActiveAt || "—")}</span>
+                  </div>
+
+                  <div class="student-info-row">
+                    <span class="student-info-label">Kho từ vựng</span>
+                    <span class="student-info-value"><strong>${st.vocabCount}</strong> từ đã lưu</span>
+                  </div>
+                </div>
+
+                ${
+                  vocabItems.length > 0
+                    ? `
+                    <details class="student-vocab-peek">
+                      <summary>Xem danh sách từ vựng đã lưu (${vocabItems.length})</summary>
+                      <div class="student-vocab-peek-list">
+                        ${vocabItems
+                          .slice(0, 40)
+                          .map(
+                            v => `
+                            <div class="student-vocab-peek-item">
+                              <strong>${escapeHtml(v.word)}</strong>
+                              ${v.meaning ? `<span>— ${escapeHtml(v.meaning)}</span>` : ""}
+                            </div>
+                          `
+                          )
+                          .join("")}
+                      </div>
+                    </details>
+                  `
+                    : ""
+                }
+
+                <div class="student-info-danger-box">
+                  <button
+                    type="button"
+                    class="btn-danger-outline"
+                    style="width:100%;justify-content:center;height:38px;"
+                    data-delete-student="${escapeHtml(st.id)}"
+                    data-delete-student-name="${escapeHtml(st.name)}"
+                    data-delete-student-email="${escapeHtml(st.email)}"
+                    ${tState.deletingUserId === st.id ? "disabled" : ""}
+                  >
+                    ${tState.deletingUserId === st.id ? "Đang xoá tài khoản..." : "🗑️ Xoá tài khoản học viên"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderTeacherDashboard() {
+        const totalSubmitted = tState.submissions.filter(s => s.isOfficiallySubmitted).length;
+        const totalUngraded = tState.submissions.filter(
+          s => s.isOfficiallySubmitted && !hasAnyFeedbackOrReview(s)
+        ).length;
+        const pendingAiCount = tState.submissions.filter(
+          s => s.isOfficiallySubmitted && (!s.aiReview || s.aiReview.status !== "ready")
+        ).length;
+
+        const selectedStudentObj = tState.selectedStudentId
+          ? tState.students.find(s => s.id === tState.selectedStudentId)
+          : null;
+
+        return `
+          <div class="home-shell">
+            <header class="dt-topbar teacher-clean-topbar">
+              <div class="dt-topbar-inner">
+                <div class="dt-topbar-left-group">
+                  <button
+                    type="button"
+                    class="ej-sb-logo-btn"
+                    id="btn-brand-reset-view"
+                    title="Về danh sách học viên"
+                  >
+                    <span class="ej-sb-logo-badge">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </span>
+                    <div class="ej-sb-logo-text">
+                      <span class="ej-sb-logo-main">Quản lý Học viên</span>
+                      <span class="ej-sb-logo-sub">VSTEP Speaking</span>
+                    </div>
+                  </button>
+                </div>
+
+                <div class="dt-topbar-right-group teacher-topbar-right">
+                  <a href="./index.html" class="top-pill-btn" style="text-decoration:none;" title="Về trang luyện tập">
+                    <span>← <span class="topbar-vocab-label-full">Trang học</span></span>
+                  </a>
+
+                  ${
+                    pendingAiCount > 0 && !tState.aiTableNotice
+                      ? `<button type="button" class="top-pill-btn yellow" id="btn-flush-queue" ${tState.flushingQueue ? "disabled" : ""}>
+                          <span>${tState.flushingQueue ? "⏳..." : `🔄 Chấm chờ (${pendingAiCount})`}</span>
+                        </button>`
+                      : ""
+                  }
+
+                  <button type="button" class="top-pill-btn" id="btn-refresh-data" title="Làm mới dữ liệu">
+                    <span>${tState.loading ? "⏳" : "↻"} <span class="topbar-vocab-label-full">Làm mới</span></span>
+                  </button>
+
+                  <button type="button" class="top-pill-btn yellow" id="btn-export-csv" title="Xuất báo cáo Excel (.csv)">
+                    <span>📊 <span class="topbar-vocab-label-full">Xuất Excel</span></span>
+                  </button>
+
+                  ${renderAccountMenuHtml()}
+                </div>
+              </div>
+            </header>
+
+            <main class="home-container teacher-compact-container">
+              ${
+                tState.dbError
+                  ? `<div style="padding:12px 16px;border:2px solid #DC2626;background:#FEF2F2;color:#B91C1C;font-size:13.5px;font-weight:700;margin-bottom:16px;border-radius:8px;">⚠️ ${escapeHtml(tState.dbError)}</div>`
+                  : ""
+              }
+              ${
+                tState.aiTableNotice
+                  ? `<div style="padding:12px 16px;border:2px solid #D97706;background:#FFFBEB;color:#92400E;font-size:13px;font-weight:600;margin-bottom:16px;border-radius:8px;">💡 ${escapeHtml(tState.aiTableNotice)}</div>`
+                  : ""
+              }
+
+              <div class="teacher-stats-grid teacher-stats-3col">
+                <div class="teacher-stat-card">
+                  <div class="teacher-stat-label">Tổng số học viên</div>
+                  <div class="teacher-stat-value">${tState.students.length}</div>
+                </div>
+                <div class="teacher-stat-card">
+                  <div class="teacher-stat-label">Bài đã nộp chính thức</div>
+                  <div class="teacher-stat-value" style="color:#15803D;">${totalSubmitted}</div>
+                </div>
+                <div class="teacher-stat-card">
+                  <div class="teacher-stat-label">Bài chờ chấm / nhận xét</div>
+                  <div class="teacher-stat-value" style="color:#B45309;">${totalUngraded}</div>
+                </div>
+              </div>
+
+              ${
+                selectedStudentObj
+                  ? renderStudentSubmissionsSection(selectedStudentObj)
+                  : renderStudentsTableSection()
+              }
+            </main>
+          </div>
+          ${renderStudentInfoModal()}
         `;
       }
 
@@ -1229,9 +1402,19 @@
           };
         }
 
+        const btnToggleAcc = document.getElementById("btn-toggle-account-menu");
+        if (btnToggleAcc) {
+          btnToggleAcc.onclick = e => {
+            e.stopPropagation();
+            tState.accountMenuOpen = !tState.accountMenuOpen;
+            renderTeacherApp();
+          };
+        }
+
         const btnLogout = document.getElementById("btn-teacher-logout");
         if (btnLogout) {
           btnLogout.onclick = async () => {
+            tState.accountMenuOpen = false;
             const client = CLOUD.getClient();
             if (client) {
               try {
@@ -1242,7 +1425,26 @@
             tState.unauthorizedEmail = "";
             tState.teacherEmail = "";
             tState.teacherUserId = "";
+            tState.selectedStudentId = "";
+            tState.infoModalStudentId = "";
             tState.deletingUserId = "";
+            renderTeacherApp();
+          };
+        }
+
+        const btnBrandReset = document.getElementById("btn-brand-reset-view");
+        if (btnBrandReset) {
+          btnBrandReset.onclick = () => {
+            tState.selectedStudentId = "";
+            renderTeacherApp();
+          };
+        }
+
+        const btnBackStudents = document.getElementById("btn-back-to-students");
+        if (btnBackStudents) {
+          btnBackStudents.onclick = () => {
+            tState.selectedStudentId = "";
+            tState.filterStatus = "all";
             renderTeacherApp();
           };
         }
@@ -1259,7 +1461,8 @@
 
         const btnExportCsv = document.getElementById("btn-export-csv");
         if (btnExportCsv) {
-          btnExportCsv.onclick = () => exportCsvReport(getFilteredSubmissions());
+          btnExportCsv.onclick = () =>
+            exportCsvReport(getFilteredSubmissionsForStudent(tState.selectedStudentId || ""));
         }
 
         const btnResetFilters = document.getElementById("btn-reset-filters");
@@ -1270,26 +1473,34 @@
             tState.filterLevel = "all";
             tState.filterPart = "all";
             tState.filterTopic = "all";
-            tState.filterStudent = "all";
             tState.filterStatus = "all";
             renderTeacherApp();
           };
         }
 
-        document.querySelectorAll("[data-teacher-tab]").forEach(btn => {
-          btn.onclick = () => {
-            tState.activeTab = btn.getAttribute("data-teacher-tab");
+        document.querySelectorAll("[data-open-student-info]").forEach(btn => {
+          btn.onclick = e => {
+            e.stopPropagation();
+            tState.infoModalStudentId = btn.getAttribute("data-open-student-info") || "";
             renderTeacherApp();
           };
         });
 
+        ["student-info-backdrop", "btn-close-student-info"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.onclick = () => {
+              tState.infoModalStudentId = "";
+              renderTeacherApp();
+            };
+          }
+        });
+
         document.querySelectorAll("[data-view-student-subs]").forEach(btn => {
           btn.onclick = () => {
-            tState.filterStudent = btn.getAttribute("data-view-student-subs");
-            tState.filterClass = "all";
-            tState.searchNameQuery = "";
-            tState.activeTab = "submissions";
+            tState.selectedStudentId = btn.getAttribute("data-view-student-subs") || "";
             renderTeacherApp();
+            window.scrollTo({ top: 0, behavior: "smooth" });
           };
         });
 
@@ -1321,12 +1532,6 @@
         if (selFilterClass) {
           selFilterClass.onchange = e => {
             tState.filterClass = e.target.value;
-            if (tState.filterStudent !== "all") {
-              const stObj = tState.students.find(s => s.email === tState.filterStudent);
-              if (!stObj || !matchesClassFilter(stObj.className)) {
-                tState.filterStudent = "all";
-              }
-            }
             renderTeacherApp();
           };
         }
@@ -1355,14 +1560,6 @@
         if (selTopic) {
           selTopic.onchange = e => {
             tState.filterTopic = e.target.value;
-            renderTeacherApp();
-          };
-        }
-
-        const selStudent = document.getElementById("sel-filter-student");
-        if (selStudent) {
-          selStudent.onchange = e => {
-            tState.filterStudent = e.target.value;
             renderTeacherApp();
           };
         }
@@ -1404,6 +1601,21 @@
         });
       }
 
+      document.addEventListener("click", e => {
+        if (tState.accountMenuOpen && !e.target.closest("#teacher-account-menu-wrap")) {
+          tState.accountMenuOpen = false;
+          renderTeacherApp();
+        }
+      });
+
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && (tState.accountMenuOpen || tState.infoModalStudentId)) {
+          tState.accountMenuOpen = false;
+          tState.infoModalStudentId = "";
+          renderTeacherApp();
+        }
+      });
+
       window.addEventListener("DOMContentLoaded", async () => {
         const client = CLOUD.getClient();
         if (!client) {
@@ -1432,6 +1644,8 @@
             tState.unauthorizedEmail = "";
             tState.teacherEmail = "";
             tState.teacherUserId = "";
+            tState.selectedStudentId = "";
+            tState.infoModalStudentId = "";
             tState.deletingUserId = "";
             renderTeacherApp();
           }
