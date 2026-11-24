@@ -59,7 +59,8 @@
     "imagination", "clues", "plot", "scenes", "primary", "public", "private",
     "international", "neighborhood", "traffic", "pick", "parents", "child", "daughter", "factor", "options",
     "stable", "well-paid", "government", "foreign", "company", "companies", "business",
-    "salary", "salaries", "benefits", "insurance", "colleagues", "managers", "investment", "security"
+    "salary", "salaries", "benefits", "insurance", "colleagues", "managers", "investment", "security",
+    "freelancer", "freelancers", "office", "balance", "schedule", "lifestyle", "customers", "mental", "freedom"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -111,7 +112,9 @@
     "predictable", "daily commute", "solid foundation", "far too expensive",
     "competitive salaries", "attractive benefits", "health insurance", "paid holidays",
     "international colleagues", "self-confidence", "job security", "significant investment",
-    "practical experience", "satisfying", "experienced managers"
+    "practical experience", "satisfying", "experienced managers",
+    "work-life balance", "flexible working hours", "quality time", "commute to the office",
+    "relaxing lifestyle", "predictable hours", "personal freedom", "mental health"
   ];
 
   function tokenize(text) {

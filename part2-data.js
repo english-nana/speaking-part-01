@@ -1154,7 +1154,7 @@ window.SPEAKING_PART2_TOPICS = [
   },
 
   // ==========================================================================
-  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 1 TÌNH HUỐNG
+  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 2 TÌNH HUỐNG
   // ==========================================================================
   {
     part: "part2",
@@ -1163,8 +1163,8 @@ window.SPEAKING_PART2_TOPICS = [
     title: "Choosing a Career",
     titleVi: "Chọn nghề nghiệp phù hợp",
     description:
-      "Luyện tình huống lựa chọn công việc ổn định và lương cao sau tốt nghiệp (làm cơ quan nhà nước, công ty nước ngoài hay tự kinh doanh riêng).",
-    questionsCount: 1,
+      "Luyện 2 tình huống lựa chọn nghề nghiệp: tìm công việc ổn định lương cao sau tốt nghiệp và chọn công việc có sự cân bằng tốt giữa công việc và cuộc sống.",
+    questionsCount: 2,
     questions: [
       {
         part: "part2",
@@ -1382,6 +1382,227 @@ window.SPEAKING_PART2_TOPICS = [
                 pos: "n. phr.",
                 meaning: "sự ổn định, an toàn trong công việc",
                 example: "Working for the government is worth considering because it offers <strong>job security</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        part: "part2",
+        id: "p2_career_q2",
+        num: 2,
+        situationTitle: "Choosing a job with a good work-life balance (office, freelancer, small business)",
+        prompt:
+          "Your close friend wants to choose a job that offers a good work-life balance. He is considering working in an office, becoming a freelancer, or running a small business. Which option do you think is the most suitable?",
+        promptHtml:
+          "Your close friend wants to choose a job that offers a good work-life balance. He is considering <strong>working in an office</strong>, <strong>becoming a freelancer</strong>, or <strong>running a small business</strong>. Which option do you think is the most suitable?",
+        promptSentences: [
+          {
+            enHtml: "Your close friend wants to choose a job that offers a good work-life balance.",
+            vi: "Bạn thân của bạn muốn chọn một công việc có sự cân bằng tốt giữa công việc và cuộc sống."
+          },
+          {
+            enHtml:
+              "He is considering <strong>working in an office</strong>, <strong>becoming a freelancer</strong>, or <strong>running a small business</strong>.",
+            vi: "Bạn ấy đang cân nhắc làm việc văn phòng, trở thành người làm việc tự do, hoặc điều hành một doanh nghiệp nhỏ."
+          },
+          {
+            enHtml: "Which option do you think is the most suitable?",
+            vi: "Bạn nghĩ lựa chọn nào là phù hợp nhất?"
+          }
+        ],
+        promptVi:
+          "Bạn thân của bạn muốn chọn một công việc có sự cân bằng tốt giữa công việc và cuộc sống. Bạn ấy đang cân nhắc làm việc văn phòng, trở thành người làm việc tự do, hoặc điều hành một doanh nghiệp nhỏ. Bạn nghĩ lựa chọn nào là phù hợp nhất?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Becoming a freelancer (Làm việc tự do)",
+              reasons: [
+                "He has flexible working hours and can decide when to start and finish without following a fixed schedule.",
+                "He can work in the morning and spend the rest of the day doing his favorite activities or being with his family.",
+                "He can work from almost anywhere—at home, at a coffee shop, or at the library—saving time, reducing stress, and enjoying a comfortable and relaxing lifestyle."
+              ]
+            },
+            {
+              option: "Working in an office (Làm việc văn phòng)",
+              reasons: [
+                "It offers a stable monthly salary, so he does not have much financial pressure.",
+                "Fixed working hours from 7 a.m. to 5 p.m. allow him to spend the evenings with his family or doing his favorite activities.",
+                "He does not have to worry about finding customers, so he feels less stressed and has better mental health than people who start their own business."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Working in an office (Làm việc văn phòng)",
+              whyNot: "Although it offers a stable monthly salary and predictable hours, the fixed schedule is not flexible and commuting daily limits his personal freedom."
+            },
+            {
+              option: "Running a small business (Kinh doanh nhỏ)",
+              whyNot: "Managing everything and finding customers takes too much time and effort, which causes high stress and harms his mental health."
+            }
+          ]
+        },
+        analysis: {
+          questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 hướng: working in an office / becoming a freelancer / running a small business).",
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Bám sát từ khóa 'work-life balance'.",
+          length: "B1: ~145–160 từ · B2: ~185–210 từ."
+        },
+        pitfalls: [
+          "Phát âm thiếu âm cuối /s/ trong 'freelancer' (/ˈfriːlænsər/), 'hours' (/ˈaʊərz/), 'activities', 'stress'.",
+          "Quên gắn lý do với mục tiêu 'work-life balance' (có thêm thời gian cho bản thân, gia đình, giảm căng thẳng).",
+          "Không giải thích rõ tại sao 'running a small business' khó giữ cân bằng cuộc sống (tốn nhiều thời gian, áp lực tìm khách hàng)."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my close friend wants a job with a good work-life balance. If I were him, I think I would choose becoming a freelancer."
+              },
+              {
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1: Giờ làm linh hoạt, tự quyết giờ bắt đầu và kết thúc, làm buổi sáng rồi dành phần còn lại trong ngày cho gia đình và sở thích. Lý do 2: Làm việc từ mọi nơi (nhà, quán cà phê), không phải đi làm mỗi ngày -> tiết kiệm thời gian, giảm căng thẳng, sống thoải mái. Phản biện: Làm văn phòng tuy lương ổn định nhưng giờ cố định không linh hoạt; kinh doanh nhỏ quá áp lực và tốn thời gian."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe becoming a freelancer is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my close friend wants a job with a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a <strong>freelancer</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> freelancers have <strong>flexible working hours</strong>. He can decide when to start and finish work without a <strong>fixed schedule</strong>. <strong>For example,</strong> he can work in the morning and spend <strong>the rest of the day</strong> doing his favorite activities or being with his family.<br><br><strong>Another reason is that</strong> he can work from almost anywhere, like at home or at a coffee shop. He doesn't have to travel to the office every day. <strong>This can help</strong> him save time, <strong>reduce stress</strong>, and enjoy a <strong>comfortable lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is a good option</strong> because of the <strong>stable monthly salary</strong>, the fixed hours are not flexible. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> it is very stressful and takes too much time.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "work-life balance",
+                ipa: "/ˌwɜːrk laɪf ˈbæləns/",
+                pos: "n. phr.",
+                meaning: "sự cân bằng giữa công việc và cuộc sống",
+                example: "My close friend wants a job with a good <strong>work-life balance</strong>."
+              },
+              {
+                word: "freelancer",
+                ipa: "/ˈfriːlænsər/",
+                pos: "n.",
+                meaning: "người làm việc tự do",
+                example: "If I were him, I think I would choose becoming a <strong>freelancer</strong>."
+              },
+              {
+                word: "flexible working hours",
+                ipa: "/ˈfleksəbl ˈwɜːrkɪŋ ˈaʊərz/",
+                pos: "n. phr.",
+                meaning: "giờ làm việc linh hoạt",
+                example: "First of all, freelancers have <strong>flexible working hours</strong>."
+              },
+              {
+                word: "fixed schedule",
+                ipa: "/fɪkst ˈskedʒuːl/",
+                pos: "n. phr.",
+                meaning: "lịch làm việc cố định",
+                example: "He can decide when to start and finish work without a <strong>fixed schedule</strong>."
+              },
+              {
+                word: "the rest of the day",
+                ipa: "/ðə rest əv ðə deɪ/",
+                pos: "n. phr.",
+                meaning: "phần thời gian còn lại trong ngày",
+                example: "He can spend <strong>the rest of the day</strong> doing his favorite activities."
+              },
+              {
+                word: "reduce stress",
+                ipa: "/rɪˈduːs stres/",
+                pos: "v. phr.",
+                meaning: "giảm căng thẳng",
+                example: "Working from home helps him save time and <strong>reduce stress</strong>."
+              },
+              {
+                word: "comfortable lifestyle",
+                ipa: "/ˈkʌmftəbl ˈlaɪfstaɪl/",
+                pos: "n. phr.",
+                meaning: "lối sống thoải mái",
+                example: "He can save time, reduce stress, and enjoy a <strong>comfortable lifestyle</strong>."
+              },
+              {
+                word: "stable monthly salary",
+                ipa: "/ˈsteɪbl ˈmʌnθli ˈsæləri/",
+                pos: "n. phr.",
+                meaning: "mức lương hằng tháng ổn định",
+                example: "Working in an office is a good option because of the <strong>stable monthly salary</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my close friend is looking for a job that offers a good work-life balance. If I were him, I think I would choose becoming a freelancer."
+              },
+              {
+                label: "2. Thân bài (2 lý do chi tiết + Phản biện 2 phương án còn lại)",
+                text: "Lý do 1: Giờ làm linh hoạt hoàn toàn, tự quyết giờ làm/nghỉ thay vì theo lịch cố định -> làm buổi sáng rồi dành phần còn lại cho sở thích và thời gian chất lượng (quality time) bên gia đình. Lý do 2: Làm việc ở bất kỳ đâu (nhà, quán cà phê, thư viện), không phải đi lại giữa giờ cao điểm -> tiết kiệm thời gian, giảm căng thẳng, tận hưởng lối sống thư thái (relaxing lifestyle). Phản biện: Làm văn phòng tuy lương ổn định và giờ giấc đều đặn (predictable hours) nhưng đi lại mỗi ngày hạn chế tự do cá nhân (personal freedom); tự kinh doanh tốn nhiều công sức tìm khách và ảnh hưởng sức khỏe tinh thần (mental health)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe becoming a freelancer is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my close friend is looking for a job that offers a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a freelancer. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> becoming a freelancer gives him truly <strong>flexible working hours</strong>. <strong>This is because</strong> he can freely decide when to start working and when to finish instead of following a fixed schedule. <strong>For example,</strong> he can focus on his tasks in the morning and spend the rest of the day doing his favorite activities, <strong>which</strong> leaves much more <strong>quality time</strong> for himself and his family.<br><br><strong>Another reason is that</strong> he can work from almost anywhere he feels comfortable. <strong>In other words,</strong> he can easily switch between working at home, at a quiet coffee shop, or at the school library. <strong>Moreover,</strong> he doesn't have to <strong>commute to the office</strong> through heavy traffic every day. <strong>This can allow</strong> him <strong>to</strong> save time, reduce stress, and enjoy a more comfortable and <strong>relaxing lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is worth considering</strong> because it provides a stable monthly salary and <strong>predictable hours</strong>, commuting daily still limits his <strong>personal freedom</strong>. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> managing everything and finding customers takes huge effort and can harm his <strong>mental health</strong>.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "work-life balance",
+                ipa: "/ˌwɜːrk laɪf ˈbæləns/",
+                pos: "n. phr.",
+                meaning: "sự cân bằng giữa công việc và cuộc sống",
+                example: "My close friend is looking for a job that offers a good <strong>work-life balance</strong>."
+              },
+              {
+                word: "flexible working hours",
+                ipa: "/ˈfleksəbl ˈwɜːrkɪŋ ˈaʊərz/",
+                pos: "n. phr.",
+                meaning: "giờ làm việc linh hoạt",
+                example: "Becoming a freelancer gives him truly <strong>flexible working hours</strong>."
+              },
+              {
+                word: "quality time",
+                ipa: "/ˈkwɑːləti taɪm/",
+                pos: "n. phr.",
+                meaning: "khoảng thời gian chất lượng, ý nghĩa",
+                example: "It leaves much more <strong>quality time</strong> for himself and his family."
+              },
+              {
+                word: "commute to the office",
+                ipa: "/kəˈmjuːt tuː ði ˈɔːfɪs/",
+                pos: "v. phr.",
+                meaning: "đi làm tới văn phòng hằng ngày",
+                example: "He doesn't have to <strong>commute to the office</strong> through heavy traffic every day."
+              },
+              {
+                word: "relaxing lifestyle",
+                ipa: "/rɪˈlæksɪŋ ˈlaɪfstaɪl/",
+                pos: "n. phr.",
+                meaning: "lối sống thư thái, nhẹ nhàng",
+                example: "This can allow him to enjoy a more comfortable and <strong>relaxing lifestyle</strong>."
+              },
+              {
+                word: "predictable hours",
+                ipa: "/prɪˈdɪktəbl ˈaʊərz/",
+                pos: "n. phr.",
+                meaning: "khung giờ làm việc cố định, dễ đoán trước",
+                example: "Working in an office provides a stable salary and <strong>predictable hours</strong>."
+              },
+              {
+                word: "personal freedom",
+                ipa: "/ˈpɜːrsənl ˈfriːdəm/",
+                pos: "n. phr.",
+                meaning: "sự tự do cá nhân",
+                example: "Commuting daily to an office still limits his <strong>personal freedom</strong>."
+              },
+              {
+                word: "mental health",
+                ipa: "/ˈmentl helθ/",
+                pos: "n. phr.",
+                meaning: "sức khỏe tinh thần",
+                example: "Managing a small business takes huge effort and can harm his <strong>mental health</strong>."
               }
             ]
           }
