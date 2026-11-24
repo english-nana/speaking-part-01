@@ -38,6 +38,25 @@ window.SPEAKING_PART2_TOPICS = [
           "Your younger sister has just finished high school and is planning to study at a university. She wants to choose a university that provides high-quality education. There are three factors she should consider: the university’s ranking, the distance from her home, and the tuition fees. Which one do you think is the best choice for her?",
         promptHtml:
           "Your younger sister has just finished high school and is planning to study at a university. She wants to choose a university that provides high-quality education. There are three factors she should consider: <strong>the university’s ranking</strong>, <strong>the distance from her home</strong>, and <strong>the tuition fees</strong>. Which one do you think is the best choice for her?",
+        promptSentences: [
+          {
+            enHtml: "Your younger sister has just finished high school and is planning to study at a university.",
+            vi: "Em gái bạn vừa tốt nghiệp cấp 3 và đang dự định học đại học."
+          },
+          {
+            enHtml: "She wants to choose a university that provides high-quality education.",
+            vi: "Em ấy muốn chọn một trường đại học có chất lượng giáo dục cao."
+          },
+          {
+            enHtml:
+              "There are three factors she should consider: <strong>the university’s ranking</strong>, <strong>the distance from her home</strong>, and <strong>the tuition fees</strong>.",
+            vi: "Có ba yếu tố em ấy nên cân nhắc: thứ hạng của trường đại học, khoảng cách từ nhà và học phí."
+          },
+          {
+            enHtml: "Which one do you think is the best choice for her?",
+            vi: "Bạn nghĩ yếu tố nào là lựa chọn tốt nhất cho em ấy?"
+          }
+        ],
         promptVi:
           "Em gái bạn vừa tốt nghiệp cấp 3 và đang dự định học đại học. Em ấy muốn chọn một trường có chất lượng giáo dục cao. Có ba yếu tố để cân nhắc: thứ hạng của trường đại học, khoảng cách từ nhà và học phí. Theo bạn yếu tố nào là lựa chọn tốt nhất cho em ấy?",
         analysis: {
@@ -214,6 +233,21 @@ window.SPEAKING_PART2_TOPICS = [
           "Your cousin is about to enter university and is confused about choosing the right one. There are three criteria for him or her to consider: affordable fees, student support, and campus facilities. Which factor do you think is the most important?",
         promptHtml:
           "Your cousin is about to enter university and is confused about choosing the right one. There are three criteria for him or her to consider: <strong>affordable fees</strong>, <strong>student support</strong>, and <strong>campus facilities</strong>. Which factor do you think is the most important?",
+        promptSentences: [
+          {
+            enHtml: "Your cousin is about to enter university and is confused about choosing the right one.",
+            vi: "Anh/em họ của bạn sắp vào đại học và đang bối rối chưa biết chọn trường nào phù hợp."
+          },
+          {
+            enHtml:
+              "There are three criteria for him or her to consider: <strong>affordable fees</strong>, <strong>student support</strong>, and <strong>campus facilities</strong>.",
+            vi: "Có ba tiêu chí để bạn ấy cân nhắc: học phí vừa phải, hỗ trợ sinh viên và cơ sở vật chất của trường."
+          },
+          {
+            enHtml: "Which factor do you think is the most important?",
+            vi: "Bạn nghĩ yếu tố nào là quan trọng nhất?"
+          }
+        ],
         promptVi:
           "Anh/em họ của bạn sắp vào đại học và đang bối rối chưa biết chọn trường nào phù hợp. Có ba tiêu chí để cân nhắc: học phí vừa phải, hỗ trợ sinh viên và cơ sở vật chất trong khuôn viên trường. Theo bạn yếu tố nào quan trọng nhất?",
         analysis: {
@@ -390,6 +424,21 @@ window.SPEAKING_PART2_TOPICS = [
           "You are a recruiter and you are going to hire a new employee. There are three qualities for you to consider: communication skills, honesty, and professional skills. Which quality do you think is the most important?",
         promptHtml:
           "You are a recruiter and you are going to hire a new employee. There are three qualities for you to consider: <strong>communication skills</strong>, <strong>honesty</strong>, and <strong>professional skills</strong>. Which quality do you think is the most important?",
+        promptSentences: [
+          {
+            enHtml: "You are a recruiter and you are going to hire a new employee.",
+            vi: "Bạn là nhà tuyển dụng và sắp tuyển một nhân viên mới."
+          },
+          {
+            enHtml:
+              "There are three qualities for you to consider: <strong>communication skills</strong>, <strong>honesty</strong>, and <strong>professional skills</strong>.",
+            vi: "Có ba phẩm chất để bạn cân nhắc: kỹ năng giao tiếp, sự trung thực và kỹ năng chuyên môn."
+          },
+          {
+            enHtml: "Which quality do you think is the most important?",
+            vi: "Bạn nghĩ phẩm chất nào là quan trọng nhất?"
+          }
+        ],
         promptVi:
           "Bạn là một nhà tuyển dụng và sắp tuyển một nhân viên mới. Có ba phẩm chất để bạn cân nhắc: kỹ năng giao tiếp, sự trung thực và kỹ năng chuyên môn. Bạn nghĩ phẩm chất nào là quan trọng nhất?",
         analysis: {
@@ -582,6 +631,21 @@ window.SPEAKING_PART2_TOPICS = [
           "Your friend wants to read a book to improve her imagination. She is considering three options: a mystery novel, a romance novel, and an action fiction book. Which one would you recommend?",
         promptHtml:
           "Your friend wants to read a book to improve her imagination. She is considering three options: <strong>a mystery novel</strong>, <strong>a romance novel</strong>, and <strong>an action fiction book</strong>. Which one would you recommend?",
+        promptSentences: [
+          {
+            enHtml: "Your friend wants to read a book to improve her imagination.",
+            vi: "Bạn của bạn muốn đọc một cuốn sách để cải thiện trí tưởng tượng."
+          },
+          {
+            enHtml:
+              "She is considering three options: <strong>a mystery novel</strong>, <strong>a romance novel</strong>, and <strong>an action fiction book</strong>.",
+            vi: "Cô ấy đang cân nhắc ba lựa chọn: tiểu thuyết trinh thám, tiểu thuyết lãng mạn và sách hành động viễn tưởng."
+          },
+          {
+            enHtml: "Which one would you recommend?",
+            vi: "Bạn sẽ giới thiệu cuốn nào?"
+          }
+        ],
         promptVi:
           "Bạn của bạn muốn đọc một cuốn sách để cải thiện trí tưởng tượng. Cô ấy đang cân nhắc ba thể loại: tiểu thuyết trinh thám, tiểu thuyết lãng mạn và sách hành động viễn tưởng. Bạn sẽ gợi ý loại nào?",
         analysis: {
@@ -758,6 +822,17 @@ window.SPEAKING_PART2_TOPICS = [
           "A couple is choosing a primary school for their child. What kind of school would you recommend: a public school near her home, an international school, or a private school?",
         promptHtml:
           "A couple is choosing a primary school for their child. What kind of school would you recommend: <strong>a public school near her home</strong>, <strong>an international school</strong>, or <strong>a private school</strong>?",
+        promptSentences: [
+          {
+            enHtml: "A couple is choosing a primary school for their child.",
+            vi: "Một cặp vợ chồng đang chọn trường tiểu học cho con của họ."
+          },
+          {
+            enHtml:
+              "What kind of school would you recommend: <strong>a public school near her home</strong>, <strong>an international school</strong>, or <strong>a private school</strong>?",
+            vi: "Bạn sẽ gợi ý loại hình trường nào: một trường công lập gần nhà, một trường quốc tế hay một trường tư thục?"
+          }
+        ],
         promptVi:
           "Một cặp vợ chồng đang chọn trường tiểu học cho con gái của họ. Bạn sẽ gợi ý loại hình trường nào: một trường công lập gần nhà, một trường quốc tế hay một trường tư thục?",
         analysis: {

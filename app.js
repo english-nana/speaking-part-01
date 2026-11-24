@@ -39,6 +39,7 @@
     p2SwapSituationIdx: 0,
     p2SwapOption2Idx: 0,
     p2SwapHelpIdx: 0,
+    revealedPromptSentences: {},
     notifOpen: false,
     accountMenuOpen: false,
     reviewsByQuestionId: {},
@@ -2115,20 +2116,30 @@
             </div>
 
             <div class="question-topic-heading">${escapeHtml(topic.title)}</div>
-            <p class="examiner-instruction">
-              ${
-                isPart2
-                  ? "Choose 1 of the 3 options and present your answer in 3 parts: Introduction → 2 Reasons for your choice & Why not the other 2 options → Conclusion."
-                  : "The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences."
-              }
-            </p>
+            ${
+              !isPart2
+                ? `<p class="examiner-instruction">The examiner will ask you some questions about yourself and this topic. Answer each question in two or three sentences.</p>`
+                : ""
+            }
 
-            <div class="question-prompt-card">
-              <p class="question-prompt-text">${question.promptHtml || escapeHtml(question.prompt)}</p>
+            <div class="question-prompt-card ${isPart2 ? "part2-prompt-card" : ""}">
               ${
-                question.promptVi
-                  ? `<p class="prompt-vi-sub"><strong>Tình huống:</strong> ${escapeHtml(question.promptVi)}</p>`
-                  : ""
+                isPart2 && Array.isArray(question.promptSentences) && question.promptSentences.length > 0
+                  ? `
+                  <div class="question-prompt-text part2-prompt">
+                    ${question.promptSentences
+                      .map((sent, sIdx) => {
+                        const sentKey = `${qId}__${sIdx}`;
+                        const isRevealed = Boolean(state.revealedPromptSentences[sentKey]);
+                        return `<span class="p2-prompt-sentence ${isRevealed ? "revealed" : ""}" data-toggle-prompt-sent="${escapeHtml(sentKey)}" title="Bấm để xem / ẩn nghĩa tiếng Việt">${sent.enHtml}${
+                          isRevealed ? ` <span class="p2-sent-vi">(${escapeHtml(sent.vi)})</span>` : ""
+                        }</span>`;
+                      })
+                      .join(" ")}
+                  </div>
+                  <div class="p2-prompt-hint">Bấm vào từng câu để xem / ẩn nghĩa tiếng Việt</div>
+                `
+                  : `<p class="question-prompt-text">${escapeHtml(question.prompt)}</p>`
               }
             </div>
 
@@ -3144,6 +3155,15 @@
           scheduleSaveIdeaNote(question.id, qData.ideaNote);
         };
       }
+
+      document.querySelectorAll("[data-toggle-prompt-sent]").forEach(el => {
+        el.onclick = () => {
+          const sentKey = el.getAttribute("data-toggle-prompt-sent");
+          if (!sentKey) return;
+          state.revealedPromptSentences[sentKey] = !state.revealedPromptSentences[sentKey];
+          renderApp();
+        };
+      });
 
       const btnRec = document.getElementById("btn-record-toggle");
       if (btnRec) {
