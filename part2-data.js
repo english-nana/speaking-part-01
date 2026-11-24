@@ -59,6 +59,36 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         promptVi:
           "Em gái bạn vừa tốt nghiệp cấp 3 và đang dự định học đại học. Em ấy muốn chọn một trường có chất lượng giáo dục cao. Có ba yếu tố để cân nhắc: thứ hạng của trường đại học, khoảng cách từ nhà và học phí. Theo bạn yếu tố nào là lựa chọn tốt nhất cho em ấy?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "The university’s ranking (Thứ hạng trường)",
+              reasons: [
+                "Giảng viên giỏi, chương trình học bài bản, thư viện & cơ sở vật chất hiện đại.",
+                "Bằng cấp uy tín giúp dễ tìm được công việc tốt sau khi tốt nghiệp.",
+                "Môi trường học năng động, có nhiều bạn giỏi để cùng cố gắng."
+              ]
+            },
+            {
+              option: "The tuition fees (Học phí)",
+              reasons: [
+                "Giảm áp lực tiền bạc cho bố mẹ suốt 4 năm đại học.",
+                "Không phải làm thêm quá nhiều, có thời gian tập trung học và ôn thi.",
+                "Có thêm ngân sách lo sinh hoạt phí, sách vở hoặc học thêm kỹ năng."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "The distance from her home (Khoảng cách từ nhà)",
+              whyNot: "Không phải yếu tố quyết định chất lượng đào tạo; nếu ở xa vẫn có thể ở ký túc xá, thuê phòng gần trường hoặc đi xe buýt."
+            },
+            {
+              option: "The tuition fees (Học phí)",
+              whyNot: "Học phí quan trọng nhưng có thể xin học bổng hoặc đi làm thêm; đầu tư cho nền giáo dục chất lượng luôn xứng đáng về lâu dài."
+            }
+          ]
+        },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 yếu tố: university's ranking / distance from her home / tuition fees).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám đúng khung 3 phần chung: Mở bài → Thân bài (First of all + Another reason + Phản biện 2 phương án) → Kết bài.",
@@ -86,7 +116,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister just finished high school and wants to choose a good university. <strong>If I were her, I think I would</strong> choose <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a top university has good teachers and modern classrooms. <strong>This is because</strong> high-ranking schools focus a lot on teaching quality. <strong>For example,</strong> my sister can study in a big library and learn useful lessons. <strong>Because of this,</strong> she can <strong>study effectively</strong>. <strong>Another reason is that</strong> a good ranking brings better jobs <strong>after graduation</strong>. <strong>In other words,</strong> companies trust students from famous schools. <strong>Moreover,</strong> they believe these students have strong skills. <strong>This can help</strong> my sister <strong>to</strong> get a good job easily. <strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is a good option</strong>, she can still live in a <strong>dormitory</strong> or take the bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can <strong>apply for scholarships</strong> to <strong>save money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister just finished high school and wants to choose a good university. <strong>If I were her, I think I would</strong> choose <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a top university has good teachers and modern classrooms. <strong>This is because</strong> high-ranking schools focus a lot on teaching quality. <strong>For example,</strong> my sister can study in a big library and learn useful lessons. <strong>Because of this,</strong> she can <strong>study effectively</strong>.<br><br><strong>Another reason is that</strong> a good ranking brings better jobs <strong>after graduation</strong>. <strong>In other words,</strong> companies trust students from famous schools. <strong>Moreover,</strong> they believe these students have strong skills. <strong>This can help</strong> my sister <strong>to</strong> get a good job easily.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is a good option</strong>, she can still live in a <strong>dormitory</strong> or take the bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can <strong>apply for scholarships</strong> to <strong>save money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "university's ranking",
@@ -162,7 +192,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister is looking for a university that provides high-quality education. <strong>If I were her, I think I would</strong> prioritize <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a high-ranking university guarantees better teaching quality. <strong>This is because</strong> top schools usually have <strong>experienced lecturers</strong> and a <strong>well-structured curriculum</strong>. <strong>For example,</strong> she can study with modern facilities and practice real-life skills, <strong>which</strong> boosts her academic performance. <strong>Because of this,</strong> she will build strong confidence in her major. <strong>Another reason is that</strong> graduating from a <strong>reputable</strong> university brings wider <strong>career opportunities</strong>. <strong>In other words,</strong> employers strongly value graduates from well-known institutions. <strong>Moreover,</strong> top schools often connect students directly with major companies. <strong>This can allow</strong> her <strong>to</strong> land a <strong>meaningful</strong> job right after graduation. <strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is worth considering</strong>, she can stay in a dormitory or <strong>commute</strong> by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can apply for scholarships, and quality education <strong>pays off in the long run</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister is looking for a university that provides high-quality education. <strong>If I were her, I think I would</strong> prioritize <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a high-ranking university guarantees better teaching quality. <strong>This is because</strong> top schools usually have <strong>experienced lecturers</strong> and a <strong>well-structured curriculum</strong>. <strong>For example,</strong> she can study with modern facilities and practice real-life skills, <strong>which</strong> boosts her academic performance. <strong>Because of this,</strong> she will build strong confidence in her major.<br><br><strong>Another reason is that</strong> graduating from a <strong>reputable</strong> university brings wider <strong>career opportunities</strong>. <strong>In other words,</strong> employers strongly value graduates from well-known institutions. <strong>Moreover,</strong> top schools often connect students directly with major companies. <strong>This can allow</strong> her <strong>to</strong> land a <strong>meaningful</strong> job right after graduation.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is worth considering</strong>, she can stay in a dormitory or <strong>commute</strong> by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can apply for scholarships, and quality education <strong>pays off in the long run</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "prioritize",
@@ -250,6 +280,36 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         promptVi:
           "Anh/em họ của bạn sắp vào đại học và đang bối rối chưa biết chọn trường nào phù hợp. Có ba tiêu chí để cân nhắc: học phí vừa phải, hỗ trợ sinh viên và cơ sở vật chất trong khuôn viên trường. Theo bạn yếu tố nào quan trọng nhất?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Affordable fees (Học phí vừa phải)",
+              reasons: [
+                "Giảm áp lực tài chính cho gia đình suốt 4 năm vì còn tiền ăn ở, sách vở.",
+                "Giúp sinh viên yên tâm tập trung học hành, thi cử mà không phải làm thêm quá sức.",
+                "Phù hợp với thu nhập thực tế của đa số gia đình Việt Nam."
+              ]
+            },
+            {
+              option: "Campus facilities (Cơ sở vật chất)",
+              reasons: [
+                "Phòng học máy lạnh, thư viện hiện đại, phòng máy tính giúp học thoải mái và hiệu quả hơn.",
+                "Có sân thể thao, không gian tự học giúp sinh viên cân bằng giữa học tập và thư giãn.",
+                "Tạo cảm hứng đến trường mỗi ngày."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Campus facilities (Cơ sở vật chất)",
+              whyNot: "Phòng ốc đẹp là điểm cộng nhưng không bắt buộc; sinh viên vẫn có thể học tốt qua tài liệu online và thư viện công cộng."
+            },
+            {
+              option: "Student support (Hỗ trợ sinh viên)",
+              whyNot: "Chủ yếu cần trong tuần đầu định hướng tân sinh viên; trong quá trình học hằng ngày, giảng viên và bạn bè đã đủ hỗ trợ."
+            }
+          ]
+        },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 tiêu chí: affordable fees / student support / campus facilities).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Triển khai theo đúng khung dàn ý 3 phần chung.",
@@ -277,7 +337,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing a school. <strong>If I were him, I think I would</strong> choose <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable fees reduce <strong>money pressure</strong> on his parents. <strong>This is because</strong> university takes four long years to finish. <strong>For example,</strong> besides tuition, he has to <strong>pay for</strong> rent, food, and books every month. <strong>Because of this,</strong> his whole family feels much less stressed. <strong>Another reason is that</strong> lower fees let him <strong>focus on</strong> studying. <strong>In other words,</strong> he does not need to work too many <strong>part-time hours</strong>. <strong>Moreover,</strong> he has enough energy to prepare well for <strong>final exams</strong>. <strong>This can help</strong> him <strong>to</strong> get good grades. <strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is a good option</strong>, students can still learn well using online materials and <strong>public libraries</strong>. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> he mainly needs it in the first week, and teachers or <strong>close friends</strong> can help him daily.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing a school. <strong>If I were him, I think I would</strong> choose <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable fees reduce <strong>money pressure</strong> on his parents. <strong>This is because</strong> university takes four long years to finish. <strong>For example,</strong> besides tuition, he has to <strong>pay for</strong> rent, food, and books every month. <strong>Because of this,</strong> his whole family feels much less stressed.<br><br><strong>Another reason is that</strong> lower fees let him <strong>focus on</strong> studying. <strong>In other words,</strong> he does not need to work too many <strong>part-time hours</strong>. <strong>Moreover,</strong> he has enough energy to prepare well for <strong>final exams</strong>. <strong>This can help</strong> him <strong>to</strong> get good grades.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is a good option</strong>, students can still learn well using online materials and <strong>public libraries</strong>. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> he mainly needs it in the first week, and teachers or <strong>close friends</strong> can help him daily.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "affordable fees",
@@ -353,7 +413,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing the right one. <strong>If I were him, I think I would</strong> go for <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. <strong>This is because</strong> university life involves four continuous years of <strong>living expenses</strong>. <strong>For example,</strong> his parents already have to cover rent, meals, and textbooks every month, <strong>which</strong> adds up quickly. <strong>Because of this,</strong> manageable fees give everyone much greater <strong>peace of mind</strong>. <strong>Another reason is that</strong> affordable tuition protects his study focus. <strong>In other words,</strong> he will not have to take <strong>exhausting</strong> part-time shifts just to pay tuition. <strong>Moreover,</strong> he won't <strong>feel sluggish</strong> during lectures or before final exams. <strong>This can allow</strong> him <strong>to</strong> keep his grades consistently high. <strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is worth considering</strong>, fancy buildings are not <strong>essential</strong> when students can study through online resources. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> it is mainly needed during <strong>freshman orientation</strong>, while lecturers and classmates provide enough <strong>daily guidance</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing the right one. <strong>If I were him, I think I would</strong> go for <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. <strong>This is because</strong> university life involves four continuous years of <strong>living expenses</strong>. <strong>For example,</strong> his parents already have to cover rent, meals, and textbooks every month, <strong>which</strong> adds up quickly. <strong>Because of this,</strong> manageable fees give everyone much greater <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> affordable tuition protects his study focus. <strong>In other words,</strong> he will not have to take <strong>exhausting</strong> part-time shifts just to pay tuition. <strong>Moreover,</strong> he won't <strong>feel sluggish</strong> during lectures or before final exams. <strong>This can allow</strong> him <strong>to</strong> keep his grades consistently high.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is worth considering</strong>, fancy buildings are not <strong>essential</strong> when students can study through online resources. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> it is mainly needed during <strong>freshman orientation</strong>, while lecturers and classmates provide enough <strong>daily guidance</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "financial burden",
@@ -441,6 +501,36 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         promptVi:
           "Bạn là một nhà tuyển dụng và sắp tuyển một nhân viên mới. Có ba phẩm chất để bạn cân nhắc: kỹ năng giao tiếp, sự trung thực và kỹ năng chuyên môn. Bạn nghĩ phẩm chất nào là quan trọng nhất?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Honesty (Sự trung thực)",
+              reasons: [
+                "Xây dựng niềm tin vững chắc — sếp yên tâm giao tiền bạc, dự án quan trọng hay dữ liệu khách hàng.",
+                "Nhân viên trung thực dám nhận lỗi sớm để cả nhóm sửa kịp tiến độ thay vì giấu giếm.",
+                "Kỹ năng có thể đào tạo dần nhưng tính cách trung thực rất khó rèn lại."
+              ]
+            },
+            {
+              option: "Professional skills (Kỹ năng chuyên môn)",
+              reasons: [
+                "Bắt tay vào làm việc ngay mà không tốn nhiều thời gian và chi phí đào tạo lại.",
+                "Hoàn thành công việc nhanh, chính xác và mang lại hiệu quả trực tiếp cho công ty.",
+                "Hỗ trợ được các đồng nghiệp khác xử lý các vấn đề kỹ thuật khó."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Professional skills (Kỹ năng chuyên môn)",
+              whyNot: "Kỹ năng chuyên môn quan trọng nhưng nhân viên mới hoàn toàn có thể học và được đào tạo dần trong công việc."
+            },
+            {
+              option: "Communication skills (Kỹ năng giao tiếp)",
+              whyNot: "Nói năng khéo léo là lợi thế, nhưng nếu thiếu trung thực thì lời nói hay cũng làm mất niềm tin của khách hàng và đồng nghiệp."
+            }
+          ]
+        },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 phẩm chất: communication skills / honesty / professional skills).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Đóng vai nhà tuyển dụng theo khung 3 phần chung.",
@@ -468,7 +558,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> I am a recruiter and I need to hire a new employee for my company. <strong>If I were in this situation, I think I would</strong> choose <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty builds <strong>strong trust</strong> at work. <strong>This is because</strong> every company needs people they can rely on. <strong>For example,</strong> managers can <strong>feel safe</strong> giving an honest worker money or <strong>important projects</strong>. <strong>Because of this,</strong> there is less worry about cheating. <strong>Another reason is that</strong> honest workers help a team fix problems fast. <strong>In other words,</strong> when they <strong>make a mistake</strong>, they <strong>tell the truth</strong> early. <strong>Moreover,</strong> everyone can work together calmly instead of hiding errors. <strong>This can help</strong> the whole team <strong>to</strong> finish tasks on time. <strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is a good option</strong>, a new worker can learn job skills <strong>step by step</strong> after training. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>sweet words</strong> without honesty can hurt customers' trust.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> I am a recruiter and I need to hire a new employee for my company. <strong>If I were in this situation, I think I would</strong> choose <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty builds <strong>strong trust</strong> at work. <strong>This is because</strong> every company needs people they can rely on. <strong>For example,</strong> managers can <strong>feel safe</strong> giving an honest worker money or <strong>important projects</strong>. <strong>Because of this,</strong> there is less worry about cheating.<br><br><strong>Another reason is that</strong> honest workers help a team fix problems fast. <strong>In other words,</strong> when they <strong>make a mistake</strong>, they <strong>tell the truth</strong> early. <strong>Moreover,</strong> everyone can work together calmly instead of hiding errors. <strong>This can help</strong> the whole team <strong>to</strong> finish tasks on time.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is a good option</strong>, a new worker can learn job skills <strong>step by step</strong> after training. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>sweet words</strong> without honesty can hurt customers' trust.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "honesty",
@@ -544,7 +634,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> I am recruiting a new employee and need to pick the most important quality. <strong>If I were in this situation, I think I would</strong> prioritize <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty is the foundation of real trust in any organization. <strong>This is because</strong> companies rely heavily on dependable staff to protect their reputation. <strong>For example,</strong> managers can safely trust an honest employee with budgets or <strong>sensitive</strong> <strong>client data</strong>, <strong>which</strong> prevents costly mistakes. <strong>Because of this,</strong> the company enjoys true <strong>peace of mind</strong>. <strong>Another reason is that</strong> honest workers build a healthy and productive team environment. <strong>In other words,</strong> they <strong>admit mistakes</strong> openly instead of covering them up. <strong>Moreover,</strong> coworkers can jump in and solve issues before <strong>tight deadlines</strong> are missed. <strong>This can allow</strong> the whole team <strong>to</strong> work smoothly together. <strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is worth considering</strong>, technical skills can easily be <strong>trained on the job</strong>, whereas poor <strong>character</strong> is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>smooth talk</strong> without honesty can seriously <strong>damage trust</strong> with clients.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> I am recruiting a new employee and need to pick the most important quality. <strong>If I were in this situation, I think I would</strong> prioritize <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty is the foundation of real trust in any organization. <strong>This is because</strong> companies rely heavily on dependable staff to protect their reputation. <strong>For example,</strong> managers can safely trust an honest employee with budgets or <strong>sensitive</strong> <strong>client data</strong>, <strong>which</strong> prevents costly mistakes. <strong>Because of this,</strong> the company enjoys true <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> honest workers build a healthy and productive team environment. <strong>In other words,</strong> they <strong>admit mistakes</strong> openly instead of covering them up. <strong>Moreover,</strong> coworkers can jump in and solve issues before <strong>tight deadlines</strong> are missed. <strong>This can allow</strong> the whole team <strong>to</strong> work smoothly together.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is worth considering</strong>, technical skills can easily be <strong>trained on the job</strong>, whereas poor <strong>character</strong> is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>smooth talk</strong> without honesty can seriously <strong>damage trust</strong> with clients.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "client data",
@@ -648,6 +738,36 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         promptVi:
           "Bạn của bạn muốn đọc một cuốn sách để cải thiện trí tưởng tượng. Cô ấy đang cân nhắc ba thể loại: tiểu thuyết trinh thám, tiểu thuyết lãng mạn và sách hành động viễn tưởng. Bạn sẽ gợi ý loại nào?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "A mystery novel (Tiểu thuyết trinh thám)",
+              reasons: [
+                "Nhiều manh mối và cú bẻ lái bất ngờ buộc người đọc tự hình dung bối cảnh và đoán thủ phạm.",
+                "Cốt truyện tò mò, cuốn hút từ đầu đến cuối nên dễ đọc hết sách mà không chán.",
+                "Vừa rèn trí tưởng tượng vừa phát triển tư duy suy luận logic."
+              ]
+            },
+            {
+              option: "An action fiction book (Sách hành động viễn tưởng)",
+              reasons: [
+                "Nhịp truyện nhanh, kịch tính với nhiều cuộc phiêu lưu và thế giới giả tưởng thú vị.",
+                "Tác giả miêu tả nhiều bối cảnh, nhân vật mới lạ giúp người đọc tưởng tượng sinh động.",
+                "Giúp giải trí, xả stress rất tốt sau giờ học."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "A romance novel (Tiểu thuyết lãng mạn)",
+              whyNot: "Cốt truyện tình cảm thường nhẹ nhàng, khá dễ đoán và xoay quanh cảm xúc đời thường nên ít kích thích trí tưởng tượng."
+            },
+            {
+              option: "An action fiction book (Sách hành động viễn tưởng)",
+              whyNot: "Tập trung nhiều vào các pha đánh nhau, rượt đuổi liên tục nên ít khoảng lặng để người đọc suy ngẫm sâu."
+            }
+          ]
+        },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 thể loại sách: mystery novel / romance novel / action fiction book).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám sát từ khóa đề bài 'improve her imagination' theo khung 3 phần chung.",
@@ -675,7 +795,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my friend wants to read a book to improve her imagination. <strong>If I were her, I think I would</strong> choose <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery books make readers think actively. <strong>This is because</strong> they are full of <strong>clues</strong> and hidden secrets. <strong>For example,</strong> my friend can <strong>picture the places</strong> and <strong>guess the ending</strong> in her head. <strong>Because of this,</strong> her imagination grows much stronger. <strong>Another reason is that</strong> this kind of book is very exciting <strong>from start to finish</strong>. <strong>In other words,</strong> every chapter brings a new surprise. <strong>Moreover,</strong> she will not <strong>feel bored</strong> while reading. <strong>This can help</strong> her <strong>to</strong> finish the whole story happily. <strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is a good option</strong>, love stories are often <strong>easy to guess</strong> and focus mostly on daily feelings. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> it focuses too much on fast fights instead of <strong>creative thinking</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my friend wants to read a book to improve her imagination. <strong>If I were her, I think I would</strong> choose <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery books make readers think actively. <strong>This is because</strong> they are full of <strong>clues</strong> and hidden secrets. <strong>For example,</strong> my friend can <strong>picture the places</strong> and <strong>guess the ending</strong> in her head. <strong>Because of this,</strong> her imagination grows much stronger.<br><br><strong>Another reason is that</strong> this kind of book is very exciting <strong>from start to finish</strong>. <strong>In other words,</strong> every chapter brings a new surprise. <strong>Moreover,</strong> she will not <strong>feel bored</strong> while reading. <strong>This can help</strong> her <strong>to</strong> finish the whole story happily.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is a good option</strong>, love stories are often <strong>easy to guess</strong> and focus mostly on daily feelings. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> it focuses too much on fast fights instead of <strong>creative thinking</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "mystery novel",
@@ -751,7 +871,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my friend is looking for a book that can sharpen her imagination. <strong>If I were her, I think I would</strong> go for <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery stories push the reader's mind to work creatively. <strong>This is because</strong> they are packed with hidden clues and <strong>unexpected twists</strong>. <strong>For example,</strong> she has to picture scenes and <strong>connect details</strong> like a detective, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>. <strong>Because of this,</strong> her imagination gets a real workout. <strong>Another reason is that</strong> a clever mystery builds strong <strong>curiosity</strong> from the very first chapter. <strong>In other words,</strong> readers always want to discover what happens next. <strong>Moreover,</strong> the suspense keeps her engaged rather than putting the book down halfway. <strong>This can allow</strong> her <strong>to</strong> <strong>stay hooked</strong> and enjoy the entire reading experience. <strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is worth considering</strong>, love stories are often quite <strong>predictable</strong> and focus mostly on everyday emotions. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> fast chases feel <strong>thrilling</strong>, yet non-stop fighting leaves little room for <strong>deep reflection</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my friend is looking for a book that can sharpen her imagination. <strong>If I were her, I think I would</strong> go for <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery stories push the reader's mind to work creatively. <strong>This is because</strong> they are packed with hidden clues and <strong>unexpected twists</strong>. <strong>For example,</strong> she has to picture scenes and <strong>connect details</strong> like a detective, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>. <strong>Because of this,</strong> her imagination gets a real workout.<br><br><strong>Another reason is that</strong> a clever mystery builds strong <strong>curiosity</strong> from the very first chapter. <strong>In other words,</strong> readers always want to discover what happens next. <strong>Moreover,</strong> the suspense keeps her engaged rather than putting the book down halfway. <strong>This can allow</strong> her <strong>to</strong> <strong>stay hooked</strong> and enjoy the entire reading experience.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is worth considering</strong>, love stories are often quite <strong>predictable</strong> and focus mostly on everyday emotions. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> fast chases feel <strong>thrilling</strong>, yet non-stop fighting leaves little room for <strong>deep reflection</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "unexpected twists",
@@ -835,6 +955,36 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         promptVi:
           "Một cặp vợ chồng đang chọn trường tiểu học cho con gái của họ. Bạn sẽ gợi ý loại hình trường nào: một trường công lập gần nhà, một trường quốc tế hay một trường tư thục?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "A public school near her home (Trường công lập gần nhà)",
+              reasons: [
+                "Đưa đón con mỗi sáng rất tiện và an toàn, bé được ngủ đủ giấc thay vì ngồi kẹt xe.",
+                "Học phí thấp giúp gia đình tiết kiệm tiền mà bé vẫn nắm chắc kiến thức nền tảng.",
+                "Dễ kết bạn với các bạn nhỏ ngay trong khu phố quanh nhà."
+              ]
+            },
+            {
+              option: "A private school (Trường tư thục)",
+              reasons: [
+                "Sĩ số lớp nhỏ nên giáo viên quan tâm sát sao hơn đến từng học sinh.",
+                "Cơ sở vật chất khang trang, có nhiều hoạt động ngoại khóa rèn kỹ năng mềm.",
+                "Chi phí dễ chịu hơn nhiều so với trường quốc tế."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "An international school (Trường quốc tế)",
+              whyNot: "Học phí quá đắt đỏ với phần lớn gia đình, và học chủ yếu bằng tiếng Anh quá sớm có thể làm yếu nền tảng tiếng Việt của trẻ."
+            },
+            {
+              option: "A private school (Trường tư thục)",
+              whyNot: "Thường ở xa nhà hơn và phát sinh nhiều khoản phụ phí (xe đưa đón, ăn bán trú) cao hơn đáng kể so với trường công gần nhà."
+            }
+          ]
+        },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 loại trường: public school near her home / international school / private school).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Liên hệ thực tế Việt Nam theo đúng khung dàn ý 3 phần chung.",
@@ -862,7 +1012,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> a couple is choosing a primary school for their young daughter. <strong>If I were in this situation, I think I would</strong> choose <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school is very safe and easy for daily travel. <strong>This is because</strong> parents do not need to spend much time on the road. <strong>For example,</strong> the little girl can <strong>get enough sleep</strong> instead of sitting in <strong>heavy traffic</strong> every morning. <strong>Because of this,</strong> she goes to class feeling fresh and happy. <strong>Another reason is that</strong> a <strong>public school</strong> has low tuition fees. <strong>In other words,</strong> the parents can <strong>save money</strong> for other family needs. <strong>Moreover,</strong> their daughter still learns <strong>basic subjects</strong> well and makes friends right in her <strong>neighborhood</strong>. <strong>This can help</strong> her <strong>to</strong> grow up happily near home. <strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is a good option</strong>, it is too expensive and young children need strong Vietnamese skills first. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is often far away and costs a lot of <strong>extra money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> a couple is choosing a primary school for their young daughter. <strong>If I were in this situation, I think I would</strong> choose <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school is very safe and easy for daily travel. <strong>This is because</strong> parents do not need to spend much time on the road. <strong>For example,</strong> the little girl can <strong>get enough sleep</strong> instead of sitting in <strong>heavy traffic</strong> every morning. <strong>Because of this,</strong> she goes to class feeling fresh and happy.<br><br><strong>Another reason is that</strong> a <strong>public school</strong> has low tuition fees. <strong>In other words,</strong> the parents can <strong>save money</strong> for other family needs. <strong>Moreover,</strong> their daughter still learns <strong>basic subjects</strong> well and makes friends right in her <strong>neighborhood</strong>. <strong>This can help</strong> her <strong>to</strong> grow up happily near home.<br><br><strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is a good option</strong>, it is too expensive and young children need strong Vietnamese skills first. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is often far away and costs a lot of <strong>extra money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "public school",
@@ -938,7 +1088,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> a couple wants to find the right primary school for their daughter. <strong>If I were in this situation, I think I would</strong> go for <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. <strong>This is because</strong> long trips in rush hour are exhausting for primary students. <strong>For example,</strong> her parents can easily <strong>pick her up</strong> right on time, <strong>which</strong> lets her get enough rest instead of sitting in heavy traffic. <strong>Because of this,</strong> she stays energetic and healthy every school day. <strong>Another reason is that</strong> public schools offer very <strong>affordable</strong> tuition. <strong>In other words,</strong> the family avoids unnecessary <strong>financial burden</strong> while still getting a <strong>solid foundation</strong> in <strong>core subjects</strong>. <strong>Moreover,</strong> the girl can make close friends right in her own neighborhood. <strong>This can allow</strong> her <strong>to</strong> feel comfortable and happy at school. <strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is worth considering</strong>, the fees are <strong>far too expensive</strong> and studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> a couple wants to find the right primary school for their daughter. <strong>If I were in this situation, I think I would</strong> go for <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. <strong>This is because</strong> long trips in rush hour are exhausting for primary students. <strong>For example,</strong> her parents can easily <strong>pick her up</strong> right on time, <strong>which</strong> lets her get enough rest instead of sitting in heavy traffic. <strong>Because of this,</strong> she stays energetic and healthy every school day.<br><br><strong>Another reason is that</strong> public schools offer very <strong>affordable</strong> tuition. <strong>In other words,</strong> the family avoids unnecessary <strong>financial burden</strong> while still getting a <strong>solid foundation</strong> in <strong>core subjects</strong>. <strong>Moreover,</strong> the girl can make close friends right in her own neighborhood. <strong>This can allow</strong> her <strong>to</strong> feel comfortable and happy at school.<br><br><strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is worth considering</strong>, the fees are <strong>far too expensive</strong> and studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "daily commute",

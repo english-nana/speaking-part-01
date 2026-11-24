@@ -2358,40 +2358,90 @@
               <div class="guide-section-header">
                 <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
               </div>
-              <ul class="guide-bullets">
-                <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
-                <li><strong>Thì &amp; Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
-                <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
-              </ul>
+              ${
+                isPart2 && question.optionGuide
+                  ? `
+                  <div class="vocab-table-wrap">
+                    <table class="vocab-table p2-option-table">
+                      <thead>
+                        <tr>
+                          <th style="width:34%;">2 lựa chọn dễ nói nhất</th>
+                          <th>Gợi ý lý do</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${(question.optionGuide.easiestOptions || [])
+                          .map(
+                            opt => `
+                            <tr>
+                              <td class="p2-opt-name"><strong>${escapeHtml(opt.option)}</strong></td>
+                              <td>
+                                <ul class="p2-opt-reasons-list">
+                                  ${(opt.reasons || []).map(r => `<li>${escapeHtml(r)}</li>`).join("")}
+                                </ul>
+                              </td>
+                            </tr>
+                          `
+                          )
+                          .join("")}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="p2-reject-box">
+                    <div class="p2-reject-title">Gợi ý lý do không chọn 2 lựa chọn còn lại</div>
+                    <ul class="guide-bullets" style="margin:0;">
+                      ${(question.optionGuide.rejectReasons || [])
+                        .map(
+                          item => `<li><strong>${escapeHtml(item.option)}:</strong> ${escapeHtml(item.whyNot)}</li>`
+                        )
+                        .join("")}
+                    </ul>
+                  </div>
+                `
+                  : `
+                  <ul class="guide-bullets">
+                    <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
+                    <li><strong>Thì &amp; Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
+                    <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
+                  </ul>
+                `
+              }
             </section>
+
+            ${
+              !isPart2
+                ? `
+                <section class="guide-section">
+                  <div class="guide-section-header">
+                    <h2 class="guide-section-title">II. Cách trả lời</h2>
+                  </div>
+                  <ol class="guide-numbered">
+                    ${levelData.strategy
+                      .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>`)
+                      .join("")}
+                  </ol>
+                </section>
+              `
+                : ""
+            }
 
             <section class="guide-section">
               <div class="guide-section-header">
-                <h2 class="guide-section-title">II. Cách trả lời</h2>
-              </div>
-              <ol class="guide-numbered">
-                ${levelData.strategy
-                  .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.text)}</li>`)
-                  .join("")}
-              </ol>
-            </section>
-
-            <section class="guide-section">
-              <div class="guide-section-header">
-                <h2 class="guide-section-title">${isPart2 ? "III. Bài nói mẫu (Mở bài – Thân bài – Kết bài)" : "III. Câu trả lời mẫu"}</h2>
+                <h2 class="guide-section-title">${isPart2 ? "II. Bài nói mẫu" : "III. Câu trả lời mẫu"}</h2>
                 <button type="button" class="listen-sample-btn" id="btn-listen-sample">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                   <span>${isPart2 ? "Nghe bài nói mẫu" : "Nghe câu trả lời mẫu"}</span>
                 </button>
               </div>
-              <blockquote class="sample-answer-blockquote">
+              <blockquote class="sample-answer-blockquote ${isPart2 ? "part2-sample" : ""}">
                 ${levelData.modelAnswer}
               </blockquote>
             </section>
 
             <section class="guide-section">
               <div class="guide-section-header">
-                <h2 class="guide-section-title">IV. Lỗi cần tránh</h2>
+                <h2 class="guide-section-title">${isPart2 ? "III. Lỗi cần tránh" : "IV. Lỗi cần tránh"}</h2>
               </div>
               <ol class="guide-numbered">
                 ${question.pitfalls.map(p => `<li>${escapeHtml(p)}</li>`).join("")}
@@ -2400,7 +2450,7 @@
 
             <section class="guide-section">
               <div class="guide-section-header">
-                <h2 class="guide-section-title">V. Từ vựng nên dùng</h2>
+                <h2 class="guide-section-title">${isPart2 ? "IV. Từ vựng nên dùng" : "V. Từ vựng nên dùng"}</h2>
                 <span style="font-size:11.5px;color:#71717A;">Bấm vào từ để nghe phát âm · Bấm +Lưu từ vào kho</span>
               </div>
               <div class="vocab-table-wrap">
