@@ -64,28 +64,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "The university’s ranking (Thứ hạng trường)",
               reasons: [
-                "Giảng viên giỏi, chương trình học bài bản, thư viện & cơ sở vật chất hiện đại.",
-                "Bằng cấp uy tín giúp dễ tìm được công việc tốt sau khi tốt nghiệp.",
-                "Môi trường học năng động, có nhiều bạn giỏi để cùng cố gắng."
+                "Top universities usually have experienced teachers, useful lessons, and modern facilities like big libraries.",
+                "A degree from a reputable university helps her find a good job more easily after graduation.",
+                "Studying with motivated classmates creates a better learning environment."
               ]
             },
             {
               option: "The tuition fees (Học phí)",
               reasons: [
-                "Giảm áp lực tiền bạc cho bố mẹ suốt 4 năm đại học.",
-                "Không phải làm thêm quá nhiều, có thời gian tập trung học và ôn thi.",
-                "Có thêm ngân sách lo sinh hoạt phí, sách vở hoặc học thêm kỹ năng."
+                "Reasonable tuition reduces money pressure on her parents during four years of university.",
+                "She can focus on studying instead of working exhausting part-time hours.",
+                "The family can save money for living expenses like rent, food, and books."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "The distance from her home (Khoảng cách từ nhà)",
-              whyNot: "Không phải yếu tố quyết định chất lượng đào tạo; nếu ở xa vẫn có thể ở ký túc xá, thuê phòng gần trường hoặc đi xe buýt."
+              whyNot: "It is not the most important factor because even if the campus is far away, she can live in a dormitory or commute by bus."
             },
             {
               option: "The tuition fees (Học phí)",
-              whyNot: "Học phí quan trọng nhưng có thể xin học bổng hoặc đi làm thêm; đầu tư cho nền giáo dục chất lượng luôn xứng đáng về lâu dài."
+              whyNot: "Tuition matters, but she can apply for scholarships or work part-time, and quality education always pays off in the long run."
             }
           ]
         },
@@ -285,28 +285,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "Affordable fees (Học phí vừa phải)",
               reasons: [
-                "Giảm áp lực tài chính cho gia đình suốt 4 năm vì còn tiền ăn ở, sách vở.",
-                "Giúp sinh viên yên tâm tập trung học hành, thi cử mà không phải làm thêm quá sức.",
-                "Phù hợp với thu nhập thực tế của đa số gia đình Việt Nam."
+                "It eases the financial burden on his parents over four years of living expenses.",
+                "He can focus on studying and final exams instead of taking exhausting part-time jobs.",
+                "Manageable tuition gives the whole family greater peace of mind."
               ]
             },
             {
               option: "Campus facilities (Cơ sở vật chất)",
               reasons: [
-                "Phòng học máy lạnh, thư viện hiện đại, phòng máy tính giúp học thoải mái và hiệu quả hơn.",
-                "Có sân thể thao, không gian tự học giúp sinh viên cân bằng giữa học tập và thư giãn.",
-                "Tạo cảm hứng đến trường mỗi ngày."
+                "Air-conditioned classrooms, modern libraries, and computer labs make studying much more comfortable.",
+                "Good sports fields and study spaces help students stay active and reduce stress.",
+                "A clean, modern campus makes students feel excited to go to school every day."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "Campus facilities (Cơ sở vật chất)",
-              whyNot: "Phòng ốc đẹp là điểm cộng nhưng không bắt buộc; sinh viên vẫn có thể học tốt qua tài liệu online và thư viện công cộng."
+              whyNot: "Modern buildings are nice to have, but students can still learn effectively using online materials and public libraries."
             },
             {
               option: "Student support (Hỗ trợ sinh viên)",
-              whyNot: "Chủ yếu cần trong tuần đầu định hướng tân sinh viên; trong quá trình học hằng ngày, giảng viên và bạn bè đã đủ hỗ trợ."
+              whyNot: "It is mainly useful during the first week of orientation, while teachers and close friends can help with daily problems."
             }
           ]
         },
@@ -506,28 +506,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "Honesty (Sự trung thực)",
               reasons: [
-                "Xây dựng niềm tin vững chắc — sếp yên tâm giao tiền bạc, dự án quan trọng hay dữ liệu khách hàng.",
-                "Nhân viên trung thực dám nhận lỗi sớm để cả nhóm sửa kịp tiến độ thay vì giấu giếm.",
-                "Kỹ năng có thể đào tạo dần nhưng tính cách trung thực rất khó rèn lại."
+                "It builds strong trust, so managers feel safe assigning budgets, important projects, or sensitive client data.",
+                "Honest employees admit mistakes early instead of hiding them, helping the team fix problems on time.",
+                "Job skills can be trained step by step, whereas poor character is very hard to change."
               ]
             },
             {
               option: "Professional skills (Kỹ năng chuyên môn)",
               reasons: [
-                "Bắt tay vào làm việc ngay mà không tốn nhiều thời gian và chi phí đào tạo lại.",
-                "Hoàn thành công việc nhanh, chính xác và mang lại hiệu quả trực tiếp cho công ty.",
-                "Hỗ trợ được các đồng nghiệp khác xử lý các vấn đề kỹ thuật khó."
+                "A skilled employee can start working right away without needing long, costly training.",
+                "They complete tasks quickly and accurately, which boosts the whole team's productivity.",
+                "They can also support coworkers when difficult technical issues come up."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "Professional skills (Kỹ năng chuyên môn)",
-              whyNot: "Kỹ năng chuyên môn quan trọng nhưng nhân viên mới hoàn toàn có thể học và được đào tạo dần trong công việc."
+              whyNot: "Technical skills are important, but a new employee can easily learn them on the job through training."
             },
             {
               option: "Communication skills (Kỹ năng giao tiếp)",
-              whyNot: "Nói năng khéo léo là lợi thế, nhưng nếu thiếu trung thực thì lời nói hay cũng làm mất niềm tin của khách hàng và đồng nghiệp."
+              whyNot: "Speaking smoothly is helpful, yet sweet talk without honesty can quickly damage trust with clients and coworkers."
             }
           ]
         },
@@ -743,28 +743,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "A mystery novel (Tiểu thuyết trinh thám)",
               reasons: [
-                "Nhiều manh mối và cú bẻ lái bất ngờ buộc người đọc tự hình dung bối cảnh và đoán thủ phạm.",
-                "Cốt truyện tò mò, cuốn hút từ đầu đến cuối nên dễ đọc hết sách mà không chán.",
-                "Vừa rèn trí tưởng tượng vừa phát triển tư duy suy luận logic."
+                "It is packed with clues and unexpected twists that make readers picture scenes and guess the ending.",
+                "The suspense keeps her curious from start to finish, so she stays hooked and finishes the whole book.",
+                "Connecting details like a detective actively develops both imagination and creative thinking."
               ]
             },
             {
               option: "An action fiction book (Sách hành động viễn tưởng)",
               reasons: [
-                "Nhịp truyện nhanh, kịch tính với nhiều cuộc phiêu lưu và thế giới giả tưởng thú vị.",
-                "Tác giả miêu tả nhiều bối cảnh, nhân vật mới lạ giúp người đọc tưởng tượng sinh động.",
-                "Giúp giải trí, xả stress rất tốt sau giờ học."
+                "Fast-paced adventures and imaginary worlds make the reading experience very exciting.",
+                "Detailed descriptions of characters and settings help readers create vivid images in their minds.",
+                "It is a great way to unwind and enjoy reading after a busy day."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "A romance novel (Tiểu thuyết lãng mạn)",
-              whyNot: "Cốt truyện tình cảm thường nhẹ nhàng, khá dễ đoán và xoay quanh cảm xúc đời thường nên ít kích thích trí tưởng tượng."
+              whyNot: "Love stories are often quite predictable and focus mostly on everyday feelings rather than creative imagination."
             },
             {
               option: "An action fiction book (Sách hành động viễn tưởng)",
-              whyNot: "Tập trung nhiều vào các pha đánh nhau, rượt đuổi liên tục nên ít khoảng lặng để người đọc suy ngẫm sâu."
+              whyNot: "It focuses too heavily on non-stop fights and chases, leaving little room for deep reflection and imagination."
             }
           ]
         },
@@ -960,28 +960,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "A public school near her home (Trường công lập gần nhà)",
               reasons: [
-                "Đưa đón con mỗi sáng rất tiện và an toàn, bé được ngủ đủ giấc thay vì ngồi kẹt xe.",
-                "Học phí thấp giúp gia đình tiết kiệm tiền mà bé vẫn nắm chắc kiến thức nền tảng.",
-                "Dễ kết bạn với các bạn nhỏ ngay trong khu phố quanh nhà."
+                "The daily commute is safe and convenient, so the child gets enough sleep instead of sitting in heavy traffic.",
+                "Affordable tuition helps the family save money while still giving her a solid foundation in core subjects.",
+                "She can easily make close friends right in her own neighborhood."
               ]
             },
             {
               option: "A private school (Trường tư thục)",
               reasons: [
-                "Sĩ số lớp nhỏ nên giáo viên quan tâm sát sao hơn đến từng học sinh.",
-                "Cơ sở vật chất khang trang, có nhiều hoạt động ngoại khóa rèn kỹ năng mềm.",
-                "Chi phí dễ chịu hơn nhiều so với trường quốc tế."
+                "Smaller class sizes allow teachers to pay closer attention to each young student.",
+                "Better facilities and extracurricular clubs help children build confidence and soft skills.",
+                "The fees are much more manageable compared to an international school."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "An international school (Trường quốc tế)",
-              whyNot: "Học phí quá đắt đỏ với phần lớn gia đình, và học chủ yếu bằng tiếng Anh quá sớm có thể làm yếu nền tảng tiếng Việt của trẻ."
+              whyNot: "The tuition fees are far too expensive for most families, and studying mostly in English too early may weaken her Vietnamese skills."
             },
             {
               option: "A private school (Trường tư thục)",
-              whyNot: "Thường ở xa nhà hơn và phát sinh nhiều khoản phụ phí (xe đưa đón, ăn bán trú) cao hơn đáng kể so với trường công gần nhà."
+              whyNot: "It is usually farther away and charges high extra fees for school buses and meals compared to a nearby public school."
             }
           ]
         },
@@ -1197,28 +1197,28 @@ window.SPEAKING_PART2_TOPICS = [
             {
               option: "Working for a foreign company (Làm công ty nước ngoài)",
               reasons: [
-                "Mức lương cạnh tranh và phúc lợi tốt (bảo hiểm sức khỏe, ngày nghỉ có lương) giúp tự lo sinh hoạt và tiết kiệm.",
-                "Cải thiện tiếng Anh hằng ngày, học kỹ năng mới từ đồng nghiệp quốc tế và quản lý giàu kinh nghiệm.",
-                "Tăng sự tự tin và mở ra nhiều cơ hội nghề nghiệp trong tương lai."
+                "It offers competitive salaries and attractive benefits like health insurance and paid holidays.",
+                "She can improve her English every day by working with international colleagues and experienced managers.",
+                "This work experience boosts her self-confidence and opens up more career opportunities."
               ]
             },
             {
               option: "Working for the government (Làm cơ quan nhà nước)",
               reasons: [
-                "Tính ổn định và an toàn công việc cao, ít lo biến động hay cắt giảm nhân sự.",
-                "Giờ làm hành chính đều đặn, ít phải tăng ca nên dễ cân bằng cuộc sống.",
-                "Có chế độ bảo hiểm xã hội và hưu trí rõ ràng về lâu dài."
+                "It provides strong job security, so she does not have to worry much about losing her job.",
+                "Fixed office hours make it easier to maintain a healthy work-life balance.",
+                "Stable social insurance and pension benefits offer long-term peace of mind."
               ]
             }
           ],
           rejectReasons: [
             {
               option: "Working for the government (Làm cơ quan nhà nước)",
-              whyNot: "Tuy mang lại sự ổn định công việc nhưng mức lương thường chưa cao và chưa thật sự thỏa đáng so với nhu cầu."
+              whyNot: "Although it offers good job security, the salary is usually not high enough or very satisfying for a new graduate."
             },
             {
               option: "Starting her own business (Tự kinh doanh riêng)",
-              whyNot: "Đòi hỏi nguồn vốn đầu tư lớn và nhiều kinh nghiệm thực tế; sinh viên mới tốt nghiệp dễ gặp rủi ro cao."
+              whyNot: "It requires significant investment and practical experience, which makes it too risky right after graduation."
             }
           ]
         },
