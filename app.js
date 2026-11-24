@@ -990,7 +990,7 @@
           <p style="font-size:13.5px;color:#52525B;line-height:1.5;margin-bottom:16px;">
             ${
               isReg
-                ? "Đăng nhập nhanh bằng Google hoặc tạo tài khoản để lưu kho từ vựng, nộp bài ghi âm và nhận bài chấm AI chi tiết."
+                ? "Đăng nhập nhanh bằng Google hoặc tạo tài khoản để lưu kho từ vựng, nộp bài ghi âm và nhận bài sửa chi tiết."
                 : "Đăng nhập bằng tài khoản Google hoặc email của bạn để tiếp tục luyện nói và nhận bài sửa chi tiết."
             }
           </p>
@@ -1180,7 +1180,7 @@
     if (releasedList.length === 0 && pendingList.length === 0) {
       dropdownContentHtml = `
         <div class="notif-empty-state">
-          Chưa có bài sửa nào.<br />Khi bạn ghi âm và nộp bài Speaking Part 1, bài chấm &amp; sửa chi tiết bằng AI sẽ tự động trả về đây sau ${RELEASE_HOURS} tiếng.
+          Chưa có bài sửa nào.<br />Khi bạn ghi âm và nộp bài Speaking Part 1, bài sửa chi tiết sẽ tự động được gửi về đây sau ${RELEASE_HOURS} tiếng.
         </div>
       `;
     } else {
@@ -1246,7 +1246,7 @@
           type="button"
           class="notif-bell-btn ${unreadCount > 0 ? "has-unread" : ""}"
           id="topbar-notif-btn"
-          title="Thông báo bài sửa AI"
+          title="Thông báo bài sửa"
           aria-expanded="${state.notifOpen ? "true" : "false"}"
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
@@ -1320,7 +1320,7 @@
               type="button"
               class="ej-sb-item ${state.view === "my-submissions" ? "active" : ""}"
               data-sb-nav="my-submissions"
-              title="Bài nói đã nộp & Bài sửa AI"
+              title="Bài nói đã nộp & Bài sửa"
             >
               <span class="ej-sb-ico">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
@@ -1544,7 +1544,7 @@
             <div class="home-eyebrow">VSTEP SPEAKING PART 1 · PRACTICE TOPICS</div>
             <h1 class="home-h1">DANH SÁCH ĐỀ LUYỆN SPEAKING PART 1</h1>
             <p class="home-desc">
-              Chọn một chủ đề bên dưới để bắt đầu luyện nói. Khi bạn nộp bản ghi âm, hệ thống AI sẽ nghe trực tiếp phát âm, ngữ điệu, ngữ pháp, lỗi "Vietlish", độ mạch lạc và gửi bài sửa chi tiết vào chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
+              Chọn một chủ đề bên dưới để bắt đầu luyện nói. Bạn có thể ghi chú ý tưởng, ghi âm nhiều lần để chọn bản tốt nhất nộp bài, và xem bài sửa chi tiết ở chuông thông báo 🔔 sau ${RELEASE_HOURS} tiếng.
             </p>
           </div>
         </div>
@@ -1606,9 +1606,9 @@
         <div class="home-header-block">
           <div>
             <div class="home-eyebrow">VSTEP SPEAKING PART 1 · SUBMISSION HISTORY</div>
-            <h1 class="home-h1">LỊCH SỬ BÀI NÓI ĐÃ NỘP &amp; BÀI SỬA AI</h1>
+            <h1 class="home-h1">LỊCH SỬ BÀI NÓI ĐÃ NỘP &amp; BÀI SỬA</h1>
             <p class="home-desc">
-              Theo dõi toàn bộ các câu trả lời ghi âm bạn đã nộp, thời gian hẹn trả bài chấm AI sau ${RELEASE_HOURS} tiếng và xem lại chi tiết nhận xét phát âm, ngữ điệu, ngữ pháp, Vietlish &amp; mở rộng ý.
+              Theo dõi toàn bộ các câu trả lời ghi âm bạn đã nộp, thời gian trả bài sửa sau ${RELEASE_HOURS} tiếng và xem lại chi tiết nhận xét phát âm, ngữ điệu, ngữ pháp, cách diễn đạt &amp; mở rộng ý.
             </p>
           </div>
         </div>
@@ -1691,7 +1691,7 @@
                         class="nb-back-btn"
                         data-history-open-question="${escapeHtml(it.qId)}"
                       >
-                        <span>${rev ? "Xem bài sửa AI →" : "Mở câu hỏi →"}</span>
+                        <span>${rev ? "Xem bài sửa →" : "Mở câu hỏi →"}</span>
                       </button>
                     </div>
                   `;
@@ -1868,7 +1868,7 @@
               </div>
 
               <p class="recorder-helper-note">
-                Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong> (AI sẽ trả bài sửa sau ${RELEASE_HOURS} tiếng).
+                Nói tối đa 0:45; bấm Dừng khi trả lời xong. Bạn có thể ghi âm nhiều lần và chọn bản ưng ý nhất để bấm <strong>Nộp bài</strong>.
               </p>
 
               ${
@@ -1939,7 +1939,7 @@
                             ${
                               att.transcript
                                 ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
-                                : `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — khi nộp bài, AI sẽ nghe trực tiếp file ghi âm của bạn để chấm.</p>`
+                                : `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — bản ghi âm của bạn vẫn được lưu đầy đủ khi nộp bài.</p>`
                             }
                           </div>
 
@@ -1956,48 +1956,31 @@
                     const submittedTakeNum = submittedTakeObj
                       ? attempts.indexOf(submittedTakeObj) + 1
                       : 0;
-                    const chosenLevelUpper = state.selectedLevel.toUpperCase();
-                    const isSameTakeAndLevelSubmitted = Boolean(
-                      submittedTakeId &&
-                        submittedTakeId === selectedTakeId &&
-                        (qData.targetLevel || "B1").toUpperCase() === chosenLevelUpper
+                    const isCurrentTakeSubmitted = Boolean(
+                      submittedTakeId && submittedTakeId === selectedTakeId
                     );
                     return `
                       <div class="submit-take-bar">
-                        <div class="target-level-submit-row">
-                          <span>Mục tiêu chấm AI:</span>
-                          <button
-                            type="button"
-                            class="target-level-mini-pill ${lvl === "b1" ? "active" : ""}"
-                            data-level="b1"
-                          >Level B1</button>
-                          <button
-                            type="button"
-                            class="target-level-mini-pill ${lvl === "b2" ? "active" : ""}"
-                            data-level="b2"
-                          >Level B2</button>
-                        </div>
-
                         ${
                           state.submitErrorMsg
-                            ? `<div style="width:100%;font-size:12.5px;color:#B91C1C;font-weight:600;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                            ? `<div style="font-size:12.5px;color:#B91C1C;font-weight:600;margin-right:auto;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
                             : ""
                         }
 
                         <button
                           type="button"
-                          class="submit-take-btn ${isSameTakeAndLevelSubmitted ? "is-submitted" : ""}"
+                          class="submit-take-btn ${isCurrentTakeSubmitted ? "is-submitted" : ""}"
                           id="btn-submit-selected-take"
-                          ${isSameTakeAndLevelSubmitted || state.isSubmitting ? "disabled" : ""}
+                          ${isCurrentTakeSubmitted || state.isSubmitting ? "disabled" : ""}
                         >
                           ${
                             state.isSubmitting
                               ? `<span>⏳ Đang tải âm thanh &amp; nộp bài...</span>`
-                              : isSameTakeAndLevelSubmitted
-                                ? `<span>✓ Đã nộp Bản ghi âm #${submittedTakeNum} (Level ${chosenLevelUpper})</span>`
+                              : isCurrentTakeSubmitted
+                                ? `<span>✓ Đã nộp Bản ghi âm #${submittedTakeNum}</span>`
                                 : `
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                              <span>Nộp Bản #${selectedTakeNum} chấm Level ${chosenLevelUpper} →</span>
+                              <span>Bấm để nộp bài (Bản ghi âm #${selectedTakeNum}) →</span>
                             `
                           }
                         </button>

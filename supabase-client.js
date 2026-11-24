@@ -241,7 +241,7 @@
       }
       return parsed;
     } catch (err) {
-      return { ok: false, error: err && err.message ? err.message : "Lỗi kết nối hệ thống chấm bài AI." };
+      return { ok: false, error: err && err.message ? err.message : "Lỗi kết nối hệ thống chấm bài." };
     }
   }
 
