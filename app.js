@@ -36,7 +36,6 @@
     mobileSidebarOpen: false,
     sbPart1Collapsed: false,
     sbPart2Collapsed: false,
-    part2OutlineCollapsed: false,
     p2SwapSituationIdx: 0,
     p2SwapOption2Idx: 0,
     p2SwapHelpIdx: 0,
@@ -1716,18 +1715,9 @@
             <h2 class="topic-card-title" style="margin-bottom:4px;">${escapeHtml(outline.title || "General Outline · Speaking Part 2")}</h2>
             <div class="topic-card-vi" style="margin-bottom:0;">${escapeHtml(outline.subtitle || "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2")}</div>
           </div>
-          <div class="p2-outline-actions">
-            <button type="button" class="top-pill-btn" id="btn-toggle-p2-outline">
-              <span>${state.part2OutlineCollapsed ? "Mở dàn ý ▾" : "Thu gọn ▴"}</span>
-            </button>
-          </div>
         </div>
 
-        ${
-          state.part2OutlineCollapsed
-            ? ""
-            : `
-            <div class="p2-outline-list">
+        <div class="p2-outline-list">
               <div class="p2-outline-row">
                 <div class="p2-outline-row-head">
                   <span class="p2-outline-step-label">1. Mở bài</span>
@@ -1778,9 +1768,7 @@
                   <strong>In conclusion,</strong> I believe ${slot("lựa chọn của tôi")} is the most suitable option in this situation.
                 </div>
               </div>
-            </div>
-          `
-        }
+        </div>
       </section>
     `;
   }
@@ -3060,14 +3048,6 @@
         renderApp();
       };
     });
-
-    const btnToggleP2Outline = document.getElementById("btn-toggle-p2-outline");
-    if (btnToggleP2Outline) {
-      btnToggleP2Outline.onclick = () => {
-        state.part2OutlineCollapsed = !state.part2OutlineCollapsed;
-        renderApp();
-      };
-    }
 
     const btnMobileMenu = document.getElementById("ej-mobile-menu-btn");
     if (btnMobileMenu) {

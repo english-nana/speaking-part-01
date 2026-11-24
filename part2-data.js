@@ -7,7 +7,7 @@
 
 window.SPEAKING_PART2_OUTLINE = {
   title: "General Outline · Speaking Part 2",
-  subtitle: "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2 · Bấm vào cụm chữ đỏ có gạch chân để đổi cách diễn đạt",
+  subtitle: "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2 · Bấm vào các cụm màu xanh đậm để đổi cách diễn đạt",
   swapOptions: {
     situation: ["in this situation", "him", "her"],
     option2Verb: ["is a good option", "is worth considering"],
@@ -567,7 +567,7 @@ window.SPEAKING_PART2_TOPICS = [
     part: "part2",
     id: "part2-genre",
     number: "02",
-    title: "Choosing a Type or Genre",
+    title: "Choosing a Type",
     titleVi: "Chọn thể loại / loại hình phù hợp",
     description:
       "Luyện 2 tình huống chọn thể loại sách giúp phát triển trí tưởng tượng và chọn loại hình trường tiểu học phù hợp cho trẻ.",

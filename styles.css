@@ -4232,7 +4232,7 @@ button, input, select, textarea {
 
 .p2-slot {
   color: #B91C1C;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .p2-swap-btn {
@@ -4243,18 +4243,18 @@ button, input, select, textarea {
   margin: 0 1px;
   font-family: inherit;
   font-size: inherit;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.45;
-  color: #B91C1C;
-  background: #FEF2F2;
-  border: 1.5px dashed #B91C1C;
+  color: #1D4ED8;
+  background: #EFF6FF;
+  border: 1.5px dashed #1D4ED8;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.12s ease, transform 0.1s ease;
 }
 
 .p2-swap-btn:hover {
-  background: #FEE2E2;
+  background: #DBEAFE;
   border-style: solid;
 }
 
