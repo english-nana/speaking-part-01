@@ -12,15 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124f" />
+  <link rel="stylesheet" href="./styles.css?v=20261124g" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124f"></script>
-  <script src="./supabase-client.js?v=20261124f"></script>
-  <script src="./travel-data.js?v=20261124f"></script>
-  <script src="./speaking-evaluator.js?v=20261124f"></script>
+  <script src="./supabase-config.js?v=20261124g"></script>
+  <script src="./supabase-client.js?v=20261124g"></script>
+  <script src="./travel-data.js?v=20261124g"></script>
+  <script src="./speaking-evaluator.js?v=20261124g"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -232,7 +232,10 @@
           parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
         });
 
-        const studentAttemptRows = attemptRows.filter(a => !hiddenAdminIds.has(a.user_id));
+        // Chỉ ghi nhận bài đã nộp chính thức (bỏ qua bản ghi nháp chưa nộp)
+        const studentAttemptRows = attemptRows.filter(
+          a => Boolean(a.is_submitted) && !hiddenAdminIds.has(a.user_id)
+        );
         const signedUrlMap = await CLOUD.getSignedAudioUrls(
           studentAttemptRows.map(a => a.audio_path).filter(Boolean)
         );
@@ -250,7 +253,8 @@
 
         Object.keys(grouped).forEach(k => {
           const list = grouped[k];
-          const chosen = list.find(a => a.is_submitted) || list[0];
+          const chosen = list.find(a => a.is_submitted);
+          if (!chosen) return;
           const prof = profileById[chosen.user_id] || {
             id: chosen.user_id,
             full_name: "Học viên",
@@ -852,7 +856,6 @@
                   ? `
                 <select id="sel-filter-status" class="form-input teacher-filter-item" aria-label="Lọc theo trạng thái">
                   <option value="all" ${tState.filterStatus === "all" ? "selected" : ""}>Mọi trạng thái</option>
-                  <option value="submitted" ${tState.filterStatus === "submitted" ? "selected" : ""}>Chỉ bài đã nộp chính thức</option>
                   <option value="unread_review" ${tState.filterStatus === "unread_review" ? "selected" : ""}>Bài sửa học viên chưa đọc</option>
                   <option value="ungraded" ${tState.filterStatus === "ungraded" ? "selected" : ""}>Chưa có bài sửa / nhận xét</option>
                   <option value="graded" ${tState.filterStatus === "graded" ? "selected" : ""}>Đã có bài sửa / nhận xét</option>
