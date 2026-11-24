@@ -608,6 +608,7 @@
     getSignedAudioUrls,
     invokeGradeSpeaking,
     invokeProcessSpeakingQueue,
+    formatCleanBandLabel,
     renderSpeakingReviewHtml
   };
 })();

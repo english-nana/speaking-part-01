@@ -1133,7 +1133,8 @@ button, input, select, textarea {
 .vocab-table-wrap {
   border: 1px solid #E4E4E7;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: #FFFFFF;
 }
 
@@ -1819,7 +1820,9 @@ button, input, select, textarea {
 
 .app-layout.split-tab-active .ej-main-shell {
   height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
   overflow: hidden;
   background: var(--bg-workspace);
 }
@@ -3259,6 +3262,13 @@ button, input, select, textarea {
   margin-bottom: 10px;
 }
 
+.teacher-ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .teacher-ai-details {
   margin-bottom: 12px;
 }
@@ -3275,16 +3285,124 @@ button, input, select, textarea {
   user-select: none;
 }
 
+/* ==========================================================================
+   9. TEACHER MULTI-CRITERIA FILTER BAR, READ-STATUS PILLS & MOBILE RESPONSIVE
+   ========================================================================== */
+
+.teacher-filter-bar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.teacher-filter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teacher-filter-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.teacher-filter-item {
+  height: 36px;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 10px;
+}
+
+.teacher-reset-filter-btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1.5px solid #18181B;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.teacher-reset-filter-btn:hover {
+  background: #FDE68A;
+}
+
+.teacher-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.review-read-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.review-read-pill.neutral {
+  background: #F4F4F5;
+  color: #71717A;
+  border: 1px solid #E4E4E7;
+}
+
+.review-read-pill.waiting {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.review-read-pill.read {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.review-read-pill.unread {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+.review-read-pill.partial {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
+}
+
+.grade-score-input {
+  height: 36px;
+  font-size: 13px;
+  width: 190px;
+  font-weight: 700;
+}
+
+.grade-fb-input {
+  height: 36px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 220px;
+}
+
 /* Responsive Tablet & Mobile Sidebar Drawer */
 @media (max-width: 960px) {
   .dt-topbar {
-    height: 56px !important;
+    height: auto !important;
     min-height: 56px !important;
   }
 
   .dt-topbar-inner {
-    flex-wrap: nowrap !important;
-    padding: 0 14px !important;
+    flex-wrap: nowrap;
+    padding: 8px 14px !important;
   }
 
   .ej-mobile-menu-btn {
@@ -3325,16 +3443,363 @@ button, input, select, textarea {
   }
 
   .ej-topbar-search-wrap {
-    width: 190px;
+    width: 210px;
+  }
+}
+
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .home-topbar {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .home-container {
+    padding: 20px 14px 48px;
+  }
+
+  .home-h1 {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+
+  .home-desc {
+    font-size: 13.5px;
+  }
+
+  .topic-card {
+    padding: 16px 16px;
+  }
+
+  .topic-card-title {
+    font-size: 17px;
+  }
+
+  /* Teacher Dashboard Mobile Grid & Stacked Student Cards */
+  .teacher-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .teacher-stat-card {
+    padding: 11px 12px;
+  }
+
+  .teacher-stat-value {
+    font-size: 22px;
+  }
+
+  .teacher-tabs-bar {
+    gap: 8px;
+  }
+
+  .teacher-tab-btn {
+    flex: 1;
+    padding: 9px 10px;
+    font-size: 12.5px;
+    text-align: center;
+  }
+
+  .teacher-filter-bar {
+    padding: 12px 14px;
+  }
+
+  .teacher-filter-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-table-wrap {
+    overflow: visible;
+  }
+
+  .teacher-students-table,
+  .teacher-students-table tbody {
+    display: block;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .teacher-students-table thead {
+    display: none;
+  }
+
+  .teacher-students-table tr {
+    display: block;
+    background: #FFFFFF;
+    border: 2px solid #18181B;
+    border-radius: 10px;
+    box-shadow: 3px 3px 0px #18181B;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+  }
+
+  .teacher-students-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #F4F4F5;
+    text-align: right;
+  }
+
+  .teacher-students-table td:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
+  }
+
+  .teacher-students-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    color: #71717A;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .td-student-name-cell {
+    text-align: right;
+  }
+
+  .teacher-row-actions {
+    justify-content: flex-end;
+  }
+
+  .submission-review-card {
+    padding: 14px;
+  }
+
+  .practice-bottom-nav {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
   }
 }
 
 @media (max-width: 640px) {
-  .ej-topbar-search-wrap {
+  .topbar-vocab-label-full {
     display: none;
   }
 
-  .topbar-vocab-label-full {
+  /* Dashboard topbar: row 1 = menu + right controls, row 2 = full-width search bar */
+  .app-layout:not(.focus-lesson-mode) .dt-topbar-inner {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 8px 12px !important;
+  }
+
+  .app-layout:not(.focus-lesson-mode) .dt-topbar-left-group {
+    display: contents;
+  }
+
+  .app-layout:not(.focus-lesson-mode) .ej-mobile-menu-btn {
+    order: 1;
+  }
+
+  .app-layout:not(.focus-lesson-mode) .dt-topbar-right-group {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .app-layout:not(.focus-lesson-mode) .vs-dashboard-topbar-left {
+    order: 3;
+    flex: 1 0 100%;
+    width: 100%;
+  }
+
+  .app-layout:not(.focus-lesson-mode) .ej-topbar-search-wrap {
+    width: 100%;
+  }
+
+  .ej-search-dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Focus Lesson topbar compact on phone */
+  .app-layout.focus-lesson-mode .dt-topbar-inner {
+    padding: 6px 10px !important;
+    gap: 6px;
+  }
+
+  .ej-focus-nav-group {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .nb-back-btn {
+    padding: 0 9px;
+    font-size: 12px;
+    height: 34px;
+  }
+
+  .header-part-badge {
     display: none;
+  }
+
+  .header-topic-name {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .dt-topbar-right-group {
+    gap: 6px;
+  }
+
+  .dt-topbar .top-pill-btn {
+    padding: 0 9px;
+    font-size: 12px;
+  }
+
+  /* Full-width notification dropdown on small phones */
+  .notif-dropdown {
+    position: fixed;
+    top: 58px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+    z-index: 600;
+  }
+
+  /* Practice room mobile polish */
+  .question-prompt-card {
+    padding: 14px 15px;
+  }
+
+  .question-prompt-text {
+    font-size: 16px;
+  }
+
+  .recorder-box-card,
+  .idea-notes-card {
+    padding: 14px;
+  }
+
+  .recorder-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .record-btn,
+  .submit-take-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .guide-top-bar,
+  .guide-section-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .vocab-table th,
+  .vocab-table td,
+  .ai-corr-table th,
+  .ai-corr-table td {
+    padding: 8px 9px;
+    font-size: 12.5px;
+  }
+
+  .td-word {
+    min-width: 130px;
+  }
+
+  .ej-history-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .ej-history-card .nb-back-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-panel {
+    max-height: 92dvh;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 12px 14px;
+  }
+
+  /* Teacher grading & filter controls on phones */
+  .teacher-topbar-actions-mobile {
+    width: 100%;
+  }
+
+  .teacher-topbar-actions-mobile .top-pill-btn,
+  .teacher-topbar-actions-mobile .user-account-pill {
+    font-size: 12px;
+    padding: 0 10px;
+    height: 34px;
+  }
+
+  .grade-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grade-score-input,
+  .grade-fb-input,
+  .save-grade-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .teacher-ai-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .teacher-ai-actions {
+    width: 100%;
+  }
+
+  .teacher-ai-actions .top-pill-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .dt-topbar .user-account-pill {
+    padding: 0 6px;
+    gap: 0;
+  }
+
+  .dt-topbar .user-account-pill > span:not(.user-initials) {
+    display: none;
+  }
+
+  .teacher-filter-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .ej-focus-nav-group .nb-back-btn span {
+    display: none;
+  }
+
+  .auth-card-box {
+    padding: 20px 16px;
   }
 }
