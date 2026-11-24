@@ -1,70 +1,17 @@
 // ==========================================================================
 // SPEAKING PART 2 — SOLUTION DISCUSSION (CHỌN YẾU TỐ TỐT NHẤT & CHỌN THỂ LOẠI)
-// - Khung dàn ý 3 phần dùng chung cho tất cả các dạng đề Part 2 (B1 & B2)
+// - Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2
 // - Chỉ lấy đề từ bộ câu hỏi gốc; toàn bộ dàn ý, bài mẫu B1/B2 và từ vựng được
 //   biên soạn mới theo văn nói giao tiếp tự nhiên, gần gũi đời thực.
 // ==========================================================================
 
 window.SPEAKING_PART2_OUTLINE = {
-  title: "Khung dàn ý chung Speaking Part 2 (Áp dụng cho mọi đề)",
-  subtitle:
-    "Cấu trúc 3 phần rõ ràng, dễ thuộc, ghép linh hoạt vào cả 9 dạng tình huống (chọn quà, hoạt động, địa điểm, phương tiện, giải pháp, hình thức, nghề nghiệp, thể loại, yếu tố tốt nhất).",
-  timingNote: "Thời gian thi thật: 1 phút chuẩn bị + 2–3 phút nói (tại đây ghi âm tối đa 3:00).",
-  levels: {
-    b1: {
-      badge: "Khung sườn B1 (Tự nhiên · Dễ nhớ)",
-      wordTarget: "~115–138 từ (55–70 giây nói trôi chảy)",
-      parts: [
-        {
-          step: "1. Mở bài",
-          goal: "Dẫn nhập vào tình huống & đưa ra lựa chọn",
-          templateHtml:
-            "“<strong>Well,</strong> [nhắc lại ngắn gọn tình huống bằng 1 câu đơn]. <strong>Among the three options, I think</strong> [Phương án chọn] <strong>is the best choice</strong> (for me / her / him / them).”",
-          note: "Không cần chép lại dài dòng cả đề bài. Chỉ cần nêu gọn bối cảnh + chốt ngay lựa chọn."
-        },
-        {
-          step: "2. Thân bài",
-          goal: "Nêu 2 lý do chọn + giải thích tại sao không chọn 2 phương án còn lại",
-          templateHtml:
-            "“<strong>First,</strong> [lý do thực tế 1]. <strong>For example,</strong> [ví dụ gần gũi].<br/><strong>Second,</strong> [lý do thực tế 2]. <strong>So,</strong> [lợi ích dễ thấy].<br/><strong>On the other hand, I don't choose</strong> [Phương án B] <strong>because</strong> [lý do ngắn gọn]. <strong>Also,</strong> [Phương án C] <strong>is not suitable because</strong> [lý do ngắn gọn].”",
-          note: "Mỗi ý đi kèm 1 ví dụ hoặc kết quả đời thường (tiết kiệm tiền, đỡ áp lực, tiện đi lại, vui hơn...)."
-        },
-        {
-          step: "3. Kết bài",
-          goal: "Khẳng định lại lựa chọn lần nữa",
-          templateHtml:
-            "“<strong>For these reasons, I believe</strong> [Phương án chọn] <strong>is the best option in this situation.</strong>”",
-          note: "Ngắn gọn, dứt khoát để kết thúc bài nói trọn vẹn."
-        }
-      ]
-    },
-    b2: {
-      badge: "Khung sườn B2 (Mạch lạc · Từ vựng nâng cấp)",
-      wordTarget: "~155–190 từ (75–95 giây nói tự nhiên)",
-      parts: [
-        {
-          step: "1. Mở bài",
-          goal: "Dẫn nhập tự nhiên & chốt phương án ưu tiên",
-          templateHtml:
-            "“<strong>Well, considering the situation where</strong> [dẫn nhập tình huống tự nhiên], <strong>I'd definitely go for</strong> [Phương án chọn] <strong>out of the three options.</strong>”",
-          note: "Giữ giọng điệu tự nhiên như đang khuyên bạn bè hoặc đồng nghiệp."
-        },
-        {
-          step: "2. Thân bài",
-          goal: "Phát triển 2 lý do chọn + phản biện khéo 2 phương án còn lại",
-          templateHtml:
-            "“<strong>The main reason is that</strong> [ý chính 1 với cụm B2 tự nhiên]. <strong>For instance,</strong> [ví dụ đời thực], <strong>which</strong> [lợi ích trực tiếp].<br/><strong>On top of that,</strong> [ý chính 2 nâng cấp từ vựng]. <strong>As a result,</strong> [tác động thiết thực].<br/><strong>Regarding the other two options, I wouldn't pick</strong> [Phương án B] <strong>because</strong> [lý do hợp lý]. <strong>As for</strong> [Phương án C], <strong>although</strong> [ghi nhận ngắn mặt tốt], [lý do chưa phù hợp bằng].”",
-          note: "Giữ nguyên ý thực tế như B1 nhưng dùng cụm từ nối (which, although, on top of that, as a result) và collocation tự nhiên."
-        },
-        {
-          step: "3. Kết bài",
-          goal: "Khẳng định lại lựa chọn một cách thuyết phục",
-          templateHtml:
-            "“<strong>All in all,</strong> [Phương án chọn] <strong>is definitely the most practical and suitable choice here.</strong>”",
-          note: "Chốt lại tính thực tế và phù hợp của phương án bạn chọn."
-        }
-      ]
-    }
+  title: "General Outline · Speaking Part 2",
+  subtitle: "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2 · Bấm vào cụm chữ đỏ có gạch chân để đổi cách diễn đạt",
+  swapOptions: {
+    situation: ["in this situation", "him", "her"],
+    option2Verb: ["is a good option", "is worth considering"],
+    helpVerb: ["help", "allow"]
   }
 };
 
@@ -95,8 +42,8 @@ window.SPEAKING_PART2_TOPICS = [
           "Em gái bạn vừa tốt nghiệp cấp 3 và đang dự định học đại học. Em ấy muốn chọn một trường có chất lượng giáo dục cao. Có ba yếu tố để cân nhắc: thứ hạng của trường đại học, khoảng cách từ nhà và học phí. Theo bạn yếu tố nào là lựa chọn tốt nhất cho em ấy?",
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 yếu tố: university's ranking / distance from her home / tuition fees).",
-          tense: "Hiện tại đơn và động từ khuyết thiếu (can / would / should) để đưa lời khuyên. Triển khai theo khung 3 phần: Mở bài → Thân bài (2 lý do chọn + lý do bỏ 2 phương án còn lại) → Kết bài.",
-          length: "B1: ~115–138 từ (55–70s) · B2: ~155–185 từ (75–90s)."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám đúng khung 3 phần chung: Mở bài → Thân bài (First of all + Another reason + Phản biện 2 phương án) → Kết bài.",
+          length: "B1: ~140–160 từ (60–75s) · B2: ~175–205 từ (80–95s)."
         },
         pitfalls: [
           "Chỉ nói mỗi lý do chọn mà quên giải thích tại sao không chọn 2 yếu tố còn lại (khoảng cách & học phí).",
@@ -108,26 +55,26 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "Giới thiệu ngắn tình huống em gái sắp vào đại học và chốt chọn 'the university's ranking'."
+                text: "The situation here is that my younger sister wants to choose a good university. If I were her, I think I would choose the university's ranking."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Loại 2 phương án còn lại)",
-                text: "Lý do 1: Trường thứ hạng cao có thầy cô giỏi, thư viện hiện đại giúp học tốt. Lý do 2: Dễ tìm việc tốt sau tốt nghiệp vì công ty tin tưởng bằng cấp. Bỏ distance (có thể ở ký túc xá / thuê phòng gần trường và đi xe buýt) và bỏ tuition fees (học phí quan trọng nhưng giáo dục tốt rất xứng đáng, có thể xin học bổng)."
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (First of all): Trường thứ hạng cao có thầy cô giỏi, thư viện hiện đại giúp học tốt hơn. Lý do 2 (Another reason): Dễ tìm việc tốt sau tốt nghiệp vì công ty tin tưởng bằng cấp. Phản biện: Không chọn distance (ở ký túc xá / đi xe buýt được) và không chọn tuition fees (có thể xin học bổng để tiết kiệm tiền)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt lại bằng câu khẳng định 'the university's ranking' là lựa chọn tốt nhất."
+                text: "In conclusion, I believe the university's ranking is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well,</strong> my younger sister just finished high school and wants to find a good university. <strong>Among the three options, I think</strong> <strong>the university's ranking</strong> <strong>is the best choice</strong> for her.<br><br><strong>First,</strong> a top university usually has good teachers and modern classrooms. <strong>For example,</strong> my sister can study in a big library and learn useful lessons, so she can study effectively. <strong>Second,</strong> a good ranking helps her find a good job after graduation. Many companies trust students from famous schools because they have strong skills. <strong>On the other hand, I don't choose</strong> <strong>the distance from her home</strong> <strong>because</strong> she can stay in a dormitory or rent a room nearby and take the bus. <strong>Also,</strong> <strong>the tuition fees</strong> <strong>are not suitable as</strong> the main factor because she can apply for scholarships to save money.<br><br><strong>For these reasons, I believe</strong> <strong>the university's ranking</strong> <strong>is the best option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister just finished high school and wants to choose a good university. <strong>If I were her, I think I would</strong> choose <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a top university has good teachers and modern classrooms. <strong>This is because</strong> high-ranking schools focus a lot on teaching quality. <strong>For example,</strong> my sister can study in a big library and learn useful lessons. <strong>Because of this,</strong> she can <strong>study effectively</strong>. <strong>Another reason is that</strong> a good ranking brings better jobs <strong>after graduation</strong>. <strong>In other words,</strong> companies trust students from famous schools. <strong>Moreover,</strong> they believe these students have strong skills. <strong>This can help</strong> my sister <strong>to</strong> get a good job easily. <strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is a good option</strong>, she can still live in a <strong>dormitory</strong> or take the bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can <strong>apply for scholarships</strong> to <strong>save money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "university's ranking",
                 ipa: "/ˌjuːnɪˈvɜːrsətiz ˈræŋkɪŋ/",
                 pos: "n. phr.",
                 meaning: "thứ hạng của trường đại học",
-                example: "Among the three options, I think the <strong>university's ranking</strong> is the best choice."
+                example: "If I were her, I think I would choose the <strong>university's ranking</strong>."
               },
               {
                 word: "modern classrooms",
@@ -141,21 +88,21 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈstʌdi ɪˈfektɪvli/",
                 pos: "v. phr.",
                 meaning: "học tập hiệu quả",
-                example: "She can learn useful lessons, so she can <strong>study effectively</strong>."
+                example: "Because of this, she can <strong>study effectively</strong>."
               },
               {
                 word: "after graduation",
                 ipa: "/ˈæftər ˌɡrædʒuˈeɪʃn/",
                 pos: "prep. phr.",
                 meaning: "sau khi tốt nghiệp",
-                example: "A good ranking helps her find a good job <strong>after graduation</strong>."
+                example: "A good ranking brings better jobs <strong>after graduation</strong>."
               },
               {
                 word: "dormitory",
                 ipa: "/ˈdɔːrmətɔːri/",
                 pos: "n.",
                 meaning: "ký túc xá",
-                example: "She can stay in a <strong>dormitory</strong> or rent a room nearby."
+                example: "She can still live in a <strong>dormitory</strong> or take the bus."
               },
               {
                 word: "rent a room",
@@ -183,34 +130,34 @@ window.SPEAKING_PART2_TOPICS = [
           b2: {
             strategy: [
               {
-                label: "1. Mở bài (Dẫn nhập tự nhiên & Chọn phương án)",
-                text: "Mở bài bằng 'Well, considering the situation where my younger sister...' và chọn 'the university's ranking' bằng 'I'd definitely go for'."
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my younger sister is looking for a university with high-quality education. If I were her, I think I would prioritize the university's ranking."
               },
               {
                 label: "2. Thân bài (2 lý do nâng cấp từ vựng + Phản biện 2 lựa chọn kia)",
-                text: "Lý do 1: Thứ hạng cao đi kèm giảng viên giàu kinh nghiệm (experienced lecturers) và chương trình bài bản (well-structured curriculum), giúp phát triển kỹ năng thực tế (which helps...). Lý do 2: Trường danh tiếng (reputable university) mở rộng cơ hội nghề nghiệp (career opportunities). Bỏ distance (có thể ở ký túc xá hoặc đi buýt) và bỏ tuition fees (tuy học phí quan trọng nhưng nền giáo dục tốt rất đáng đầu tư lâu dài)."
+                text: "Lý do 1 (First of all): Giảng viên giàu kinh nghiệm (experienced lecturers) và chương trình bài bản (well-structured curriculum), giúp phát triển kỹ năng thực tế. Lý do 2 (Another reason): Bằng cấp trường uy tín (reputable university) mở rộng cơ hội nghề nghiệp (career opportunities). Phản biện: Although the distance from her home is worth considering (có thể ở ký túc xá / đi buýt); As for the tuition fees (học phí có thể bù bằng học bổng và đầu tư giáo dục xứng đáng về lâu dài)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt lại bằng 'All in all, the university's ranking is definitely the most practical and suitable choice here.'"
+                text: "In conclusion, I believe the university's ranking is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well, considering the situation where</strong> my younger sister wants a university with high-quality education, <strong>I'd definitely go for</strong> <strong>the university's ranking</strong> <strong>out of the three options.</strong><br><br><strong>The main reason is that</strong> a high-ranking university usually offers experienced lecturers and a <strong>well-structured curriculum</strong>. <strong>For instance,</strong> she can study with modern facilities and learn practical skills, <strong>which</strong> boosts her academic performance. <strong>On top of that,</strong> graduating from a <strong>reputable</strong> university brings better career opportunities. <strong>As a result,</strong> employers are more willing to hire her and offer meaningful work right after graduation. <strong>Regarding the other two options, I wouldn't pick</strong> <strong>the distance from her home</strong> <strong>because</strong> even if the campus is far away, she can live in a dormitory or commute by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>although</strong> money matters a lot, she can apply for scholarships or work part-time, and quality education pays off in the long run.<br><br><strong>All in all,</strong> <strong>the university's ranking</strong> <strong>is definitely the most practical and suitable choice here.</strong>",
+              "<strong>The situation here is that</strong> my younger sister is looking for a university that provides high-quality education. <strong>If I were her, I think I would</strong> prioritize <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a high-ranking university guarantees better teaching quality. <strong>This is because</strong> top schools usually have <strong>experienced lecturers</strong> and a <strong>well-structured curriculum</strong>. <strong>For example,</strong> she can study with modern facilities and practice real-life skills, <strong>which</strong> boosts her academic performance. <strong>Because of this,</strong> she will build strong confidence in her major. <strong>Another reason is that</strong> graduating from a <strong>reputable</strong> university brings wider <strong>career opportunities</strong>. <strong>In other words,</strong> employers strongly value graduates from well-known institutions. <strong>Moreover,</strong> top schools often connect students directly with major companies. <strong>This can allow</strong> her <strong>to</strong> land a <strong>meaningful</strong> job right after graduation. <strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is worth considering</strong>, she can stay in a dormitory or <strong>commute</strong> by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can apply for scholarships, and quality education <strong>pays off in the long run</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
-                word: "go for",
-                ipa: "/ɡoʊ fɔːr/",
-                pos: "v. phr.",
-                meaning: "chọn, ưu tiên lựa chọn",
-                example: "I'd definitely <strong>go for</strong> the university's ranking out of the three options."
+                word: "prioritize",
+                ipa: "/praɪˈɔːrətaɪz/",
+                pos: "v.",
+                meaning: "ưu tiên hàng đầu",
+                example: "If I were her, I think I would <strong>prioritize</strong> the university's ranking."
               },
               {
                 word: "experienced lecturers",
                 ipa: "/ɪkˈspɪriənst ˈlektʃərərz/",
                 pos: "n. phr.",
                 meaning: "giảng viên giàu kinh nghiệm",
-                example: "A top university usually offers <strong>experienced lecturers</strong>."
+                example: "Top schools usually have <strong>experienced lecturers</strong>."
               },
               {
                 word: "well-structured curriculum",
@@ -224,7 +171,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈrepjətəbl/",
                 pos: "adj.",
                 meaning: "có danh tiếng tốt, uy tín",
-                example: "Graduating from a <strong>reputable</strong> university brings better career opportunities."
+                example: "Graduating from a <strong>reputable</strong> university brings wider career opportunities."
               },
               {
                 word: "career opportunities",
@@ -238,7 +185,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈmiːnɪŋfl/",
                 pos: "adj.",
                 meaning: "ý nghĩa, giá trị",
-                example: "Employers offer <strong>meaningful</strong> work to well-trained graduates."
+                example: "This can allow her to land a <strong>meaningful</strong> job right after graduation."
               },
               {
                 word: "commute",
@@ -271,39 +218,39 @@ window.SPEAKING_PART2_TOPICS = [
           "Anh/em họ của bạn sắp vào đại học và đang bối rối chưa biết chọn trường nào phù hợp. Có ba tiêu chí để cân nhắc: học phí vừa phải, hỗ trợ sinh viên và cơ sở vật chất trong khuôn viên trường. Theo bạn yếu tố nào quan trọng nhất?",
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 tiêu chí: affordable fees / student support / campus facilities).",
-          tense: "Hiện tại đơn và động từ khuyết thiếu (can / would). Đề này xoay quanh sinh viên Việt Nam nên lý do về giảm áp lực cho bố mẹ và tập trung thi cử rất dễ nói.",
-          length: "B1: ~118–138 từ · B2: ~158–185 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Triển khai theo đúng khung dàn ý 3 phần chung.",
+          length: "B1: ~140–160 từ · B2: ~175–205 từ."
         },
         pitfalls: [
           "Nhầm nghĩa từ 'affordable fees' thành 'rẻ nhất' (cheap); đúng phải là 'vừa túi tiền, hợp khả năng chi trả'.",
           "Quên nhắc đến việc ngoài học phí, sinh viên đại học còn phải tốn tiền trọ, ăn uống và sách vở suốt 4 năm.",
-          "Khi phản biện 'campus facilities' hay 'student support', tránh chê vô lý (nói 'không cần chút nào'); hãy công nhận mặt tốt nhưng giải thích tại sao không cấp bách bằng học phí."
+          "Khi phản biện 'campus facilities' hay 'student support', tránh chê vô lý (nói 'không cần chút nào'); hãy công nhận mặt tốt rồi nêu lý do chưa cấp bách bằng học phí."
         ],
         levels: {
           b1: {
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "Giới thiệu người em họ sắp vào đại học đang phân vân chọn trường và chốt chọn 'affordable fees'."
+                text: "The situation here is that my cousin is about to enter university and feels confused. If I were him, I think I would choose affordable fees."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Loại 2 phương án còn lại)",
-                text: "Lý do 1: Giảm áp lực tiền bạc cho gia đình suốt 4 năm (vì còn tiền phòng trọ, ăn uống, sách vở). Lý do 2: Em ấy yên tâm tập trung học hành, thi cuối kỳ (final exams) thay vì đi làm thêm quá nhiều. Không chọn campus facilities (có thể học qua tài liệu online & thư viện công cộng) và không chọn student support (chỉ cần lúc mới nhập học, bình thường có thể hỏi thầy cô, bạn thân)."
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (First of all): Giảm áp lực tiền bạc cho gia đình suốt 4 năm (vì còn tiền phòng, ăn uống, sách vở). Lý do 2 (Another reason): Tập trung tốt hơn cho việc học và kỳ thi cuối kỳ thay vì làm thêm quá sức. Phản biện: Không chọn campus facilities (có thể học qua tài liệu online & thư viện công cộng) và không chọn student support (chủ yếu cần tuần đầu, hằng ngày có thầy cô và bạn bè hỗ trợ)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Khẳng định lại 'affordable fees' là lựa chọn phù hợp nhất."
+                text: "In conclusion, I believe affordable fees is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well,</strong> my cousin is going to enter university soon and feels confused about choosing a school. <strong>Among the three options, I think</strong> <strong>affordable fees</strong> <strong>is the best choice</strong> for him.<br><br><strong>First,</strong> reasonable fees help reduce money pressure on his parents during four years. <strong>For example,</strong> besides tuition, a student has to pay for food, rent, and books every month. <strong>Second,</strong> my cousin can focus better on studying and <strong>final exams</strong>. <strong>So,</strong> he does not need to work too many part-time hours just to pay for school. <strong>On the other hand, I don't choose</strong> <strong>campus facilities</strong> <strong>because</strong> students can easily study with online materials and public libraries. <strong>Also,</strong> <strong>student support</strong> <strong>is not suitable as</strong> the top factor because he mainly needs it in the first week, and teachers or <strong>close friends</strong> can help him daily.<br><br><strong>For these reasons, I believe</strong> <strong>affordable fees</strong> <strong>is the best option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing a school. <strong>If I were him, I think I would</strong> choose <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable fees reduce <strong>money pressure</strong> on his parents. <strong>This is because</strong> university takes four long years to finish. <strong>For example,</strong> besides tuition, he has to <strong>pay for</strong> rent, food, and books every month. <strong>Because of this,</strong> his whole family feels much less stressed. <strong>Another reason is that</strong> lower fees let him <strong>focus on</strong> studying. <strong>In other words,</strong> he does not need to work too many <strong>part-time hours</strong>. <strong>Moreover,</strong> he has enough energy to prepare well for <strong>final exams</strong>. <strong>This can help</strong> him <strong>to</strong> get good grades. <strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is a good option</strong>, students can still learn well using online materials and <strong>public libraries</strong>. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> he mainly needs it in the first week, and teachers or <strong>close friends</strong> can help him daily.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "affordable fees",
                 ipa: "/əˈfɔːrdəbl fiːz/",
                 pos: "n. phr.",
                 meaning: "học phí phải chăng, vừa túi tiền",
-                example: "I think <strong>affordable fees</strong> is the best choice for my cousin."
+                example: "If I were him, I think I would choose <strong>affordable fees</strong>."
               },
               {
                 word: "money pressure",
@@ -324,14 +271,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈfoʊkəs ɑːn/",
                 pos: "v. phr.",
                 meaning: "tập trung vào",
-                example: "He can <strong>focus on</strong> studying instead of worrying about money."
+                example: "Lower fees let him <strong>focus on</strong> studying."
               },
               {
                 word: "final exams",
                 ipa: "/ˈfaɪnl ɪɡˈzæmz/",
                 pos: "n. phr.",
                 meaning: "các kỳ thi cuối kỳ",
-                example: "With enough time, he can prepare well for his <strong>final exams</strong>."
+                example: "With enough energy, he can prepare well for his <strong>final exams</strong>."
               },
               {
                 word: "part-time hours",
@@ -345,7 +292,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈpʌblɪk ˈlaɪbreriz/",
                 pos: "n. phr.",
                 meaning: "thư viện công cộng",
-                example: "Students can still study with online tools and <strong>public libraries</strong>."
+                example: "Students can still study with online materials and <strong>public libraries</strong>."
               },
               {
                 word: "close friends",
@@ -359,20 +306,20 @@ window.SPEAKING_PART2_TOPICS = [
           b2: {
             strategy: [
               {
-                label: "1. Mở bài (Dẫn nhập tự nhiên & Chọn phương án)",
-                text: "Mở bằng 'Well, considering the situation where my cousin...' và chốt 'affordable fees'."
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my cousin is struggling to pick a suitable university. If I were him, I think I would go for affordable fees."
               },
               {
                 label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
-                text: "Lý do 1: Giảm gánh nặng tài chính (ease the financial burden) vì ngoài học phí còn chi phí sinh hoạt (living expenses), giúp cả nhà thấy nhẹ nhõm (peace of mind). Lý do 2: Giúp tập trung tối đa cho việc học mà không bị kiệt sức vì làm thêm (As a result, ... feel sluggish). Bỏ campus facilities (dùng tài liệu online vẫn học tốt) và bỏ student support (chủ yếu cần lúc định hướng tân sinh viên - freshman orientation)."
+                text: "Lý do 1 (First of all): Giảm gánh nặng tài chính (ease the financial burden) vì ngoài học phí còn 4 năm chi phí sinh hoạt (living expenses), giúp cả nhà thấy an tâm (peace of mind). Lý do 2 (Another reason): Toàn tâm cho việc học thay vì làm thêm kiệt sức (exhausting shifts, feel sluggish). Phản biện: Although campus facilities is worth considering (học tốt qua tài liệu online); As for student support (chủ yếu hữu ích lúc freshman orientation)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt bằng 'All in all, affordable fees is definitely the most practical and suitable choice here.'"
+                text: "In conclusion, I believe affordable fees is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well, considering the situation where</strong> my cousin is struggling to choose a suitable university, <strong>I'd definitely go for</strong> <strong>affordable fees</strong> <strong>out of the three options.</strong><br><br><strong>The main reason is that</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. <strong>For instance,</strong> university life requires four years of <strong>living expenses</strong> like rent, food, and textbooks, <strong>which</strong> gives everyone greater <strong>peace of mind</strong> when fees are manageable. <strong>On top of that,</strong> lower fees allow him to focus on his coursework instead of working exhausting part-time shifts. <strong>As a result,</strong> he won't <strong>feel sluggish</strong> in class and can keep his grades high. <strong>Regarding the other two options, I wouldn't pick</strong> <strong>campus facilities</strong> <strong>because</strong> fancy buildings are not essential when students can learn well through online resources and public libraries. <strong>As for</strong> <strong>student support</strong>, <strong>although</strong> it is helpful during <strong>freshman orientation</strong>, classmates and lecturers usually provide enough daily guidance.<br><br><strong>All in all,</strong> <strong>affordable fees</strong> <strong>is definitely the most practical and suitable choice here.</strong>",
+              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing the right one. <strong>If I were him, I think I would</strong> go for <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. <strong>This is because</strong> university life involves four continuous years of <strong>living expenses</strong>. <strong>For example,</strong> his parents already have to cover rent, meals, and textbooks every month, <strong>which</strong> adds up quickly. <strong>Because of this,</strong> manageable fees give everyone much greater <strong>peace of mind</strong>. <strong>Another reason is that</strong> affordable tuition protects his study focus. <strong>In other words,</strong> he will not have to take <strong>exhausting</strong> part-time shifts just to pay tuition. <strong>Moreover,</strong> he won't <strong>feel sluggish</strong> during lectures or before final exams. <strong>This can allow</strong> him <strong>to</strong> keep his grades consistently high. <strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is worth considering</strong>, fancy buildings are not <strong>essential</strong> when students can study through online resources. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> it is mainly needed during <strong>freshman orientation</strong>, while lecturers and classmates provide enough <strong>daily guidance</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "financial burden",
@@ -386,7 +333,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈlɪvɪŋ ɪkˈspensɪz/",
                 pos: "n. phr.",
                 meaning: "chi phí sinh hoạt",
-                example: "Students already have to pay four years of <strong>living expenses</strong>."
+                example: "University life involves four continuous years of <strong>living expenses</strong>."
               },
               {
                 word: "peace of mind",
@@ -400,7 +347,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ɪɡˈzɔːstɪŋ/",
                 pos: "adj.",
                 meaning: "gây kiệt sức, mệt nhoài",
-                example: "He won't have to work <strong>exhausting</strong> part-time shifts."
+                example: "He won't have to take <strong>exhausting</strong> part-time shifts."
               },
               {
                 word: "feel sluggish",
@@ -447,39 +394,39 @@ window.SPEAKING_PART2_TOPICS = [
           "Bạn là một nhà tuyển dụng và sắp tuyển một nhân viên mới. Có ba phẩm chất để bạn cân nhắc: kỹ năng giao tiếp, sự trung thực và kỹ năng chuyên môn. Bạn nghĩ phẩm chất nào là quan trọng nhất?",
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 phẩm chất: communication skills / honesty / professional skills).",
-          tense: "Hiện tại đơn kết hợp câu điều kiện loại 1/2 (if an employee is honest, managers can...). Đóng vai nhà tuyển dụng (I / the company / our team).",
-          length: "B1: ~115–138 từ · B2: ~155–185 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Đóng vai nhà tuyển dụng theo khung 3 phần chung.",
+          length: "B1: ~140–160 từ · B2: ~175–205 từ."
         },
         pitfalls: [
           "Phát âm nhầm âm /h/ câm trong từ 'honesty' (/ˈɑːnəsti/) và 'honest' (/ˈɑːnɪst/) — KHÔNG đọc chữ 'h' đầu từ!",
           "Nói chung chung 'honesty is good' mà thiếu ví dụ công việc thực tế (giữ tiền, bảo mật khách hàng, nhận lỗi sớm để cả nhóm sửa).",
-          "Quên thừa nhận vai trò của professional skills trước khi giải thích lý do chưa chọn (vì kỹ năng có thể đào tạo được còn tính cách thì rất khó sửa)."
+          "Quên thừa nhận vai trò của professional skills trước khi giải thích lý do chưa chọn (kỹ năng có thể đào tạo dần còn tính cách rất khó sửa)."
         ],
         levels: {
           b1: {
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "Đóng vai nhà tuyển dụng sắp tuyển nhân viên mới và chốt chọn 'honesty'."
+                text: "The situation here is that I am a recruiter looking for a new employee. If I were in this situation, I think I would choose honesty."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Loại 2 phương án còn lại)",
-                text: "Lý do 1: Xây dựng niềm tin — sếp yên tâm giao dự án quan trọng, tiền bạc hay dữ liệu khách hàng. Lý do 2: Nhân viên trung thực dám nhận lỗi sớm để cả nhóm sửa kịp thời, làm việc an toàn hơn. Bỏ professional skills (nhân viên mới có thể được đào tạo dần trong công việc) và bỏ communication skills (nói khéo mà thiếu trung thực thì khách hàng và đồng nghiệp không thể tin tưởng)."
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (First of all): Xây dựng niềm tin ở công ty — sếp yên tâm giao tiền hay dự án quan trọng. Lý do 2 (Another reason): Giúp cả nhóm giải quyết vấn đề sớm vì nhân viên trung thực dám nói sự thật khi mắc lỗi. Phản biện: Không chọn professional skills (có thể học từng bước qua đào tạo) và không chọn communication skills (lời nói khéo léo mà thiếu trung thực sẽ làm mất niềm tin khách hàng)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Khẳng định lại 'honesty' là phẩm chất phù hợp nhất."
+                text: "In conclusion, I believe honesty is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well,</strong> I am a recruiter looking for a new employee for my company. <strong>Among the three options, I think</strong> <strong>honesty</strong> <strong>is the best choice</strong> for this role.<br><br><strong>First,</strong> an honest worker builds strong trust at the workplace. <strong>For example,</strong> managers can <strong>feel safe</strong> giving them money or <strong>important projects</strong> without worrying about cheating. <strong>Second,</strong> honesty helps a team solve problems quickly. When an employee makes a mistake, they will tell the truth early, <strong>so</strong> everyone can fix it together on time. <strong>On the other hand, I don't choose</strong> <strong>professional skills</strong> <strong>because</strong> a new worker can learn job skills step by step after training. <strong>Also,</strong> <strong>communication skills</strong> <strong>are not suitable as</strong> the top quality because sweet words without honesty can hurt customers' trust.<br><br><strong>For these reasons, I believe</strong> <strong>honesty</strong> <strong>is the best option in this situation.</strong>",
+              "<strong>The situation here is that</strong> I am a recruiter and I need to hire a new employee for my company. <strong>If I were in this situation, I think I would</strong> choose <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty builds <strong>strong trust</strong> at work. <strong>This is because</strong> every company needs people they can rely on. <strong>For example,</strong> managers can <strong>feel safe</strong> giving an honest worker money or <strong>important projects</strong>. <strong>Because of this,</strong> there is less worry about cheating. <strong>Another reason is that</strong> honest workers help a team fix problems fast. <strong>In other words,</strong> when they <strong>make a mistake</strong>, they <strong>tell the truth</strong> early. <strong>Moreover,</strong> everyone can work together calmly instead of hiding errors. <strong>This can help</strong> the whole team <strong>to</strong> finish tasks on time. <strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is a good option</strong>, a new worker can learn job skills <strong>step by step</strong> after training. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>sweet words</strong> without honesty can hurt customers' trust.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "honesty",
                 ipa: "/ˈɑːnəsti/",
                 pos: "n.",
                 meaning: "sự trung thực (lưu ý âm /h/ câm)",
-                example: "I think <strong>honesty</strong> is the best choice for this role."
+                example: "If I were in this situation, I think I would choose <strong>honesty</strong>."
               },
               {
                 word: "strong trust",
@@ -535,20 +482,20 @@ window.SPEAKING_PART2_TOPICS = [
           b2: {
             strategy: [
               {
-                label: "1. Mở bài (Dẫn nhập tự nhiên & Chọn phương án)",
-                text: "Dẫn nhập tình huống tuyển dụng và chọn 'honesty' bằng 'I'd definitely go for'."
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that I am recruiting a new member for our company. If I were in this situation, I think I would prioritize honesty."
               },
               {
                 label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
-                text: "Lý do 1: Nền tảng của niềm tin trong công ty — yên tâm giao dữ liệu khách hàng (client data) hay tài chính mà mang lại sự an tâm (peace of mind). Lý do 2: Xây dựng môi trường làm việc lành mạnh — nhân viên dám nhận lỗi sớm (admit mistakes) để xử lý kịp hạn chót (tight deadlines). Bỏ professional skills (có thể đào tạo tại chỗ - trained on the job, còn tính cách khó đổi) và bỏ communication skills (nói hay nhưng thiếu trung thực sẽ làm hỏng uy tín)."
+                text: "Lý do 1 (First of all): Nền tảng niềm tin trong tổ chức — yên tâm giao dữ liệu khách hàng nhạy cảm (sensitive client data), mang lại sự an tâm (peace of mind). Lý do 2 (Another reason): Xây dựng môi trường làm việc lành mạnh — dám thừa nhận sai sót (admit mistakes) sớm để xử lý kịp hạn chót (tight deadlines). Phản biện: Although professional skills is worth considering (được đào tạo thực tế - trained on the job, còn character rất khó sửa); As for communication skills (smooth talk thiếu trung thực dễ làm hỏng niềm tin - damage trust)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt lại tính thực tế và giá trị lâu dài của 'honesty'."
+                text: "In conclusion, I believe honesty is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well, considering the situation where</strong> I am recruiting a new member for our company, <strong>I'd definitely go for</strong> <strong>honesty</strong> <strong>out of the three options.</strong><br><br><strong>The main reason is that</strong> honesty builds real trust across the whole organization. <strong>For instance,</strong> managers can safely trust an honest employee with budgets or sensitive <strong>client data</strong>, <strong>which</strong> gives the company true <strong>peace of mind</strong>. <strong>On top of that,</strong> honest workers create a healthy and productive team environment. <strong>As a result,</strong> whenever they <strong>admit mistakes</strong> early, the team can fix problems quickly before <strong>tight deadlines</strong> are missed. <strong>Regarding the other two options, I wouldn't pick</strong> <strong>professional skills</strong> <strong>because</strong> technical skills can easily be <strong>trained on the job</strong>, whereas bad character is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>although</strong> speaking well helps at work, smooth talk without honesty can actually damage trust with clients.<br><br><strong>All in all,</strong> <strong>honesty</strong> <strong>is definitely the most practical and suitable choice here.</strong>",
+              "<strong>The situation here is that</strong> I am recruiting a new employee and need to pick the most important quality. <strong>If I were in this situation, I think I would</strong> prioritize <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty is the foundation of real trust in any organization. <strong>This is because</strong> companies rely heavily on dependable staff to protect their reputation. <strong>For example,</strong> managers can safely trust an honest employee with budgets or <strong>sensitive</strong> <strong>client data</strong>, <strong>which</strong> prevents costly mistakes. <strong>Because of this,</strong> the company enjoys true <strong>peace of mind</strong>. <strong>Another reason is that</strong> honest workers build a healthy and productive team environment. <strong>In other words,</strong> they <strong>admit mistakes</strong> openly instead of covering them up. <strong>Moreover,</strong> coworkers can jump in and solve issues before <strong>tight deadlines</strong> are missed. <strong>This can allow</strong> the whole team <strong>to</strong> work smoothly together. <strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is worth considering</strong>, technical skills can easily be <strong>trained on the job</strong>, whereas poor <strong>character</strong> is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>smooth talk</strong> without honesty can seriously <strong>damage trust</strong> with clients.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "client data",
@@ -569,7 +516,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ədˈmɪt mɪˈsteɪks/",
                 pos: "v. phr.",
                 meaning: "thừa nhận sai sót",
-                example: "Honest employees <strong>admit mistakes</strong> early instead of hiding them."
+                example: "Honest employees <strong>admit mistakes</strong> openly instead of hiding them."
               },
               {
                 word: "tight deadlines",
@@ -590,7 +537,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈkærəktər/",
                 pos: "n.",
                 meaning: "tính cách, phẩm chất",
-                example: "Technical skills are learnable, whereas bad <strong>character</strong> is hard to change."
+                example: "Technical skills are learnable, whereas poor <strong>character</strong> is hard to change."
               },
               {
                 word: "smooth talk",
@@ -639,46 +586,46 @@ window.SPEAKING_PART2_TOPICS = [
           "Bạn của bạn muốn đọc một cuốn sách để cải thiện trí tưởng tượng. Cô ấy đang cân nhắc ba thể loại: tiểu thuyết trinh thám, tiểu thuyết lãng mạn và sách hành động viễn tưởng. Bạn sẽ gợi ý loại nào?",
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 thể loại sách: mystery novel / romance novel / action fiction book).",
-          tense: "Hiện tại đơn và 'would recommend / should'. Tập trung gắn lý do vào từ khóa đề bài: 'improve her imagination'.",
-          length: "B1: ~115–138 từ · B2: ~155–185 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám sát từ khóa đề bài 'improve her imagination' theo khung 3 phần chung.",
+          length: "B1: ~140–160 từ · B2: ~175–205 từ."
         },
         pitfalls: [
           "Chỉ nói cuốn sách hay mà quên giải thích nó kích thích trí tưởng tượng (picture scenes, guess clues) như thế nào.",
-          "Phát âm thiếu âm cuối /s/ trong 'clues', 'twists', 'stories', 'scenes' (đây đều là âm cuối quan trọng của danh từ số nhiều/từ vựng).",
-          "Nhầm cấu trúc 'recommend + V-ing / Noun' — nói đúng là 'I recommend a mystery novel', không nói 'recommend her a mystery novel' thiếu giới từ."
+          "Phát âm thiếu âm cuối /s/ trong 'clues', 'twists', 'stories', 'scenes' (đây đều là âm cuối quan trọng của từ).",
+          "Nhầm cấu trúc 'recommend + Noun / V-ing' — nói đúng là 'I recommend a mystery novel', không nói 'recommend her a mystery novel' thiếu giới từ."
         ],
         levels: {
           b1: {
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn thể loại)",
-                text: "Giới thiệu người bạn muốn cải thiện trí tưởng tượng và chốt gợi ý 'a mystery novel'."
+                text: "The situation here is that my friend wants to read a book to improve her imagination. If I were her, I think I would choose a mystery novel."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Loại 2 thể loại còn lại)",
-                text: "Lý do 1: Nhiều manh mối (clues) và bí mật buộc bạn phải tự hình dung bối cảnh, đoán kết quả trong đầu -> rèn trí tưởng tượng trực tiếp. Lý do 2: Cốt truyện hồi hộp, thú vị từ đầu đến cuối nên bạn đọc hết cả quyển mà không chán. Bỏ romance novel (chuyện tình cảm thường dễ đoán, xoay quanh cảm xúc thường ngày) và bỏ action fiction book (tập trung quá nhiều vào đánh nhau, rượt đuổi nhanh nên ít chỗ suy nghĩ sâu)."
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 thể loại còn lại)",
+                text: "Lý do 1 (First of all): Có nhiều manh mối (clues) và bí mật giúp người đọc tự hình dung bối cảnh và đoán kết quả -> rèn trí tưởng tượng. Lý do 2 (Another reason): Rất hồi hộp, cuốn hút từ đầu đến cuối nên không thấy chán và đọc hết sách. Phản biện: Không chọn romance novel (cốt truyện dễ đoán, chỉ nói về cảm xúc thường ngày) và không chọn action fiction book (quá tập trung vào đánh nhau nhanh, ít chỗ cho tư duy sáng tạo)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt lại 'a mystery novel' là lựa chọn phù hợp nhất."
+                text: "In conclusion, I believe a mystery novel is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well,</strong> my friend wants to read a book to improve her imagination. <strong>Among the three options, I think</strong> <strong>a mystery novel</strong> <strong>is the best choice</strong> for her.<br><br><strong>First,</strong> mystery books have many clues and secrets, so readers have to think actively. <strong>For example,</strong> my friend can picture the places and guess the ending in her head, which helps her imagination grow. <strong>Second,</strong> this kind of book is very exciting from start to finish. <strong>So,</strong> she will not feel bored and will want to finish the whole story. <strong>On the other hand, I don't choose</strong> <strong>a romance novel</strong> <strong>because</strong> love stories are often easy to guess and focus mostly on daily feelings. <strong>Also,</strong> <strong>an action fiction book</strong> <strong>is not suitable because</strong> it focuses too much on fast fights instead of creative thinking.<br><br><strong>For these reasons, I believe</strong> <strong>a mystery novel</strong> <strong>is the best option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my friend wants to read a book to improve her imagination. <strong>If I were her, I think I would</strong> choose <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery books make readers think actively. <strong>This is because</strong> they are full of <strong>clues</strong> and hidden secrets. <strong>For example,</strong> my friend can <strong>picture the places</strong> and <strong>guess the ending</strong> in her head. <strong>Because of this,</strong> her imagination grows much stronger. <strong>Another reason is that</strong> this kind of book is very exciting <strong>from start to finish</strong>. <strong>In other words,</strong> every chapter brings a new surprise. <strong>Moreover,</strong> she will not <strong>feel bored</strong> while reading. <strong>This can help</strong> her <strong>to</strong> finish the whole story happily. <strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is a good option</strong>, love stories are often <strong>easy to guess</strong> and focus mostly on daily feelings. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> it focuses too much on fast fights instead of <strong>creative thinking</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "mystery novel",
                 ipa: "/ˈmɪstəri ˈnɑːvl/",
                 pos: "n. phr.",
                 meaning: "tiểu thuyết trinh thám, bí ẩn",
-                example: "I think <strong>a mystery novel</strong> is the best choice to improve imagination."
+                example: "If I were her, I think I would choose a <strong>mystery novel</strong>."
               },
               {
                 word: "clues",
                 ipa: "/kluːz/",
                 pos: "n.",
                 meaning: "manh mối, gợi ý",
-                example: "Mystery books have many <strong>clues</strong> and secrets for readers to solve."
+                example: "Mystery books are full of <strong>clues</strong> and hidden secrets."
               },
               {
                 word: "picture the places",
@@ -727,20 +674,20 @@ window.SPEAKING_PART2_TOPICS = [
           b2: {
             strategy: [
               {
-                label: "1. Mở bài (Dẫn nhập tự nhiên & Chọn thể loại)",
-                text: "Mở bài bằng 'Well, considering the situation where my friend...' và chọn 'a mystery novel'."
+                label: "1. Mở bài (Dẫn nhập & Chọn thể loại)",
+                text: "The situation here is that my friend wants to pick a book that sharpens her imagination. If I were her, I think I would go for a mystery novel."
               },
               {
                 label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 thể loại còn lại)",
-                text: "Lý do 1: Đầy manh mối và cú bẻ lái bất ngờ (unexpected twists), kích thích người đọc tự dựng hình ảnh trong tâm trí (mental imagery), giúp phát triển tư duy sáng tạo (which naturally...). Lý do 2: Giữ được sự tò mò cuốn hút (stay hooked), đọc liền mạch thay vì bỏ dở. Bỏ romance novel (cốt truyện thường dễ đoán - predictable) và bỏ action fiction book (nhiều cảnh đánh đấm, rượt đuổi nhanh nhưng thiếu chiều sâu suy luận)."
+                text: "Lý do 1 (First of all): Đầy manh mối và cú bẻ lái bất ngờ (unexpected twists), buộc người đọc xâu chuỗi chi tiết (connect details) và tự dựng hình ảnh trong tâm trí (mental imagery). Lý do 2 (Another reason): Gợi sự tò mò (curiosity) cực mạnh để cuốn hút đọc hết quyển (stay hooked). Phản biện: Although a romance novel is worth considering (khá dễ đoán - predictable); As for an action fiction book (gay cấn - thrilling - nhưng ít khoảng lặng để suy ngẫm sâu - deep reflection)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt bằng 'All in all, a mystery novel is definitely the most practical and suitable choice here.'"
+                text: "In conclusion, I believe a mystery novel is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well, considering the situation where</strong> my friend wants a book that sharpens her imagination, <strong>I'd definitely go for</strong> <strong>a mystery novel</strong> <strong>out of the three options.</strong><br><br><strong>The main reason is that</strong> mystery stories are packed with hidden clues and <strong>unexpected twists</strong>. <strong>For instance,</strong> she has to picture different scenes and connect details to solve the puzzle, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>. <strong>On top of that,</strong> a clever mystery builds strong curiosity from the very first page. <strong>As a result,</strong> she will <strong>stay hooked</strong> and finish the entire book instead of putting it down halfway. <strong>Regarding the other two options, I wouldn't pick</strong> <strong>a romance novel</strong> <strong>because</strong> love stories are often quite <strong>predictable</strong> and focus more on everyday emotions than creative thinking. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>although</strong> fast chases feel thrilling, non-stop fighting leaves less room for deep reflection.<br><br><strong>All in all,</strong> <strong>a mystery novel</strong> <strong>is definitely the most practical and suitable choice here.</strong>",
+              "<strong>The situation here is that</strong> my friend is looking for a book that can sharpen her imagination. <strong>If I were her, I think I would</strong> go for <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery stories push the reader's mind to work creatively. <strong>This is because</strong> they are packed with hidden clues and <strong>unexpected twists</strong>. <strong>For example,</strong> she has to picture scenes and <strong>connect details</strong> like a detective, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>. <strong>Because of this,</strong> her imagination gets a real workout. <strong>Another reason is that</strong> a clever mystery builds strong <strong>curiosity</strong> from the very first chapter. <strong>In other words,</strong> readers always want to discover what happens next. <strong>Moreover,</strong> the suspense keeps her engaged rather than putting the book down halfway. <strong>This can allow</strong> her <strong>to</strong> <strong>stay hooked</strong> and enjoy the entire reading experience. <strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is worth considering</strong>, love stories are often quite <strong>predictable</strong> and focus mostly on everyday emotions. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> fast chases feel <strong>thrilling</strong>, yet non-stop fighting leaves little room for <strong>deep reflection</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "unexpected twists",
@@ -815,8 +762,8 @@ window.SPEAKING_PART2_TOPICS = [
           "Một cặp vợ chồng đang chọn trường tiểu học cho con gái của họ. Bạn sẽ gợi ý loại hình trường nào: một trường công lập gần nhà, một trường quốc tế hay một trường tư thục?",
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 loại trường: public school near her home / international school / private school).",
-          tense: "Hiện tại đơn, dùng 'for their daughter / for the parents / for a young child'. Liên hệ thực tế Việt Nam (đưa đón đi học, kẹt xe, học phí, bạn hàng xóm, nền tảng tiếng Việt).",
-          length: "B1: ~115–138 từ · B2: ~155–185 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Liên hệ thực tế Việt Nam theo đúng khung dàn ý 3 phần chung.",
+          length: "B1: ~140–160 từ · B2: ~175–205 từ."
         },
         pitfalls: [
           "Lẫn lộn đại từ nhân xưng ('her' là cô con gái nhỏ trong đề, còn bố mẹ là 'they / the parents').",
@@ -828,26 +775,26 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn loại trường)",
-                text: "Giới thiệu cặp vợ chồng đang chọn trường tiểu học cho con gái và chốt chọn 'a public school near her home'."
+                text: "The situation here is that a couple is choosing a primary school for their young daughter. If I were in this situation, I think I would choose a public school near her home."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Loại 2 loại trường còn lại)",
-                text: "Lý do 1: Rất tiện và an toàn để bố mẹ đưa đón mỗi sáng, con được ngủ đủ giấc thay vì kẹt xe xa nhà. Lý do 2: Học phí hợp lý giúp gia đình tiết kiệm tiền, mà bé vẫn học kiến thức cơ bản tốt và kết bạn ngay khu phố quanh nhà. Bỏ international school (học phí quá đắt với nhiều gia đình, lại học quá ít tiếng Việt khi còn nhỏ) và bỏ private school (thường xa nhà và tốn nhiều phí xe đưa đón, ăn trưa)."
+                label: "2. Thân bài (2 lý do chọn & Phản biện 2 loại trường còn lại)",
+                text: "Lý do 1 (First of all): Rất tiện và an toàn để bố mẹ đưa đón hằng ngày, bé được ngủ đủ giấc thay vì kẹt xe. Lý do 2 (Another reason): Học phí hợp lý giúp tiết kiệm tiền, mà bé vẫn học tốt các môn cơ bản và kết bạn quanh khu phố. Phản biện: Không chọn international school (học phí quá đắt, trẻ nhỏ cần vững tiếng Việt trước) và không chọn private school (thường xa nhà và tốn nhiều tiền phụ phí)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Khẳng định lại 'a public school near her home' là lựa chọn phù hợp nhất."
+                text: "In conclusion, I believe a public school near her home is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well,</strong> a couple is looking for a primary school for their young daughter. <strong>Among the three options, I think</strong> <strong>a public school near her home</strong> <strong>is the best choice</strong> for their family.<br><br><strong>First,</strong> it is very easy and safe for parents to take their child to school every morning. <strong>For example,</strong> the little girl can get enough sleep instead of sitting in heavy traffic on long roads. <strong>Second,</strong> a public school has low fees, so the parents can <strong>save money</strong>. The girl can still learn basic subjects well and make friends in her neighborhood. <strong>On the other hand, I don't choose</strong> <strong>an international school</strong> <strong>because</strong> the tuition is too expensive, and a young child needs strong Vietnamese skills first. <strong>Also,</strong> <strong>a private school</strong> <strong>is not suitable as</strong> it is often far away and costs a lot of extra money.<br><br><strong>For these reasons, I believe</strong> <strong>a public school near her home</strong> <strong>is the best option in this situation.</strong>",
+              "<strong>The situation here is that</strong> a couple is choosing a primary school for their young daughter. <strong>If I were in this situation, I think I would</strong> choose <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school is very safe and easy for daily travel. <strong>This is because</strong> parents do not need to spend much time on the road. <strong>For example,</strong> the little girl can <strong>get enough sleep</strong> instead of sitting in <strong>heavy traffic</strong> every morning. <strong>Because of this,</strong> she goes to class feeling fresh and happy. <strong>Another reason is that</strong> a <strong>public school</strong> has low tuition fees. <strong>In other words,</strong> the parents can <strong>save money</strong> for other family needs. <strong>Moreover,</strong> their daughter still learns <strong>basic subjects</strong> well and makes friends right in her <strong>neighborhood</strong>. <strong>This can help</strong> her <strong>to</strong> grow up happily near home. <strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is a good option</strong>, it is too expensive and young children need strong Vietnamese skills first. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is often far away and costs a lot of <strong>extra money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "public school",
                 ipa: "/ˈpʌblɪk skuːl/",
                 pos: "n. phr.",
                 meaning: "trường công lập",
-                example: "I think a <strong>public school</strong> near her home is the best choice."
+                example: "If I were in this situation, I think I would choose a <strong>public school</strong> near her home."
               },
               {
                 word: "get enough sleep",
@@ -903,20 +850,20 @@ window.SPEAKING_PART2_TOPICS = [
           b2: {
             strategy: [
               {
-                label: "1. Mở bài (Dẫn nhập tự nhiên & Chọn loại trường)",
-                text: "Mở bài bằng 'Well, considering the situation where a couple...' và chọn 'a public school near her home'."
+                label: "1. Mở bài (Dẫn nhập & Chọn loại trường)",
+                text: "The situation here is that a couple wants to find the right primary school for their daughter. If I were in this situation, I think I would go for a public school near her home."
               },
               {
                 label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 loại trường còn lại)",
-                text: "Lý do 1: Rất thuận tiện (convenient) và an toàn cho việc đưa đón hằng ngày (daily commute), giúp bé giữ nếp sinh hoạt khỏe mạnh thay vì mệt mỏi vì tắc đường (which protects...). Lý do 2: Chi phí phải chăng (affordable) giúp gia đình giảm áp lực tài chính mà vẫn xây dựng nền tảng kiến thức vững chắc (solid foundation) và tình bạn gần nhà. Bỏ international school (quá đắt đỏ - far too expensive - và học hoàn toàn tiếng Anh quá sớm dễ làm yếu nền tảng tiếng Việt) và bỏ private school (xa hơn và phát sinh nhiều phụ phí xe/ăn uống)."
+                text: "Lý do 1 (First of all): Rất thuận tiện (convenient) và an toàn cho việc đưa đón hằng ngày (daily commute), giúp con nghỉ ngơi đủ thay vì mệt vì kẹt xe. Lý do 2 (Another reason): Học phí phải chăng (affordable) giảm gánh nặng tài chính (financial burden) mà vẫn có nền tảng vững chắc (solid foundation) ở các môn chính (core subjects) và bạn bè gần nhà. Phản biện: Although an international school is worth considering (quá đắt đỏ - far too expensive - dễ làm yếu tiếng Việt - weaken); As for a private school (xa hơn và nhiều phụ phí xe/ăn uống)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
-                text: "Chốt bằng 'All in all, a public school near her home is definitely the most practical and suitable choice here.'"
+                text: "In conclusion, I believe a public school near her home is the most suitable option in this situation."
               }
             ],
             modelAnswer:
-              "<strong>Well, considering the situation where</strong> a couple needs a suitable primary school for their daughter, <strong>I'd definitely go for</strong> <strong>a public school near her home</strong> <strong>out of the three options.</strong><br><br><strong>The main reason is that</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. <strong>For instance,</strong> her parents can pick her up right on time, <strong>which</strong> helps the girl get enough rest instead of feeling tired in heavy traffic. <strong>On top of that,</strong> public schools have very <strong>affordable</strong> tuition while still providing a <strong>solid foundation</strong> in core subjects. <strong>As a result,</strong> the family avoids unnecessary <strong>financial burden</strong>, and the child can grow up playing with friends in her own neighborhood. <strong>Regarding the other two options, I wouldn't pick</strong> <strong>an international school</strong> <strong>because</strong> the tuition is <strong>far too expensive</strong>, and studying mostly in English too early may weaken her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>although</strong> it has small classes, it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>All in all,</strong> <strong>a public school near her home</strong> <strong>is definitely the most practical and suitable choice here.</strong>",
+              "<strong>The situation here is that</strong> a couple wants to find the right primary school for their daughter. <strong>If I were in this situation, I think I would</strong> go for <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. <strong>This is because</strong> long trips in rush hour are exhausting for primary students. <strong>For example,</strong> her parents can easily <strong>pick her up</strong> right on time, <strong>which</strong> lets her get enough rest instead of sitting in heavy traffic. <strong>Because of this,</strong> she stays energetic and healthy every school day. <strong>Another reason is that</strong> public schools offer very <strong>affordable</strong> tuition. <strong>In other words,</strong> the family avoids unnecessary <strong>financial burden</strong> while still getting a <strong>solid foundation</strong> in <strong>core subjects</strong>. <strong>Moreover,</strong> the girl can make close friends right in her own neighborhood. <strong>This can allow</strong> her <strong>to</strong> feel comfortable and happy at school. <strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is worth considering</strong>, the fees are <strong>far too expensive</strong> and studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "daily commute",

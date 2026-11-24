@@ -4196,15 +4196,75 @@ button, input, select, textarea {
 
 .p2-outline-row-template {
   font-size: 13.5px;
-  line-height: 1.6;
-  color: #27272A;
+  line-height: 1.7;
+  color: #18181B;
 }
 
 .p2-outline-row-template strong {
-  background: #FEF3C7;
-  padding: 0 3px;
-  border-radius: 2px;
+  font-weight: 800;
   color: #18181B;
+}
+
+.p2-outline-block {
+  margin-top: 8px;
+}
+
+.p2-outline-block:first-child {
+  margin-top: 2px;
+}
+
+.p2-outline-sublist {
+  margin: 4px 0 6px 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.p2-outline-sublist li {
+  line-height: 1.65;
+}
+
+.p2-outline-counter {
+  padding-top: 8px;
+  border-top: 1px dotted #D4D4D8;
+}
+
+.p2-slot {
+  color: #B91C1C;
+  font-weight: 700;
+}
+
+.p2-swap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  margin: 0 1px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #B91C1C;
+  background: #FEF2F2;
+  border: 1.5px dashed #B91C1C;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.1s ease;
+}
+
+.p2-swap-btn:hover {
+  background: #FEE2E2;
+  border-style: solid;
+}
+
+.p2-swap-btn:active {
+  transform: translateY(1px);
+}
+
+.p2-swap-ico {
+  font-size: 11px;
+  opacity: 0.8;
 }
 
 .topic-q-jump-item {

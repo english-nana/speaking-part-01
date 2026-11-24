@@ -88,10 +88,10 @@ function buildSpeakingGradingPrompt(params: {
   const levelGuidance = isPart2
     ? level === "B2"
       ? `Mục tiêu của học viên là trình độ B2 (Speaking Part 2):
-- Đánh giá theo đúng bố cục 3 phần (~150-200 từ): Mở bài ("Well, considering the situation where..., I'd definitely go for...") -> Thân bài nêu 2 lý do thuyết phục có ví dụ & collocations tự nhiên + phản biện 2 phương án còn lại ("Regarding the other two options, I wouldn't pick... As for..., although...") -> Kết bài ("All in all, ... is definitely the most practical and suitable choice here.").
+- Đánh giá theo bố cục 3 phần dùng chung (~170-210 từ): Mở bài ("The situation here is that... If I were in this situation/him/her, I think I would... I believe it's the best option because of the following reasons.") -> Thân bài ("First of all,... This is because... For example,... Because of this,... Another reason is that... In other words,... Moreover,... This can help/allow... Regarding the other two options, although... is worth considering,... As for..., I don't think it's a good idea because...") -> Kết bài ("In conclusion, I believe... is the most suitable option in this situation.").
 - Chỉ ra các chỗ bị "Vietlish" hoặc lập luận chưa chặt, gợi ý diễn đạt tự nhiên mức B2 chứ KHÔNG ép từ C1/C2 cứng nhắc.`
       : `Mục tiêu của học viên là trình độ B1 (Speaking Part 2):
-- Chỉ cần bài nói đủ 3 phần (~110-145 từ): Mở bài nêu tình huống & chọn 1 phương án -> Thân bài giải thích 2 lý do đời thường (First... For example... Second... So...) và nói gọn lý do không chọn 2 phương án còn lại (On the other hand, I don't choose... because... Also, ... is not suitable because...) -> Kết bài khẳng định lại ("For these reasons, I believe...").
+- Chỉ cần bài nói đủ 3 phần (~130-165 từ) theo đúng khung dàn ý chung: Mở bài ("The situation here is that... If I were in this situation/him/her, I think I would...") -> Thân bài nêu 2 lý do đời thường (First of all... This is because... For example... Because of this... / Another reason is that... In other words... Moreover... This can help...) và phản biện 2 phương án còn lại (Regarding the other two options, although... is a good option,... As for..., I don't think it's a good idea because...) -> Kết bài ("In conclusion, I believe... is the most suitable option in this situation.").
 - KHÔNG ép học viên dùng từ vựng phức tạp. Nếu nói rõ ý, tự nhiên ở mức B1 thì khen ngợi và giữ nguyên.`
     : level === "B2"
       ? `Mục tiêu của học viên là trình độ B2:

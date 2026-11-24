@@ -1095,55 +1095,61 @@
     if (isPart2) {
       // ------------------------------------------------------------------
       // CHẤM ĐIỂM SPEAKING PART 2 (SOLUTION DISCUSSION · LÀM TRÒN 0.25)
+      // Khung dàn ý chung (First of all / Moreover / Regarding / As for / although)
+      // dùng chung cho cả B1 & B2; phân biệt B1 vs B2 dựa trên vốn từ vựng & cấu trúc nâng cao.
       // ------------------------------------------------------------------
+      const PART2_SHARED_OUTLINE_MARKERS = new Set([
+        "first of all", "moreover", "regarding the other two options", "as for",
+        "although", "in other words", "in conclusion", "step by step", "close friends",
+        "important projects"
+      ]);
+      const b2ContentLexis2 = allB2Lexis.filter(p => !PART2_SHARED_OUTLINE_MARKERS.has(p.toLowerCase()));
+
       let devPts2 = 0.4;
-      if (wordCount >= 210) devPts2 = 2.75;
-      else if (wordCount >= 155) devPts2 = 2.45;
-      else if (wordCount >= 115) devPts2 = 2.0;
-      else if (wordCount >= 85) devPts2 = 1.65;
-      else if (wordCount >= 70) devPts2 = 1.35;
+      if (wordCount >= 250) devPts2 = 2.75;
+      else if (wordCount >= 195) devPts2 = 2.45;
+      else if (wordCount >= 145) devPts2 = 2.05;
+      else if (wordCount >= 100) devPts2 = 1.65;
+      else if (wordCount >= 75) devPts2 = 1.35;
       else if (wordCount >= 45) devPts2 = 0.9;
 
-      let vocabPts2 = matchedDomainCount === 0 ? 0.4 : 0.95 + Math.min(0.65, uniqueDomainWords.length * 0.06);
+      let vocabPts2 = matchedDomainCount === 0 ? 0.4 : 0.95 + Math.min(0.65, uniqueDomainWords.length * 0.05);
       if (b1SampleHits.length > 0) vocabPts2 += Math.min(0.3, b1SampleHits.length * 0.08);
-      vocabPts2 += Math.min(1.4, allB2Lexis.length * 0.22);
+      vocabPts2 += Math.min(1.4, b2ContentLexis2.length * 0.24);
       vocabPts2 = Math.min(2.8, vocabPts2);
 
-      let gramPts2 = wordCount >= 70 ? 1.1 : 0.8;
+      let gramPts2 = wordCount >= 75 ? 1.1 : 0.8;
       if (usedCompound.length > 0) gramPts2 += 0.2;
       if (usedComplex.length >= 1) gramPts2 += 0.3;
       if (usedComplex.length >= 2) gramPts2 += 0.2;
-      if (usedRelative.length >= 1) gramPts2 += 0.45;
-      if (usedDiscourse.length >= 1) gramPts2 += 0.25;
-      if (usedDiscourse.length >= 2) gramPts2 += 0.2;
+      if (usedRelative.length >= 1) gramPts2 += 0.5;
+      if (b2ContentLexis2.length >= 4) gramPts2 += 0.3;
 
       let fluPts2 = 0.4;
-      if (wordCount >= 150) fluPts2 = 1.45;
-      else if (wordCount >= 110) fluPts2 = 1.15;
-      else if (wordCount >= 70) fluPts2 = 0.85;
-      if (usedDiscourse.length >= 2 && wordCount >= 150) fluPts2 = Math.min(1.65, fluPts2 + 0.2);
+      if (wordCount >= 195) fluPts2 = 1.45;
+      else if (wordCount >= 140) fluPts2 = 1.15;
+      else if (wordCount >= 75) fluPts2 = 0.85;
 
       rawScore = devPts2 + vocabPts2 + gramPts2 + fluPts2 - errorTypeCount * 0.55;
 
-      const b2MarkerCount2 = allB2Lexis.length + usedDiscourse.length;
-      const hasB2Lexis2 = b2MarkerCount2 >= 4;
-      const hasB2Grammar2 = usedRelative.length > 0 || usedComplex.length >= 2 || usedDiscourse.length >= 2;
+      const hasB2Lexis2 = b2ContentLexis2.length >= 4;
+      const hasB2Grammar2 = usedRelative.length >= 1 || /\bis worth considering\b/i.test(lower);
       const hasC1Profile2 =
         errorTypeCount === 0 &&
-        wordCount >= 220 &&
-        allB2Lexis.length >= 7 &&
-        usedRelative.length >= 1 &&
+        wordCount >= 260 &&
+        b2ContentLexis2.length >= 8 &&
+        usedRelative.length >= 2 &&
         usedComplex.length >= 2;
 
       if (isOffTopic) {
         rawScore = Math.min(rawScore, 2.5);
       } else if (wordCount < 45) {
         rawScore = Math.min(rawScore, 2.5);
-      } else if (wordCount < 70 || errorTypeCount >= 3) {
+      } else if (wordCount < 75 || errorTypeCount >= 3) {
         rawScore = Math.min(rawScore, 3.5);
-      } else if (wordCount < 148 || !hasB2Lexis2 || !hasB2Grammar2 || errorTypeCount >= 2 || matchedDomainCount < 4) {
+      } else if (wordCount < 165 || !hasB2Lexis2 || !hasB2Grammar2 || errorTypeCount >= 2 || matchedDomainCount < 4) {
         // Khung B1 (4.0 - 5.5)
-        rawScore = Math.min(rawScore, wordCount < 95 ? 4.5 : 5.5);
+        rawScore = Math.min(rawScore, wordCount < 110 ? 4.5 : 5.5);
       } else if (hasC1Profile2) {
         rawScore = Math.max(rawScore, 9.0);
       } else {

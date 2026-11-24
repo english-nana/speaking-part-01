@@ -36,8 +36,10 @@
     mobileSidebarOpen: false,
     sbPart1Collapsed: false,
     sbPart2Collapsed: false,
-    part2OutlineLevel: "b1", // "b1" | "b2"
     part2OutlineCollapsed: false,
+    p2SwapSituationIdx: 0,
+    p2SwapOption2Idx: 0,
+    p2SwapHelpIdx: 0,
     notifOpen: false,
     accountMenuOpen: false,
     reviewsByQuestionId: {},
@@ -1694,22 +1696,27 @@
   function renderPart2OutlineCardHtml() {
     const outline = window.SPEAKING_PART2_OUTLINE;
     if (!outline) return "";
-    const lvl = state.part2OutlineLevel === "b2" ? "b2" : "b1";
-    const lvlData = outline.levels && outline.levels[lvl];
-    if (!lvlData) return "";
+    const swaps = outline.swapOptions || {
+      situation: ["in this situation", "him", "her"],
+      option2Verb: ["is a good option", "is worth considering"],
+      helpVerb: ["help", "allow"]
+    };
+    const sitText = swaps.situation[state.p2SwapSituationIdx % swaps.situation.length];
+    const opt2Text = swaps.option2Verb[state.p2SwapOption2Idx % swaps.option2Verb.length];
+    const helpText = swaps.helpVerb[state.p2SwapHelpIdx % swaps.helpVerb.length];
+
+    const slot = label => `<span class="p2-slot">[${escapeHtml(label)}]</span>`;
+    const swapBtn = (key, text, titleText) =>
+      `<button type="button" class="p2-swap-btn" data-p2-swap="${key}" title="${escapeHtml(titleText)}">${escapeHtml(text)} <span class="p2-swap-ico">↻</span></button>`;
 
     return `
       <section class="p2-outline-banner">
         <div class="p2-outline-head">
           <div>
-            <h2 class="topic-card-title" style="margin-bottom:4px;">General Outline · Speaking Part 2</h2>
-            <div class="topic-card-vi" style="margin-bottom:0;">Khung dàn ý 3 phần dùng chung cho nhiều dạng đề (${escapeHtml(lvlData.wordTarget)})</div>
+            <h2 class="topic-card-title" style="margin-bottom:4px;">${escapeHtml(outline.title || "General Outline · Speaking Part 2")}</h2>
+            <div class="topic-card-vi" style="margin-bottom:0;">${escapeHtml(outline.subtitle || "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2")}</div>
           </div>
           <div class="p2-outline-actions">
-            <div class="level-switch-group" role="group" aria-label="Chọn khung dàn ý B1 hoặc B2">
-              <button type="button" class="level-switch-btn ${lvl === "b1" ? "active" : ""}" data-p2-outline-level="b1">Level B1</button>
-              <button type="button" class="level-switch-btn ${lvl === "b2" ? "active" : ""}" data-p2-outline-level="b2">Level B2</button>
-            </div>
             <button type="button" class="top-pill-btn" id="btn-toggle-p2-outline">
               <span>${state.part2OutlineCollapsed ? "Mở dàn ý ▾" : "Thu gọn ▴"}</span>
             </button>
@@ -1721,19 +1728,56 @@
             ? ""
             : `
             <div class="p2-outline-list">
-              ${lvlData.parts
-                .map(
-                  p => `
-                  <div class="p2-outline-row">
-                    <div class="p2-outline-row-head">
-                      <span class="p2-outline-step-label">${escapeHtml(p.step)}</span>
-                      <span class="p2-outline-step-goal">— ${escapeHtml(p.goal)}</span>
-                    </div>
-                    <div class="p2-outline-row-template">${p.templateHtml}</div>
+              <div class="p2-outline-row">
+                <div class="p2-outline-row-head">
+                  <span class="p2-outline-step-label">1. Mở bài</span>
+                  <span class="p2-outline-step-goal">— Dẫn nhập vào tình huống &amp; đưa ra lựa chọn</span>
+                </div>
+                <div class="p2-outline-row-template">
+                  The situation here is that ${slot("thuật lại tình huống")}. If I were ${swapBtn("situation", sitText, "Bấm để đổi: in this situation / him / her")}, I think I would ${slot("làm gì đó")}. I believe it’s the best option because of the following reasons.
+                </div>
+              </div>
+
+              <div class="p2-outline-row">
+                <div class="p2-outline-row-head">
+                  <span class="p2-outline-step-label">2. Thân bài</span>
+                  <span class="p2-outline-step-goal">— Giải thích 2 lý do chọn &amp; giải thích tại sao không chọn 2 phương án còn lại</span>
+                </div>
+                <div class="p2-outline-row-template">
+                  <div class="p2-outline-block">
+                    <div><strong>First of all,</strong> ${slot("lý do 1")}.</div>
+                    <ul class="p2-outline-sublist">
+                      <li>This is because ${slot("giải thích tại sao")}.</li>
+                      <li>For example, ${slot("đưa ra ví dụ thực tế")}.</li>
+                      <li>Because of this, ${slot("nêu kết quả/lợi ích")}.</li>
+                    </ul>
                   </div>
-                `
-                )
-                .join("")}
+
+                  <div class="p2-outline-block">
+                    <div><strong>Another reason is that</strong> ${slot("lý do 2")}.</div>
+                    <ul class="p2-outline-sublist">
+                      <li>In other words, ${slot("giải thích rõ hơn")}.</li>
+                      <li>Moreover, ${slot("bổ sung một lợi ích hoặc ví dụ")}.</li>
+                      <li>This can ${swapBtn("helpVerb", helpText, "Bấm để đổi: help / allow")} ${slot("ai đó")} to ${slot("lợi ích nhận được")}.</li>
+                    </ul>
+                  </div>
+
+                  <div class="p2-outline-block p2-outline-counter">
+                    <div><strong>Regarding the other two options,</strong> although ${slot("option 2")} ${swapBtn("option2Verb", opt2Text, "Bấm để đổi: is a good option / is worth considering")}, ${slot("lý do không chọn")}.</div>
+                    <div style="margin-top:4px;"><strong>As for</strong> ${slot("option 3")}, I don’t think it’s a good idea because ${slot("lý do không chọn")}.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p2-outline-row">
+                <div class="p2-outline-row-head">
+                  <span class="p2-outline-step-label">3. Kết bài</span>
+                  <span class="p2-outline-step-goal">— Khẳng định lại lựa chọn lần nữa</span>
+                </div>
+                <div class="p2-outline-row-template">
+                  <strong>In conclusion,</strong> I believe ${slot("lựa chọn của tôi")} is the most suitable option in this situation.
+                </div>
+              </div>
             </div>
           `
         }
@@ -3002,9 +3046,17 @@
       };
     });
 
-    document.querySelectorAll("[data-p2-outline-level]").forEach(btn => {
-      btn.onclick = () => {
-        state.part2OutlineLevel = btn.getAttribute("data-p2-outline-level") === "b2" ? "b2" : "b1";
+    document.querySelectorAll("[data-p2-swap]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const key = btn.getAttribute("data-p2-swap");
+        if (key === "situation") {
+          state.p2SwapSituationIdx = (state.p2SwapSituationIdx + 1) % 3;
+        } else if (key === "option2Verb") {
+          state.p2SwapOption2Idx = (state.p2SwapOption2Idx + 1) % 2;
+        } else if (key === "helpVerb") {
+          state.p2SwapHelpIdx = (state.p2SwapHelpIdx + 1) % 2;
+        }
         renderApp();
       };
     });
