@@ -56,6 +56,9 @@
   };
 
   let mediaRecorder = null;
+  let activeMediaStream = null;
+  let isStartingRecording = false;
+  let recordingSessionSeq = 0;
   let recordingTimer = null;
   let speechRecognizer = null;
   let persistedTranscript = "";
@@ -927,6 +930,9 @@
       stopRecording(qId);
       return;
     }
+    if (isStartingRecording) {
+      return;
+    }
 
     if (
       !navigator.mediaDevices ||
@@ -938,6 +944,25 @@
       renderApp();
       return;
     }
+
+    // Chốt dừng sạch mọi phiên ghi âm còn sót trước khi mở Micro mới
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      try {
+        mediaRecorder.ondataavailable = null;
+        mediaRecorder.onstop = null;
+        mediaRecorder.stop();
+      } catch (e) {}
+    }
+    mediaRecorder = null;
+    if (activeMediaStream) {
+      try {
+        activeMediaStream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+      activeMediaStream = null;
+    }
+
+    isStartingRecording = true;
+    const mySessionSeq = ++recordingSessionSeq;
 
     state.submitErrorMsg = "";
     state.liveTranscript = "";
@@ -952,6 +977,15 @@
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then(stream => {
+        isStartingRecording = false;
+        // Nếu người dùng đã bấm dừng/chuyển câu trong lúc chờ cấp quyền Micro thì đóng ngay luồng này
+        if (mySessionSeq !== recordingSessionSeq) {
+          try {
+            stream.getTracks().forEach(t => t.stop());
+          } catch (e) {}
+          return;
+        }
+
         const localChunks = [];
         let recorder = null;
         let chosenMime = "";
@@ -966,6 +1000,7 @@
           return;
         }
 
+        activeMediaStream = stream;
         mediaRecorder = recorder;
         state.isRecording = true;
         state.recordingSeconds = 0;
@@ -987,6 +1022,8 @@
         };
         recorder.onstop = () => {
           stream.getTracks().forEach(t => t.stop());
+          if (activeMediaStream === stream) activeMediaStream = null;
+          if (mediaRecorder === recorder) mediaRecorder = null;
           const firstTypedChunk = localChunks.find(c => c && c.type);
           const rawMime =
             (recorder && recorder.mimeType) ||
@@ -1009,7 +1046,7 @@
         };
 
         // Không truyền timeslice (250ms) vì Safari/iOS dễ tạo file MP4 phân mảnh bị lỗi không phát được trên Chrome
-        mediaRecorder.start();
+        recorder.start();
 
         // Trên điện thoại (iOS/Android), bật đồng thời SpeechRecognition dễ cướp quyền Micro của MediaRecorder
         // khiến file ghi âm bị 0:00 / hỏng; AI chấm bài vẫn tự nghe và phiên âm trực tiếp từ file audio.
@@ -1023,6 +1060,7 @@
         renderApp();
       })
       .catch(err => {
+        isStartingRecording = false;
         if (recordingTimer) {
           clearInterval(recordingTimer);
           recordingTimer = null;
@@ -1035,6 +1073,8 @@
   }
 
   function stopRecording(qId) {
+    recordingSessionSeq++;
+    isStartingRecording = false;
     if (recordingTimer) {
       clearInterval(recordingTimer);
       recordingTimer = null;
@@ -1054,6 +1094,13 @@
         mediaRecorder.stop();
         return;
       } catch (e) {}
+    }
+
+    if (activeMediaStream) {
+      try {
+        activeMediaStream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+      activeMediaStream = null;
     }
 
     setTimeout(() => {

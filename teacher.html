@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261126c" />
+  <link rel="stylesheet" href="./styles.css?v=20261126d" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261126c"></script>
-  <script src="./supabase-client.js?v=20261126c"></script>
-  <script src="./travel-data.js?v=20261126c"></script>
-  <script src="./part2-data.js?v=20261126c"></script>
-  <script src="./speaking-evaluator.js?v=20261126c"></script>
+  <script src="./supabase-config.js?v=20261126d"></script>
+  <script src="./supabase-client.js?v=20261126d"></script>
+  <script src="./travel-data.js?v=20261126d"></script>
+  <script src="./part2-data.js?v=20261126d"></script>
+  <script src="./speaking-evaluator.js?v=20261126d"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -1121,7 +1121,7 @@
                           ${
                             sub.audioUrl
                               ? `<div class="teacher-audio-wrap">
-                                   <audio controls preload="metadata" src="${escapeHtml(sub.audioUrl)}" data-audio-url="${escapeHtml(sub.audioUrl)}" data-audio-path="${escapeHtml(sub.audioPath || "")}" class="student-audio-player"></audio>
+                                   <audio controls preload="metadata" src="${escapeHtml(sub.audioUrl)}" data-audio-url="${escapeHtml(sub.audioUrl)}" data-audio-path="${escapeHtml(sub.audioPath || "")}" data-expected-sec="${Number(sub.durationSec) || 0}" class="student-audio-player"></audio>
                                    <div class="audio-diag-note" style="display:none;font-size:12px;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;margin-top:4px;margin-bottom:6px;line-height:1.45;"></div>
                                  </div>`
                               : sub.audioPath
@@ -1678,6 +1678,126 @@
           return new Blob([ab], { type: "audio/wav" });
         }
 
+        function repairInterleavedWebmBytes(u8, ebmlOff) {
+          if (!u8 || ebmlOff < 0 || ebmlOff >= u8.length - 16) return null;
+          const clusterOffsets = [];
+          for (let i = ebmlOff; i <= u8.length - 12; i++) {
+            if (u8[i] === 0x1f && u8[i + 1] === 0x43 && u8[i + 2] === 0xb6 && u8[i + 3] === 0x75) {
+              clusterOffsets.push(i);
+            }
+          }
+          if (clusterOffsets.length < 2) {
+            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+          }
+
+          const parseCluster = (start, end) => {
+            let p = start + 4;
+            const sb = u8[p];
+            let sLen = 1;
+            for (let bit = 0x80; bit > 0 && !(sb & bit); bit >>= 1) sLen++;
+            p += sLen;
+            if (p >= end || u8[p] !== 0xe7) return null;
+            const tcLen = u8[p + 1] & 0x7f;
+            if (tcLen === 0 || tcLen > 6 || p + 2 + tcLen > end) return null;
+            let tc = 0;
+            for (let k = 0; k < tcLen; k++) tc = tc * 256 + u8[p + 2 + k];
+            const headerEnd = p + 2 + tcLen;
+            const headerBytes = u8.slice(start, headerEnd);
+            const blocks = [];
+            let q = headerEnd;
+            while (q < end) {
+              if (u8[q] !== 0xa3) break;
+              const b0 = u8[q + 1];
+              let vLen = 1;
+              let bSize = 0;
+              if (b0 & 0x80) {
+                vLen = 1;
+                bSize = b0 & 0x7f;
+              } else if (b0 & 0x40) {
+                vLen = 2;
+                bSize = ((b0 & 0x3f) << 8) | u8[q + 2];
+              } else if (b0 & 0x20) {
+                vLen = 3;
+                bSize = ((b0 & 0x1f) << 16) | (u8[q + 2] << 8) | u8[q + 3];
+              } else {
+                break;
+              }
+              const dataStart = q + 1 + vLen;
+              const blockEnd = dataStart + bSize;
+              if (blockEnd > end || bSize < 4) break;
+              const relTcRaw = (u8[dataStart + 1] << 8) | u8[dataStart + 2];
+              const relTc = relTcRaw >= 0x8000 ? relTcRaw - 0x10000 : relTcRaw;
+              blocks.push({ relTc, bytes: u8.slice(q, blockEnd) });
+              q = blockEnd;
+            }
+            return { tc, headerBytes, blocks };
+          };
+
+          const clusters = [];
+          for (let i = 0; i < clusterOffsets.length; i++) {
+            const end = i + 1 < clusterOffsets.length ? clusterOffsets[i + 1] : u8.length;
+            const c = parseCluster(clusterOffsets[i], end);
+            if (c) clusters.push(c);
+          }
+          if (clusters.length < 2) {
+            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+          }
+
+          let hasInterleaving = false;
+          for (let i = 1; i < clusters.length; i++) {
+            const diff = clusters[i].tc - clusters[i - 1].tc;
+            if (diff < 0 || diff > 10000) {
+              hasInterleaving = true;
+              break;
+            }
+          }
+          if (!hasInterleaving) {
+            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+          }
+
+          const outParts = [u8.slice(ebmlOff, clusterOffsets[0])];
+          let expectedTc = clusters[0].tc;
+          for (let i = 0; i < clusters.length; i++) {
+            const c = clusters[i];
+            if (c.tc >= expectedTc && c.tc - expectedTc <= 5000) {
+              outParts.push(c.headerBytes);
+              let lastRel = -1;
+              for (let j = 0; j < c.blocks.length; j++) {
+                const blk = c.blocks[j];
+                if (blk.relTc > lastRel) {
+                  outParts.push(blk.bytes);
+                  lastRel = blk.relTc;
+                } else {
+                  break;
+                }
+              }
+              if (i + 1 < clusters.length) {
+                const nextC = clusters[i + 1];
+                const nextIsForeign = nextC.tc < c.tc || nextC.tc - c.tc > 10000;
+                if (nextIsForeign && nextC.blocks.length > 0) {
+                  for (let j = 0; j < nextC.blocks.length; j++) {
+                    const fBlk = nextC.blocks[j];
+                    if (fBlk.relTc >= lastRel + 40 && fBlk.relTc <= lastRel + 90) {
+                      outParts.push(fBlk.bytes);
+                      lastRel = fBlk.relTc;
+                    }
+                  }
+                }
+              }
+              expectedTc = c.tc + 1;
+            }
+          }
+
+          const totalLen = outParts.reduce((s, p) => s + p.length, 0);
+          const out = new Uint8Array(totalLen);
+          let pos = 0;
+          for (let i = 0; i < outParts.length; i++) {
+            out.set(outParts[i], pos);
+            pos += outParts[i].length;
+          }
+          return out;
+        }
+
         function buildForceDownloadUrl(signedUrl, fileName) {
           if (!signedUrl) return "";
           const sep = signedUrl.includes("?") ? "&" : "?";
@@ -1718,8 +1838,14 @@
                   .join(" ");
                 const detected = detectAudioContainerAndOffset(fullBytes);
                 const detectedMime = detected.mime;
-                const cleanBuf = detected.offset > 0 ? buf.slice(detected.offset) : buf;
-                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ"}${detected.offset > 0 ? ` · cắt ${detected.offset}B rác đầu file` : ""} · hex: ${headHex}`;
+                let cleanBuf = detected.offset > 0 ? buf.slice(detected.offset) : buf;
+                if (detectedMime === "audio/webm") {
+                  const deinterleaved = repairInterleavedWebmBytes(fullBytes, detected.offset);
+                  if (deinterleaved && deinterleaved.byteLength >= 400) {
+                    cleanBuf = deinterleaved.buffer;
+                  }
+                }
+                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ"}${detected.offset > 0 ? ` · đã tách luồng sạch` : ""} · hex: ${headHex}`;
 
                 if (cleanBuf.byteLength >= 400 && detectedMime) {
                   const blobUrl = URL.createObjectURL(new Blob([cleanBuf], { type: detectedMime }));
@@ -1771,6 +1897,16 @@
           audioEl.addEventListener("error", handleAudioFailure);
           audioEl.addEventListener("loadedmetadata", () => {
             if (noteEl) noteEl.style.display = "none";
+            const expectedSec = Number(audioEl.getAttribute("data-expected-sec")) || 0;
+            if (
+              audioEl.dataset.blobTried !== "1" &&
+              /\.webm(\?|$)/i.test(rawPath || rawUrl) &&
+              expectedSec > 0 &&
+              Number.isFinite(audioEl.duration) &&
+              audioEl.duration > expectedSec * 3 + 30
+            ) {
+              handleAudioFailure();
+            }
           });
           if (audioEl.error) {
             handleAudioFailure();

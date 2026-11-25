@@ -49,11 +49,130 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array | null {
+  if (!u8 || ebmlOff < 0 || ebmlOff >= u8.length - 16) return null;
+  const clusterOffsets: number[] = [];
+  for (let i = ebmlOff; i <= u8.length - 12; i++) {
+    if (u8[i] === 0x1f && u8[i + 1] === 0x43 && u8[i + 2] === 0xb6 && u8[i + 3] === 0x75) {
+      clusterOffsets.push(i);
+    }
+  }
+  if (clusterOffsets.length < 2) {
+    return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+  }
+
+  const parseCluster = (start: number, end: number) => {
+    let p = start + 4;
+    const sb = u8[p];
+    let sLen = 1;
+    for (let bit = 0x80; bit > 0 && !(sb & bit); bit >>= 1) sLen++;
+    p += sLen;
+    if (p >= end || u8[p] !== 0xe7) return null;
+    const tcLen = u8[p + 1] & 0x7f;
+    if (tcLen === 0 || tcLen > 6 || p + 2 + tcLen > end) return null;
+    let tc = 0;
+    for (let k = 0; k < tcLen; k++) tc = tc * 256 + u8[p + 2 + k];
+    const headerEnd = p + 2 + tcLen;
+    const headerBytes = u8.slice(start, headerEnd);
+    const blocks: Array<{ relTc: number; bytes: Uint8Array }> = [];
+    let q = headerEnd;
+    while (q < end) {
+      if (u8[q] !== 0xa3) break;
+      const b0 = u8[q + 1];
+      let vLen = 1;
+      let bSize = 0;
+      if (b0 & 0x80) {
+        vLen = 1;
+        bSize = b0 & 0x7f;
+      } else if (b0 & 0x40) {
+        vLen = 2;
+        bSize = ((b0 & 0x3f) << 8) | u8[q + 2];
+      } else if (b0 & 0x20) {
+        vLen = 3;
+        bSize = ((b0 & 0x1f) << 16) | (u8[q + 2] << 8) | u8[q + 3];
+      } else {
+        break;
+      }
+      const dataStart = q + 1 + vLen;
+      const blockEnd = dataStart + bSize;
+      if (blockEnd > end || bSize < 4) break;
+      const relTcRaw = (u8[dataStart + 1] << 8) | u8[dataStart + 2];
+      const relTc = relTcRaw >= 0x8000 ? relTcRaw - 0x10000 : relTcRaw;
+      blocks.push({ relTc, bytes: u8.slice(q, blockEnd) });
+      q = blockEnd;
+    }
+    return { tc, headerBytes, blocks };
+  };
+
+  const clusters: Array<{ tc: number; headerBytes: Uint8Array; blocks: Array<{ relTc: number; bytes: Uint8Array }> }> = [];
+  for (let i = 0; i < clusterOffsets.length; i++) {
+    const end = i + 1 < clusterOffsets.length ? clusterOffsets[i + 1] : u8.length;
+    const c = parseCluster(clusterOffsets[i], end);
+    if (c) clusters.push(c);
+  }
+  if (clusters.length < 2) {
+    return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+  }
+
+  let hasInterleaving = false;
+  for (let i = 1; i < clusters.length; i++) {
+    const diff = clusters[i].tc - clusters[i - 1].tc;
+    if (diff < 0 || diff > 10000) {
+      hasInterleaving = true;
+      break;
+    }
+  }
+  if (!hasInterleaving) {
+    return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+  }
+
+  const outParts: Uint8Array[] = [u8.slice(ebmlOff, clusterOffsets[0])];
+  let expectedTc = clusters[0].tc;
+  for (let i = 0; i < clusters.length; i++) {
+    const c = clusters[i];
+    if (c.tc >= expectedTc && c.tc - expectedTc <= 5000) {
+      outParts.push(c.headerBytes);
+      let lastRel = -1;
+      for (const blk of c.blocks) {
+        if (blk.relTc > lastRel) {
+          outParts.push(blk.bytes);
+          lastRel = blk.relTc;
+        } else {
+          break;
+        }
+      }
+      if (i + 1 < clusters.length) {
+        const nextC = clusters[i + 1];
+        const nextIsForeign = nextC.tc < c.tc || nextC.tc - c.tc > 10000;
+        if (nextIsForeign && nextC.blocks.length > 0) {
+          for (const fBlk of nextC.blocks) {
+            if (fBlk.relTc >= lastRel + 40 && fBlk.relTc <= lastRel + 90) {
+              outParts.push(fBlk.bytes);
+              lastRel = fBlk.relTc;
+            }
+          }
+        }
+      }
+      expectedTc = c.tc + 1;
+    }
+  }
+
+  const totalLen = outParts.reduce((s, p) => s + p.length, 0);
+  const out = new Uint8Array(totalLen);
+  let pos = 0;
+  for (const p of outParts) {
+    out.set(p, pos);
+    pos += p.length;
+  }
+  return out;
+}
+
 function trimCorruptedAudioPrefix(buffer: ArrayBuffer, fallbackMime: string): { buffer: ArrayBuffer; mimeType: string } {
   const u8 = new Uint8Array(buffer);
   if (u8.length < 16) return { buffer, mimeType: fallbackMime };
   if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
-    return { buffer, mimeType: "audio/webm" };
+    const deinterleaved = repairInterleavedWebmBytes(u8, 0);
+    return { buffer: deinterleaved ? deinterleaved.buffer : buffer, mimeType: "audio/webm" };
   }
   if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
     return { buffer, mimeType: "audio/mp4" };
@@ -61,7 +180,8 @@ function trimCorruptedAudioPrefix(buffer: ArrayBuffer, fallbackMime: string): { 
   const scanMax = Math.min(u8.length - 8, 262144);
   for (let i = 1; i <= scanMax; i++) {
     if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
-      return { buffer: buffer.slice(i), mimeType: "audio/webm" };
+      const deinterleaved = repairInterleavedWebmBytes(u8, i);
+      return { buffer: deinterleaved ? deinterleaved.buffer : buffer.slice(i), mimeType: "audio/webm" };
     }
   }
   for (let i = 4; i <= scanMax; i++) {
