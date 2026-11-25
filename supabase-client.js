@@ -4,7 +4,7 @@
 
 (function () {
   const AUDIO_BUCKET = "speaking-recordings";
-  const CLASS_LIST = ["ONB204", "CB221", "CB212", "ONB102", "ONB104", "B210", "IELTS Basic"];
+  const CLASS_LIST = ["ONB204", "CB221", "CB212", "ONB102", "ONB104", "B210", "C1"];
   const RELEASE_DELAY_HOURS = 6;
   let cachedClient = null;
 
