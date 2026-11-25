@@ -4,7 +4,7 @@
 
 (function () {
   const AUDIO_BUCKET = "speaking-recordings";
-  const CLASS_LIST = ["ONB204", "CB221"];
+  const CLASS_LIST = ["ONB204", "CB221", "CB212", "ONB102", "ONB104", "B210", "IELTS Basic"];
   const RELEASE_DELAY_HOURS = 6;
   let cachedClient = null;
 
@@ -89,12 +89,20 @@
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
+  function normalizeClassName(rawClass) {
+    const trimmed = String(rawClass || "").trim();
+    if (!trimmed) return "";
+    const lowered = trimmed.toLowerCase();
+    const found = CLASS_LIST.find(c => c.toLowerCase() === lowered);
+    return found || "";
+  }
+
   function parseFullNameAndClass(rawFullName) {
     const raw = String(rawFullName || "").trim();
-    const match = raw.match(/^\[([A-Za-z0-9_-]+)\]\s*(.*)$/);
+    const match = raw.match(/^\[([^\]]+)\]\s*(.*)$/);
     if (match) {
-      const candidateClass = match[1].toUpperCase();
-      if (CLASS_LIST.includes(candidateClass)) {
+      const candidateClass = normalizeClassName(match[1]);
+      if (candidateClass) {
         return {
           className: candidateClass,
           fullName: match[2].trim()
@@ -109,9 +117,9 @@
 
   function formatStoredFullName(fullName, className) {
     const cleanName = String(fullName || "").trim();
-    const upperClass = String(className || "").trim().toUpperCase();
-    return upperClass && CLASS_LIST.includes(upperClass)
-      ? `[${upperClass}] ${cleanName}`
+    const canonicalClass = normalizeClassName(className);
+    return canonicalClass
+      ? `[${canonicalClass}] ${cleanName}`
       : cleanName;
   }
 
@@ -644,6 +652,7 @@
     formatDateTime,
     formatRemainingTime,
     getInitials,
+    normalizeClassName,
     parseFullNameAndClass,
     formatStoredFullName,
     renderGoogleIconSvg,

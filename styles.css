@@ -1720,13 +1720,14 @@ button, input, select, textarea {
 }
 
 .class-option-btn {
-  height: 40px;
+  min-height: 40px;
+  padding: 6px 8px;
   border: 2px solid #18181B;
   border-radius: 5px;
   background: #FFFFFF;
   color: #3F3F46;
   font-family: var(--font-mono);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.12s ease, box-shadow 0.12s ease;

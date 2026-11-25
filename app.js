@@ -175,8 +175,8 @@
         ? profileRes.data.full_name
         : fallbackName;
     const parsed = CLOUD.parseFullNameAndClass(rawStoredName);
-    const metaClass = String(meta.class_name || "").trim().toUpperCase();
-    const resolvedClass = parsed.className || (CLOUD.CLASS_LIST.includes(metaClass) ? metaClass : "");
+    const metaClass = CLOUD.normalizeClassName(meta.class_name);
+    const resolvedClass = parsed.className || metaClass || "";
     const resolvedName = parsed.fullName || fallbackName;
     const storedFullName = CLOUD.formatStoredFullName(resolvedName, resolvedClass);
 
@@ -2977,7 +2977,7 @@
 
         const nameInp = document.getElementById("inp-setup-fullname");
         const cleanName = (nameInp ? nameInp.value : state.profileFormName).trim();
-        const chosenClass = String(state.profileFormClass || "").trim().toUpperCase();
+        const chosenClass = CLOUD.normalizeClassName(state.profileFormClass);
 
         state.profileFormName = cleanName;
         if (!cleanName) {
@@ -2985,8 +2985,8 @@
           renderApp();
           return;
         }
-        if (!CLOUD.CLASS_LIST.includes(chosenClass)) {
-          state.profileFormError = "Vui lòng chọn lớp của bạn (ONB204 hoặc CB221).";
+        if (!chosenClass) {
+          state.profileFormError = "Vui lòng chọn lớp của bạn trong danh sách.";
           renderApp();
           return;
         }

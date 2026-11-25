@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261125f" />
+  <link rel="stylesheet" href="./styles.css?v=20261125g" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261125f"></script>
-  <script src="./supabase-client.js?v=20261125f"></script>
-  <script src="./travel-data.js?v=20261125f"></script>
-  <script src="./part2-data.js?v=20261125f"></script>
-  <script src="./speaking-evaluator.js?v=20261125f"></script>
+  <script src="./supabase-config.js?v=20261125g"></script>
+  <script src="./supabase-client.js?v=20261125g"></script>
+  <script src="./travel-data.js?v=20261125g"></script>
+  <script src="./part2-data.js?v=20261125g"></script>
+  <script src="./speaking-evaluator.js?v=20261125g"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -54,6 +54,7 @@
         infoModalStudentId: "",
         selectedStudentId: "", // "" = danh sách học viên | "<uuid>" = xem bài làm của học viên đó
         deletingUserId: "",
+        deletingAttemptId: "",
         gradingAttemptId: "",
         releasingAttemptId: "",
         flushingQueue: false,
@@ -501,6 +502,64 @@
           tState.deletingUserId = "";
           renderTeacherApp();
           alert("Lỗi khi xoá tài khoản: " + (err && err.message ? err.message : "Không xác định"));
+        }
+      }
+
+      async function deleteSubmissionForRetry(attemptId) {
+        const client = CLOUD.getClient();
+        if (!client || !attemptId || tState.deletingAttemptId) return;
+        const sub = tState.submissions.find(s => s.attemptId === attemptId);
+        if (!sub) return;
+
+        const qLabel = `${sub.topicTitle} · Câu ${sub.questionNum}`;
+        if (
+          !confirm(
+            `Bạn có chắc muốn XOÁ bài nộp "${qLabel}" của học viên "${sub.studentName}" để bạn ấy làm lại?\n\nBản ghi âm và bài sửa của câu này sẽ bị gỡ bỏ.`
+          )
+        ) {
+          return;
+        }
+
+        tState.deletingAttemptId = attemptId;
+        renderTeacherApp();
+
+        try {
+          const { data: attRows } = await client
+            .from("speaking_attempts")
+            .select("id, audio_path")
+            .eq("user_id", sub.studentId)
+            .eq("question_id", sub.questionId);
+
+          const audioPaths = Array.isArray(attRows) ? attRows.map(r => r.audio_path).filter(Boolean) : [];
+          if (audioPaths.length > 0) {
+            await CLOUD.deleteRecordings(audioPaths);
+          }
+
+          await client
+            .from("speaking_ai_reviews")
+            .delete()
+            .eq("user_id", sub.studentId)
+            .eq("question_id", sub.questionId);
+
+          const { error: delErr } = await client
+            .from("speaking_attempts")
+            .delete()
+            .eq("user_id", sub.studentId)
+            .eq("question_id", sub.questionId);
+
+          if (delErr) {
+            tState.deletingAttemptId = "";
+            renderTeacherApp();
+            alert("Không xoá được bài nộp: " + delErr.message);
+            return;
+          }
+
+          tState.deletingAttemptId = "";
+          await refreshCloudDashboardData();
+        } catch (err) {
+          tState.deletingAttemptId = "";
+          renderTeacherApp();
+          alert("Lỗi khi xoá bài nộp: " + (err && err.message ? err.message : "Không xác định"));
         }
       }
 
@@ -1060,6 +1119,16 @@
                             <button type="button" class="top-pill-btn" data-ai-grade="${escapeHtml(sub.attemptId)}" ${isGrading || isNoAudioSubmission ? "disabled" : ""} ${isNoAudioSubmission ? 'title="Bài nộp thiếu tệp âm thanh và transcript"' : ""}>
                               ${isGrading ? "⏳ Đang chấm..." : hasReadyReview ? "↻ Chấm lại" : "✨ Tạo bài sửa"}
                             </button>
+                            <button
+                              type="button"
+                              class="top-pill-btn"
+                              style="color:#B91C1C;border-color:#FCA5A5;background:#FEF2F2;"
+                              data-delete-submission="${escapeHtml(sub.attemptId)}"
+                              ${tState.deletingAttemptId === sub.attemptId ? "disabled" : ""}
+                              title="Xoá bài nộp câu này để học viên làm lại"
+                            >
+                              ${tState.deletingAttemptId === sub.attemptId ? "Đang xoá..." : "🗑️ Xoá bài nộp"}
+                            </button>
                           </div>
                         </div>
 
@@ -1479,6 +1548,10 @@
 
         document.querySelectorAll("[data-release-now]").forEach(btn => {
           btn.onclick = () => releaseAiReviewNow(btn.getAttribute("data-release-now"));
+        });
+
+        document.querySelectorAll("[data-delete-submission]").forEach(btn => {
+          btn.onclick = () => deleteSubmissionForRetry(btn.getAttribute("data-delete-submission"));
         });
 
         document.querySelectorAll("[data-speak-word]").forEach(el => {
