@@ -955,8 +955,9 @@
       .getUserMedia({ audio: true })
       .then(stream => {
         let recorder = null;
+        let chosenMime = "";
         try {
-          const chosenMime = pickSupportedAudioMimeType();
+          chosenMime = pickSupportedAudioMimeType();
           recorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
         } catch (recErr) {
           stream.getTracks().forEach(t => t.stop());
@@ -987,7 +988,12 @@
         };
         mediaRecorder.onstop = () => {
           stream.getTracks().forEach(t => t.stop());
-          const rawMime = (recorder && recorder.mimeType) || "audio/webm";
+          const firstTypedChunk = audioChunks.find(c => c && c.type);
+          const rawMime =
+            (recorder && recorder.mimeType) ||
+            (firstTypedChunk && firstTypedChunk.type) ||
+            chosenMime ||
+            "audio/webm";
           const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
           const blob = new Blob(audioChunks, { type: cleanMime });
           if (!blob || blob.size < 200) {
@@ -1003,12 +1009,18 @@
           }, 350);
         };
 
-        try {
-          mediaRecorder.start(250);
-        } catch (startErr) {
-          mediaRecorder.start();
+        // Không truyền timeslice (250ms) vì Safari/iOS dễ tạo file MP4 phân mảnh bị lỗi không phát được trên Chrome
+        mediaRecorder.start();
+
+        // Trên điện thoại (iOS/Android), bật đồng thời SpeechRecognition dễ cướp quyền Micro của MediaRecorder
+        // khiến file ghi âm bị 0:00 / hỏng; AI chấm bài vẫn tự nghe và phiên âm trực tiếp từ file audio.
+        const ua = navigator.userAgent || "";
+        const isMobileAudioDevice =
+          /Android|iPhone|iPad|iPod/i.test(ua) ||
+          (navigator.platform === "MacIntel" && (navigator.maxTouchPoints || 0) > 1);
+        if (!isMobileAudioDevice) {
+          initSpeechRecognitionForSession();
         }
-        initSpeechRecognitionForSession();
         renderApp();
       })
       .catch(err => {

@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261125h" />
+  <link rel="stylesheet" href="./styles.css?v=20261126a" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261125h"></script>
-  <script src="./supabase-client.js?v=20261125h"></script>
-  <script src="./travel-data.js?v=20261125h"></script>
-  <script src="./part2-data.js?v=20261125h"></script>
-  <script src="./speaking-evaluator.js?v=20261125h"></script>
+  <script src="./supabase-config.js?v=20261126a"></script>
+  <script src="./supabase-client.js?v=20261126a"></script>
+  <script src="./travel-data.js?v=20261126a"></script>
+  <script src="./part2-data.js?v=20261126a"></script>
+  <script src="./speaking-evaluator.js?v=20261126a"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -1120,7 +1120,10 @@
                         <div style="margin-bottom:10px;">
                           ${
                             sub.audioUrl
-                              ? `<audio controls preload="metadata" src="${sub.audioUrl}" class="student-audio-player"></audio>`
+                              ? `<div class="teacher-audio-wrap">
+                                   <audio controls preload="metadata" src="${escapeHtml(sub.audioUrl)}" data-audio-url="${escapeHtml(sub.audioUrl)}" data-audio-path="${escapeHtml(sub.audioPath || "")}" class="student-audio-player"></audio>
+                                   <div class="audio-diag-note" style="display:none;font-size:12px;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;margin-top:4px;margin-bottom:6px;line-height:1.45;"></div>
+                                 </div>`
                               : sub.audioPath
                                 ? `<div style="font-size:12.5px;color:#B45309;margin-bottom:6px;"><em>(Có tệp âm thanh trên máy chủ nhưng chưa tải được link nghe — thử bấm Làm mới)</em></div>`
                                 : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm — máy học viên chưa tải được file ghi âm lên hệ thống)</em></div>`
@@ -1588,6 +1591,87 @@
             e.stopPropagation();
             speakEnglishText(el.getAttribute("data-speak-word"));
           };
+        });
+
+        function detectAudioMimeFromBytes(u8) {
+          if (!u8 || u8.length < 12) return "";
+          if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) return "audio/webm";
+          if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) return "audio/mp4";
+          if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return "audio/ogg";
+          if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return "audio/wav";
+          if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
+            return "audio/mpeg";
+          }
+          return "";
+        }
+
+        document.querySelectorAll("audio.student-audio-player").forEach(audioEl => {
+          const wrap = audioEl.closest(".teacher-audio-wrap");
+          const noteEl = wrap ? wrap.querySelector(".audio-diag-note") : null;
+          const rawUrl = audioEl.getAttribute("data-audio-url") || "";
+          const rawPath = audioEl.getAttribute("data-audio-path") || "";
+
+          const handleAudioFailure = async () => {
+            if (!rawUrl || audioEl.dataset.recovering === "1") return;
+            const alreadyTriedBlob = audioEl.dataset.blobTried === "1";
+
+            if (!alreadyTriedBlob) {
+              audioEl.dataset.recovering = "1";
+              audioEl.dataset.blobTried = "1";
+              try {
+                const res = await fetch(rawUrl);
+                if (!res.ok) {
+                  audioEl.dataset.recovering = "0";
+                  if (noteEl) {
+                    noteEl.style.display = "block";
+                    noteEl.innerHTML = `⚠️ Không tải được file ghi âm (HTTP ${res.status}). Thử bấm <strong>Làm mới</strong> ở góc trên.`;
+                  }
+                  return;
+                }
+                const serverType = (res.headers.get("content-type") || "").split(";")[0].trim();
+                const buf = await res.arrayBuffer();
+                const sizeKb = (buf.byteLength / 1024).toFixed(1);
+                const detectedMime = detectAudioMimeFromBytes(new Uint8Array(buf.slice(0, 16)));
+                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ định dạng"}`;
+
+                if (buf.byteLength >= 400 && detectedMime) {
+                  const blobUrl = URL.createObjectURL(new Blob([buf], { type: detectedMime }));
+                  audioEl.dataset.recovering = "0";
+                  audioEl.src = blobUrl;
+                  audioEl.load();
+                  return;
+                }
+
+                audioEl.dataset.recovering = "0";
+                if (noteEl) {
+                  noteEl.style.display = "block";
+                  noteEl.innerHTML = `⚠️ File ghi âm từ máy học viên bị lỗi/rỗng (${escapeHtml(audioEl.dataset.diagInfo)}${rawPath ? ` · ${escapeHtml(rawPath.split("/").pop())}` : ""}) nên trình duyệt không phát được. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file gốc</a>`;
+                }
+              } catch (err) {
+                audioEl.dataset.recovering = "0";
+                if (noteEl) {
+                  noteEl.style.display = "block";
+                  noteEl.innerHTML = `⚠️ Không mở được file ghi âm trên trình duyệt này. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Mở / Tải file gốc</a>`;
+                }
+              }
+              return;
+            }
+
+            // Đã thử phát qua Blob với đúng MIME nhưng trình duyệt vẫn không giải mã được
+            if (noteEl) {
+              const info = audioEl.dataset.diagInfo ? ` (${escapeHtml(audioEl.dataset.diagInfo)})` : "";
+              noteEl.style.display = "block";
+              noteEl.innerHTML = `⚠️ File ghi âm bị lỗi dữ liệu âm thanh${info} — thường do điện thoại của học viên bị xung đột Micro khi ghi âm. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file gốc</a>`;
+            }
+          };
+
+          audioEl.addEventListener("error", handleAudioFailure);
+          audioEl.addEventListener("loadedmetadata", () => {
+            if (noteEl) noteEl.style.display = "none";
+          });
+          if (audioEl.error) {
+            handleAudioFailure();
+          }
         });
       }
 

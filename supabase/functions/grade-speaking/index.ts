@@ -485,7 +485,7 @@ async function gradeSingleAttempt(
     })
     .eq("id", att.id);
 
-  const prompt = buildSpeakingGradingPrompt({
+  const promptWithAudio = buildSpeakingGradingPrompt({
     topicId: att.topic_id || "",
     questionId: att.question_id || "",
     topicTitle,
@@ -496,53 +496,126 @@ async function gradeSingleAttempt(
     hasAudio: Boolean(audioBase64)
   });
 
-  const userParts: Array<Record<string, unknown>> = [];
-  if (audioBase64) {
-    userParts.push({
-      inlineData: {
-        mimeType: audioMimeType,
-        data: audioBase64
-      }
-    });
-  }
-  userParts.push({ text: prompt });
-
-  const fallbackModels = Array.from(
-    new Set([geminiModel, "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"])
-  );
-
-  let geminiRes: Response | null = null;
-  let lastStatus = 500;
-  let lastErrText = "";
-
-  for (const modelName of fallbackModels) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: userParts }],
-          generationConfig: {
-            temperature: 0.25,
-            responseMimeType: "application/json"
-          }
-        })
+  const buildUserParts = (includeAudio: boolean): Array<Record<string, unknown>> => {
+    const parts: Array<Record<string, unknown>> = [];
+    if (includeAudio && audioBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: audioMimeType,
+          data: audioBase64
+        }
       });
-      if (res.ok) {
-        geminiRes = res;
+      parts.push({ text: promptWithAudio });
+    } else {
+      const textOnlyPrompt = audioBase64
+        ? buildSpeakingGradingPrompt({
+            topicId: att.topic_id || "",
+            questionId: att.question_id || "",
+            topicTitle,
+            promptText,
+            browserTranscript,
+            durationSec: Number(att.duration_sec) || 0,
+            targetLevel,
+            hasAudio: false
+          })
+        : promptWithAudio;
+      parts.push({ text: textOnlyPrompt });
+    }
+    return parts;
+  };
+
+  const RETIRED_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp"]);
+  const fallbackModels = Array.from(
+    new Set([
+      geminiModel,
+      "gemini-flash-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-2.5-flash"
+    ])
+  ).filter(m => Boolean(m) && !RETIRED_MODELS.has(m));
+
+  const extractGeminiErrorMessage = (rawText: string): string => {
+    const trimmed = String(rawText || "").trim();
+    if (!trimmed) return "";
+    try {
+      const parsed = JSON.parse(trimmed);
+      const msg = parsed?.error?.message || parsed?.message;
+      if (msg) return String(msg).replace(/\s+/g, " ").trim();
+    } catch (_e) {
+      // keep raw text fallback
+    }
+    return trimmed.replace(/\s+/g, " ").trim();
+  };
+
+  const callGeminiWithParts = async (parts: Array<Record<string, unknown>>) => {
+    let okRes: Response | null = null;
+    const errors: Array<{ model: string; status: number; detail: string }> = [];
+
+    for (const modelName of fallbackModels) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+      let modelStatus = 500;
+      let modelErrText = "";
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts }],
+            generationConfig: {
+              temperature: 0.25,
+              responseMimeType: "application/json"
+            }
+          })
+        });
+        if (res.ok) {
+          okRes = res;
+          break;
+        }
+        modelStatus = res.status;
+        modelErrText = await res.text().catch(() => "");
+        if ((res.status === 503 || res.status === 429 || res.status === 500) && attempt === 0) {
+          await new Promise(r => setTimeout(r, 1200));
+          continue;
+        }
         break;
       }
-      lastStatus = res.status;
-      lastErrText = await res.text().catch(() => "");
-      if ((res.status === 503 || res.status === 429 || res.status === 500) && attempt === 0) {
-        await new Promise(r => setTimeout(r, 1200));
-        continue;
+      if (okRes) break;
+      errors.push({
+        model: modelName,
+        status: modelStatus,
+        detail: extractGeminiErrorMessage(modelErrText)
+      });
+      // Lỗi xác thực / payload sai (400/401/403) sẽ giống nhau trên mọi model, dừng sớm khỏi thử thêm
+      if (modelStatus === 400 || modelStatus === 401 || modelStatus === 403) {
+        break;
       }
-      break;
     }
-    if (geminiRes) break;
+    return { okRes, errors };
+  };
+
+  let { okRes: geminiRes, errors: modelErrors } = await callGeminiWithParts(buildUserParts(Boolean(audioBase64)));
+
+  // Nếu file ghi âm bị lỗi định dạng / rỗng khiến Gemini báo 400 nhưng vẫn có transcript trình duyệt,
+  // tự động chấm tiếp bằng transcript để không bị kẹt 20/20 lần thử.
+  const hitAudioBadRequest =
+    !geminiRes && Boolean(audioBase64) && wordCount >= 3 && modelErrors.some(e => e.status === 400);
+  if (hitAudioBadRequest) {
+    const retryTextOnly = await callGeminiWithParts(buildUserParts(false));
+    if (retryTextOnly.okRes) {
+      geminiRes = retryTextOnly.okRes;
+    } else if (retryTextOnly.errors.length > 0) {
+      modelErrors = retryTextOnly.errors;
+    }
   }
+
+  const primaryError =
+    modelErrors.find(e => e.status !== 404) || modelErrors[0] || { model: geminiModel, status: 500, detail: "" };
+  const lastStatus = primaryError.status;
+  const triedSummary = modelErrors.map(e => `${e.model}:${e.status}`).join(", ");
+  const conciseErrDetail = primaryError.detail
+    ? `${primaryError.detail.slice(0, 160)} [${triedSummary}]`
+    : triedSummary;
 
   if (!geminiRes) {
     const nextRetry = prevRetry + 1;
@@ -558,7 +631,7 @@ async function gradeSingleAttempt(
         target_level: targetLevel,
         status: "error",
         release_at: releaseAtIso,
-        error_message: `Gemini API lỗi (${lastStatus}): ${lastErrText.slice(0, 220)}`,
+        error_message: `Gemini API lỗi (${lastStatus}): ${conciseErrDetail.slice(0, 220)}`,
         grade_count: prevCount,
         retry_count: nextRetry,
         updated_at: nowIso
@@ -778,7 +851,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY") || "";
-    const geminiModel = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+    const geminiModel = Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest";
     const cronSecretEnv = Deno.env.get("CRON_SECRET") || "";
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
@@ -875,7 +948,7 @@ Deno.serve(async (req: Request) => {
           const rev = reviewById[key];
           if (rev && rev.attempt_id === att.id && (rev.status === "ready" || rev.status === "no_audio")) return false;
           if ((att as { ai_status?: string }).ai_status === "no_audio") return false;
-          if (rev && rev.attempt_id === att.id && (rev.retry_count || 0) >= MAX_AUTO_RETRIES) return false;
+          if (!isTeacher && rev && rev.attempt_id === att.id && (rev.retry_count || 0) >= MAX_AUTO_RETRIES) return false;
           const wc = String(att.transcript || "").trim().split(/\s+/).filter(Boolean).length;
           if (!att.audio_path && wc < 2) {
             emptyNoAudioAttempts.push(att);
