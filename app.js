@@ -46,6 +46,7 @@
     currentTopicId: TOPICS[0] ? TOPICS[0].id : "topic-travelling",
     currentQuestionIndex: 0,
     selectedLevel: "b1", // "b1" | "b2"
+    isPreparingMic: false,
     isRecording: false,
     recordingSeconds: 0,
     liveTranscript: "",
@@ -57,6 +58,7 @@
 
   let mediaRecorder = null;
   let activeMediaStream = null;
+  let activeMicMonitorStop = null;
   let isStartingRecording = false;
   let recordingSessionSeq = 0;
   let recordingTimer = null;
@@ -475,8 +477,11 @@
     const runTask = (async () => {
       let audioPath = takeObj.audioPath || "";
       if (!audioPath && audioBlob && audioBlob.size > 0) {
+        takeObj.uploadStatus = "uploading";
+        if (!takeObj._submittingOrSubmitted) renderApp();
         const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, audioBlob);
         if (upRes.error) {
+          takeObj.uploadStatus = "failed";
           if (!takeObj._submittingOrSubmitted) {
             state.submitErrorMsg = "Chưa tải được file âm thanh: " + (upRes.error.message || "Lỗi quyền Storage");
             renderApp();
@@ -486,7 +491,10 @@
         if (upRes.path) {
           audioPath = upRes.path;
           takeObj.audioPath = audioPath;
+          takeObj.uploadStatus = "uploaded";
         }
+      } else if (audioPath) {
+        takeObj.uploadStatus = "uploaded";
       }
 
       // Nếu học viên đã bấm "Nộp bài chính thức" trong lúc đang tải file nháp,
@@ -925,6 +933,171 @@
     return "Không thể bật ghi âm Micro trên trình duyệt này (thường gặp khi mở link trực tiếp trong Zalo/Facebook). Hãy mở bằng Chrome hoặc Safari và cấp quyền Micro nhé.";
   }
 
+  function detectValidAudioBlobMime(u8) {
+    if (!u8 || u8.length < 12) return "";
+    if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) return "audio/webm";
+    const box4 = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
+    if (
+      box4 === "ftyp" ||
+      box4 === "styp" ||
+      box4 === "moof" ||
+      box4 === "moov" ||
+      box4 === "mdat" ||
+      box4 === "wide" ||
+      box4 === "free"
+    ) {
+      return "audio/mp4";
+    }
+    if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return "audio/ogg";
+    if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return "audio/wav";
+    if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return "audio/flac";
+    if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
+      return "audio/mpeg";
+    }
+    return "";
+  }
+
+  async function validateRecordedAudioBlob(blob) {
+    if (!blob || blob.size < 400) {
+      return {
+        ok: false,
+        reason:
+          "Bản ghi âm quá nhỏ hoặc không thu được dữ liệu từ Micro. Hãy kiểm tra quyền Micro (hoặc mở bằng Chrome/Safari) và ghi âm lại nhé!"
+      };
+    }
+
+    let finalBlob = blob;
+    try {
+      const ab = await blob.arrayBuffer();
+      const head = new Uint8Array(ab.slice(0, 16));
+      const detectedMime = detectValidAudioBlobMime(head);
+      if (!detectedMime) {
+        return {
+          ok: false,
+          reason:
+            "Tệp ghi âm vừa tạo bị lỗi cấu trúc trên trình duyệt này. Bạn hãy bấm ghi âm lại (khuyên dùng Chrome hoặc Safari bản mới nhất) nhé!"
+        };
+      }
+      if (!blob.type || blob.type.split(";")[0].trim() !== detectedMime) {
+        finalBlob = new Blob([ab], { type: detectedMime });
+      }
+    } catch (_e) {}
+
+    // Kiểm tra khả năng phát thực tế ngay trên trình duyệt bằng thẻ <audio> tạm
+    const testUrl = URL.createObjectURL(finalBlob);
+    const canPlay = await new Promise(resolve => {
+      const probe = document.createElement("audio");
+      let settled = false;
+      const done = ok => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        probe.onloadedmetadata = null;
+        probe.oncanplay = null;
+        probe.onerror = null;
+        try {
+          probe.removeAttribute("src");
+          probe.load();
+        } catch (_e) {}
+        resolve(ok);
+      };
+      const timer = setTimeout(() => done(true), 1600);
+      probe.preload = "metadata";
+      probe.onloadedmetadata = () => done(true);
+      probe.oncanplay = () => done(true);
+      probe.onerror = () => done(false);
+      probe.src = testUrl;
+    });
+
+    if (!canPlay) {
+      try {
+        URL.revokeObjectURL(testUrl);
+      } catch (_e) {}
+      return {
+        ok: false,
+        reason:
+          "Tệp ghi âm vừa tạo không thể phát lại trên trình duyệt. Hãy kiểm tra lại Micro/tai nghe và ghi âm lại nhé!"
+      };
+    }
+
+    return { ok: true, blob: finalBlob, previewUrl: testUrl };
+  }
+
+  function startMicLevelMonitor(stream) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const tracker = { peak: 0, sampled: false, stop: () => {} };
+    if (!AudioCtx || !stream) return tracker;
+    try {
+      const ctx = new AudioCtx();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      const iv = setInterval(() => {
+        try {
+          analyser.getByteTimeDomainData(data);
+          tracker.sampled = true;
+          for (let i = 0; i < data.length; i++) {
+            const amp = Math.abs(data[i] - 128) / 128;
+            if (amp > tracker.peak) tracker.peak = amp;
+          }
+        } catch (_e) {}
+      }, 150);
+      let closed = false;
+      tracker.stop = () => {
+        if (closed) return;
+        closed = true;
+        clearInterval(iv);
+        try {
+          source.disconnect();
+        } catch (_e) {}
+        try {
+          ctx.close().catch(() => {});
+        } catch (_e) {}
+      };
+    } catch (_e) {}
+    return tracker;
+  }
+
+  function forceCleanupActiveRecordingResources() {
+    recordingSessionSeq++;
+    isStartingRecording = false;
+    state.isPreparingMic = false;
+    state.isRecording = false;
+    if (recordingTimer) {
+      clearInterval(recordingTimer);
+      recordingTimer = null;
+    }
+    if (activeMicMonitorStop) {
+      try {
+        activeMicMonitorStop();
+      } catch (_e) {}
+      activeMicMonitorStop = null;
+    }
+    if (speechRecognizer) {
+      const rec = speechRecognizer;
+      speechRecognizer = null;
+      try {
+        rec.stop();
+      } catch (_e) {}
+    }
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      try {
+        mediaRecorder.ondataavailable = null;
+        mediaRecorder.onstop = null;
+        mediaRecorder.stop();
+      } catch (_e) {}
+    }
+    mediaRecorder = null;
+    if (activeMediaStream) {
+      try {
+        activeMediaStream.getTracks().forEach(t => t.stop());
+      } catch (_e) {}
+      activeMediaStream = null;
+    }
+  }
+
   function startRecording(qId) {
     if (state.isRecording) {
       stopRecording(qId);
@@ -946,22 +1119,10 @@
     }
 
     // Chốt dừng sạch mọi phiên ghi âm còn sót trước khi mở Micro mới
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      try {
-        mediaRecorder.ondataavailable = null;
-        mediaRecorder.onstop = null;
-        mediaRecorder.stop();
-      } catch (e) {}
-    }
-    mediaRecorder = null;
-    if (activeMediaStream) {
-      try {
-        activeMediaStream.getTracks().forEach(t => t.stop());
-      } catch (e) {}
-      activeMediaStream = null;
-    }
+    forceCleanupActiveRecordingResources();
 
     isStartingRecording = true;
+    state.isPreparingMic = true;
     const mySessionSeq = ++recordingSessionSeq;
 
     state.submitErrorMsg = "";
@@ -970,6 +1131,7 @@
     sessionFinalText = "";
     sessionInterimText = "";
     latestCreatedTake = null;
+    renderApp();
 
     const recTopic = TOPICS.find(t => (t.questions || []).some(q => q.id === qId)) || getCurrentTopic();
     const maxRecSec = getMaxRecordingSeconds(recTopic);
@@ -978,11 +1140,13 @@
       .getUserMedia({ audio: true })
       .then(stream => {
         isStartingRecording = false;
+        state.isPreparingMic = false;
         // Nếu người dùng đã bấm dừng/chuyển câu trong lúc chờ cấp quyền Micro thì đóng ngay luồng này
         if (mySessionSeq !== recordingSessionSeq) {
           try {
             stream.getTracks().forEach(t => t.stop());
           } catch (e) {}
+          renderApp();
           return;
         }
 
@@ -1000,6 +1164,8 @@
           return;
         }
 
+        const micMonitor = startMicLevelMonitor(stream);
+        activeMicMonitorStop = micMonitor.stop;
         activeMediaStream = stream;
         mediaRecorder = recorder;
         state.isRecording = true;
@@ -1020,10 +1186,14 @@
         recorder.ondataavailable = e => {
           if (e.data && e.data.size > 0) localChunks.push(e.data);
         };
-        recorder.onstop = () => {
+        recorder.onstop = async () => {
+          const capturedSec = state.recordingSeconds;
+          micMonitor.stop();
+          if (activeMicMonitorStop === micMonitor.stop) activeMicMonitorStop = null;
           stream.getTracks().forEach(t => t.stop());
           if (activeMediaStream === stream) activeMediaStream = null;
           if (mediaRecorder === recorder) mediaRecorder = null;
+
           const firstTypedChunk = localChunks.find(c => c && c.type);
           const rawMime =
             (recorder && recorder.mimeType) ||
@@ -1031,18 +1201,31 @@
             chosenMime ||
             "audio/webm";
           const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
-          const blob = new Blob(localChunks, { type: cleanMime });
-          if (!blob || blob.size < 200) {
+          const rawBlob = new Blob(localChunks, { type: cleanMime });
+
+          // Chờ Web Speech API chốt câu cuối (nếu đang chạy trên máy tính)
+          await new Promise(r => setTimeout(r, 350));
+
+          const recognizedSoFar = (composeCurrentTranscript() || state.liveTranscript || "").trim();
+          const hasSpokenWords = recognizedSoFar.split(/\s+/).filter(Boolean).length >= 2;
+
+          // Lớp bảo vệ 1: Phát hiện Micro bị tắt tiếng (im lặng 100%)
+          if (capturedSec >= 2 && micMonitor.sampled && micMonitor.peak < 0.008 && !hasSpokenWords) {
             state.submitErrorMsg =
-              "Bản ghi âm không thu được âm thanh từ Micro. Hãy kiểm tra lại quyền Micro (hoặc mở bằng Chrome/Safari) và ghi âm lại nhé!";
+              "Micro đang bị im lặng (không thu được tiếng nói). Hãy kiểm tra xem Micro có đang bị tắt tiếng / tai nghe Bluetooth có bị mất mic không rồi ghi âm lại nhé!";
             renderApp();
             return;
           }
-          const previewUrl = URL.createObjectURL(blob);
-          // Allow Web Speech API 350ms to flush the last spoken phrase before finalizing take
-          setTimeout(() => {
-            finalizeNewTake(qId, previewUrl, blob);
-          }, 350);
+
+          // Lớp bảo vệ 2: Tự kiểm tra cấu trúc file & khả năng phát lại trước khi lưu/tải lên Supabase
+          const check = await validateRecordedAudioBlob(rawBlob);
+          if (!check.ok) {
+            state.submitErrorMsg = check.reason;
+            renderApp();
+            return;
+          }
+
+          finalizeNewTake(qId, check.previewUrl, check.blob);
         };
 
         // Không truyền timeslice (250ms) vì Safari/iOS dễ tạo file MP4 phân mảnh bị lỗi không phát được trên Chrome
@@ -1061,6 +1244,7 @@
       })
       .catch(err => {
         isStartingRecording = false;
+        state.isPreparingMic = false;
         if (recordingTimer) {
           clearInterval(recordingTimer);
           recordingTimer = null;
@@ -1075,6 +1259,7 @@
   function stopRecording(qId) {
     recordingSessionSeq++;
     isStartingRecording = false;
+    state.isPreparingMic = false;
     if (recordingTimer) {
       clearInterval(recordingTimer);
       recordingTimer = null;
@@ -1094,6 +1279,13 @@
         mediaRecorder.stop();
         return;
       } catch (e) {}
+    }
+
+    if (activeMicMonitorStop) {
+      try {
+        activeMicMonitorStop();
+      } catch (e) {}
+      activeMicMonitorStop = null;
     }
 
     if (activeMediaStream) {
@@ -2318,9 +2510,14 @@
                   type="button"
                   class="record-btn ${state.isRecording ? "recording" : ""}"
                   id="btn-record-toggle"
+                  ${state.isPreparingMic ? "disabled" : ""}
                 >
                   ${
-                    state.isRecording
+                    state.isPreparingMic
+                      ? `
+                    <span>⏳ Đang bật Micro...</span>
+                  `
+                      : state.isRecording
                       ? `
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
                     <span>Dừng ghi âm</span>
@@ -2405,6 +2602,13 @@
                             </label>
 
                             <div style="display:flex;align-items:center;gap:6px;">
+                              ${
+                                att.uploadStatus === "uploading"
+                                  ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;padding:2px 7px;border-radius:4px;">⏳ Đang lưu âm thanh...</span>`
+                                  : att.uploadStatus === "failed"
+                                    ? `<span style="font-size:11px;font-weight:600;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;padding:2px 7px;border-radius:4px;">⚠️ Lưu âm thanh lỗi</span>`
+                                    : ""
+                              }
                               ${isSubmitted ? `<span class="submitted-badge">✓ Bản đã nộp</span>` : ""}
                               <button
                                 type="button"
@@ -2913,6 +3117,7 @@
 
   function openTopicAndQuestion(topicId, qIdx, scrollToSubmitted) {
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
+    else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
     if (state.view === "home" || state.view === "part-topics" || state.view === "my-submissions") {
       state.prevDashboardView = state.view;
     }
@@ -2964,6 +3169,7 @@
     const topic = getCurrentTopic();
     if (newIndex < 0 || newIndex >= topic.questions.length) return;
     if (state.isRecording) stopRecording(getCurrentQuestion().id);
+    else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
     state.currentQuestionIndex = newIndex;
     state.submitErrorMsg = "";
     renderApp();
@@ -3602,6 +3808,13 @@
   }
 
   // Global document listeners registered once (outside renderApp)
+  window.addEventListener("pagehide", () => {
+    forceCleanupActiveRecordingResources();
+  });
+  window.addEventListener("beforeunload", () => {
+    forceCleanupActiveRecordingResources();
+  });
+
   document.addEventListener("click", e => {
     let changed = false;
     if (state.notifOpen && !e.target.closest("#topbar-notif-wrap")) {
