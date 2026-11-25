@@ -524,33 +524,62 @@
         renderTeacherApp();
 
         try {
-          const { data: attRows } = await client
-            .from("speaking_attempts")
-            .select("id, audio_path")
-            .eq("user_id", sub.studentId)
-            .eq("question_id", sub.questionId);
+          const targetQuestionId = sub.qId || sub.questionId || "";
+          const { data: attRows } = targetQuestionId
+            ? await client
+                .from("speaking_attempts")
+                .select("id, audio_path")
+                .eq("user_id", sub.studentId)
+                .eq("question_id", targetQuestionId)
+            : await client
+                .from("speaking_attempts")
+                .select("id, audio_path")
+                .eq("id", attemptId);
 
           const audioPaths = Array.isArray(attRows) ? attRows.map(r => r.audio_path).filter(Boolean) : [];
           if (audioPaths.length > 0) {
             await CLOUD.deleteRecordings(audioPaths);
           }
 
-          await client
-            .from("speaking_ai_reviews")
-            .delete()
-            .eq("user_id", sub.studentId)
-            .eq("question_id", sub.questionId);
+          if (targetQuestionId) {
+            await client
+              .from("speaking_ai_reviews")
+              .delete()
+              .eq("user_id", sub.studentId)
+              .eq("question_id", targetQuestionId);
+          } else {
+            await client
+              .from("speaking_ai_reviews")
+              .delete()
+              .eq("attempt_id", attemptId);
+          }
 
-          const { error: delErr } = await client
-            .from("speaking_attempts")
-            .delete()
-            .eq("user_id", sub.studentId)
-            .eq("question_id", sub.questionId);
+          const { data: deletedRows, error: delErr } = targetQuestionId
+            ? await client
+                .from("speaking_attempts")
+                .delete()
+                .eq("user_id", sub.studentId)
+                .eq("question_id", targetQuestionId)
+                .select("id")
+            : await client
+                .from("speaking_attempts")
+                .delete()
+                .eq("id", attemptId)
+                .select("id");
 
           if (delErr) {
             tState.deletingAttemptId = "";
             renderTeacherApp();
             alert("Không xoá được bài nộp: " + delErr.message);
+            return;
+          }
+
+          if (!Array.isArray(deletedRows) || deletedRows.length === 0) {
+            tState.deletingAttemptId = "";
+            renderTeacherApp();
+            alert(
+              "Supabase chưa xoá được dòng bài nộp (0 dòng bị xoá). Vui lòng kiểm tra policy DELETE trên bảng speaking_attempts trong supabase-setup.sql."
+            );
             return;
           }
 
