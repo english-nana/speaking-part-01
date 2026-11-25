@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261126b" />
+  <link rel="stylesheet" href="./styles.css?v=20261126c" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261126b"></script>
-  <script src="./supabase-client.js?v=20261126b"></script>
-  <script src="./travel-data.js?v=20261126b"></script>
-  <script src="./part2-data.js?v=20261126b"></script>
-  <script src="./speaking-evaluator.js?v=20261126b"></script>
+  <script src="./supabase-config.js?v=20261126c"></script>
+  <script src="./supabase-client.js?v=20261126c"></script>
+  <script src="./travel-data.js?v=20261126c"></script>
+  <script src="./part2-data.js?v=20261126c"></script>
+  <script src="./speaking-evaluator.js?v=20261126c"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -1593,9 +1593,11 @@
           };
         });
 
-        function detectAudioMimeFromBytes(u8) {
-          if (!u8 || u8.length < 12) return "";
-          if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) return "audio/webm";
+        function detectAudioContainerAndOffset(u8) {
+          if (!u8 || u8.length < 12) return { mime: "", offset: 0 };
+          if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
+            return { mime: "audio/webm", offset: 0 };
+          }
           const box4 = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
           if (
             box4 === "ftyp" ||
@@ -1606,22 +1608,36 @@
             box4 === "wide" ||
             box4 === "free"
           ) {
-            return "audio/mp4";
+            return { mime: "audio/mp4", offset: 0 };
           }
-          if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return "audio/ogg";
-          if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return "audio/wav";
-          if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return "audio/flac";
+          if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return { mime: "audio/ogg", offset: 0 };
+          if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return { mime: "audio/wav", offset: 0 };
+          if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return { mime: "audio/flac", offset: 0 };
           if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
-            return "audio/mpeg";
+            return { mime: "audio/mpeg", offset: 0 };
           }
-          // Quét trong 64 byte đầu xem có chữ ký ftyp (MP4) không
-          const scanLen = Math.min(u8.length - 4, 64);
-          for (let i = 0; i <= scanLen; i++) {
-            if (u8[i] === 0x66 && u8[i + 1] === 0x74 && u8[i + 2] === 0x79 && u8[i + 3] === 0x70) {
-              return "audio/mp4";
+
+          // Phục hồi các bản ghi cũ bị dính chunk rác của bản ghi trước ở đầu file:
+          // quét tìm chữ ký EBML (1A 45 DF A3 - WebM) hoặc ftyp (MP4) để cắt bỏ phần rác đầu file.
+          const scanMax = Math.min(u8.length - 8, 262144);
+          for (let i = 1; i <= scanMax; i++) {
+            if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
+              return { mime: "audio/webm", offset: i };
             }
           }
-          return "";
+          for (let i = 4; i <= scanMax; i++) {
+            if (
+              u8[i] === 0x66 &&
+              u8[i + 1] === 0x74 &&
+              u8[i + 2] === 0x79 &&
+              u8[i + 3] === 0x70 &&
+              u8[i - 4] === 0x00 &&
+              u8[i - 3] === 0x00
+            ) {
+              return { mime: "audio/mp4", offset: i - 4 };
+            }
+          }
+          return { mime: "", offset: 0 };
         }
 
         function audioBufferToWavBlob(audioBuffer) {
@@ -1696,15 +1712,17 @@
                 const serverType = (res.headers.get("content-type") || "").split(";")[0].trim();
                 const buf = await res.arrayBuffer();
                 const sizeKb = (buf.byteLength / 1024).toFixed(1);
-                const headBytes = new Uint8Array(buf.slice(0, 64));
-                const headHex = Array.from(headBytes.slice(0, 12))
+                const fullBytes = new Uint8Array(buf);
+                const headHex = Array.from(fullBytes.slice(0, 12))
                   .map(b => b.toString(16).padStart(2, "0"))
                   .join(" ");
-                const detectedMime = detectAudioMimeFromBytes(headBytes);
-                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ"} · hex: ${headHex}`;
+                const detected = detectAudioContainerAndOffset(fullBytes);
+                const detectedMime = detected.mime;
+                const cleanBuf = detected.offset > 0 ? buf.slice(detected.offset) : buf;
+                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ"}${detected.offset > 0 ? ` · cắt ${detected.offset}B rác đầu file` : ""} · hex: ${headHex}`;
 
-                if (buf.byteLength >= 400 && detectedMime) {
-                  const blobUrl = URL.createObjectURL(new Blob([buf], { type: detectedMime }));
+                if (cleanBuf.byteLength >= 400 && detectedMime) {
+                  const blobUrl = URL.createObjectURL(new Blob([cleanBuf], { type: detectedMime }));
                   audioEl.dataset.recovering = "0";
                   audioEl.src = blobUrl;
                   audioEl.load();
@@ -1713,10 +1731,10 @@
 
                 // Thử giải mã trực tiếp bằng Web Audio API rồi chuyển sang WAV
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx && buf.byteLength >= 400) {
+                if (AudioCtx && cleanBuf.byteLength >= 400) {
                   try {
                     const ctx = new AudioCtx();
-                    const decoded = await ctx.decodeAudioData(buf.slice(0));
+                    const decoded = await ctx.decodeAudioData(cleanBuf.slice(0));
                     await ctx.close().catch(() => {});
                     if (decoded && decoded.duration > 0) {
                       const wavUrl = URL.createObjectURL(audioBufferToWavBlob(decoded));

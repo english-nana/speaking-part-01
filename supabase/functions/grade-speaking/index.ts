@@ -49,6 +49,36 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+function trimCorruptedAudioPrefix(buffer: ArrayBuffer, fallbackMime: string): { buffer: ArrayBuffer; mimeType: string } {
+  const u8 = new Uint8Array(buffer);
+  if (u8.length < 16) return { buffer, mimeType: fallbackMime };
+  if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
+    return { buffer, mimeType: "audio/webm" };
+  }
+  if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
+    return { buffer, mimeType: "audio/mp4" };
+  }
+  const scanMax = Math.min(u8.length - 8, 262144);
+  for (let i = 1; i <= scanMax; i++) {
+    if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
+      return { buffer: buffer.slice(i), mimeType: "audio/webm" };
+    }
+  }
+  for (let i = 4; i <= scanMax; i++) {
+    if (
+      u8[i] === 0x66 &&
+      u8[i + 1] === 0x74 &&
+      u8[i + 2] === 0x79 &&
+      u8[i + 3] === 0x70 &&
+      u8[i - 4] === 0x00 &&
+      u8[i - 3] === 0x00
+    ) {
+      return { buffer: buffer.slice(i - 4), mimeType: "audio/mp4" };
+    }
+  }
+  return { buffer, mimeType: fallbackMime };
+}
+
 function resolveCleanAudioMimeType(audioPath: string, blobType?: string): string {
   const lowerType = String(blobType || "").toLowerCase().split(";")[0].trim();
   const lowerPath = String(audioPath || "").toLowerCase();
@@ -397,9 +427,11 @@ async function gradeSingleAttempt(
         .from(AUDIO_BUCKET)
         .download(att.audio_path);
       if (!dlErr && audioBlob && audioBlob.size > 0) {
-        const ab = await audioBlob.arrayBuffer();
-        audioBase64 = arrayBufferToBase64(ab);
-        audioMimeType = resolveCleanAudioMimeType(att.audio_path, audioBlob.type);
+        const rawAb = await audioBlob.arrayBuffer();
+        const rawMime = resolveCleanAudioMimeType(att.audio_path, audioBlob.type);
+        const cleaned = trimCorruptedAudioPrefix(rawAb, rawMime);
+        audioBase64 = arrayBufferToBase64(cleaned.buffer);
+        audioMimeType = cleaned.mimeType;
       }
     } catch (_e) {
       // Fallback to transcript if storage download fails

@@ -56,7 +56,6 @@
   };
 
   let mediaRecorder = null;
-  let audioChunks = [];
   let recordingTimer = null;
   let speechRecognizer = null;
   let persistedTranscript = "";
@@ -946,7 +945,6 @@
     sessionFinalText = "";
     sessionInterimText = "";
     latestCreatedTake = null;
-    audioChunks = [];
 
     const recTopic = TOPICS.find(t => (t.questions || []).some(q => q.id === qId)) || getCurrentTopic();
     const maxRecSec = getMaxRecordingSeconds(recTopic);
@@ -954,6 +952,7 @@
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then(stream => {
+        const localChunks = [];
         let recorder = null;
         let chosenMime = "";
         try {
@@ -983,19 +982,19 @@
           }
         }, 1000);
 
-        mediaRecorder.ondataavailable = e => {
-          if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        recorder.ondataavailable = e => {
+          if (e.data && e.data.size > 0) localChunks.push(e.data);
         };
-        mediaRecorder.onstop = () => {
+        recorder.onstop = () => {
           stream.getTracks().forEach(t => t.stop());
-          const firstTypedChunk = audioChunks.find(c => c && c.type);
+          const firstTypedChunk = localChunks.find(c => c && c.type);
           const rawMime =
             (recorder && recorder.mimeType) ||
             (firstTypedChunk && firstTypedChunk.type) ||
             chosenMime ||
             "audio/webm";
           const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
-          const blob = new Blob(audioChunks, { type: cleanMime });
+          const blob = new Blob(localChunks, { type: cleanMime });
           if (!blob || blob.size < 200) {
             state.submitErrorMsg =
               "Bản ghi âm không thu được âm thanh từ Micro. Hãy kiểm tra lại quyền Micro (hoặc mở bằng Chrome/Safari) và ghi âm lại nhé!";
