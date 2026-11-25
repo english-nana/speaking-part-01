@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261126a" />
+  <link rel="stylesheet" href="./styles.css?v=20261126b" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261126a"></script>
-  <script src="./supabase-client.js?v=20261126a"></script>
-  <script src="./travel-data.js?v=20261126a"></script>
-  <script src="./part2-data.js?v=20261126a"></script>
-  <script src="./speaking-evaluator.js?v=20261126a"></script>
+  <script src="./supabase-config.js?v=20261126b"></script>
+  <script src="./supabase-client.js?v=20261126b"></script>
+  <script src="./travel-data.js?v=20261126b"></script>
+  <script src="./part2-data.js?v=20261126b"></script>
+  <script src="./speaking-evaluator.js?v=20261126b"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -1596,13 +1596,76 @@
         function detectAudioMimeFromBytes(u8) {
           if (!u8 || u8.length < 12) return "";
           if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) return "audio/webm";
-          if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) return "audio/mp4";
+          const box4 = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
+          if (
+            box4 === "ftyp" ||
+            box4 === "styp" ||
+            box4 === "moof" ||
+            box4 === "moov" ||
+            box4 === "mdat" ||
+            box4 === "wide" ||
+            box4 === "free"
+          ) {
+            return "audio/mp4";
+          }
           if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return "audio/ogg";
           if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return "audio/wav";
+          if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return "audio/flac";
           if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
             return "audio/mpeg";
           }
+          // Quét trong 64 byte đầu xem có chữ ký ftyp (MP4) không
+          const scanLen = Math.min(u8.length - 4, 64);
+          for (let i = 0; i <= scanLen; i++) {
+            if (u8[i] === 0x66 && u8[i + 1] === 0x74 && u8[i + 2] === 0x79 && u8[i + 3] === 0x70) {
+              return "audio/mp4";
+            }
+          }
           return "";
+        }
+
+        function audioBufferToWavBlob(audioBuffer) {
+          const numCh = Math.min(audioBuffer.numberOfChannels || 1, 2);
+          const sampleRate = audioBuffer.sampleRate || 44100;
+          const length = audioBuffer.length;
+          const bytesPerSample = 2;
+          const blockAlign = numCh * bytesPerSample;
+          const dataSize = length * blockAlign;
+          const ab = new ArrayBuffer(44 + dataSize);
+          const view = new DataView(ab);
+          const writeStr = (off, s) => {
+            for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+          };
+          writeStr(0, "RIFF");
+          view.setUint32(4, 36 + dataSize, true);
+          writeStr(8, "WAVE");
+          writeStr(12, "fmt ");
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true);
+          view.setUint16(22, numCh, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * blockAlign, true);
+          view.setUint16(32, blockAlign, true);
+          view.setUint16(34, 16, true);
+          writeStr(36, "data");
+          view.setUint32(40, dataSize, true);
+          let offset = 44;
+          const channels = [];
+          for (let c = 0; c < numCh; c++) channels.push(audioBuffer.getChannelData(c));
+          for (let i = 0; i < length; i++) {
+            for (let c = 0; c < numCh; c++) {
+              const s = Math.max(-1, Math.min(1, channels[c][i]));
+              view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+              offset += 2;
+            }
+          }
+          return new Blob([ab], { type: "audio/wav" });
+        }
+
+        function buildForceDownloadUrl(signedUrl, fileName) {
+          if (!signedUrl) return "";
+          const sep = signedUrl.includes("?") ? "&" : "?";
+          return `${signedUrl}${sep}download=${encodeURIComponent(fileName || "recording.webm")}`;
         }
 
         document.querySelectorAll("audio.student-audio-player").forEach(audioEl => {
@@ -1610,6 +1673,8 @@
           const noteEl = wrap ? wrap.querySelector(".audio-diag-note") : null;
           const rawUrl = audioEl.getAttribute("data-audio-url") || "";
           const rawPath = audioEl.getAttribute("data-audio-path") || "";
+          const baseName = rawPath ? rawPath.split("/").pop() : "recording.webm";
+          const downloadHref = buildForceDownloadUrl(rawUrl, baseName);
 
           const handleAudioFailure = async () => {
             if (!rawUrl || audioEl.dataset.recovering === "1") return;
@@ -1631,8 +1696,12 @@
                 const serverType = (res.headers.get("content-type") || "").split(";")[0].trim();
                 const buf = await res.arrayBuffer();
                 const sizeKb = (buf.byteLength / 1024).toFixed(1);
-                const detectedMime = detectAudioMimeFromBytes(new Uint8Array(buf.slice(0, 16)));
-                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ định dạng"}`;
+                const headBytes = new Uint8Array(buf.slice(0, 64));
+                const headHex = Array.from(headBytes.slice(0, 12))
+                  .map(b => b.toString(16).padStart(2, "0"))
+                  .join(" ");
+                const detectedMime = detectAudioMimeFromBytes(headBytes);
+                audioEl.dataset.diagInfo = `${sizeKb} KB · ${detectedMime || serverType || "không rõ"} · hex: ${headHex}`;
 
                 if (buf.byteLength >= 400 && detectedMime) {
                   const blobUrl = URL.createObjectURL(new Blob([buf], { type: detectedMime }));
@@ -1642,26 +1711,42 @@
                   return;
                 }
 
+                // Thử giải mã trực tiếp bằng Web Audio API rồi chuyển sang WAV
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx && buf.byteLength >= 400) {
+                  try {
+                    const ctx = new AudioCtx();
+                    const decoded = await ctx.decodeAudioData(buf.slice(0));
+                    await ctx.close().catch(() => {});
+                    if (decoded && decoded.duration > 0) {
+                      const wavUrl = URL.createObjectURL(audioBufferToWavBlob(decoded));
+                      audioEl.dataset.recovering = "0";
+                      audioEl.src = wavUrl;
+                      audioEl.load();
+                      return;
+                    }
+                  } catch (_decodeErr) {}
+                }
+
                 audioEl.dataset.recovering = "0";
                 if (noteEl) {
                   noteEl.style.display = "block";
-                  noteEl.innerHTML = `⚠️ File ghi âm từ máy học viên bị lỗi/rỗng (${escapeHtml(audioEl.dataset.diagInfo)}${rawPath ? ` · ${escapeHtml(rawPath.split("/").pop())}` : ""}) nên trình duyệt không phát được. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file gốc</a>`;
+                  noteEl.innerHTML = `⚠️ File ghi âm từ máy học viên bị lỗi cấu trúc (${escapeHtml(audioEl.dataset.diagInfo)}${baseName ? ` · ${escapeHtml(baseName)}` : ""}) nên trình duyệt không phát được. <a href="${escapeHtml(downloadHref)}" download="${escapeHtml(baseName)}" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file về máy</a>`;
                 }
               } catch (err) {
                 audioEl.dataset.recovering = "0";
                 if (noteEl) {
                   noteEl.style.display = "block";
-                  noteEl.innerHTML = `⚠️ Không mở được file ghi âm trên trình duyệt này. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Mở / Tải file gốc</a>`;
+                  noteEl.innerHTML = `⚠️ Không mở được file ghi âm trên trình duyệt này. <a href="${escapeHtml(downloadHref)}" download="${escapeHtml(baseName)}" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file về máy</a>`;
                 }
               }
               return;
             }
 
-            // Đã thử phát qua Blob với đúng MIME nhưng trình duyệt vẫn không giải mã được
             if (noteEl) {
               const info = audioEl.dataset.diagInfo ? ` (${escapeHtml(audioEl.dataset.diagInfo)})` : "";
               noteEl.style.display = "block";
-              noteEl.innerHTML = `⚠️ File ghi âm bị lỗi dữ liệu âm thanh${info} — thường do điện thoại của học viên bị xung đột Micro khi ghi âm. <a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file gốc</a>`;
+              noteEl.innerHTML = `⚠️ File ghi âm bị lỗi dữ liệu âm thanh${info}. <a href="${escapeHtml(downloadHref)}" download="${escapeHtml(baseName)}" style="color:#1D4ED8;font-weight:700;text-decoration:underline;margin-left:4px;">Tải file về máy</a>`;
             }
           };
 
