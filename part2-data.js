@@ -103,6 +103,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "The university’s ranking (Thứ hạng trường)",
+                  reasons: [
+                    "Top universities have good teachers, modern classrooms, and big libraries for useful lessons.",
+                    "Companies trust famous schools, so she can get a good job easily after graduation."
+                  ]
+                },
+                {
+                  option: "The tuition fees (Học phí)",
+                  reasons: [
+                    "Low fees reduce money pressure on her parents for four years.",
+                    "She can focus on studying instead of working too many part-time hours.",
+                    "Her family can save money for rent, food, and books."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "The distance from her home (Khoảng cách từ nhà)",
+                  whyNot: "Even if the school is far away, she can live in a dormitory or take the bus."
+                },
+                {
+                  option: "The tuition fees (Học phí)",
+                  whyNot: "She can apply for scholarships to save money."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
@@ -324,6 +353,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Affordable fees (Học phí vừa phải)",
+                  reasons: [
+                    "Lower fees reduce money pressure on his parents, who also pay for rent, food, and books.",
+                    "He can focus on studying and final exams instead of working too many part-time hours."
+                  ]
+                },
+                {
+                  option: "Campus facilities (Cơ sở vật chất)",
+                  reasons: [
+                    "Modern classrooms, libraries, and computer rooms make studying comfortable.",
+                    "Good sports areas help students stay active and reduce stress.",
+                    "A clean and nice school makes him happy to go to class every day."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Campus facilities (Cơ sở vật chất)",
+                  whyNot: "Students can still learn well at public libraries or online."
+                },
+                {
+                  option: "Student support (Hỗ trợ sinh viên)",
+                  whyNot: "Teachers and close friends can help him every day."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
@@ -545,6 +603,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Honesty (Sự trung thực)",
+                  reasons: [
+                    "It builds strong trust, so managers feel safe giving them money or important projects.",
+                    "Honest workers tell the truth early when they make a mistake, helping the team fix problems fast."
+                  ]
+                },
+                {
+                  option: "Professional skills (Kỹ năng chuyên môn)",
+                  reasons: [
+                    "A skilled worker can start working right away without long training.",
+                    "They finish tasks quickly and carefully.",
+                    "They can also help coworkers with hard tasks."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Professional skills (Kỹ năng chuyên môn)",
+                  whyNot: "A new worker can learn job skills step by step."
+                },
+                {
+                  option: "Communication skills (Kỹ năng giao tiếp)",
+                  whyNot: "Sweet words without honesty can hurt customers' trust."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
@@ -782,6 +869,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "A mystery novel (Tiểu thuyết trinh thám)",
+                  reasons: [
+                    "It is full of clues, so she can picture the places and guess the ending.",
+                    "Every chapter brings a new surprise, so she will not feel bored from start to finish."
+                  ]
+                },
+                {
+                  option: "An action fiction book (Sách hành động viễn tưởng)",
+                  reasons: [
+                    "Fast adventures and new worlds make reading very exciting.",
+                    "Clear stories about characters and places help her picture scenes in her head.",
+                    "It is a fun way to relax after a busy day."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "A romance novel (Tiểu thuyết lãng mạn)",
+                  whyNot: "Love stories are often easy to guess."
+                },
+                {
+                  option: "An action fiction book (Sách hành động viễn tưởng)",
+                  whyNot: "It focuses too much on fights instead of creative thinking."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn thể loại)",
@@ -999,6 +1115,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "A public school near her home (Trường công lập gần nhà)",
+                  reasons: [
+                    "It is safe and easy for daily travel, so the child gets enough sleep instead of sitting in heavy traffic.",
+                    "Low fees help parents save money, while she learns basic subjects and makes friends in her neighborhood."
+                  ]
+                },
+                {
+                  option: "A private school (Trường tư thục)",
+                  reasons: [
+                    "Small classes help teachers take good care of each student.",
+                    "Nice classrooms and school clubs help children feel more confident.",
+                    "The fees are lower than an international school."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "An international school (Trường quốc tế)",
+                  whyNot: "It is too expensive for most families."
+                },
+                {
+                  option: "A private school (Trường tư thục)",
+                  whyNot: "It is often far away and costs a lot of extra money."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn loại trường)",
@@ -1236,6 +1381,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Working for a foreign company (Làm công ty nước ngoài)",
+                  reasons: [
+                    "It offers good salaries and benefits, so she can support herself, save money, and enjoy a better quality of life.",
+                    "She can improve her English, learn new skills, become more confident, and gain useful work experience."
+                  ]
+                },
+                {
+                  option: "Working for the government (Làm cơ quan nhà nước)",
+                  reasons: [
+                    "It is a very stable job, so she does not worry about losing work.",
+                    "Fixed office hours give her time for family and rest.",
+                    "Good insurance helps her feel safe for the future."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Working for the government (Làm cơ quan nhà nước)",
+                  whyNot: "It is a good option, but the salary is not high enough."
+                },
+                {
+                  option: "Starting her own business (Tự kinh doanh riêng)",
+                  whyNot: "It needs a lot of money and experience."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
@@ -1457,6 +1631,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Becoming a freelancer (Làm việc tự do)",
+                  reasons: [
+                    "He has flexible working hours without a fixed schedule, so he can spend the rest of the day with family or hobbies.",
+                    "He can work from home or a coffee shop, saving time, reducing stress, and enjoying a comfortable lifestyle."
+                  ]
+                },
+                {
+                  option: "Working in an office (Làm việc văn phòng)",
+                  reasons: [
+                    "It gives a stable monthly salary with less money worry.",
+                    "Fixed hours from 7 a.m. to 5 p.m. leave his evenings free for family and hobbies.",
+                    "He does not have to find customers, so he feels less stressed."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Working in an office (Làm việc văn phòng)",
+                  whyNot: "It has a stable monthly salary, but the fixed hours are not flexible."
+                },
+                {
+                  option: "Running a small business (Kinh doanh nhỏ)",
+                  whyNot: "It is stressful and takes too much time."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
@@ -1682,6 +1885,35 @@ window.SPEAKING_PART2_TOPICS = [
         ],
         levels: {
           b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "A graphic designer (Nhà thiết kế đồ họa)",
+                  reasons: [
+                    "She can use her creativity every day to make logos, posters, and advertisements, and share her ideas freely.",
+                    "She can work in many different fields like advertising companies, fashion brands, or as a freelancer to get more job chances and earn more money."
+                  ]
+                },
+                {
+                  option: "A fashion designer (Nhà thiết kế thời trang)",
+                  reasons: [
+                    "She can make her own clothes designs and show her personal style.",
+                    "She can follow her love for fashion every day.",
+                    "She may become famous if people like her designs and start her own fashion brand in the future."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "A fashion designer (Nhà thiết kế thời trang)",
+                  whyNot: "It is a good option, but it is very competitive and hard to succeed."
+                },
+                {
+                  option: "An interior decorator (Người trang trí nội thất)",
+                  whyNot: "She has to follow customers' ideas instead of her own."
+                }
+              ]
+            },
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn nghề)",

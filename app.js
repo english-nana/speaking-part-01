@@ -2471,8 +2471,10 @@
                 <h2 class="guide-section-title">I. Phân tích câu hỏi</h2>
               </div>
               ${
-                isPart2 && question.optionGuide
-                  ? `
+                (() => {
+                  const activeOptionGuide = (levelData && levelData.optionGuide) || question.optionGuide;
+                  return isPart2 && activeOptionGuide
+                    ? `
                   <div class="vocab-table-wrap">
                     <table class="vocab-table p2-option-table">
                       <thead>
@@ -2482,7 +2484,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        ${(question.optionGuide.easiestOptions || [])
+                        ${(activeOptionGuide.easiestOptions || [])
                           .map(
                             opt => `
                             <tr>
@@ -2503,7 +2505,7 @@
                   <div class="p2-reject-box">
                     <div class="p2-reject-title">Gợi ý lý do không chọn 2 lựa chọn còn lại</div>
                     <ul class="guide-bullets" style="margin:0;">
-                      ${(question.optionGuide.rejectReasons || [])
+                      ${(activeOptionGuide.rejectReasons || [])
                         .map(
                           item => `<li><strong>${escapeHtml(item.option)}:</strong> ${escapeHtml(item.whyNot)}</li>`
                         )
@@ -2511,13 +2513,14 @@
                     </ul>
                   </div>
                 `
-                  : `
+                    : `
                   <ul class="guide-bullets">
                     <li><strong>Loại câu hỏi:</strong> ${escapeHtml(question.analysis.questionType)}</li>
                     <li><strong>Thì &amp; Cấu trúc câu:</strong> ${escapeHtml(question.analysis.tense)}</li>
                     <li><strong>Độ dài:</strong> ${escapeHtml(question.analysis.length)}</li>
                   </ul>
-                `
+                `;
+                })()
               }
             </section>
 
