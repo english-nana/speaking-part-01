@@ -1,13 +1,15 @@
 // ==========================================================================
-// SPEAKING PART 2 — SOLUTION DISCUSSION (CHỌN YẾU TỐ TỐT NHẤT & CHỌN THỂ LOẠI)
+// SPEAKING PART 2 — SOLUTION DISCUSSION
 // - Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2
-// - Chỉ lấy đề từ bộ câu hỏi gốc; toàn bộ dàn ý, bài mẫu B1/B2 và từ vựng được
-//   biên soạn mới theo văn nói giao tiếp tự nhiên, gần gũi đời thực.
+// - Các cụm mở rộng (This is because, For example, Because of this, In other words,
+//   Moreover, This can...) chỉ là gợi ý linh hoạt, không bắt buộc dùng hết.
+// - Level B1: ngắn gọn, dễ nhớ (mỗi lý do 1 câu luận điểm + 1–2 câu mở rộng).
+// - Level B2: diễn đạt tự nhiên, giàu collocation & cấu trúc linh hoạt.
 // ==========================================================================
 
 window.SPEAKING_PART2_OUTLINE = {
   title: "General Outline · Speaking Part 2",
-  subtitle: "Khung dàn ý 3 phần dùng chung cho cả Level B1 & Level B2 · Bấm vào các cụm màu xanh đậm để đổi cách diễn đạt",
+  subtitle: "Khung dàn ý 3 phần dùng chung cho cả B1 & B2 · Các cụm mở rộng chỉ là gợi ý linh hoạt, không bắt buộc dùng hết",
   swapOptions: {
     situation: ["in this situation", "him", "her"],
     option2Verb: ["is a good option", "is worth considering"],
@@ -91,8 +93,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 yếu tố: university's ranking / distance from her home / tuition fees).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám đúng khung 3 phần chung: Mở bài → Thân bài (First of all + Another reason + Phản biện 2 phương án) → Kết bài.",
-          length: "B1: ~140–160 từ (60–75s) · B2: ~175–205 từ (80–95s)."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám khung 3 phần, chọn lọc từ nối tự nhiên.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Chỉ nói mỗi lý do chọn mà quên giải thích tại sao không chọn 2 yếu tố còn lại (khoảng cách & học phí).",
@@ -107,8 +109,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my younger sister wants to choose a good university. If I were her, I think I would choose the university's ranking."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
-                text: "Lý do 1 (First of all): Trường thứ hạng cao có thầy cô giỏi, thư viện hiện đại giúp học tốt hơn. Lý do 2 (Another reason): Dễ tìm việc tốt sau tốt nghiệp vì công ty tin tưởng bằng cấp. Phản biện: Không chọn distance (ở ký túc xá / đi xe buýt được) và không chọn tuition fees (có thể xin học bổng để tiết kiệm tiền)."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Trường thứ hạng cao có thầy cô giỏi, phòng học hiện đại -> học ở thư viện lớn, học hiệu quả hơn. Lý do 2 (1 câu luận điểm + 2 câu mở rộng): Dễ tìm việc tốt sau tốt nghiệp vì công ty tin tưởng sinh viên trường nổi tiếng. Phản biện ngắn: Distance (ở ký túc xá / đi xe buýt được); Tuition fees (xin học bổng để tiết kiệm tiền)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -116,7 +118,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister just finished high school and wants to choose a good university. <strong>If I were her, I think I would</strong> choose <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a top university has good teachers and modern classrooms. <strong>This is because</strong> high-ranking schools focus a lot on teaching quality. <strong>For example,</strong> my sister can study in a big library and learn useful lessons. <strong>Because of this,</strong> she can <strong>study effectively</strong>.<br><br><strong>Another reason is that</strong> a good ranking brings better jobs <strong>after graduation</strong>. <strong>In other words,</strong> companies trust students from famous schools. <strong>Moreover,</strong> they believe these students have strong skills. <strong>This can help</strong> my sister <strong>to</strong> get a good job easily.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is a good option</strong>, she can still live in a <strong>dormitory</strong> or take the bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can <strong>apply for scholarships</strong> to <strong>save money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister wants to choose a good university. <strong>If I were her, I think I would</strong> choose <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a top university has good teachers and <strong>modern classrooms</strong>. She can study in a big library and learn <strong>useful lessons</strong>. <strong>Because of this,</strong> she can <strong>study effectively</strong>.<br><br><strong>Another reason is that</strong> a good ranking brings better jobs <strong>after graduation</strong>. Companies trust students from famous schools and believe they have strong skills. <strong>This can help</strong> her get a good job easily.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is a good option</strong>, she can live in a <strong>dormitory</strong> or take the bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can <strong>apply for scholarships</strong> to <strong>save money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "university's ranking",
@@ -151,14 +153,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈdɔːrmətɔːri/",
                 pos: "n.",
                 meaning: "ký túc xá",
-                example: "She can still live in a <strong>dormitory</strong> or take the bus."
+                example: "She can live in a <strong>dormitory</strong> or take the bus."
               },
               {
                 word: "useful lessons",
                 ipa: "/ˈjuːsfl ˈlesnz/",
                 pos: "n. phr.",
                 meaning: "những bài học hữu ích",
-                example: "My sister can study in a big library and learn <strong>useful lessons</strong>."
+                example: "She can study in a big library and learn <strong>useful lessons</strong>."
               },
               {
                 word: "apply for scholarships",
@@ -172,7 +174,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/seɪv ˈmʌni/",
                 pos: "v. phr.",
                 meaning: "tiết kiệm tiền",
-                example: "Scholarships and part-time jobs help students <strong>save money</strong>."
+                example: "Scholarships help students <strong>save money</strong>."
               }
             ]
           },
@@ -183,8 +185,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my younger sister is looking for a university with high-quality education. If I were her, I think I would prioritize the university's ranking."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp từ vựng + Phản biện 2 lựa chọn kia)",
-                text: "Lý do 1 (First of all): Giảng viên giàu kinh nghiệm (experienced lecturers) và chương trình bài bản (well-structured curriculum), giúp phát triển kỹ năng thực tế. Lý do 2 (Another reason): Bằng cấp trường uy tín (reputable university) mở rộng cơ hội nghề nghiệp (career opportunities). Phản biện: Although the distance from her home is worth considering (có thể ở ký túc xá / đi buýt); As for the tuition fees (học phí có thể bù bằng học bổng và đầu tư giáo dục xứng đáng về lâu dài)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
+                text: "Lý do 1: Giảng viên giàu kinh nghiệm (experienced lecturers) và chương trình bài bản (well-structured curriculum) giúp rèn kỹ năng thực tế và tự tin hơn. Lý do 2: Trường uy tín (reputable university) mở rộng cơ hội nghề nghiệp (career opportunities), kết nối doanh nghiệp để dễ có việc ý nghĩa (meaningful job). Phản biện: Distance (ở ký túc xá / commute by bus); Tuition fees (xin học bổng, giáo dục tốt luôn pays off in the long run)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -192,7 +194,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister is looking for a university that provides high-quality education. <strong>If I were her, I think I would</strong> prioritize <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a high-ranking university guarantees better teaching quality. <strong>This is because</strong> top schools usually have <strong>experienced lecturers</strong> and a <strong>well-structured curriculum</strong>. <strong>For example,</strong> she can study with modern facilities and practice real-life skills, <strong>which</strong> boosts her academic performance. <strong>Because of this,</strong> she will build strong confidence in her major.<br><br><strong>Another reason is that</strong> graduating from a <strong>reputable</strong> university brings wider <strong>career opportunities</strong>. <strong>In other words,</strong> employers strongly value graduates from well-known institutions. <strong>Moreover,</strong> top schools often connect students directly with major companies. <strong>This can allow</strong> her <strong>to</strong> land a <strong>meaningful</strong> job right after graduation.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is worth considering</strong>, she can stay in a dormitory or <strong>commute</strong> by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can apply for scholarships, and quality education <strong>pays off in the long run</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister is looking for a university that provides high-quality education. <strong>If I were her, I think I would</strong> <strong>prioritize</strong> <strong>the university's ranking</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a high-ranking university guarantees much better teaching quality. Top schools usually have <strong>experienced lecturers</strong> and a <strong>well-structured curriculum</strong>, <strong>which</strong> helps students build practical skills. Studying with modern facilities also boosts her academic performance and confidence in her major.<br><br><strong>Another reason is that</strong> graduating from a <strong>reputable</strong> university opens up wider <strong>career opportunities</strong>. Employers strongly value graduates from well-known schools, and top universities often connect students directly with major companies. This gives her a real advantage when looking for a <strong>meaningful</strong> job right after graduation.<br><br><strong>Regarding the other two options, although</strong> <strong>the distance from her home</strong> <strong>is worth considering</strong>, she can easily stay in a dormitory or <strong>commute</strong> by bus. <strong>As for</strong> <strong>the tuition fees</strong>, <strong>I don't think it's a good idea because</strong> she can apply for scholarships, and quality education always <strong>pays off in the long run</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>the university's ranking</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "prioritize",
@@ -220,7 +222,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈrepjətəbl/",
                 pos: "adj.",
                 meaning: "có danh tiếng tốt, uy tín",
-                example: "Graduating from a <strong>reputable</strong> university brings wider career opportunities."
+                example: "Graduating from a <strong>reputable</strong> university opens up wider career opportunities."
               },
               {
                 word: "career opportunities",
@@ -234,7 +236,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈmiːnɪŋfl/",
                 pos: "adj.",
                 meaning: "ý nghĩa, giá trị",
-                example: "This can allow her to land a <strong>meaningful</strong> job right after graduation."
+                example: "This gives her an advantage when looking for a <strong>meaningful</strong> job."
               },
               {
                 word: "commute",
@@ -312,8 +314,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 tiêu chí: affordable fees / student support / campus facilities).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Triển khai theo đúng khung dàn ý 3 phần chung.",
-          length: "B1: ~140–160 từ · B2: ~175–205 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Bám khung 3 phần, triển khai tự nhiên.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Nhầm nghĩa từ 'affordable fees' thành 'rẻ nhất' (cheap); đúng phải là 'vừa túi tiền, hợp khả năng chi trả'.",
@@ -328,8 +330,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my cousin is about to enter university and feels confused. If I were him, I think I would choose affordable fees."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
-                text: "Lý do 1 (First of all): Giảm áp lực tiền bạc cho gia đình suốt 4 năm (vì còn tiền phòng, ăn uống, sách vở). Lý do 2 (Another reason): Tập trung tốt hơn cho việc học và kỳ thi cuối kỳ thay vì làm thêm quá sức. Phản biện: Không chọn campus facilities (có thể học qua tài liệu online & thư viện công cộng) và không chọn student support (chủ yếu cần tuần đầu, hằng ngày có thầy cô và bạn bè hỗ trợ)."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Giảm áp lực tiền bạc cho bố mẹ vì 4 năm học còn phải trả tiền trọ, ăn uống và sách vở -> cả nhà bớt căng thẳng. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Tập trung học tập hơn vì không cần làm thêm quá nhiều giờ, có đủ sức cho kỳ thi cuối kỳ. Phản biện ngắn: Campus facilities (vẫn học tốt ở thư viện công cộng); Student support (thầy cô và bạn thân có thể giúp hằng ngày)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -337,7 +339,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing a school. <strong>If I were him, I think I would</strong> choose <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable fees reduce <strong>money pressure</strong> on his parents. <strong>This is because</strong> university takes four long years to finish. <strong>For example,</strong> besides tuition, he has to <strong>pay for</strong> rent, food, and books every month. <strong>Because of this,</strong> his whole family feels much less stressed.<br><br><strong>Another reason is that</strong> lower fees let him <strong>focus on</strong> studying. <strong>In other words,</strong> he does not need to work too many <strong>part-time hours</strong>. <strong>Moreover,</strong> he has enough energy to prepare well for <strong>final exams</strong>. <strong>This can help</strong> him <strong>to</strong> get good grades.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is a good option</strong>, students can still learn well using online materials and <strong>public libraries</strong>. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> he mainly needs it in the first week, and teachers or <strong>close friends</strong> can help him daily.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my cousin is entering university and feels confused about choosing a school. <strong>If I were him, I think I would</strong> choose <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> lower fees reduce <strong>money pressure</strong> on his parents. University takes four years, and he also has to <strong>pay for</strong> rent, food, and books. <strong>Because of this,</strong> his whole family feels less stressed.<br><br><strong>Another reason is that</strong> lower fees let him <strong>focus on</strong> studying. He does not need to work too many <strong>part-time hours</strong>, so he has enough energy for his <strong>final exams</strong>.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is a good option</strong>, students can still learn well at <strong>public libraries</strong>. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> teachers and <strong>close friends</strong> can help him every day.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "affordable fees",
@@ -351,7 +353,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈmʌni ˈpreʃər/",
                 pos: "n. phr.",
                 meaning: "áp lực tiền bạc",
-                example: "Reasonable tuition helps reduce <strong>money pressure</strong> on parents."
+                example: "Lower fees help reduce <strong>money pressure</strong> on parents."
               },
               {
                 word: "pay for",
@@ -372,7 +374,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈfaɪnl ɪɡˈzæmz/",
                 pos: "n. phr.",
                 meaning: "các kỳ thi cuối kỳ",
-                example: "With enough energy, he can prepare well for his <strong>final exams</strong>."
+                example: "He has enough energy for his <strong>final exams</strong>."
               },
               {
                 word: "part-time hours",
@@ -386,14 +388,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈpʌblɪk ˈlaɪbreriz/",
                 pos: "n. phr.",
                 meaning: "thư viện công cộng",
-                example: "Students can still study with online materials and <strong>public libraries</strong>."
+                example: "Students can still learn well at <strong>public libraries</strong>."
               },
               {
                 word: "close friends",
                 ipa: "/kloʊs frendz/",
                 pos: "n. phr.",
                 meaning: "bạn thân",
-                example: "Teachers and <strong>close friends</strong> can help him in daily university life."
+                example: "Teachers and <strong>close friends</strong> can help him every day."
               }
             ]
           },
@@ -401,11 +403,11 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "The situation here is that my cousin is struggling to pick a suitable university. If I were him, I think I would go for affordable fees."
+                text: "The situation here is that my cousin is about to enter university and feels confused about choosing the right one. If I were him, I think I would go for affordable fees."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
-                text: "Lý do 1 (First of all): Giảm gánh nặng tài chính (ease the financial burden) vì ngoài học phí còn 4 năm chi phí sinh hoạt (living expenses), giúp cả nhà thấy an tâm (peace of mind). Lý do 2 (Another reason): Toàn tâm cho việc học thay vì làm thêm kiệt sức (exhausting shifts, feel sluggish). Phản biện: Although campus facilities is worth considering (học tốt qua tài liệu online); As for student support (chủ yếu hữu ích lúc freshman orientation)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
+                text: "Lý do 1: Giảm gánh nặng tài chính (ease the financial burden) suốt 4 năm chi phí sinh hoạt (living expenses), giúp cả nhà thấy an tâm (peace of mind). Lý do 2: Giữ tập trung học tập thay vì làm thêm kiệt sức (exhausting shifts), tránh uể oải (feel sluggish) và giữ điểm cao. Phản biện: Campus facilities (không quá thiết yếu - essential - khi có tài liệu online); Student support (chủ yếu hữu ích dịp freshman orientation, hằng ngày có giảng viên và bạn bè hướng dẫn - daily guidance)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -413,7 +415,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing the right one. <strong>If I were him, I think I would</strong> go for <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. <strong>This is because</strong> university life involves four continuous years of <strong>living expenses</strong>. <strong>For example,</strong> his parents already have to cover rent, meals, and textbooks every month, <strong>which</strong> adds up quickly. <strong>Because of this,</strong> manageable fees give everyone much greater <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> affordable tuition protects his study focus. <strong>In other words,</strong> he will not have to take <strong>exhausting</strong> part-time shifts just to pay tuition. <strong>Moreover,</strong> he won't <strong>feel sluggish</strong> during lectures or before final exams. <strong>This can allow</strong> him <strong>to</strong> keep his grades consistently high.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is worth considering</strong>, fancy buildings are not <strong>essential</strong> when students can study through online resources. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> it is mainly needed during <strong>freshman orientation</strong>, while lecturers and classmates provide enough <strong>daily guidance</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my cousin is about to enter university and feels confused about choosing the right one. <strong>If I were him, I think I would</strong> go for <strong>affordable fees</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> reasonable tuition helps ease the <strong>financial burden</strong> on his family. University involves four continuous years of <strong>living expenses</strong> like rent, meals, and textbooks, <strong>which</strong> add up very quickly. Having manageable fees gives both him and his parents much greater <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> affordable tuition protects his focus on studying. Instead of taking <strong>exhausting</strong> part-time shifts just to cover school fees, he can save his energy for lectures and final exams. <strong>As a result,</strong> he won't <strong>feel sluggish</strong> in class and can keep his grades consistently high.<br><br><strong>Regarding the other two options, although</strong> <strong>campus facilities</strong> <strong>is worth considering</strong>, fancy buildings are not <strong>essential</strong> when students can study through online resources. <strong>As for</strong> <strong>student support</strong>, <strong>I don't think it's a good idea because</strong> it is mainly needed during <strong>freshman orientation</strong>, while lecturers and classmates provide enough <strong>daily guidance</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>affordable fees</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "financial burden",
@@ -427,7 +429,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈlɪvɪŋ ɪkˈspensɪz/",
                 pos: "n. phr.",
                 meaning: "chi phí sinh hoạt",
-                example: "University life involves four continuous years of <strong>living expenses</strong>."
+                example: "University involves four continuous years of <strong>living expenses</strong>."
               },
               {
                 word: "peace of mind",
@@ -448,7 +450,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/fiːl ˈslʌɡɪʃ/",
                 pos: "v. phr.",
                 meaning: "cảm thấy uể oải, thiếu năng lượng",
-                example: "Working too late at night makes students <strong>feel sluggish</strong> in class."
+                example: "Working late at night makes students <strong>feel sluggish</strong> in class."
               },
               {
                 word: "essential",
@@ -462,7 +464,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈfreʃmən ˌɔːriənˈteɪʃn/",
                 pos: "n. phr.",
                 meaning: "tuần định hướng tân sinh viên",
-                example: "Student support offices are mainly helpful during <strong>freshman orientation</strong>."
+                example: "Student support is mainly needed during <strong>freshman orientation</strong>."
               },
               {
                 word: "daily guidance",
@@ -533,8 +535,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 phẩm chất: communication skills / honesty / professional skills).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Đóng vai nhà tuyển dụng theo khung 3 phần chung.",
-          length: "B1: ~140–160 từ · B2: ~175–205 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Đóng vai nhà tuyển dụng, triển khai tự nhiên.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Phát âm nhầm âm /h/ câm trong từ 'honesty' (/ˈɑːnəsti/) và 'honest' (/ˈɑːnɪst/) — KHÔNG đọc chữ 'h' đầu từ!",
@@ -549,8 +551,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that I am a recruiter looking for a new employee. If I were in this situation, I think I would choose honesty."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
-                text: "Lý do 1 (First of all): Xây dựng niềm tin ở công ty — sếp yên tâm giao tiền hay dự án quan trọng. Lý do 2 (Another reason): Giúp cả nhóm giải quyết vấn đề sớm vì nhân viên trung thực dám nói sự thật khi mắc lỗi. Phản biện: Không chọn professional skills (có thể học từng bước qua đào tạo) và không chọn communication skills (lời nói khéo léo mà thiếu trung thực sẽ làm mất niềm tin khách hàng)."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Xây dựng niềm tin ở công ty -> sếp yên tâm giao tiền hay dự án quan trọng, đỡ lo gian lận. Lý do 2 (1 câu luận điểm + 2 câu mở rộng): Giúp nhóm sửa lỗi nhanh vì dám nói sự thật sớm khi mắc sai lầm -> xong việc đúng hạn. Phản biện ngắn: Professional skills (học từng bước sau khi vào làm); Communication skills (lời ngon ngọt thiếu trung thực làm mất lòng khách)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -558,7 +560,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> I am a recruiter and I need to hire a new employee for my company. <strong>If I were in this situation, I think I would</strong> choose <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty builds <strong>strong trust</strong> at work. <strong>This is because</strong> every company needs people they can rely on. <strong>For example,</strong> managers can <strong>feel safe</strong> giving an honest worker money or <strong>important projects</strong>. <strong>Because of this,</strong> there is less worry about cheating.<br><br><strong>Another reason is that</strong> honest workers help a team fix problems fast. <strong>In other words,</strong> when they <strong>make a mistake</strong>, they <strong>tell the truth</strong> early. <strong>Moreover,</strong> everyone can work together calmly instead of hiding errors. <strong>This can help</strong> the whole team <strong>to</strong> finish tasks on time.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is a good option</strong>, a new worker can learn job skills <strong>step by step</strong> after training. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>sweet words</strong> without honesty can hurt customers' trust.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> I am a recruiter and need to hire a new employee. <strong>If I were in this situation, I think I would</strong> choose <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty builds <strong>strong trust</strong> at work. Managers can <strong>feel safe</strong> giving an honest worker money or <strong>important projects</strong>. <strong>Because of this,</strong> there is less worry about cheating.<br><br><strong>Another reason is that</strong> honest workers help a team fix problems fast. When they <strong>make a mistake</strong>, they <strong>tell the truth</strong> early. This helps everyone finish tasks on time.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is a good option</strong>, a new worker can learn job skills <strong>step by step</strong>. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>sweet words</strong> without honesty can hurt customers' trust.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "honesty",
@@ -572,35 +574,35 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/strɔːŋ trʌst/",
                 pos: "n. phr.",
                 meaning: "niềm tin vững chắc",
-                example: "An honest worker builds <strong>strong trust</strong> at the workplace."
+                example: "An honest worker builds <strong>strong trust</strong> at work."
               },
               {
                 word: "feel safe",
                 ipa: "/fiːl seɪf/",
                 pos: "v. phr.",
                 meaning: "cảm thấy an tâm, tin cậy",
-                example: "Managers can <strong>feel safe</strong> giving them money or data."
+                example: "Managers can <strong>feel safe</strong> giving them money or projects."
               },
               {
                 word: "important projects",
                 ipa: "/ɪmˈpɔːrtnt ˈprɑːdʒekts/",
                 pos: "n. phr.",
                 meaning: "những dự án quan trọng",
-                example: "Leaders trust honest staff with <strong>important projects</strong>."
+                example: "Managers trust honest workers with <strong>important projects</strong>."
               },
               {
                 word: "make a mistake",
                 ipa: "/meɪk ə mɪˈsteɪk/",
                 pos: "v. phr.",
                 meaning: "mắc sai lầm",
-                example: "When an employee <strong>makes a mistake</strong>, they tell the truth early."
+                example: "When they <strong>make a mistake</strong>, they tell the truth early."
               },
               {
                 word: "tell the truth",
                 ipa: "/tel ðə truːθ/",
                 pos: "v. phr.",
                 meaning: "nói sự thật",
-                example: "Good employees always <strong>tell the truth</strong> instead of hiding errors."
+                example: "Good employees always <strong>tell the truth</strong> early."
               },
               {
                 word: "step by step",
@@ -614,7 +616,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/swiːt wɜːrdz/",
                 pos: "n. phr.",
                 meaning: "lời nói khéo léo, ngon ngọt",
-                example: "<strong>Sweet words</strong> without honesty cannot keep customers' trust."
+                example: "<strong>Sweet words</strong> without honesty can hurt customers' trust."
               }
             ]
           },
@@ -622,11 +624,11 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "The situation here is that I am recruiting a new member for our company. If I were in this situation, I think I would prioritize honesty."
+                text: "The situation here is that I am recruiting a new employee and need to pick the most important quality. If I were in this situation, I think I would prioritize honesty."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
-                text: "Lý do 1 (First of all): Nền tảng niềm tin trong tổ chức — yên tâm giao dữ liệu khách hàng nhạy cảm (sensitive client data), mang lại sự an tâm (peace of mind). Lý do 2 (Another reason): Xây dựng môi trường làm việc lành mạnh — dám thừa nhận sai sót (admit mistakes) sớm để xử lý kịp hạn chót (tight deadlines). Phản biện: Although professional skills is worth considering (được đào tạo thực tế - trained on the job, còn character rất khó sửa); As for communication skills (smooth talk thiếu trung thực dễ làm hỏng niềm tin - damage trust)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
+                text: "Lý do 1: Nền tảng niềm tin trong công ty — yên tâm giao ngân sách, dữ liệu khách hàng nhạy cảm (sensitive client data), đem lại sự an tâm (peace of mind). Lý do 2: Tạo môi trường làm việc lành mạnh — dám thừa nhận sai sót (admit mistakes) sớm để cả nhóm xử lý kịp hạn chót (tight deadlines). Phản biện: Professional skills (có thể trained on the job, còn character khó sửa); Communication skills (smooth talk thiếu trung thực dễ damage trust)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -634,7 +636,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> I am recruiting a new employee and need to pick the most important quality. <strong>If I were in this situation, I think I would</strong> prioritize <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty is the foundation of real trust in any organization. <strong>This is because</strong> companies rely heavily on dependable staff to protect their reputation. <strong>For example,</strong> managers can safely trust an honest employee with budgets or <strong>sensitive</strong> <strong>client data</strong>, <strong>which</strong> prevents costly mistakes. <strong>Because of this,</strong> the company enjoys true <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> honest workers build a healthy and productive team environment. <strong>In other words,</strong> they <strong>admit mistakes</strong> openly instead of covering them up. <strong>Moreover,</strong> coworkers can jump in and solve issues before <strong>tight deadlines</strong> are missed. <strong>This can allow</strong> the whole team <strong>to</strong> work smoothly together.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is worth considering</strong>, technical skills can easily be <strong>trained on the job</strong>, whereas poor <strong>character</strong> is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>smooth talk</strong> without honesty can seriously <strong>damage trust</strong> with clients.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> I am recruiting a new employee and need to pick the most important quality. <strong>If I were in this situation, I think I would</strong> prioritize <strong>honesty</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> honesty is the foundation of real trust in any company. Managers need dependable staff to protect the business, so they can safely trust an honest employee with budgets or <strong>sensitive</strong> <strong>client data</strong>. Having trustworthy people on board gives leaders true <strong>peace of mind</strong>.<br><br><strong>Another reason is that</strong> honest workers build a healthy and productive team environment. When issues happen, they <strong>admit mistakes</strong> openly instead of covering them up, <strong>which</strong> allows coworkers to step in and solve problems before <strong>tight deadlines</strong> are missed.<br><br><strong>Regarding the other two options, although</strong> <strong>professional skills</strong> <strong>is worth considering</strong>, technical skills can easily be <strong>trained on the job</strong>, whereas poor <strong>character</strong> is very hard to change. <strong>As for</strong> <strong>communication skills</strong>, <strong>I don't think it's a good idea because</strong> <strong>smooth talk</strong> without honesty can seriously <strong>damage trust</strong> with clients.<br><br><strong>In conclusion, I believe</strong> <strong>honesty</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "client data",
@@ -770,8 +772,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 thể loại sách: mystery novel / romance novel / action fiction book).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám sát từ khóa đề bài 'improve her imagination' theo khung 3 phần chung.",
-          length: "B1: ~140–160 từ · B2: ~175–205 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám sát từ khóa 'improve her imagination'.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Chỉ nói cuốn sách hay mà quên giải thích nó kích thích trí tưởng tượng (picture scenes, guess clues) như thế nào.",
@@ -786,8 +788,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my friend wants to read a book to improve her imagination. If I were her, I think I would choose a mystery novel."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 thể loại còn lại)",
-                text: "Lý do 1 (First of all): Có nhiều manh mối (clues) và bí mật giúp người đọc tự hình dung bối cảnh và đoán kết quả -> rèn trí tưởng tượng. Lý do 2 (Another reason): Rất hồi hộp, cuốn hút từ đầu đến cuối nên không thấy chán và đọc hết sách. Phản biện: Không chọn romance novel (cốt truyện dễ đoán, chỉ nói về cảm xúc thường ngày) và không chọn action fiction book (quá tập trung vào đánh nhau nhanh, ít chỗ cho tư duy sáng tạo)."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 thể loại còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Sách trinh thám giúp người đọc suy nghĩ tích cực nhờ nhiều manh mối (clues), tự hình dung bối cảnh và đoán kết thúc -> trí tưởng tượng mạnh hơn. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Hồi hộp từ đầu đến cuối vì mỗi chương có bất ngờ mới nên không chán. Phản biện ngắn: Romance novel (dễ đoán); Action fiction (tập trung đánh nhau thay vì tư duy sáng tạo)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -795,7 +797,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my friend wants to read a book to improve her imagination. <strong>If I were her, I think I would</strong> choose <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery books make readers think actively. <strong>This is because</strong> they are full of <strong>clues</strong> and hidden secrets. <strong>For example,</strong> my friend can <strong>picture the places</strong> and <strong>guess the ending</strong> in her head. <strong>Because of this,</strong> her imagination grows much stronger.<br><br><strong>Another reason is that</strong> this kind of book is very exciting <strong>from start to finish</strong>. <strong>In other words,</strong> every chapter brings a new surprise. <strong>Moreover,</strong> she will not <strong>feel bored</strong> while reading. <strong>This can help</strong> her <strong>to</strong> finish the whole story happily.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is a good option</strong>, love stories are often <strong>easy to guess</strong> and focus mostly on daily feelings. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> it focuses too much on fast fights instead of <strong>creative thinking</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my friend wants to read a book to improve her imagination. <strong>If I were her, I think I would</strong> choose <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery books make readers think actively. They are full of <strong>clues</strong>, so my friend can <strong>picture the places</strong> and <strong>guess the ending</strong>. <strong>Because of this,</strong> her imagination grows stronger.<br><br><strong>Another reason is that</strong> mystery stories are exciting <strong>from start to finish</strong>. Every chapter brings a new surprise, so she will not <strong>feel bored</strong> and will finish the whole book.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is a good option</strong>, love stories are often <strong>easy to guess</strong>. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> it focuses too much on fights instead of <strong>creative thinking</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "mystery novel",
@@ -809,7 +811,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/kluːz/",
                 pos: "n.",
                 meaning: "manh mối, gợi ý",
-                example: "Mystery books are full of <strong>clues</strong> and hidden secrets."
+                example: "Mystery books are full of <strong>clues</strong> and secrets."
               },
               {
                 word: "picture the places",
@@ -830,14 +832,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/frʌm stɑːrt tuː ˈfɪnɪʃ/",
                 pos: "prep. phr.",
                 meaning: "từ đầu đến cuối",
-                example: "Good mystery stories are exciting <strong>from start to finish</strong>."
+                example: "Mystery stories are exciting <strong>from start to finish</strong>."
               },
               {
                 word: "feel bored",
                 ipa: "/fiːl bɔːrd/",
                 pos: "v. phr.",
                 meaning: "cảm thấy chán",
-                example: "With unexpected clues, she will not <strong>feel bored</strong>."
+                example: "With new surprises, she will not <strong>feel bored</strong>."
               },
               {
                 word: "easy to guess",
@@ -851,7 +853,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/kriˈeɪtɪv ˈθɪŋkɪŋ/",
                 pos: "n. phr.",
                 meaning: "tư duy sáng tạo",
-                example: "Solving puzzles in books develops <strong>creative thinking</strong>."
+                example: "Mystery books encourage <strong>creative thinking</strong>."
               }
             ]
           },
@@ -859,11 +861,11 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn thể loại)",
-                text: "The situation here is that my friend wants to pick a book that sharpens her imagination. If I were her, I think I would go for a mystery novel."
+                text: "The situation here is that my friend is looking for a book that can sharpen her imagination. If I were her, I think I would go for a mystery novel."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 thể loại còn lại)",
-                text: "Lý do 1 (First of all): Đầy manh mối và cú bẻ lái bất ngờ (unexpected twists), buộc người đọc xâu chuỗi chi tiết (connect details) và tự dựng hình ảnh trong tâm trí (mental imagery). Lý do 2 (Another reason): Gợi sự tò mò (curiosity) cực mạnh để cuốn hút đọc hết quyển (stay hooked). Phản biện: Although a romance novel is worth considering (khá dễ đoán - predictable); As for an action fiction book (gay cấn - thrilling - nhưng ít khoảng lặng để suy ngẫm sâu - deep reflection)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 thể loại kia)",
+                text: "Lý do 1: Đầy manh mối và cú bẻ lái bất ngờ (unexpected twists), buộc người đọc xâu chuỗi chi tiết (connect details) như thám tử và kích thích hình ảnh tâm trí (mental imagery). Lý do 2: Khơi gợi sự tò mò (curiosity) ngay từ chương đầu giúp cuốn hút đọc hết quyển (stay hooked). Phản biện: Romance novel (khá dễ đoán - predictable); Action fiction (gay cấn - thrilling - nhưng ít chỗ suy ngẫm sâu - deep reflection)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -871,7 +873,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my friend is looking for a book that can sharpen her imagination. <strong>If I were her, I think I would</strong> go for <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery stories push the reader's mind to work creatively. <strong>This is because</strong> they are packed with hidden clues and <strong>unexpected twists</strong>. <strong>For example,</strong> she has to picture scenes and <strong>connect details</strong> like a detective, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>. <strong>Because of this,</strong> her imagination gets a real workout.<br><br><strong>Another reason is that</strong> a clever mystery builds strong <strong>curiosity</strong> from the very first chapter. <strong>In other words,</strong> readers always want to discover what happens next. <strong>Moreover,</strong> the suspense keeps her engaged rather than putting the book down halfway. <strong>This can allow</strong> her <strong>to</strong> <strong>stay hooked</strong> and enjoy the entire reading experience.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is worth considering</strong>, love stories are often quite <strong>predictable</strong> and focus mostly on everyday emotions. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> fast chases feel <strong>thrilling</strong>, yet non-stop fighting leaves little room for <strong>deep reflection</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my friend is looking for a book that can sharpen her imagination. <strong>If I were her, I think I would</strong> go for <strong>a mystery novel</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> mystery stories push the reader's mind to work creatively. Packed with hidden clues and <strong>unexpected twists</strong>, they make her picture scenes and <strong>connect details</strong> like a detective, <strong>which</strong> actively stimulates her <strong>mental imagery</strong>.<br><br><strong>Another reason is that</strong> a clever mystery builds strong <strong>curiosity</strong> from the very first chapter. Because she always wants to discover what happens next, the suspense keeps her engaged rather than putting the book down halfway. This allows her to <strong>stay hooked</strong> and enjoy the entire reading experience.<br><br><strong>Regarding the other two options, although</strong> <strong>a romance novel</strong> <strong>is worth considering</strong>, love stories are often quite <strong>predictable</strong> and focus mostly on everyday emotions. <strong>As for</strong> <strong>an action fiction book</strong>, <strong>I don't think it's a good idea because</strong> fast chases feel <strong>thrilling</strong>, yet non-stop fighting leaves little room for <strong>deep reflection</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a mystery novel</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "unexpected twists",
@@ -987,8 +989,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 loại trường: public school near her home / international school / private school).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Liên hệ thực tế Việt Nam theo đúng khung dàn ý 3 phần chung.",
-          length: "B1: ~140–160 từ · B2: ~175–205 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Liên hệ thực tế Việt Nam.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Lẫn lộn đại từ nhân xưng ('her' là cô con gái nhỏ trong đề, còn bố mẹ là 'they / the parents').",
@@ -1000,11 +1002,11 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn loại trường)",
-                text: "The situation here is that a couple is choosing a primary school for their young daughter. If I were in this situation, I think I would choose a public school near her home."
+                text: "The situation here is that a couple is choosing a primary school for their daughter. If I were in this situation, I think I would choose a public school near her home."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 loại trường còn lại)",
-                text: "Lý do 1 (First of all): Rất tiện và an toàn để bố mẹ đưa đón hằng ngày, bé được ngủ đủ giấc thay vì kẹt xe. Lý do 2 (Another reason): Học phí hợp lý giúp tiết kiệm tiền, mà bé vẫn học tốt các môn cơ bản và kết bạn quanh khu phố. Phản biện: Không chọn international school (học phí quá đắt, trẻ nhỏ cần vững tiếng Việt trước) và không chọn private school (thường xa nhà và tốn nhiều tiền phụ phí)."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 loại trường còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Trường gần nhà an toàn, đi lại dễ -> bé ngủ đủ giấc thay vì kẹt xe sáng sớm, đi học vui vẻ. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Trường công học phí thấp giúp tiết kiệm tiền, mà bé vẫn học tốt các môn cơ bản và kết bạn quanh khu phố. Phản biện ngắn: International school (quá đắt); Private school (thường xa và nhiều tiền phụ phí)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -1012,14 +1014,14 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> a couple is choosing a primary school for their young daughter. <strong>If I were in this situation, I think I would</strong> choose <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school is very safe and easy for daily travel. <strong>This is because</strong> parents do not need to spend much time on the road. <strong>For example,</strong> the little girl can <strong>get enough sleep</strong> instead of sitting in <strong>heavy traffic</strong> every morning. <strong>Because of this,</strong> she goes to class feeling fresh and happy.<br><br><strong>Another reason is that</strong> a <strong>public school</strong> has low tuition fees. <strong>In other words,</strong> the parents can <strong>save money</strong> for other family needs. <strong>Moreover,</strong> their daughter still learns <strong>basic subjects</strong> well and makes friends right in her <strong>neighborhood</strong>. <strong>This can help</strong> her <strong>to</strong> grow up happily near home.<br><br><strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is a good option</strong>, it is too expensive and young children need strong Vietnamese skills first. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is often far away and costs a lot of <strong>extra money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> a couple is choosing a primary school for their daughter. <strong>If I were in this situation, I think I would</strong> choose <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school is safe and easy for daily travel. The little girl can <strong>get enough sleep</strong> instead of sitting in <strong>heavy traffic</strong> every morning. <strong>Because of this,</strong> she goes to class feeling happy.<br><br><strong>Another reason is that</strong> a <strong>public school</strong> has low tuition fees. Parents can save money, while their daughter still learns <strong>basic subjects</strong> well and makes friends in her <strong>neighborhood</strong>.<br><br><strong>Regarding the other two options, although</strong> an <strong>international school</strong> <strong>is a good option</strong>, it is too expensive for most families. <strong>As for</strong> a <strong>private school</strong>, <strong>I don't think it's a good idea because</strong> it is often far away and costs a lot of <strong>extra money</strong>.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "public school",
                 ipa: "/ˈpʌblɪk skuːl/",
                 pos: "n. phr.",
                 meaning: "trường công lập",
-                example: "If I were in this situation, I think I would choose a <strong>public school</strong> near her home."
+                example: "I would choose a <strong>public school</strong> near her home."
               },
               {
                 word: "get enough sleep",
@@ -1040,28 +1042,28 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈbeɪsɪk ˈsʌbdʒekts/",
                 pos: "n. phr.",
                 meaning: "các môn học cơ bản",
-                example: "Public schools teach <strong>basic subjects</strong> like Math and Vietnamese very well."
+                example: "Public schools teach <strong>basic subjects</strong> like Math and Vietnamese well."
               },
               {
                 word: "neighborhood",
                 ipa: "/ˈneɪbərhʊd/",
                 pos: "n.",
                 meaning: "khu phố, hàng xóm xung quanh",
-                example: "She can easily make friends right in her <strong>neighborhood</strong>."
+                example: "She can make friends right in her <strong>neighborhood</strong>."
               },
               {
                 word: "international school",
                 ipa: "/ˌɪntərˈnæʃnəl skuːl/",
                 pos: "n. phr.",
                 meaning: "trường quốc tế",
-                example: "An <strong>international school</strong> is often too expensive for average families."
+                example: "An <strong>international school</strong> is too expensive for most families."
               },
               {
                 word: "private school",
                 ipa: "/ˈpraɪvət skuːl/",
                 pos: "n. phr.",
                 meaning: "trường tư thục",
-                example: "A <strong>private school</strong> usually charges much higher monthly fees."
+                example: "A <strong>private school</strong> usually charges higher monthly fees."
               },
               {
                 word: "extra money",
@@ -1079,8 +1081,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that a couple wants to find the right primary school for their daughter. If I were in this situation, I think I would go for a public school near her home."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 loại trường còn lại)",
-                text: "Lý do 1 (First of all): Rất thuận tiện (convenient) và an toàn cho việc đưa đón hằng ngày (daily commute), giúp con nghỉ ngơi đủ thay vì mệt vì kẹt xe. Lý do 2 (Another reason): Học phí phải chăng (affordable) giảm gánh nặng tài chính (financial burden) mà vẫn có nền tảng vững chắc (solid foundation) ở các môn chính (core subjects) và bạn bè gần nhà. Phản biện: Although an international school is worth considering (quá đắt đỏ - far too expensive - dễ làm yếu tiếng Việt - weaken); As for a private school (xa hơn và nhiều phụ phí xe/ăn uống)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 loại trường kia)",
+                text: "Lý do 1: Rất thuận tiện (convenient) và an toàn cho việc đưa đón hằng ngày (daily commute), bố mẹ dễ đón đúng giờ (pick her up) giúp con nghỉ ngơi đủ thay vì kẹt xe. Lý do 2: Học phí phải chăng (affordable) giảm gánh nặng tài chính mà vẫn xây nền tảng vững chắc (solid foundation) ở các môn chính (core subjects) và có bạn quanh nhà. Phản biện: International school (far too expensive, dễ weaken tiếng Việt); Private school (xa hơn và nhiều phụ phí)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -1088,7 +1090,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> a couple wants to find the right primary school for their daughter. <strong>If I were in this situation, I think I would</strong> go for <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. <strong>This is because</strong> long trips in rush hour are exhausting for primary students. <strong>For example,</strong> her parents can easily <strong>pick her up</strong> right on time, <strong>which</strong> lets her get enough rest instead of sitting in heavy traffic. <strong>Because of this,</strong> she stays energetic and healthy every school day.<br><br><strong>Another reason is that</strong> public schools offer very <strong>affordable</strong> tuition. <strong>In other words,</strong> the family avoids unnecessary <strong>financial burden</strong> while still getting a <strong>solid foundation</strong> in <strong>core subjects</strong>. <strong>Moreover,</strong> the girl can make close friends right in her own neighborhood. <strong>This can allow</strong> her <strong>to</strong> feel comfortable and happy at school.<br><br><strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is worth considering</strong>, the fees are <strong>far too expensive</strong> and studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> a couple wants to find the right primary school for their daughter. <strong>If I were in this situation, I think I would</strong> go for <strong>a public school near her home</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> a nearby school makes the <strong>daily commute</strong> much more <strong>convenient</strong> and safer for a young child. Her parents can easily <strong>pick her up</strong> right on time, <strong>which</strong> lets her get enough rest instead of sitting in heavy traffic during rush hour. <strong>As a result,</strong> she stays energetic and healthy every school day.<br><br><strong>Another reason is that</strong> public schools offer very <strong>affordable</strong> tuition. The family can avoid unnecessary financial burden while their daughter still builds a <strong>solid foundation</strong> in <strong>core subjects</strong> and makes close friends right in her own neighborhood.<br><br><strong>Regarding the other two options, although</strong> <strong>an international school</strong> <strong>is worth considering</strong>, the fees are <strong>far too expensive</strong> and studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills. <strong>As for</strong> <strong>a private school</strong>, <strong>I don't think it's a good idea because</strong> it is usually farther away and charges high extra fees for buses and meals.<br><br><strong>In conclusion, I believe</strong> <strong>a public school near her home</strong> <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "daily commute",
@@ -1137,14 +1139,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈwiːkən/",
                 pos: "v.",
                 meaning: "làm suy yếu, giảm bớt",
-                example: "Using too little Vietnamese early on may <strong>weaken</strong> her mother tongue."
+                example: "Studying mostly in English too early may <strong>weaken</strong> her Vietnamese skills."
               },
               {
                 word: "pick her up",
                 ipa: "/pɪk hɜːr ʌp/",
                 pos: "v. phr.",
                 meaning: "đón con tan học",
-                example: "Parents can easily <strong>pick her up</strong> right after work."
+                example: "Parents can easily <strong>pick her up</strong> right on time."
               }
             ]
           }
@@ -1154,7 +1156,7 @@ window.SPEAKING_PART2_TOPICS = [
   },
 
   // ==========================================================================
-  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 2 TÌNH HUỐNG
+  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 3 TÌNH HUỐNG
   // ==========================================================================
   {
     part: "part2",
@@ -1163,8 +1165,8 @@ window.SPEAKING_PART2_TOPICS = [
     title: "Choosing a Career",
     titleVi: "Chọn nghề nghiệp phù hợp",
     description:
-      "Luyện 2 tình huống lựa chọn nghề nghiệp: tìm công việc ổn định lương cao sau tốt nghiệp và chọn công việc có sự cân bằng tốt giữa công việc và cuộc sống.",
-    questionsCount: 2,
+      "Luyện 3 tình huống lựa chọn nghề nghiệp: tìm việc ổn định lương cao, chọn việc cân bằng cuộc sống, và theo đuổi nghề nghệ thuật sáng tạo.",
+    questionsCount: 3,
     questions: [
       {
         part: "part2",
@@ -1224,8 +1226,8 @@ window.SPEAKING_PART2_TOPICS = [
         },
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 hướng nghề nghiệp: government / foreign company / own business).",
-          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Triển khai theo khung 3 phần chung.",
-          length: "B1: ~140–160 từ · B2: ~170–195 từ."
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Triển khai theo khung 3 phần tự nhiên.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Quên giữ dạng V-ing cho cả 3 lựa chọn ('working for...', 'starting her own business') khi dùng làm chủ ngữ.",
@@ -1237,11 +1239,11 @@ window.SPEAKING_PART2_TOPICS = [
             strategy: [
               {
                 label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
-                text: "The situation here is that my younger sister wants to find a stable and well-paid job after graduation. If I were her, I think I would choose to work for a foreign company."
+                text: "The situation here is that my younger sister wants a stable and well-paid job. If I were her, I think I would work for a foreign company."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
-                text: "Lý do 1: Lương thưởng và phúc lợi tốt giúp tự lo cuộc sống, tiết kiệm và nâng cao chất lượng sống. Lý do 2: Cải thiện tiếng Anh, học kỹ năng mới khi làm việc với người nước ngoài -> tự tin hơn và có kinh nghiệm quý giá. Phản biện: Làm nhà nước lương chưa đủ cao; tự kinh doanh cần nhiều tiền và kinh nghiệm."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Công ty nước ngoài trả lương và phúc lợi tốt -> tự lo cuộc sống, tiết kiệm và có chất lượng sống tốt hơn. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Cải thiện tiếng Anh, học kỹ năng mới khi làm với người nước ngoài -> tự tin hơn và có kinh nghiệm làm việc. Phản biện ngắn: Làm nhà nước (lương chưa đủ cao); Tự kinh doanh (cần nhiều tiền và kinh nghiệm)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -1249,28 +1251,28 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister wants to find a <strong>stable and well-paid</strong> job after graduation. <strong>If I were her, I think I would</strong> choose to work for a <strong>foreign company</strong>. <strong>I think it is the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies usually offer good <strong>salaries and benefits</strong>. This means she can earn enough money to <strong>support herself</strong> and save some money for the future. <strong>Because of this,</strong> she can have a better <strong>quality of life</strong>.<br><br><strong>Another reason is that</strong> she can improve her English and learn new skills. She will have the chance to work with foreign people. <strong>This can help</strong> her become <strong>more confident</strong> and gain valuable <strong>work experience</strong>.<br><br><strong>Regarding the other two options, although</strong> working for the government is also a good choice, the salary is not high enough. <strong>As for</strong> <strong>starting her own business</strong>, <strong>I don't think it is a good idea because</strong> it requires a lot of money and experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister wants a <strong>stable and well-paid</strong> job. <strong>If I were her, I think I would</strong> work for a <strong>foreign company</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies offer good <strong>salaries and benefits</strong>. She can earn enough money to <strong>support herself</strong> and save for the future. <strong>Because of this,</strong> she can enjoy a better <strong>quality of life</strong>.<br><br><strong>Another reason is that</strong> she can improve her English and learn new skills with foreign coworkers. This helps her become <strong>more confident</strong> and gain useful <strong>work experience</strong>.<br><br><strong>Regarding the other two options, although</strong> working for the government <strong>is a good option</strong>, the salary is not high enough. <strong>As for</strong> <strong>starting her own business</strong>, <strong>I don't think it's a good idea because</strong> it needs a lot of money and experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "stable and well-paid",
                 ipa: "/ˈsteɪbl ænd wel peɪd/",
                 pos: "adj. phr.",
                 meaning: "ổn định và lương cao",
-                example: "My younger sister wants to find a <strong>stable and well-paid</strong> job after graduation."
+                example: "My younger sister wants a <strong>stable and well-paid</strong> job."
               },
               {
                 word: "foreign company",
                 ipa: "/ˈfɔːrən ˈkʌmpəni/",
                 pos: "n. phr.",
                 meaning: "công ty nước ngoài",
-                example: "I think I would choose to work for a <strong>foreign company</strong>."
+                example: "I think I would work for a <strong>foreign company</strong>."
               },
               {
                 word: "salaries and benefits",
                 ipa: "/ˈsæləriz ænd ˈbenɪfɪts/",
                 pos: "n. phr.",
                 meaning: "lương thưởng và phúc lợi",
-                example: "Foreign companies usually offer good <strong>salaries and benefits</strong>."
+                example: "Foreign companies offer good <strong>salaries and benefits</strong>."
               },
               {
                 word: "support herself",
@@ -1284,28 +1286,28 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈkwɑːləti əv laɪf/",
                 pos: "n. phr.",
                 meaning: "chất lượng cuộc sống",
-                example: "Because of this, she can have a better <strong>quality of life</strong>."
+                example: "Because of this, she can enjoy a better <strong>quality of life</strong>."
               },
               {
                 word: "more confident",
                 ipa: "/mɔːr ˈkɑːnfɪdənt/",
                 pos: "adj. phr.",
                 meaning: "tự tin hơn",
-                example: "This can help her become <strong>more confident</strong> at work."
+                example: "This helps her become <strong>more confident</strong> at work."
               },
               {
                 word: "work experience",
                 ipa: "/wɜːrk ɪkˈspɪriəns/",
                 pos: "n. phr.",
                 meaning: "kinh nghiệm làm việc",
-                example: "She can gain valuable <strong>work experience</strong> in an international environment."
+                example: "She can gain useful <strong>work experience</strong>."
               },
               {
                 word: "starting her own business",
                 ipa: "/ˈstɑːrtɪŋ hɜːr oʊn ˈbɪznəs/",
                 pos: "v. phr.",
                 meaning: "tự mở kinh doanh riêng",
-                example: "<strong>Starting her own business</strong> requires a lot of money and experience."
+                example: "<strong>Starting her own business</strong> needs a lot of money and experience."
               }
             ]
           },
@@ -1316,7 +1318,7 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my younger sister wants to find a stable and well-paid job after graduation. If I were her, I think I would choose to work for a foreign company."
               },
               {
-                label: "2. Thân bài (2 lý do nâng cấp + Phản biện 2 phương án còn lại)",
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
                 text: "Lý do 1: Mức lương cạnh tranh (competitive salaries) và phúc lợi hấp dẫn (attractive benefits: health insurance, paid holidays) giúp trang trải chi phí sinh hoạt (cover her living expenses) và tiết kiệm. Lý do 2: Cải thiện tiếng Anh với đồng nghiệp quốc tế (international colleagues) và học từ quản lý kinh nghiệm -> nâng cao sự tự tin (boost her self-confidence) và mở rộng cơ hội nghề nghiệp. Phản biện: Làm nhà nước có job security nhưng lương chưa thỏa đáng; tự khởi nghiệp cần vốn đầu tư lớn (significant investment) và kinh nghiệm thực tế."
               },
               {
@@ -1325,7 +1327,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my younger sister wants to find a stable and well-paid job after graduation. <strong>If I were her, I think I would</strong> choose to work for a foreign company. <strong>I think it is the best choice because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies usually offer <strong>competitive salaries</strong> and <strong>attractive benefits</strong>. <strong>For example,</strong> some foreign companies provide <strong>health insurance</strong> and <strong>paid holidays</strong>. <strong>As a result,</strong> she can <strong>cover her living expenses</strong> and save money for her future.<br><br><strong>Another reason is that</strong> she can improve her English and learn new skills. She will have many opportunities to work with <strong>international colleagues</strong>, use English in daily conversations, and learn from experienced managers. These experiences can <strong>boost her self-confidence</strong> and open up more <strong>career opportunities</strong> in the future.<br><br><strong>Regarding the other two options, although</strong> working for the government <strong>is worth considering</strong> because it offers <strong>job security</strong>, the salary is not very satisfying. <strong>As for</strong> starting her own business, <strong>I don't think it is a good idea because</strong> it requires <strong>significant investment</strong> and practical experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my younger sister wants to find a stable and well-paid job after graduation. <strong>If I were her, I think I would</strong> choose to work for a foreign company. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> foreign companies usually offer <strong>competitive salaries</strong> and <strong>attractive benefits</strong>. <strong>For example,</strong> many provide <strong>health insurance</strong> and <strong>paid holidays</strong>, <strong>which</strong> allows her to <strong>cover her living expenses</strong> and save money for her future.<br><br><strong>Another reason is that</strong> she can improve her English and develop professional skills. Working with <strong>international colleagues</strong> and learning from experienced managers will <strong>boost her self-confidence</strong> and open up more <strong>career opportunities</strong> later on.<br><br><strong>Regarding the other two options, although</strong> working for the government <strong>is worth considering</strong> because it offers <strong>job security</strong>, the salary is not very satisfying. <strong>As for</strong> starting her own business, <strong>I don't think it's a good idea because</strong> it requires <strong>significant investment</strong> and practical experience.<br><br><strong>In conclusion, I believe</strong> working for a foreign company <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "competitive salaries",
@@ -1346,7 +1348,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/helθ ɪnˈʃʊrəns/",
                 pos: "n. phr.",
                 meaning: "bảo hiểm sức khỏe",
-                example: "Some foreign companies provide <strong>health insurance</strong> and paid holidays."
+                example: "Many companies provide <strong>health insurance</strong> and paid holidays."
               },
               {
                 word: "paid holidays",
@@ -1360,28 +1362,28 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈkʌvər hɜːr ˈlɪvɪŋ ɪkˈspensɪz/",
                 pos: "v. phr.",
                 meaning: "trang trải chi phí sinh hoạt",
-                example: "As a result, she can <strong>cover her living expenses</strong> and save money."
+                example: "It allows her to <strong>cover her living expenses</strong> and save money."
               },
               {
                 word: "international colleagues",
                 ipa: "/ˌɪntərˈnæʃnəl ˈkɑːliːɡz/",
                 pos: "n. phr.",
                 meaning: "đồng nghiệp quốc tế",
-                example: "She will have many opportunities to work with <strong>international colleagues</strong>."
+                example: "Working with <strong>international colleagues</strong> helps improve English."
               },
               {
                 word: "boost her self-confidence",
                 ipa: "/buːst hɜːr self ˈkɑːnfɪdəns/",
                 pos: "v. phr.",
                 meaning: "nâng cao sự tự tin của bản thân",
-                example: "These experiences can <strong>boost her self-confidence</strong> and open up more opportunities."
+                example: "These experiences will <strong>boost her self-confidence</strong>."
               },
               {
                 word: "job security",
                 ipa: "/dʒɑːb sɪˈkjʊrəti/",
                 pos: "n. phr.",
                 meaning: "sự ổn định, an toàn trong công việc",
-                example: "Working for the government is worth considering because it offers <strong>job security</strong>."
+                example: "Working for the government offers strong <strong>job security</strong>."
               }
             ]
           }
@@ -1446,7 +1448,7 @@ window.SPEAKING_PART2_TOPICS = [
         analysis: {
           questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 hướng: working in an office / becoming a freelancer / running a small business).",
           tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Bám sát từ khóa 'work-life balance'.",
-          length: "B1: ~145–160 từ · B2: ~185–210 từ."
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
         },
         pitfalls: [
           "Phát âm thiếu âm cuối /s/ trong 'freelancer' (/ˈfriːlænsər/), 'hours' (/ˈaʊərz/), 'activities', 'stress'.",
@@ -1461,8 +1463,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my close friend wants a job with a good work-life balance. If I were him, I think I would choose becoming a freelancer."
               },
               {
-                label: "2. Thân bài (2 lý do chọn & Phản biện 2 phương án còn lại)",
-                text: "Lý do 1: Giờ làm linh hoạt, tự quyết giờ bắt đầu và kết thúc, làm buổi sáng rồi dành phần còn lại trong ngày cho gia đình và sở thích. Lý do 2: Làm việc từ mọi nơi (nhà, quán cà phê), không phải đi làm mỗi ngày -> tiết kiệm thời gian, giảm căng thẳng, sống thoải mái. Phản biện: Làm văn phòng tuy lương ổn định nhưng giờ cố định không linh hoạt; kinh doanh nhỏ quá áp lực và tốn thời gian."
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 1 câu mở rộng): Giờ làm linh hoạt, không theo lịch cố định -> làm buổi sáng rồi dành phần còn lại trong ngày cho gia đình và sở thích. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Làm việc ở bất kỳ đâu (nhà, quán cà phê), không phải đi văn phòng mỗi ngày -> tiết kiệm thời gian, giảm căng thẳng, sống thoải mái. Phản biện ngắn: Văn phòng (lương ổn định nhưng giờ cứng nhắc); Kinh doanh nhỏ (áp lực, tốn quá nhiều thời gian)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -1470,7 +1472,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my close friend wants a job with a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a <strong>freelancer</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> freelancers have <strong>flexible working hours</strong>. He can decide when to start and finish work without a <strong>fixed schedule</strong>. <strong>For example,</strong> he can work in the morning and spend <strong>the rest of the day</strong> doing his favorite activities or being with his family.<br><br><strong>Another reason is that</strong> he can work from almost anywhere, like at home or at a coffee shop. He doesn't have to travel to the office every day. <strong>This can help</strong> him save time, <strong>reduce stress</strong>, and enjoy a <strong>comfortable lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is a good option</strong> because of the <strong>stable monthly salary</strong>, the fixed hours are not flexible. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> it is very stressful and takes too much time.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my close friend wants a job with a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a <strong>freelancer</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> freelancers have <strong>flexible working hours</strong> without a <strong>fixed schedule</strong>. <strong>For example,</strong> he can work in the morning and spend <strong>the rest of the day</strong> with his family or hobbies.<br><br><strong>Another reason is that</strong> he can work from anywhere, like at home or at a coffee shop. He doesn't have to travel to the office every day, so he can save time, <strong>reduce stress</strong>, and enjoy a <strong>comfortable lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is a good option</strong> for its <strong>stable monthly salary</strong>, the fixed hours are not flexible. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> it is stressful and takes too much time.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "work-life balance",
@@ -1491,21 +1493,21 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈfleksəbl ˈwɜːrkɪŋ ˈaʊərz/",
                 pos: "n. phr.",
                 meaning: "giờ làm việc linh hoạt",
-                example: "First of all, freelancers have <strong>flexible working hours</strong>."
+                example: "Freelancers have <strong>flexible working hours</strong>."
               },
               {
                 word: "fixed schedule",
                 ipa: "/fɪkst ˈskedʒuːl/",
                 pos: "n. phr.",
                 meaning: "lịch làm việc cố định",
-                example: "He can decide when to start and finish work without a <strong>fixed schedule</strong>."
+                example: "He can work without following a <strong>fixed schedule</strong>."
               },
               {
                 word: "the rest of the day",
                 ipa: "/ðə rest əv ðə deɪ/",
                 pos: "n. phr.",
                 meaning: "phần thời gian còn lại trong ngày",
-                example: "He can spend <strong>the rest of the day</strong> doing his favorite activities."
+                example: "He can spend <strong>the rest of the day</strong> with his family."
               },
               {
                 word: "reduce stress",
@@ -1519,14 +1521,14 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈkʌmftəbl ˈlaɪfstaɪl/",
                 pos: "n. phr.",
                 meaning: "lối sống thoải mái",
-                example: "He can save time, reduce stress, and enjoy a <strong>comfortable lifestyle</strong>."
+                example: "He can save time and enjoy a <strong>comfortable lifestyle</strong>."
               },
               {
                 word: "stable monthly salary",
                 ipa: "/ˈsteɪbl ˈmʌnθli ˈsæləri/",
                 pos: "n. phr.",
                 meaning: "mức lương hằng tháng ổn định",
-                example: "Working in an office is a good option because of the <strong>stable monthly salary</strong>."
+                example: "Working in an office offers a <strong>stable monthly salary</strong>."
               }
             ]
           },
@@ -1537,8 +1539,8 @@ window.SPEAKING_PART2_TOPICS = [
                 text: "The situation here is that my close friend is looking for a job that offers a good work-life balance. If I were him, I think I would choose becoming a freelancer."
               },
               {
-                label: "2. Thân bài (2 lý do chi tiết + Phản biện 2 phương án còn lại)",
-                text: "Lý do 1: Giờ làm linh hoạt hoàn toàn, tự quyết giờ làm/nghỉ thay vì theo lịch cố định -> làm buổi sáng rồi dành phần còn lại cho sở thích và thời gian chất lượng (quality time) bên gia đình. Lý do 2: Làm việc ở bất kỳ đâu (nhà, quán cà phê, thư viện), không phải đi lại giữa giờ cao điểm -> tiết kiệm thời gian, giảm căng thẳng, tận hưởng lối sống thư thái (relaxing lifestyle). Phản biện: Làm văn phòng tuy lương ổn định và giờ giấc đều đặn (predictable hours) nhưng đi lại mỗi ngày hạn chế tự do cá nhân (personal freedom); tự kinh doanh tốn nhiều công sức tìm khách và ảnh hưởng sức khỏe tinh thần (mental health)."
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
+                text: "Lý do 1: Giờ làm linh hoạt hoàn toàn (flexible working hours) thay vì lịch cố định -> làm buổi sáng rồi dành phần còn lại cho sở thích và thời gian chất lượng (quality time) bên gia đình. Lý do 2: Làm việc ở bất kỳ đâu (nhà, quán cà phê, thư viện), không phải đi lại giữa giờ cao điểm (commute to the office) -> tiết kiệm thời gian, giảm căng thẳng, tận hưởng lối sống thư thái (relaxing lifestyle). Phản biện: Làm văn phòng tuy lương ổn định và giờ đều đặn (predictable hours) nhưng hạn chế tự do cá nhân (personal freedom); tự kinh doanh tốn nhiều công sức và ảnh hưởng sức khỏe tinh thần (mental health)."
               },
               {
                 label: "3. Kết bài (Khẳng định lại lựa chọn)",
@@ -1546,7 +1548,7 @@ window.SPEAKING_PART2_TOPICS = [
               }
             ],
             modelAnswer:
-              "<strong>The situation here is that</strong> my close friend is looking for a job that offers a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a freelancer. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> becoming a freelancer gives him truly <strong>flexible working hours</strong>. <strong>This is because</strong> he can freely decide when to start working and when to finish instead of following a fixed schedule. <strong>For example,</strong> he can focus on his tasks in the morning and spend the rest of the day doing his favorite activities, <strong>which</strong> leaves much more <strong>quality time</strong> for himself and his family.<br><br><strong>Another reason is that</strong> he can work from almost anywhere he feels comfortable. <strong>In other words,</strong> he can easily switch between working at home, at a quiet coffee shop, or at the school library. <strong>Moreover,</strong> he doesn't have to <strong>commute to the office</strong> through heavy traffic every day. <strong>This can allow</strong> him <strong>to</strong> save time, reduce stress, and enjoy a more comfortable and <strong>relaxing lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is worth considering</strong> because it provides a stable monthly salary and <strong>predictable hours</strong>, commuting daily still limits his <strong>personal freedom</strong>. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> managing everything and finding customers takes huge effort and can harm his <strong>mental health</strong>.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
+              "<strong>The situation here is that</strong> my close friend is looking for a job that offers a good <strong>work-life balance</strong>. <strong>If I were him, I think I would</strong> choose becoming a freelancer. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> becoming a freelancer gives him truly <strong>flexible working hours</strong> instead of following a fixed schedule. <strong>For example,</strong> he can focus on his tasks in the morning and spend the rest of the day on his favorite activities, <strong>which</strong> leaves much more <strong>quality time</strong> for himself and his family.<br><br><strong>Another reason is that</strong> he can work from almost anywhere he feels comfortable, whether at home, at a quiet coffee shop, or at the library. Since he doesn't have to <strong>commute to the office</strong> through heavy traffic every day, he can save time, reduce stress, and enjoy a <strong>relaxing lifestyle</strong>.<br><br><strong>Regarding the other two options, although</strong> working in an office <strong>is worth considering</strong> because it provides a stable monthly salary and <strong>predictable hours</strong>, daily commuting still limits his <strong>personal freedom</strong>. <strong>As for</strong> running a small business, <strong>I don't think it's a good idea because</strong> managing everything and finding customers takes huge effort and can harm his <strong>mental health</strong>.<br><br><strong>In conclusion, I believe</strong> becoming a freelancer <strong>is the most suitable option in this situation.</strong>",
             vocab: [
               {
                 word: "work-life balance",
@@ -1581,7 +1583,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/rɪˈlæksɪŋ ˈlaɪfstaɪl/",
                 pos: "n. phr.",
                 meaning: "lối sống thư thái, nhẹ nhàng",
-                example: "This can allow him to enjoy a more comfortable and <strong>relaxing lifestyle</strong>."
+                example: "He can save time, reduce stress, and enjoy a <strong>relaxing lifestyle</strong>."
               },
               {
                 word: "predictable hours",
@@ -1595,7 +1597,7 @@ window.SPEAKING_PART2_TOPICS = [
                 ipa: "/ˈpɜːrsənl ˈfriːdəm/",
                 pos: "n. phr.",
                 meaning: "sự tự do cá nhân",
-                example: "Commuting daily to an office still limits his <strong>personal freedom</strong>."
+                example: "Daily commuting still limits his <strong>personal freedom</strong>."
               },
               {
                 word: "mental health",
@@ -1603,6 +1605,231 @@ window.SPEAKING_PART2_TOPICS = [
                 pos: "n. phr.",
                 meaning: "sức khỏe tinh thần",
                 example: "Managing a small business takes huge effort and can harm his <strong>mental health</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        part: "part2",
+        id: "p2_career_q3",
+        num: 3,
+        situationTitle: "Choosing a creative career (graphic designer, interior decorator, fashion designer)",
+        prompt:
+          "Your cousin is passionate about art and creativity. She is thinking of pursuing a career. Three options are considered: a graphic designer, an interior decorator, and a fashion designer. Which one would you recommend?",
+        promptHtml:
+          "Your cousin is passionate about art and creativity. She is thinking of pursuing a career. Three options are considered: <strong>a graphic designer</strong>, <strong>an interior decorator</strong>, and <strong>a fashion designer</strong>. Which one would you recommend?",
+        promptSentences: [
+          {
+            enHtml: "Your cousin is passionate about art and creativity.",
+            vi: "Anh/chị/em họ của bạn rất đam mê nghệ thuật và sự sáng tạo."
+          },
+          {
+            enHtml: "She is thinking of pursuing a career.",
+            vi: "Bạn ấy đang nghĩ đến việc theo đuổi một sự nghiệp."
+          },
+          {
+            enHtml:
+              "Three options are considered: <strong>a graphic designer</strong>, <strong>an interior decorator</strong>, and <strong>a fashion designer</strong>.",
+            vi: "Ba lựa chọn được cân nhắc là: nhà thiết kế đồ họa, người trang trí nội thất và nhà thiết kế thời trang."
+          },
+          {
+            enHtml: "Which one would you recommend?",
+            vi: "Bạn sẽ gợi ý lựa chọn nào?"
+          }
+        ],
+        promptVi:
+          "Em/chị họ của bạn rất đam mê nghệ thuật và sự sáng tạo. Bạn ấy đang cân nhắc theo đuổi một trong ba nghề: nhà thiết kế đồ họa, người trang trí nội thất, hoặc nhà thiết kế thời trang. Bạn sẽ gợi ý lựa chọn nào?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "A graphic designer (Nhà thiết kế đồ họa)",
+              reasons: [
+                "She can use her creativity every day to create different designs like logos, posters, and advertisements.",
+                "She can express her ideas freely, make full use of her talent, and satisfy her passion for art.",
+                "She can work in many different fields—advertising companies, fashion brands, or even as a freelancer—which gives her more career opportunities and chances to increase her income."
+              ]
+            },
+            {
+              option: "A fashion designer (Nhà thiết kế thời trang)",
+              reasons: [
+                "She can create her own clothing designs and express her personal style.",
+                "She can follow her passion for fashion every day.",
+                "She may become famous if her designs are successful and even start her own fashion brand in the future."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "A fashion designer (Nhà thiết kế thời trang)",
+              whyNot: "Although she can create her own clothing designs and express her personal style, the fashion industry is highly competitive and requires a lot of money to build a brand."
+            },
+            {
+              option: "An interior decorator (Người trang trí nội thất)",
+              whyNot: "She often has to follow clients' budgets and space limits, which restricts her creative freedom compared to graphic design."
+            }
+          ]
+        },
+        analysis: {
+          questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 nghề sáng tạo: graphic designer / interior decorator / fashion designer).",
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were her, I think I would...'). Bám sát đam mê nghệ thuật & cơ hội việc làm.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
+        },
+        pitfalls: [
+          "Phát âm nhầm trọng âm từ 'creativity' (/ˌkriːeɪˈtɪvəti/ — trọng âm rơi vào âm thứ 3) và 'advertisements' (/ˌædvərˈtaɪzmənts/).",
+          "Chỉ khen 'graphic designer is creative' chung chung mà quên nêu ví dụ sản phẩm cụ thể (logos, posters, advertisements) và môi trường làm việc đa dạng (advertising companies, fashion brands, freelancer).",
+          "Quên nhắc lý do chưa chọn 2 nghề còn lại (fashion designer cạnh tranh rất cao & tốn vốn; interior decorator hay bị giới hạn bởi ngân sách và không gian của khách)."
+        ],
+        levels: {
+          b1: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn nghề)",
+                text: "The situation here is that my cousin loves art and wants to choose a career. If I were her, I think I would become a graphic designer."
+              },
+              {
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 nghề còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 1–2 câu mở rộng): Dùng sự sáng tạo mỗi ngày để thiết kế logo, áp phích, quảng cáo -> tự do thể hiện ý tưởng và thỏa đam mê. Lý do 2 (1 câu luận điểm + 2 câu mở rộng): Làm việc ở nhiều lĩnh vực (công ty quảng cáo, nhãn hàng thời trang, freelancer) -> nhiều cơ hội việc làm và kiếm thêm thu nhập. Phản biện ngắn: Fashion designer (cạnh tranh cao, khó thành công); Interior decorator (phải làm theo ý khách thay vì ý mình)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe a graphic designer is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my cousin loves art and wants to choose a career. <strong>If I were her, I think I would</strong> become <strong>a graphic designer</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> she can <strong>use her creativity</strong> every day to make logos, posters, and <strong>advertisements</strong>. This helps her share her ideas freely and follow her <strong>passion for art</strong>.<br><br><strong>Another reason is that</strong> she can work in <strong>many different fields</strong>. <strong>For example,</strong> she can join <strong>advertising companies</strong>, <strong>fashion brands</strong>, or become a freelancer. <strong>Because of this,</strong> she gets more job chances and can <strong>earn more money</strong>.<br><br><strong>Regarding the other two options, although</strong> a <strong>fashion designer</strong> <strong>is a good option</strong>, it is very competitive and hard to succeed. <strong>As for</strong> an interior decorator, <strong>I don't think it's a good idea because</strong> she has to follow customers' ideas instead of her own.<br><br><strong>In conclusion, I believe</strong> a graphic designer <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "graphic designer",
+                ipa: "/ˈɡræfɪk dɪˈzaɪnər/",
+                pos: "n. phr.",
+                meaning: "nhà thiết kế đồ họa",
+                example: "If I were her, I think I would become a <strong>graphic designer</strong>."
+              },
+              {
+                word: "use her creativity",
+                ipa: "/juːz hɜːr ˌkriːeɪˈtɪvəti/",
+                pos: "v. phr.",
+                meaning: "vận dụng sự sáng tạo của mình",
+                example: "As a designer, she can <strong>use her creativity</strong> every day."
+              },
+              {
+                word: "advertisements",
+                ipa: "/ˌædvərˈtaɪzmənts/",
+                pos: "n.",
+                meaning: "các mẫu quảng cáo",
+                example: "Graphic designers create logos, posters, and <strong>advertisements</strong>."
+              },
+              {
+                word: "passion for art",
+                ipa: "/ˈpæʃn fɔːr ɑːrt/",
+                pos: "n. phr.",
+                meaning: "niềm đam mê nghệ thuật",
+                example: "This career helps her follow her <strong>passion for art</strong>."
+              },
+              {
+                word: "many different fields",
+                ipa: "/ˈmeni ˈdɪfrənt fiːldz/",
+                pos: "n. phr.",
+                meaning: "nhiều lĩnh vực khác nhau",
+                example: "Graphic designers can work in <strong>many different fields</strong>."
+              },
+              {
+                word: "advertising companies",
+                ipa: "/ˈædvərtaɪzɪŋ ˈkʌmpəniz/",
+                pos: "n. phr.",
+                meaning: "các công ty quảng cáo",
+                example: "She can work for <strong>advertising companies</strong> or fashion brands."
+              },
+              {
+                word: "fashion brands",
+                ipa: "/ˈfæʃn brændz/",
+                pos: "n. phr.",
+                meaning: "các thương hiệu thời trang",
+                example: "Many designers create visuals for popular <strong>fashion brands</strong>."
+              },
+              {
+                word: "earn more money",
+                ipa: "/ɜːrn mɔːr ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "kiếm được nhiều tiền hơn",
+                example: "Having more job chances helps her <strong>earn more money</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn nghề)",
+                text: "The situation here is that my cousin is passionate about art and creativity, and she is thinking of choosing a career. If I were her, I think I would recommend becoming a graphic designer."
+              },
+              {
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 nghề còn lại)",
+                text: "Lý do 1: Vận dụng sự sáng tạo mỗi ngày qua các thiết kế đa dạng (logos, posters, advertisements) -> tự do thể hiện ý tưởng (express her ideas freely), phát huy tối đa tài năng (make full use of her talent) và thỏa mãn đam mê (satisfy her passion). Lý do 2: Làm việc trong nhiều lĩnh vực (advertising companies, fashion brands, hoặc become a freelancer) -> mở rộng cơ hội nghề nghiệp (career opportunities) và tăng thu nhập (increase her income). Phản biện: Fashion designer (dù thể hiện được personal style nhưng highly competitive và cần nhiều vốn); Interior decorator (phụ thuộc ngân sách và không gian khách hàng, hạn chế creative freedom)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe becoming a graphic designer is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my cousin is passionate about art and creativity, and she is thinking of pursuing a career. <strong>If I were her, I think I would</strong> choose to become <strong>a graphic designer</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> this job lets her use her creativity every single day. She can create different <strong>visual designs</strong> like logos, posters, and advertisements, <strong>which</strong> lets her <strong>express her ideas freely</strong>. Doing this daily will help her <strong>make full use of her talent</strong> and truly <strong>satisfy her passion</strong>.<br><br><strong>Another reason is that</strong> graphic designers can work across <strong>many different fields</strong>. <strong>For example,</strong> she can work for advertising companies, join fashion brands, or even become a freelancer. This flexibility brings wider <strong>career opportunities</strong> and gives her more chances to <strong>increase her income</strong>.<br><br><strong>Regarding the other two options, although</strong> becoming a fashion designer <strong>is worth considering</strong> since she could express her <strong>personal style</strong>, the industry is <strong>highly competitive</strong> and takes huge capital to succeed. <strong>As for</strong> an interior decorator, <strong>I don't think it's a good idea because</strong> clients' budgets and spaces often limit her <strong>creative freedom</strong>.<br><br><strong>In conclusion, I believe</strong> becoming a graphic designer <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "visual designs",
+                ipa: "/ˈvɪʒuəl dɪˈzaɪnz/",
+                pos: "n. phr.",
+                meaning: "các thiết kế trực quan / hình ảnh",
+                example: "She can create different <strong>visual designs</strong> like logos and posters."
+              },
+              {
+                word: "express her ideas freely",
+                ipa: "/ɪkˈspres hɜːr aɪˈdɪəz ˈfriːli/",
+                pos: "v. phr.",
+                meaning: "tự do thể hiện các ý tưởng của mình",
+                example: "Graphic design lets her <strong>express her ideas freely</strong>."
+              },
+              {
+                word: "make full use of her talent",
+                ipa: "/meɪk fʊl juːs əv hɜːr ˈtælənt/",
+                pos: "v. phr.",
+                meaning: "phát huy tối đa tài năng của bản thân",
+                example: "This career helps her <strong>make full use of her talent</strong>."
+              },
+              {
+                word: "satisfy her passion",
+                ipa: "/ˈsætɪsfaɪ hɜːr ˈpæʃn/",
+                pos: "v. phr.",
+                meaning: "thỏa mãn niềm đam mê",
+                example: "Working in a creative field will truly <strong>satisfy her passion</strong>."
+              },
+              {
+                word: "increase her income",
+                ipa: "/ɪnˈkriːs hɜːr ˈɪnkʌm/",
+                pos: "v. phr.",
+                meaning: "gia tăng thu nhập",
+                example: "Freelance projects give her more chances to <strong>increase her income</strong>."
+              },
+              {
+                word: "personal style",
+                ipa: "/ˈpɜːrsənl staɪl/",
+                pos: "n. phr.",
+                meaning: "phong cách cá nhân",
+                example: "Fashion designers love expressing their <strong>personal style</strong>."
+              },
+              {
+                word: "highly competitive",
+                ipa: "/ˈhaɪli kəmˈpetətɪv/",
+                pos: "adj. phr.",
+                meaning: "có tính cạnh tranh rất cao",
+                example: "The fashion industry is <strong>highly competitive</strong> for beginners."
+              },
+              {
+                word: "creative freedom",
+                ipa: "/kriˈeɪtɪv ˈfriːdəm/",
+                pos: "n. phr.",
+                meaning: "sự tự do sáng tạo",
+                example: "Strict client budgets can sometimes limit a decorator's <strong>creative freedom</strong>."
               }
             ]
           }

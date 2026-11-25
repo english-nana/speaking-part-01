@@ -1812,6 +1812,9 @@
                   <span class="p2-outline-step-goal">— Giải thích 2 lý do chọn &amp; giải thích tại sao không chọn 2 phương án còn lại</span>
                 </div>
                 <div class="p2-outline-row-template">
+                  <div style="font-size:12.5px;color:#52525B;margin-bottom:8px;">
+                    <strong>Lưu ý:</strong> Các cụm mở rộng (<em>This is because, For example, Because of this, In other words, Moreover, This can...</em>) chỉ là gợi ý để phân tích lý do, <strong>không bắt buộc dùng hết</strong>. Ở <strong>Level B1</strong>, mỗi lý do chỉ cần 1 câu luận điểm + 1–2 câu mở rộng thật ngắn gọn.
+                  </div>
                   <div class="p2-outline-block">
                     <div><strong>First of all,</strong> ${slot("lý do 1")}.</div>
                     <ul class="p2-outline-sublist">

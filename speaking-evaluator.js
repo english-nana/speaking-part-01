@@ -60,7 +60,10 @@
     "international", "neighborhood", "traffic", "pick", "parents", "child", "daughter", "factor", "options",
     "stable", "well-paid", "government", "foreign", "company", "companies", "business",
     "salary", "salaries", "benefits", "insurance", "colleagues", "managers", "investment", "security",
-    "freelancer", "freelancers", "office", "balance", "schedule", "lifestyle", "customers", "mental", "freedom"
+    "freelancer", "freelancers", "office", "balance", "schedule", "lifestyle", "customers", "mental", "freedom",
+    "art", "creativity", "graphic", "designer", "designers", "design", "designs", "interior", "decorator",
+    "fashion", "logo", "logos", "brand", "brands", "talent", "passion", "passionate", "fields", "field",
+    "income", "clothing", "style", "competitive", "capital", "visual", "pursue", "pursuing", "career", "careers"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -114,7 +117,10 @@
     "international colleagues", "self-confidence", "job security", "significant investment",
     "practical experience", "satisfying", "experienced managers",
     "work-life balance", "flexible working hours", "quality time", "commute to the office",
-    "relaxing lifestyle", "predictable hours", "personal freedom", "mental health"
+    "relaxing lifestyle", "predictable hours", "personal freedom", "mental health",
+    "visual designs", "express her ideas freely", "make full use of her talent", "make full use of",
+    "satisfy her passion", "increase her income", "personal style", "highly competitive",
+    "creative freedom"
   ];
 
   function tokenize(text) {
@@ -1180,7 +1186,7 @@
       if (isOffTopic) {
         notes.push("Nội dung chưa bám sát tình huống; hãy nêu rõ lựa chọn trong 3 phương án của đề.");
       } else if (wordCount < 70) {
-        notes.push(`Bài nói Part 2 còn ngắn (${wordCount} từ${timeNote}). Hãy triển khai đủ 3 phần: Mở bài → Thân bài (2 lý do chọn + lý do bỏ 2 phương án còn lại) → Kết bài (~115+ từ) để đạt mức B1.`);
+        notes.push(`Bài nói Part 2 còn ngắn (${wordCount} từ${timeNote}). Hãy triển khai đủ 3 phần: Mở bài → Thân bài (2 lý do chọn + lý do bỏ 2 phương án còn lại) → Kết bài (~105+ từ) để đạt mức B1.`);
       } else if (badgeTone === "below") {
         notes.push(`Bài nói còn ${errorTypeCount} dạng lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); hãy sửa các lỗi trên để đạt mức B1.`);
       } else if (badgeTone === "b1" || levelLabel === "Xấp xỉ B1") {
