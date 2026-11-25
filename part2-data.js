@@ -2318,6 +2318,272 @@ window.SPEAKING_PART2_TOPICS = [
         }
       }
     ]
+  },
+
+  // ==========================================================================
+  // DẠNG 4: CHỌN HOẠT ĐỘNG PHÙ HỢP (CHOOSING AN ACTIVITY) — 1 TÌNH HUỐNG
+  // ==========================================================================
+  {
+    part: "part2",
+    id: "part2-activity",
+    number: "04",
+    title: "Choosing an Activity",
+    titleVi: "Chọn hoạt động phù hợp",
+    description:
+      "Luyện tình huống chọn hoạt động hiệu quả và thú vị nhất để học tập hoặc trải nghiệm (học lịch sử Việt Nam cho sinh viên nước ngoài).",
+    questionsCount: 1,
+    questions: [
+      {
+        part: "part2",
+        id: "p2_activity_q1",
+        num: 1,
+        situationTitle: "Learning Vietnamese history (museum, documentaries, history books)",
+        prompt:
+          "A group of your foreign students wants to learn Vietnamese history. Three activities are considered: visiting a museum, watching documentaries, and reading history books. Which one do you think is the best choice?",
+        promptHtml:
+          "A group of your foreign students wants to learn Vietnamese history. Three activities are considered: <strong>visiting a museum</strong>, <strong>watching documentaries</strong>, and <strong>reading history books</strong>. Which one do you think is the best choice?",
+        promptSentences: [
+          {
+            enHtml: "A group of your foreign students wants to learn Vietnamese history.",
+            vi: "Một nhóm sinh viên nước ngoài của bạn muốn tìm hiểu lịch sử Việt Nam."
+          },
+          {
+            enHtml:
+              "Three activities are considered: <strong>visiting a museum</strong>, <strong>watching documentaries</strong>, and <strong>reading history books</strong>.",
+            vi: "Ba hoạt động được cân nhắc là: tham quan bảo tàng, xem phim tài liệu và đọc sách lịch sử."
+          },
+          {
+            enHtml: "Which one do you think is the best choice?",
+            vi: "Bạn nghĩ hoạt động nào là lựa chọn tốt nhất?"
+          }
+        ],
+        promptVi:
+          "Một nhóm sinh viên nước ngoài của bạn muốn tìm hiểu lịch sử Việt Nam. Ba hoạt động được cân nhắc gồm: tham quan bảo tàng, xem phim tài liệu và đọc sách lịch sử. Theo bạn lựa chọn nào là tốt nhất?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Visiting a museum (Tham quan bảo tàng)",
+              reasons: [
+                "Students can learn history in a more interesting way instead of just reading about past events.",
+                "Seeing real objects, photographs, and other valuable exhibits with their own eyes makes historical events much easier to remember.",
+                "Museums often offer guided tours where they can listen to explanations, ask questions whenever they want, and make boring details like dates, events, and important figures more engaging and relevant."
+              ]
+            },
+            {
+              option: "Watching documentaries (Xem phim tài liệu)",
+              reasons: [
+                "More interesting and engaging: with historical footage, photographs, and interviews (such as a documentary about the Vietnam War), students see real images and understand historical events more clearly.",
+                "English subtitles available: very helpful for foreigners who don't know Vietnamese, helping them follow the stories easily without struggling with unfamiliar vocabulary.",
+                "Convenient: students can watch in class, pause and replay parts to learn at their own pace, and save time traveling to museums."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Watching documentaries (Xem phim tài liệu)",
+              whyNot: "Although documentaries are convenient and often include English subtitles, students cannot ask questions directly or see real historical artifacts up close."
+            },
+            {
+              option: "Reading history books (Đọc sách lịch sử)",
+              whyNot: "History books are often full of long texts and dates, which can feel dry, boring, and difficult for foreign students to follow."
+            }
+          ]
+        },
+        analysis: {
+          questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 hoạt động: visiting a museum / watching documentaries / reading history books).",
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were in this situation, I think I would...'). Chú ý đối tượng là 'foreign students'.",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
+        },
+        pitfalls: [
+          "Phát âm sai từ 'museum' (/mjuˈziːəm/ — trọng âm âm 2), 'exhibits' (/ɪɡˈzɪbɪts/ — âm /h/ câm), và 'documentaries' (/ˌdɑːkjuˈmentəriz/).",
+          "Quên gắn lý do với đối tượng 'foreign students' (sinh viên nước ngoài cần trải nghiệm trực quan, hướng dẫn viên giải thích dễ hiểu thay vì sách chữ dài khó đọc).",
+          "Chỉ nói 'museums are interesting' chung chung mà thiếu ví dụ cụ thể (real objects, old photos, guided tours, asking questions)."
+        ],
+        levels: {
+          b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Visiting a museum (Tham quan bảo tàng)",
+                  reasons: [
+                    "Students can learn history in a more interesting way by seeing real objects and old photos, making past events easier to remember.",
+                    "Museums offer guided tours, so students can listen to tour guides and ask questions to understand Vietnamese history better."
+                  ]
+                },
+                {
+                  option: "Watching documentaries (Xem phim tài liệu)",
+                  reasons: [
+                    "Videos show real pictures and interviews, like a film about the Vietnam War, helping students understand events clearly.",
+                    "Many documentaries have English subtitles, so foreign students can follow the story easily without knowing Vietnamese.",
+                    "It is convenient because they can watch in class, pause or replay parts, and save travel time."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Watching documentaries (Xem phim tài liệu)",
+                  whyNot: "It is convenient, but students cannot ask questions directly."
+                },
+                {
+                  option: "Reading history books (Đọc sách lịch sử)",
+                  whyNot: "Long books with many dates are often boring and make students lose interest."
+                }
+              ]
+            },
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn hoạt động)",
+                text: "The situation here is that a group of foreign students wants to learn Vietnamese history. If I were in this situation, I think I would choose visiting a museum."
+              },
+              {
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 hoạt động còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Học lịch sử thú vị hơn thay vì chỉ đọc -> tận mắt thấy hiện vật thật, ảnh cũ nên dễ nhớ sự kiện quá khứ hơn. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Bảo tàng có tour hướng dẫn -> nghe hướng dẫn viên giải thích và hỏi bất cứ lúc nào để hiểu sâu hơn. Phản biện ngắn: Phim tài liệu (không hỏi trực tiếp được); Sách lịch sử (dài, nhiều mốc ngày tháng dễ chán và mất hứng thú)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe visiting a museum is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> a group of foreign students wants to learn <strong>Vietnamese history</strong>. <strong>If I were in this situation, I think I would</strong> choose <strong>visiting a museum</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> students can learn history in a <strong>more interesting way</strong>. Instead of just reading, they can see <strong>real objects</strong> and <strong>old photos</strong> with their own eyes. <strong>Because of this,</strong> <strong>past events</strong> are much easier to remember.<br><br><strong>Another reason is that</strong> museums often offer <strong>guided tours</strong>. Students can listen to <strong>tour guides</strong> and ask questions whenever they want, so they understand Vietnamese history much better.<br><br><strong>Regarding the other two options, although</strong> watching documentaries <strong>is a good option</strong>, students cannot ask questions directly. <strong>As for</strong> reading history books, <strong>I don't think it's a good idea because</strong> long books with many dates are often boring and make students <strong>lose interest</strong>.<br><br><strong>In conclusion, I believe</strong> visiting a museum <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "Vietnamese history",
+                ipa: "/ˌviːetnəˈmiːz ˈhɪstəri/",
+                pos: "n. phr.",
+                meaning: "lịch sử Việt Nam",
+                example: "A group of foreign students wants to learn <strong>Vietnamese history</strong>."
+              },
+              {
+                word: "more interesting way",
+                ipa: "/mɔːr ˈɪntrəstɪŋ weɪ/",
+                pos: "n. phr.",
+                meaning: "cách thú vị hơn",
+                example: "Students can learn history in a <strong>more interesting way</strong>."
+              },
+              {
+                word: "real objects",
+                ipa: "/riːəl ˈɑːbdʒekts/",
+                pos: "n. phr.",
+                meaning: "hiện vật thật",
+                example: "At a museum, they can see <strong>real objects</strong> and old photos."
+              },
+              {
+                word: "old photos",
+                ipa: "/oʊld ˈfoʊtoʊz/",
+                pos: "n. phr.",
+                meaning: "những bức ảnh cũ / ảnh lịch sử",
+                example: "Seeing real objects and <strong>old photos</strong> helps students remember lessons."
+              },
+              {
+                word: "past events",
+                ipa: "/pæst ɪˈvents/",
+                pos: "n. phr.",
+                meaning: "những sự kiện trong quá khứ",
+                example: "Because of this, <strong>past events</strong> are much easier to remember."
+              },
+              {
+                word: "guided tours",
+                ipa: "/ˈɡaɪdɪd tʊrz/",
+                pos: "n. phr.",
+                meaning: "các chuyến tham quan có hướng dẫn viên",
+                example: "Museums often offer <strong>guided tours</strong> for visitors."
+              },
+              {
+                word: "tour guides",
+                ipa: "/tʊr ɡaɪdz/",
+                pos: "n. phr.",
+                meaning: "hướng dẫn viên tham quan",
+                example: "Students can listen to <strong>tour guides</strong> and ask questions."
+              },
+              {
+                word: "lose interest",
+                ipa: "/luːz ˈɪntrəst/",
+                pos: "v. phr.",
+                meaning: "mất hứng thú, chán nản",
+                example: "Long books with many dates can make students <strong>lose interest</strong>."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn hoạt động)",
+                text: "The situation here is that a group of foreign students wants to learn about Vietnamese history. If I were in this situation, I think I would recommend visiting a museum."
+              },
+              {
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 hoạt động kia)",
+                text: "Lý do 1: Học lịch sử sinh động hơn thay vì chỉ đọc -> tận mắt thấy (with their own eyes) hiện vật thật, ảnh và hiện vật quý giá (valuable exhibits), giúp dễ ghi nhớ các sự kiện lịch sử (historical events). Lý do 2: Có guided tours với hướng dẫn viên giải thích rõ ràng (explanations), được hỏi bất cứ lúc nào -> hiểu sâu hơn (deeper understanding) và biến mốc ngày tháng, nhân vật quan trọng (important figures) trở nên cuốn hút, gần gũi (engaging and relevant). Phản biện: Xem phim tài liệu (tuy có English subtitles nhưng không hỏi trực tiếp hay xem hiện vật tận mắt); Đọc sách lịch sử (chữ dài, nhiều ngày tháng dễ khô khan và khó theo dõi với người nước ngoài)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe visiting a museum is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> a group of foreign students wants to learn about Vietnamese history. <strong>If I were in this situation, I think I would</strong> recommend <strong>visiting a museum</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> visiting a museum lets students explore history in a much more engaging way. Instead of just reading about past events, they can see real objects, photographs, and <strong>valuable exhibits</strong> <strong>with their own eyes</strong>, <strong>which</strong> makes <strong>historical events</strong> far easier to remember.<br><br><strong>Another reason is that</strong> most museums offer guided tours with knowledgeable staff. Students can listen to clear <strong>explanations</strong> and ask questions whenever they want, giving them a <strong>deeper understanding</strong> of Vietnamese history. This turns dry details like dates and <strong>important figures</strong> into something <strong>engaging and relevant</strong>.<br><br><strong>Regarding the other two options, although</strong> watching documentaries <strong>is worth considering</strong> because many have <strong>English subtitles</strong>, students cannot ask questions directly or see real artifacts up close. <strong>As for</strong> reading history books, <strong>I don't think it's a good idea because</strong> long texts full of dates can feel dry and hard for foreigners to follow.<br><br><strong>In conclusion, I believe</strong> visiting a museum <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "valuable exhibits",
+                ipa: "/ˈvæljuəbl ɪɡˈzɪbɪts/",
+                pos: "n. phr.",
+                meaning: "những hiện vật trưng bày quý giá",
+                example: "They can see photographs and <strong>valuable exhibits</strong> at the museum."
+              },
+              {
+                word: "with their own eyes",
+                ipa: "/wɪð ðer oʊn aɪz/",
+                pos: "prep. phr.",
+                meaning: "bằng chính mắt mình, tận mắt",
+                example: "Seeing real objects <strong>with their own eyes</strong> makes lessons memorable."
+              },
+              {
+                word: "historical events",
+                ipa: "/hɪˈstɔːrɪkl ɪˈvents/",
+                pos: "n. phr.",
+                meaning: "các sự kiện lịch sử",
+                example: "Museums make <strong>historical events</strong> far easier to remember."
+              },
+              {
+                word: "explanations",
+                ipa: "/ˌekspləˈneɪʃnz/",
+                pos: "n.",
+                meaning: "lời giải thích, thuyết minh",
+                example: "Students can listen to clear <strong>explanations</strong> from tour guides."
+              },
+              {
+                word: "deeper understanding",
+                ipa: "/ˈdiːpər ˌʌndərˈstændɪŋ/",
+                pos: "n. phr.",
+                meaning: "sự hiểu biết sâu sắc hơn",
+                example: "Asking questions gives them a <strong>deeper understanding</strong> of Vietnamese history."
+              },
+              {
+                word: "important figures",
+                ipa: "/ɪmˈpɔːrtnt ˈfɪɡjərz/",
+                pos: "n. phr.",
+                meaning: "các nhân vật lịch sử quan trọng",
+                example: "Guided tours bring dates and <strong>important figures</strong> to life."
+              },
+              {
+                word: "engaging and relevant",
+                ipa: "/ɪnˈɡeɪdʒɪŋ ænd ˈreləvənt/",
+                pos: "adj. phr.",
+                meaning: "cuốn hút và gần gũi, thiết thực",
+                example: "Good guides make dry history details more <strong>engaging and relevant</strong>."
+              },
+              {
+                word: "English subtitles",
+                ipa: "/ˈɪŋɡlɪʃ ˈsʌbtaɪtlz/",
+                pos: "n. phr.",
+                meaning: "phụ đề tiếng Anh",
+                example: "Many documentaries are available with <strong>English subtitles</strong>."
+              }
+            ]
+          }
+        }
+      }
+    ]
   }
 ];
 

@@ -65,7 +65,10 @@
     "fashion", "logo", "logos", "brand", "brands", "talent", "passion", "passionate", "fields", "field",
     "income", "clothing", "style", "competitive", "capital", "visual", "pursue", "pursuing", "career", "careers",
     "rural", "teaching", "techniques", "engaging", "resources", "financially", "independent", "qualifications",
-    "transportation", "expenses", "graduate", "graduated", "higher", "education", "invest", "dynamic", "lessons"
+    "transportation", "expenses", "graduate", "graduated", "higher", "education", "invest", "dynamic", "lessons",
+    "museum", "museums", "history", "historical", "documentary", "documentaries", "foreigners", "exhibits",
+    "exhibit", "objects", "photographs", "guided", "tour", "tours", "guide", "guides", "explanations",
+    "dates", "figures", "relevant", "subtitles", "footage", "interviews", "artifacts", "vietnamese", "vietnam", "war"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -126,7 +129,10 @@
     "cover his daily expenses", "invest in himself", "higher education", "financially independent",
     "valuable teaching experience", "teaching resources", "effective teaching techniques",
     "engaging", "international working environment", "standard of living", "individual attention",
-    "high qualifications"
+    "high qualifications",
+    "valuable exhibits", "with their own eyes", "historical events", "deeper understanding",
+    "important figures", "engaging and relevant", "english subtitles", "historical footage",
+    "unfamiliar vocabulary", "learn at their own pace"
   ];
 
   function tokenize(text) {
