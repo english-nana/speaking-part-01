@@ -407,10 +407,38 @@ async function gradeSingleAttempt(
   }
 
   if (!audioBase64 && wordCount < 2) {
+    const noAudioMsg =
+      "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm (thường do học viên chưa cấp quyền micro hoặc dùng trình duyệt trong Zalo/Facebook). Học viên cần ghi âm lại và nộp lại.";
+    const nowIsoNoAudio = new Date().toISOString();
+    await admin.from("speaking_ai_reviews").upsert(
+      {
+        id: reviewId,
+        attempt_id: att.id,
+        user_id: att.user_id,
+        topic_id: att.topic_id || "",
+        topic_title: String(options.overrideTopicTitle || att.topic_title || att.topic_id || "Speaking Part 1").trim(),
+        question_id: att.question_id,
+        prompt_text: String(options.overridePromptText || att.prompt_text || att.question_id || "").trim(),
+        target_level:
+          String(options.overrideTargetLevel || att.target_level || "B1").toUpperCase() === "B2" ? "B2" : "B1",
+        status: "no_audio",
+        release_at: att.ai_release_at || nowIsoNoAudio,
+        error_message: noAudioMsg,
+        grade_count: existingReview?.grade_count || 0,
+        retry_count: MAX_AUTO_RETRIES,
+        updated_at: nowIsoNoAudio
+      },
+      { onConflict: "id" }
+    );
+    await admin
+      .from("speaking_attempts")
+      .update({ ai_status: "no_audio" })
+      .eq("id", att.id);
+
     return {
       ok: false,
       status: 400,
-      error: "Bản ghi âm chưa có dữ liệu âm thanh hoặc lời nói tiếng Anh để chấm điểm."
+      error: noAudioMsg
     };
   }
 
@@ -800,6 +828,7 @@ Deno.serve(async (req: Request) => {
       });
 
       const nowMs = Date.now();
+      const emptyNoAudioAttempts: AttemptRow[] = [];
       const pendingList = Object.values(latestByKey)
         .sort((a, b) => {
           const ta = new Date(a.submitted_at || a.created_at || 0).getTime();
@@ -809,14 +838,50 @@ Deno.serve(async (req: Request) => {
         .filter((att: AttemptRow) => {
           const key = `${att.user_id}__${att.question_id}`;
           const rev = reviewById[key];
-          if (rev && rev.attempt_id === att.id && rev.status === "ready") return false;
+          if (rev && rev.attempt_id === att.id && (rev.status === "ready" || rev.status === "no_audio")) return false;
+          if ((att as { ai_status?: string }).ai_status === "no_audio") return false;
           if (rev && rev.attempt_id === att.id && (rev.retry_count || 0) >= MAX_AUTO_RETRIES) return false;
+          const wc = String(att.transcript || "").trim().split(/\s+/).filter(Boolean).length;
+          if (!att.audio_path && wc < 2) {
+            emptyNoAudioAttempts.push(att);
+            return false;
+          }
           if (rev && rev.attempt_id === att.id && rev.updated_at && !isTeacher) {
             const lastTryMs = new Date(rev.updated_at).getTime();
             if (!isNaN(lastTryMs) && nowMs - lastTryMs < RETRY_COOLDOWN_MS) return false;
           }
           return true;
         });
+
+      // Đánh dấu ngay các bài nộp rỗng (thiếu audio + transcript) là no_audio để không bao giờ kẹt hàng đợi
+      if (emptyNoAudioAttempts.length > 0) {
+        const nowIsoSkip = new Date().toISOString();
+        const noAudioMsg =
+          "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm. Học viên cần kiểm tra micro và ghi âm nộp lại.";
+        for (const emptyAtt of emptyNoAudioAttempts.slice(0, 20)) {
+          const emptyKey = `${emptyAtt.user_id}__${emptyAtt.question_id}`;
+          await admin.from("speaking_ai_reviews").upsert(
+            {
+              id: emptyKey,
+              attempt_id: emptyAtt.id,
+              user_id: emptyAtt.user_id,
+              topic_id: emptyAtt.topic_id || "",
+              topic_title: String(emptyAtt.topic_title || emptyAtt.topic_id || "Speaking Part 1").trim(),
+              question_id: emptyAtt.question_id,
+              prompt_text: String(emptyAtt.prompt_text || emptyAtt.question_id || "").trim(),
+              target_level: String(emptyAtt.target_level || "B1").toUpperCase() === "B2" ? "B2" : "B1",
+              status: "no_audio",
+              release_at: emptyAtt.ai_release_at || nowIsoSkip,
+              error_message: noAudioMsg,
+              grade_count: reviewById[emptyKey]?.grade_count || 0,
+              retry_count: MAX_AUTO_RETRIES,
+              updated_at: nowIsoSkip
+            },
+            { onConflict: "id" }
+          );
+          await admin.from("speaking_attempts").update({ ai_status: "no_audio" }).eq("id", emptyAtt.id);
+        }
+      }
 
       const slice = pendingList.slice(0, batchSize);
       const results: Array<{ id: string; ok: boolean; error?: string }> = [];

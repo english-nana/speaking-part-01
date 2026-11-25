@@ -138,10 +138,11 @@
   async function uploadRecording(userId, questionId, takeId, blob) {
     const client = getClient();
     if (!client || !blob) return { path: "", error: null };
-    const mimeType = blob.type || "audio/webm";
-    const path = `${userId}/${questionId}/${takeId}.${pickAudioExtension(mimeType)}`;
+    const rawMime = String(blob.type || "audio/webm");
+    const cleanMimeType = rawMime.split(";")[0].trim() || "audio/webm";
+    const path = `${userId}/${questionId}/${takeId}.${pickAudioExtension(cleanMimeType)}`;
     const { error } = await client.storage.from(AUDIO_BUCKET).upload(path, blob, {
-      contentType: mimeType,
+      contentType: cleanMimeType,
       upsert: true
     });
     return error ? { path: "", error } : { path, error: null };

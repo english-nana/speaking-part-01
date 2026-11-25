@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261124v" />
+  <link rel="stylesheet" href="./styles.css?v=20261125a" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261124v"></script>
-  <script src="./supabase-client.js?v=20261124v"></script>
-  <script src="./travel-data.js?v=20261124v"></script>
-  <script src="./part2-data.js?v=20261124v"></script>
-  <script src="./speaking-evaluator.js?v=20261124v"></script>
+  <script src="./supabase-config.js?v=20261125a"></script>
+  <script src="./supabase-client.js?v=20261125a"></script>
+  <script src="./travel-data.js?v=20261125a"></script>
+  <script src="./part2-data.js?v=20261125a"></script>
+  <script src="./speaking-evaluator.js?v=20261125a"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -316,6 +316,7 @@
             durationSec: chosen.duration_sec || 0,
             takeNum: chosen.take_number || 1,
             totalAttemptsCount: list.length,
+            audioPath: chosen.audio_path || "",
             audioUrl: chosen.audio_path ? signedUrlMap[chosen.audio_path] || "" : "",
             transcript: chosen.transcript || (rj && rj.recognized_transcript) || "",
             teacherFeedback: chosen.teacher_feedback || "",
@@ -962,14 +963,35 @@
                         (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0)
                       : 0;
 
+                    const transcriptWordCount = String(sub.transcript || "")
+                      .trim()
+                      .split(/\s+/)
+                      .filter(Boolean).length;
+                    const isNoAudioSubmission =
+                      sub.aiStatus === "no_audio" ||
+                      (rev && rev.status === "no_audio") ||
+                      (!sub.audioPath && !sub.audioUrl && transcriptWordCount < 2);
+                    const scheduledReleaseMs = sub.aiReleaseAt
+                      ? new Date(sub.aiReleaseAt).getTime()
+                      : sub.rawTime
+                        ? sub.rawTime + RELEASE_HOURS * 3600 * 1000
+                        : 0;
+                    const isOverdueUngraded =
+                      !hasReadyReview && !isNoAudioSubmission && scheduledReleaseMs > 0 && scheduledReleaseMs <= Date.now();
+
                     let statusHtml = `<span style="font-size:12.5px;color:#52525B;">Chưa có bài sửa chi tiết.</span>`;
                     if (hasReadyReview && isWaitingRelease) {
                       statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đã chấm xong · Hẹn trả lúc ${escapeHtml(CLOUD.formatDateTime(rev.release_at))} (còn ${escapeHtml(remain)})</span>`;
                     } else if (hasReadyReview) {
                       statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#166534;">✅ Đã trả bài sửa (${escapeHtml(CLOUD.formatDateTime(rev.release_at))}) · ${rev.student_seen_at ? "✓ Học viên đã đọc" : "● Học viên chưa đọc"}</span>`;
+                    } else if (isNoAudioSubmission) {
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B91C1C;">⚠️ Không thể chấm tự động: bài nộp thiếu tệp âm thanh &amp; transcript (học viên chưa cấp quyền Micro hoặc mở bằng trình duyệt Zalo/Facebook). Nhắc học viên mở Chrome/Safari, bật Micro và nộp lại.</span>`;
                     } else if (rev && rev.status === "error") {
                       const tries = rev.retry_count || 1;
-                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B45309;">🔄 Hệ thống đang chờ chấm lại (lần thử ${tries}/20).</span>`;
+                      const errDetail = rev.error_message ? ` — ${escapeHtml(String(rev.error_message).slice(0, 140))}` : "";
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B45309;">🔄 Hệ thống đang chờ chấm lại (lần thử ${tries}/20)${errDetail}</span>`;
+                    } else if (isOverdueUngraded) {
+                      statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#B91C1C;">⚠️ Đã quá hạn ${RELEASE_HOURS} tiếng nhưng chưa được chấm tự động — bấm “Tạo bài sửa” để chấm ngay.</span>`;
                     } else if (sub.aiStatus === "pending" || sub.aiStatus === "pending_retry" || sub.aiStatus === "grading") {
                       statusHtml = `<span style="font-size:12.5px;font-weight:700;color:#92400E;">⏳ Đang trong hàng đợi chấm tự động (trả sau ${RELEASE_HOURS} tiếng).</span>`;
                     }
@@ -1033,7 +1055,7 @@
                                   </button>`
                                 : ""
                             }
-                            <button type="button" class="top-pill-btn" data-ai-grade="${escapeHtml(sub.attemptId)}" ${isGrading ? "disabled" : ""}>
+                            <button type="button" class="top-pill-btn" data-ai-grade="${escapeHtml(sub.attemptId)}" ${isGrading || isNoAudioSubmission ? "disabled" : ""} ${isNoAudioSubmission ? 'title="Bài nộp thiếu tệp âm thanh và transcript"' : ""}>
                               ${isGrading ? "⏳ Đang chấm..." : hasReadyReview ? "↻ Chấm lại" : "✨ Tạo bài sửa"}
                             </button>
                           </div>
@@ -1178,9 +1200,14 @@
         const totalUngraded = tState.submissions.filter(
           s => s.isOfficiallySubmitted && !hasAnyFeedbackOrReview(s)
         ).length;
-        const pendingAiCount = tState.submissions.filter(
-          s => s.isOfficiallySubmitted && (!s.aiReview || s.aiReview.status !== "ready")
-        ).length;
+        const pendingAiCount = tState.submissions.filter(s => {
+          if (!s.isOfficiallySubmitted) return false;
+          if (s.aiReview && (s.aiReview.status === "ready" || s.aiReview.status === "no_audio")) return false;
+          if (s.aiStatus === "no_audio") return false;
+          const wc = String(s.transcript || "").trim().split(/\s+/).filter(Boolean).length;
+          if (!s.audioPath && !s.audioUrl && wc < 2) return false;
+          return true;
+        }).length;
 
         const selectedStudentObj = tState.selectedStudentId
           ? tState.students.find(s => s.id === tState.selectedStudentId)

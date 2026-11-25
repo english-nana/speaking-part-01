@@ -577,6 +577,21 @@
       }
     }
 
+    const hasUploadedAudio = Boolean(takeObj.audioPath);
+    const hasSpokenTranscript =
+      String(takeObj.transcript || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length >= 2;
+    if (!hasUploadedAudio && !hasSpokenTranscript) {
+      takeObj._submittingOrSubmitted = false;
+      return {
+        ok: false,
+        error:
+          "Bản ghi này chưa có tệp âm thanh (có thể do trình duyệt chưa được cấp quyền Micro hoặc đang mở trong Zalo/Facebook). Hãy mở bằng Chrome/Safari, cấp quyền Micro rồi ghi âm bản mới để nộp nhé!"
+      };
+    }
+
     const nowMs = Date.now();
     const nowIso = new Date(nowMs).toISOString();
     const defaultReleaseIso = new Date(nowMs + RELEASE_HOURS * 3600 * 1000).toISOString();
@@ -875,75 +890,137 @@
     }
   }
 
+  function pickSupportedAudioMimeType() {
+    if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+      return "";
+    }
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/ogg;codecs=opus"
+    ];
+    for (let i = 0; i < candidates.length; i++) {
+      try {
+        if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+      } catch (e) {}
+    }
+    return "";
+  }
+
+  function formatMicErrorMessage(err) {
+    const name = String((err && err.name) || "");
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      return "Bạn chưa cấp quyền Micro cho trang web. Hãy bấm biểu tượng ổ khóa trên thanh địa chỉ → Cho phép Micro rồi tải lại trang và ghi âm lại nhé.";
+    }
+    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      return "Không tìm thấy Micro trên thiết bị của bạn. Hãy kiểm tra lại tai nghe/micro rồi thử lại.";
+    }
+    if (name === "NotReadableError" || name === "TrackStartError") {
+      return "Micro đang bị ứng dụng khác chiếm dụng. Hãy đóng các ứng dụng gọi điện/ghi âm khác rồi thử lại.";
+    }
+    return "Không thể bật ghi âm Micro trên trình duyệt này (thường gặp khi mở link trực tiếp trong Zalo/Facebook). Hãy mở bằng Chrome hoặc Safari và cấp quyền Micro nhé.";
+  }
+
   function startRecording(qId) {
     if (state.isRecording) {
       stopRecording(qId);
       return;
     }
 
-    state.isRecording = true;
-    state.recordingSeconds = 0;
-    state.liveTranscript = "";
+    if (
+      !navigator.mediaDevices ||
+      typeof navigator.mediaDevices.getUserMedia !== "function" ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      state.submitErrorMsg =
+        "Trình duyệt hiện tại không hỗ trợ ghi âm Micro (thường gặp khi mở link trong Zalo/Facebook). Hãy bấm mở bằng Chrome hoặc Safari để ghi âm nhé!";
+      renderApp();
+      return;
+    }
+
     state.submitErrorMsg = "";
+    state.liveTranscript = "";
     persistedTranscript = "";
     sessionFinalText = "";
     sessionInterimText = "";
     latestCreatedTake = null;
     audioChunks = [];
 
-    renderApp();
-
-    if (recordingTimer) clearInterval(recordingTimer);
     const recTopic = TOPICS.find(t => (t.questions || []).some(q => q.id === qId)) || getCurrentTopic();
     const maxRecSec = getMaxRecordingSeconds(recTopic);
 
-    recordingTimer = setInterval(() => {
-      state.recordingSeconds++;
-      const timerEl = document.getElementById("rec-timer-text");
-      if (timerEl) {
-        timerEl.textContent = `${formatDuration(state.recordingSeconds)} / ${formatDuration(maxRecSec)}`;
-      }
-      if (state.recordingSeconds >= maxRecSec) {
-        stopRecording(qId);
-      }
-    }, 1000);
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then(stream => {
+        let recorder = null;
+        try {
+          const chosenMime = pickSupportedAudioMimeType();
+          recorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+        } catch (recErr) {
+          stream.getTracks().forEach(t => t.stop());
+          state.isRecording = false;
+          state.submitErrorMsg = formatMicErrorMessage(recErr);
+          renderApp();
+          return;
+        }
 
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(stream => {
-          if (!state.isRecording) {
-            stream.getTracks().forEach(t => t.stop());
+        mediaRecorder = recorder;
+        state.isRecording = true;
+        state.recordingSeconds = 0;
+
+        if (recordingTimer) clearInterval(recordingTimer);
+        recordingTimer = setInterval(() => {
+          state.recordingSeconds++;
+          const timerEl = document.getElementById("rec-timer-text");
+          if (timerEl) {
+            timerEl.textContent = `${formatDuration(state.recordingSeconds)} / ${formatDuration(maxRecSec)}`;
+          }
+          if (state.recordingSeconds >= maxRecSec) {
+            stopRecording(qId);
+          }
+        }, 1000);
+
+        mediaRecorder.ondataavailable = e => {
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          const rawMime = (recorder && recorder.mimeType) || "audio/webm";
+          const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
+          const blob = new Blob(audioChunks, { type: cleanMime });
+          if (!blob || blob.size < 200) {
+            state.submitErrorMsg =
+              "Bản ghi âm không thu được âm thanh từ Micro. Hãy kiểm tra lại quyền Micro (hoặc mở bằng Chrome/Safari) và ghi âm lại nhé!";
+            renderApp();
             return;
           }
-          mediaRecorder = new MediaRecorder(stream);
-          mediaRecorder.ondataavailable = e => {
-            if (e.data && e.data.size > 0) audioChunks.push(e.data);
-          };
-          mediaRecorder.onstop = () => {
-            stream.getTracks().forEach(t => t.stop());
-            const mimeType = mediaRecorder.mimeType || "audio/webm";
-            const blob = new Blob(audioChunks, { type: mimeType });
-            const previewUrl = URL.createObjectURL(blob);
-            // Allow Web Speech API 350ms to flush the last spoken phrase before finalizing take
-            setTimeout(() => {
-              finalizeNewTake(qId, previewUrl, blob);
-            }, 350);
-          };
+          const previewUrl = URL.createObjectURL(blob);
+          // Allow Web Speech API 350ms to flush the last spoken phrase before finalizing take
+          setTimeout(() => {
+            finalizeNewTake(qId, previewUrl, blob);
+          }, 350);
+        };
+
+        try {
+          mediaRecorder.start(250);
+        } catch (startErr) {
           mediaRecorder.start();
-          initSpeechRecognitionForSession();
-          renderApp();
-        })
-        .catch(() => {
-          mediaRecorder = null;
-          initSpeechRecognitionForSession();
-          renderApp();
-        });
-    } else {
-      mediaRecorder = null;
-      initSpeechRecognitionForSession();
-      renderApp();
-    }
+        }
+        initSpeechRecognitionForSession();
+        renderApp();
+      })
+      .catch(err => {
+        if (recordingTimer) {
+          clearInterval(recordingTimer);
+          recordingTimer = null;
+        }
+        state.isRecording = false;
+        mediaRecorder = null;
+        state.submitErrorMsg = formatMicErrorMessage(err);
+        renderApp();
+      });
   }
 
   function stopRecording(qId) {
@@ -2052,26 +2129,44 @@
         markReviewAsSeen(qId);
       }
     } else {
-      const subIso = qData.submittedAtIso || "";
-      const releaseAt =
-        qData.aiReleaseAt ||
-        att.aiReleaseAt ||
-        (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
-      const remainText = releaseAt ? CLOUD.formatRemainingTime(releaseAt) : "";
-      const releaseFormatted = releaseAt ? CLOUD.formatDateTime(releaseAt) : "";
+      const attHasAudio = Boolean(att && (att.audioPath || att.audioDataUrl));
+      const attWordCount = String((att && att.transcript) || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+      const isMissingAudioSubmission =
+        qData.aiStatus === "no_audio" ||
+        (att && att.aiStatus === "no_audio") ||
+        (!attHasAudio && attWordCount < 2);
 
-      if (releaseFormatted) {
+      if (isMissingAudioSubmission) {
         blocks.push(`
-          <div class="writing-schedule-box">
-            Đã nộp bài thành công. Dự kiến có kết quả bài sửa lúc ${escapeHtml(releaseFormatted)}${remainText ? ` (còn ${escapeHtml(remainText)})` : ""} và hệ thống sẽ báo qua chuông thông báo 🔔.
+          <div style="margin-top:10px;padding:10px 12px;border:1.5px solid #FCA5A5;background:#FEF2F2;color:#991B1B;border-radius:8px;font-size:12.5px;line-height:1.5;font-weight:600;">
+            ⚠️ Bản nộp này chưa có tệp âm thanh (có thể do trình duyệt chưa được cấp quyền Micro lúc ghi âm) nên hệ thống chưa thể chấm bài. Bạn hãy mở bằng Chrome/Safari, cấp quyền Micro, ghi âm bản mới và bấm Nộp bài lại nhé!
           </div>
         `);
       } else {
-        blocks.push(`
-          <div class="writing-schedule-box">
-            Đã nộp bài thành công. Kết quả bài sửa đang được hoàn tất và sẽ báo qua chuông thông báo 🔔 ngay khi sẵn sàng.
-          </div>
-        `);
+        const subIso = qData.submittedAtIso || "";
+        const releaseAt =
+          qData.aiReleaseAt ||
+          att.aiReleaseAt ||
+          (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
+        const remainText = releaseAt ? CLOUD.formatRemainingTime(releaseAt) : "";
+        const releaseFormatted = releaseAt ? CLOUD.formatDateTime(releaseAt) : "";
+
+        if (releaseFormatted) {
+          blocks.push(`
+            <div class="writing-schedule-box">
+              Đã nộp bài thành công. Dự kiến có kết quả bài sửa lúc ${escapeHtml(releaseFormatted)}${remainText ? ` (còn ${escapeHtml(remainText)})` : ""} và hệ thống sẽ báo qua chuông thông báo 🔔.
+            </div>
+          `);
+        } else {
+          blocks.push(`
+            <div class="writing-schedule-box">
+              Đã nộp bài thành công. Kết quả bài sửa đang được hoàn tất và sẽ báo qua chuông thông báo 🔔 ngay khi sẵn sàng.
+            </div>
+          `);
+        }
       }
     }
 
@@ -2197,6 +2292,12 @@
               </p>
 
               ${
+                !state.isRecording && attempts.length === 0 && state.submitErrorMsg
+                  ? `<div style="margin-top:10px;padding:10px 12px;border:1.5px solid #FCA5A5;background:#FEF2F2;color:#B91C1C;border-radius:8px;font-size:12.5px;line-height:1.5;font-weight:600;">⚠️ ${escapeHtml(state.submitErrorMsg)}</div>`
+                  : ""
+              }
+
+              ${
                 state.isRecording
                   ? `
                 <div class="takes-list-section">
@@ -2253,7 +2354,13 @@
                             </div>
                           </div>
 
-                          ${att.audioDataUrl ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>` : ""}
+                          ${
+                            att.audioDataUrl
+                              ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>`
+                              : !att.audioPath
+                                ? `<div style="font-size:12px;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;padding:7px 10px;border-radius:6px;margin-bottom:8px;font-weight:600;">⚠️ Bản ghi này không có tệp âm thanh — hãy ghi âm lại sau khi bật quyền Micro.</div>`
+                                : ""
+                          }
 
                           <div class="transcript-result-box">
                             <div class="transcript-box-header">
@@ -2262,7 +2369,9 @@
                             ${
                               att.transcript
                                 ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
-                                : `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — bản ghi âm của bạn vẫn được lưu đầy đủ khi nộp bài.</p>`
+                                : att.audioDataUrl || att.audioPath
+                                  ? `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — bản ghi âm của bạn vẫn được lưu đầy đủ khi nộp bài.</p>`
+                                  : `<p class="transcript-text-content placeholder">Chưa thu được âm thanh hoặc transcript từ Micro.</p>`
                             }
                           </div>
 
