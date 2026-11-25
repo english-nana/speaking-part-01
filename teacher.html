@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261125a" />
+  <link rel="stylesheet" href="./styles.css?v=20261125b" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261125a"></script>
-  <script src="./supabase-client.js?v=20261125a"></script>
-  <script src="./travel-data.js?v=20261125a"></script>
-  <script src="./part2-data.js?v=20261125a"></script>
-  <script src="./speaking-evaluator.js?v=20261125a"></script>
+  <script src="./supabase-config.js?v=20261125b"></script>
+  <script src="./supabase-client.js?v=20261125b"></script>
+  <script src="./travel-data.js?v=20261125b"></script>
+  <script src="./part2-data.js?v=20261125b"></script>
+  <script src="./speaking-evaluator.js?v=20261125b"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -1032,8 +1032,10 @@
                         <div style="margin-bottom:10px;">
                           ${
                             sub.audioUrl
-                              ? `<audio controls preload="none" src="${sub.audioUrl}" class="student-audio-player"></audio>`
-                              : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm)</em></div>`
+                              ? `<audio controls preload="metadata" src="${sub.audioUrl}" class="student-audio-player"></audio>`
+                              : sub.audioPath
+                                ? `<div style="font-size:12.5px;color:#B45309;margin-bottom:6px;"><em>(Có tệp âm thanh trên máy chủ nhưng chưa tải được link nghe — thử bấm Làm mới)</em></div>`
+                                : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm — máy học viên chưa tải được file ghi âm lên hệ thống)</em></div>`
                           }
                           <div class="transcript-result-box">
                             <div class="transcript-box-header">

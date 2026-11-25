@@ -577,9 +577,44 @@ async function gradeSingleAttempt(
     };
   }
 
-  const geminiJson = await geminiRes.json();
-  const rawCandidate = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const parsedReview = parseModelJson(rawCandidate);
+  let parsedReview: Record<string, unknown> | null = null;
+  try {
+    const geminiJson = await geminiRes.json();
+    const rawCandidate = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    parsedReview = parseModelJson(rawCandidate);
+  } catch (parseErr) {
+    const nextRetry = prevRetry + 1;
+    const parseMsg = parseErr instanceof Error ? parseErr.message : "JSON không hợp lệ";
+    await admin.from("speaking_ai_reviews").upsert(
+      {
+        id: reviewId,
+        attempt_id: att.id,
+        user_id: att.user_id,
+        topic_id: att.topic_id || "",
+        topic_title: topicTitle,
+        question_id: att.question_id,
+        prompt_text: promptText,
+        target_level: targetLevel,
+        status: "error",
+        release_at: releaseAtIso,
+        error_message: `Lỗi đọc kết quả Gemini (${parseMsg.slice(0, 180)})`,
+        grade_count: prevCount,
+        retry_count: nextRetry,
+        updated_at: nowIso
+      },
+      { onConflict: "id" }
+    );
+    await admin
+      .from("speaking_attempts")
+      .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
+      .eq("id", att.id);
+
+    return {
+      ok: false,
+      status: 502,
+      error: `AI trả về dữ liệu chưa chuẩn (${parseMsg.slice(0, 120)}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
+    };
+  }
 
   const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
 
