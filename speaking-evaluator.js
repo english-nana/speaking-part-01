@@ -63,7 +63,9 @@
     "freelancer", "freelancers", "office", "balance", "schedule", "lifestyle", "customers", "mental", "freedom",
     "art", "creativity", "graphic", "designer", "designers", "design", "designs", "interior", "decorator",
     "fashion", "logo", "logos", "brand", "brands", "talent", "passion", "passionate", "fields", "field",
-    "income", "clothing", "style", "competitive", "capital", "visual", "pursue", "pursuing", "career", "careers"
+    "income", "clothing", "style", "competitive", "capital", "visual", "pursue", "pursuing", "career", "careers",
+    "rural", "teaching", "techniques", "engaging", "resources", "financially", "independent", "qualifications",
+    "transportation", "expenses", "graduate", "graduated", "higher", "education", "invest", "dynamic", "lessons"
   ];
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
@@ -120,7 +122,11 @@
     "relaxing lifestyle", "predictable hours", "personal freedom", "mental health",
     "visual designs", "express her ideas freely", "make full use of her talent", "make full use of",
     "satisfy her passion", "increase her income", "personal style", "highly competitive",
-    "creative freedom"
+    "creative freedom",
+    "cover his daily expenses", "invest in himself", "higher education", "financially independent",
+    "valuable teaching experience", "teaching resources", "effective teaching techniques",
+    "engaging", "international working environment", "standard of living", "individual attention",
+    "high qualifications"
   ];
 
   function tokenize(text) {

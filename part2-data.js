@@ -1301,7 +1301,7 @@ window.SPEAKING_PART2_TOPICS = [
   },
 
   // ==========================================================================
-  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 3 TÌNH HUỐNG
+  // DẠNG 3: CHỌN NGHỀ NGHIỆP PHÙ HỢP (CHOOSING A CAREER) — 4 TÌNH HUỐNG
   // ==========================================================================
   {
     part: "part2",
@@ -1310,8 +1310,8 @@ window.SPEAKING_PART2_TOPICS = [
     title: "Choosing a Career",
     titleVi: "Chọn nghề nghiệp phù hợp",
     description:
-      "Luyện 3 tình huống lựa chọn nghề nghiệp: tìm việc ổn định lương cao, chọn việc cân bằng cuộc sống, và theo đuổi nghề nghệ thuật sáng tạo.",
-    questionsCount: 3,
+      "Luyện 4 tình huống lựa chọn nghề nghiệp: việc ổn định lương cao, cân bằng cuộc sống, nghề sáng tạo, và môi trường giảng dạy phù hợp.",
+    questionsCount: 4,
     questions: [
       {
         part: "part2",
@@ -2062,6 +2062,256 @@ window.SPEAKING_PART2_TOPICS = [
                 pos: "n. phr.",
                 meaning: "sự tự do sáng tạo",
                 example: "Strict client budgets can sometimes limit a decorator's <strong>creative freedom</strong>."
+              }
+            ]
+          }
+        }
+      },
+      {
+        part: "part2",
+        id: "p2_career_q4",
+        num: 4,
+        situationTitle: "Choosing a teaching job (rural school, big city school, international school)",
+        prompt:
+          "Your friend has just graduated and is looking for a teaching job. There are three options: teaching in a rural school, teaching in a big city school, or teaching in an international school. Which one is most suitable for him?",
+        promptHtml:
+          "Your friend has just graduated and is looking for a teaching job. There are three options: <strong>teaching in a rural school</strong>, <strong>teaching in a big city school</strong>, or <strong>teaching in an international school</strong>. Which one is most suitable for him?",
+        promptSentences: [
+          {
+            enHtml: "Your friend has just graduated and is looking for a teaching job.",
+            vi: "Bạn của bạn vừa tốt nghiệp và đang tìm một công việc giảng dạy."
+          },
+          {
+            enHtml:
+              "There are three options: <strong>teaching in a rural school</strong>, <strong>teaching in a big city school</strong>, or <strong>teaching in an international school</strong>.",
+            vi: "Có ba lựa chọn: dạy ở trường nông thôn, dạy ở trường thành phố lớn, hoặc dạy ở trường quốc tế."
+          },
+          {
+            enHtml: "Which one is most suitable for him?",
+            vi: "Lựa chọn nào là phù hợp nhất với bạn ấy?"
+          }
+        ],
+        promptVi:
+          "Bạn của bạn vừa tốt nghiệp và đang tìm một công việc giảng dạy. Có ba lựa chọn: dạy ở trường nông thôn, dạy ở trường thành phố lớn, hoặc dạy ở trường quốc tế. Lựa chọn nào là phù hợp nhất với bạn ấy?",
+        optionGuide: {
+          easiestOptions: [
+            {
+              option: "Teaching in a big city school (Dạy ở trường thành phố lớn)",
+              reasons: [
+                "Big city schools offer better salaries than rural schools, so he can cover his daily expenses (food, rent, transportation), save for the future, invest in himself through higher education, and become financially independent.",
+                "He can gain valuable teaching experience by working with experienced teachers, modern facilities, and rich teaching resources.",
+                "This helps him learn effective teaching techniques, discover new ways to make his lessons more engaging, and develop his teaching career."
+              ]
+            },
+            {
+              option: "Teaching in an international school (Dạy ở trường quốc tế)",
+              reasons: [
+                "International working environment: he can work with foreign teachers, develop English communication skills, and build international connections.",
+                "Competitive salary and attractive benefits: he can earn a higher salary, receive health insurance and other benefits, enjoy a better standard of living, and become financially independent.",
+                "Smaller class sizes: with fewer students in each class, he can understand each student's needs better and give students more individual attention."
+              ]
+            }
+          ],
+          rejectReasons: [
+            {
+              option: "Teaching in an international school (Dạy ở trường quốc tế)",
+              whyNot: "Although it offers a competitive salary and an international environment, it usually requires high qualifications, strong English skills, and years of experience, which is difficult for a new graduate."
+            },
+            {
+              option: "Teaching in a rural school (Dạy ở trường nông thôn)",
+              whyNot: "The salary is usually lower, and rural schools often lack modern facilities and teaching resources to help him develop his career."
+            }
+          ]
+        },
+        analysis: {
+          questionType: "Speaking Part 2 — Thảo luận giải pháp (Chọn 1 trong 3 nơi dạy học: rural school / big city school / international school).",
+          tense: "Hiện tại đơn và câu điều kiện loại 2 ('If I were him, I think I would...'). Chú ý bối cảnh 'has just graduated' (vừa tốt nghiệp).",
+          length: "B1: ~150–170 từ (60–75s) · B2: ~175–215 từ (80–95s)."
+        },
+        pitfalls: [
+          "Quên chi tiết quan trọng 'has just graduated' (vừa mới tốt nghiệp) — đây là điểm phản biện rất thuyết phục để giải thích vì sao chưa dễ vào ngay trường quốc tế.",
+          "Dùng sai cấu trúc 'ways to making' — đúng phải là 'ways to make his lessons more engaging' hoặc 'ways of making...'.",
+          "Phát âm nhầm từ 'rural' (/ˈrʊrəl/) và thiếu âm cuối /s/ trong 'salaries', 'expenses', 'resources', 'techniques'."
+        ],
+        levels: {
+          b1: {
+            optionGuide: {
+              easiestOptions: [
+                {
+                  option: "Teaching in a big city school (Dạy ở trường thành phố lớn)",
+                  reasons: [
+                    "City schools pay a better salary than rural schools, so he can pay for food, rent, and travel, save money, and live on his own.",
+                    "He can get good teaching experience from experienced teachers and modern facilities to make his lessons fun."
+                  ]
+                },
+                {
+                  option: "Teaching in an international school (Dạy ở trường quốc tế)",
+                  reasons: [
+                    "He can work with foreign teachers, practice English every day, and make international friends.",
+                    "It offers a high salary and good benefits like health insurance, so he can live well on his own.",
+                    "Small classes help him know each student better and give them more care."
+                  ]
+                }
+              ],
+              rejectReasons: [
+                {
+                  option: "Teaching in an international school (Dạy ở trường quốc tế)",
+                  whyNot: "It pays well, but it is hard for a new graduate to get in without experience."
+                },
+                {
+                  option: "Teaching in a rural school (Dạy ở trường nông thôn)",
+                  whyNot: "The pay is lower, and rural schools often do not have modern facilities."
+                }
+              ]
+            },
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my friend just finished university and is looking for a teaching job. If I were him, I think I would choose teaching in a big city school."
+              },
+              {
+                label: "2. Thân bài (2 lý do ngắn gọn & Phản biện 2 phương án còn lại)",
+                text: "Lý do 1 (1 câu luận điểm + 2 câu mở rộng): Trường thành phố trả lương tốt hơn nông thôn -> đủ trả tiền ăn ở, đi lại, tiết kiệm tiền và tự lập. Lý do 2 (1 câu luận điểm + 1 câu mở rộng): Tích lũy kinh nghiệm dạy học tốt nhờ thầy cô giàu kinh nghiệm và cơ sở vật chất hiện đại -> bài giảng thú vị hơn. Phản biện ngắn: Trường quốc tế (khó xin với sinh viên mới ra trường chưa có kinh nghiệm); Trường nông thôn (lương thấp và thiếu cơ sở vật chất)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe teaching in a big city school is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my friend just finished university and is looking for a <strong>teaching job</strong>. <strong>If I were him, I think I would</strong> choose <strong>teaching in a big city school</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> city schools offer a <strong>better salary</strong> than rural schools. He can easily <strong>pay for</strong> food, rent, and travel, and <strong>save money</strong> for the future. <strong>Because of this,</strong> he can live well <strong>on his own</strong>.<br><br><strong>Another reason is that</strong> he can get good <strong>teaching experience</strong>. City schools have experienced teachers and <strong>modern facilities</strong>, so he can learn useful skills and make his lessons fun.<br><br><strong>Regarding the other two options, although</strong> teaching in an international school <strong>is a good option</strong>, it is hard for a <strong>new graduate</strong> to get in without experience. <strong>As for</strong> teaching in a rural school, <strong>I don't think it's a good idea because</strong> the pay is lower and it lacks modern facilities.<br><br><strong>In conclusion, I believe</strong> teaching in a big city school <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "teaching job",
+                ipa: "/ˈtiːtʃɪŋ dʒɑːb/",
+                pos: "n. phr.",
+                meaning: "công việc giảng dạy",
+                example: "My friend just finished university and is looking for a <strong>teaching job</strong>."
+              },
+              {
+                word: "better salary",
+                ipa: "/ˈbetər ˈsæləri/",
+                pos: "n. phr.",
+                meaning: "mức lương tốt hơn",
+                example: "City schools offer a <strong>better salary</strong> than rural schools."
+              },
+              {
+                word: "pay for",
+                ipa: "/peɪ fɔːr/",
+                pos: "v. phr.",
+                meaning: "trả tiền cho",
+                example: "He can easily <strong>pay for</strong> food, rent, and travel."
+              },
+              {
+                word: "save money",
+                ipa: "/seɪv ˈmʌni/",
+                pos: "v. phr.",
+                meaning: "tiết kiệm tiền",
+                example: "With a good salary, he can <strong>save money</strong> for the future."
+              },
+              {
+                word: "on his own",
+                ipa: "/ɑːn hɪz oʊn/",
+                pos: "prep. phr.",
+                meaning: "tự lập, tự lo cho bản thân",
+                example: "Because of this, he can live well <strong>on his own</strong>."
+              },
+              {
+                word: "teaching experience",
+                ipa: "/ˈtiːtʃɪŋ ɪkˈspɪriəns/",
+                pos: "n. phr.",
+                meaning: "kinh nghiệm giảng dạy",
+                example: "He can get good <strong>teaching experience</strong> in a city school."
+              },
+              {
+                word: "modern facilities",
+                ipa: "/ˈmɑːdərn fəˈsɪlətiz/",
+                pos: "n. phr.",
+                meaning: "cơ sở vật chất hiện đại",
+                example: "City schools have experienced teachers and <strong>modern facilities</strong>."
+              },
+              {
+                word: "new graduate",
+                ipa: "/nuː ˈɡrædʒuət/",
+                pos: "n. phr.",
+                meaning: "sinh viên mới tốt nghiệp",
+                example: "It is hard for a <strong>new graduate</strong> to enter an international school."
+              }
+            ]
+          },
+          b2: {
+            strategy: [
+              {
+                label: "1. Mở bài (Dẫn nhập & Chọn phương án)",
+                text: "The situation here is that my friend has just graduated and is looking for a suitable teaching job. If I were him, I think I would choose teaching in a big city school."
+              },
+              {
+                label: "2. Thân bài (2 lý do tự nhiên, nâng cấp từ vựng + Phản biện 2 phương án kia)",
+                text: "Lý do 1: Lương cao hơn trường nông thôn -> dễ trang trải chi phí hằng ngày (cover his daily expenses: food, rent, transportation), tiết kiệm để đầu tư cho bản thân (invest in himself) qua học lên cao (higher education) và sớm độc lập tài chính (financially independent). Lý do 2: Tích lũy kinh nghiệm giảng dạy quý giá (valuable teaching experience) nhờ đồng nghiệp giàu kinh nghiệm, cơ sở vật chất hiện đại và nhiều tài liệu giảng dạy (teaching resources) -> học kỹ thuật dạy hiệu quả (effective teaching techniques), làm bài học cuốn hút (engaging) và phát triển sự nghiệp. Phản biện: Trường quốc tế (lương tốt nhưng đòi hỏi kinh nghiệm & bằng cấp cao với sinh viên mới ra trường); Trường nông thôn (lương thấp hơn và thiếu cơ sở vật chất hiện đại)."
+              },
+              {
+                label: "3. Kết bài (Khẳng định lại lựa chọn)",
+                text: "In conclusion, I believe teaching in a big city school is the most suitable option in this situation."
+              }
+            ],
+            modelAnswer:
+              "<strong>The situation here is that</strong> my friend has just graduated and is looking for a suitable teaching job. <strong>If I were him, I think I would</strong> choose <strong>teaching in a big city school</strong>. <strong>I believe it's the best option because of the following reasons.</strong><br><br><strong>First of all,</strong> big city schools offer much better salaries than rural ones. He can easily <strong>cover his daily expenses</strong> like food, rent, and transportation, while still saving money to <strong>invest in himself</strong> through <strong>higher education</strong>. Having a solid income also helps him become <strong>financially independent</strong> early on.<br><br><strong>Another reason is that</strong> he can gain <strong>valuable teaching experience</strong> in a dynamic environment. City schools have experienced teachers, modern facilities, and plenty of <strong>teaching resources</strong>, <strong>which</strong> helps him learn <strong>effective teaching techniques</strong> and make his lessons more <strong>engaging</strong>. This is a great way to develop his teaching career.<br><br><strong>Regarding the other two options, although</strong> teaching in an international school <strong>is worth considering</strong> for its competitive salary, it usually requires years of experience and high qualifications for a new graduate. <strong>As for</strong> teaching in a rural school, <strong>I don't think it's a good idea because</strong> the pay is lower and it often lacks modern facilities.<br><br><strong>In conclusion, I believe</strong> teaching in a big city school <strong>is the most suitable option in this situation.</strong>",
+            vocab: [
+              {
+                word: "cover his daily expenses",
+                ipa: "/ˈkʌvər hɪz ˈdeɪli ɪkˈspensɪz/",
+                pos: "v. phr.",
+                meaning: "trang trải các chi phí hằng ngày",
+                example: "He can easily <strong>cover his daily expenses</strong> like food, rent, and transportation."
+              },
+              {
+                word: "invest in himself",
+                ipa: "/ɪnˈvest ɪn hɪmˈself/",
+                pos: "v. phr.",
+                meaning: "đầu tư cho bản thân",
+                example: "He can save money to <strong>invest in himself</strong> by learning new skills."
+              },
+              {
+                word: "higher education",
+                ipa: "/ˈhaɪər ˌedʒuˈkeɪʃn/",
+                pos: "n. phr.",
+                meaning: "giáo dục bậc cao (cao học, thạc sĩ...)",
+                example: "Saving money allows him to pursue <strong>higher education</strong> later."
+              },
+              {
+                word: "financially independent",
+                ipa: "/faɪˈnænʃəli ˌɪndɪˈpendənt/",
+                pos: "adj. phr.",
+                meaning: "độc lập về tài chính",
+                example: "A solid income helps him become <strong>financially independent</strong> early on."
+              },
+              {
+                word: "valuable teaching experience",
+                ipa: "/ˈvæljuəbl ˈtiːtʃɪŋ ɪkˈspɪriəns/",
+                pos: "n. phr.",
+                meaning: "kinh nghiệm giảng dạy quý giá",
+                example: "He can gain <strong>valuable teaching experience</strong> in a city school."
+              },
+              {
+                word: "teaching resources",
+                ipa: "/ˈtiːtʃɪŋ ˈriːsɔːrsɪz/",
+                pos: "n. phr.",
+                meaning: "nguồn tài liệu, học liệu giảng dạy",
+                example: "City schools provide access to plenty of <strong>teaching resources</strong>."
+              },
+              {
+                word: "effective teaching techniques",
+                ipa: "/ɪˈfektɪv ˈtiːtʃɪŋ tekˈniːks/",
+                pos: "n. phr.",
+                meaning: "các kỹ thuật giảng dạy hiệu quả",
+                example: "He can learn <strong>effective teaching techniques</strong> from experienced teachers."
+              },
+              {
+                word: "engaging",
+                ipa: "/ɪnˈɡeɪdʒɪŋ/",
+                pos: "adj.",
+                meaning: "cuốn hút, hấp dẫn, lôi cuốn",
+                example: "Good techniques help him make his lessons more <strong>engaging</strong>."
               }
             ]
           }
