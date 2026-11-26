@@ -77,7 +77,7 @@
     "because", "since", "although", "though", "even though", "while", "when",
     "whenever", "if", "unless", "so that", "before", "after", "until", "as soon as", "in case"
   ];
-  const RELATIVE_MARKERS = ["which", "who", "where"];
+  const RELATIVE_MARKERS = ["which", "who", "where", "whose"];
   const B2_DISCOURSE_MARKERS = [
     "honestly", "personally", "actually", "moreover", "furthermore",
     "in addition", "especially", "particularly", "for instance",
@@ -85,8 +85,44 @@
     "first of all", "secondly", "however", "in particular",
     "to be honest", "i'd say", "i would say", "well", "what's more",
     "on top of that", "that said", "i'm planning to",
-    "i usually go for", "my go-to", "i tend to", "yes, i really do"
+    "i usually go for", "my go-to", "i tend to", "yes, i really do",
+    "from my perspective", "in my opinion", "to be fair", "in contrast",
+    "all in all", "to sum up", "ultimately", "generally speaking"
   ];
+  const GENERAL_HIGHER_LEXIS = [
+    "in the long run", "from my perspective", "as far as i'm concerned",
+    "not only", "take into account", "in terms of", "at the end of the day",
+    "nevertheless", "consequently", "significantly", "beneficial", "worthwhile",
+    "effectively", "essential", "valuable", "broaden", "perspective", "perspectives",
+    "enhance", "flexibility", "convenience", "downside", "drawback", "advantageous",
+    "genuinely", "undoubtedly", "play a vital role", "make the most of",
+    "broaden my horizons", "recharge my batteries", "strike a balance",
+    "keep in touch", "worth considering", "pros and cons", "despite the fact that",
+    "provided that", "as long as", "compared to", "in contrast", "all things considered",
+    "crucial", "meaningful", "productive", "efficient", "efficiently",
+    "overwhelming", "stressful", "rewarding", "fulfilling", "independently",
+    "opportunity", "opportunities", "experience", "experiences", "recommend"
+  ];
+  const C1_SIGNAL_PHRASES = [
+    "all things considered", "from my perspective", "as far as i'm concerned",
+    "in the long run", "first and foremost", "at the end of the day",
+    "nevertheless", "consequently", "furthermore", "not only",
+    "broaden my horizons", "strike a balance", "make the most of",
+    "play a vital role", "undoubtedly", "genuinely", "significantly", "thereby"
+  ];
+  const BASIC_LONG_WORDS = new Set([
+    "traveling", "travelling", "together", "friends", "prepare", "usually",
+    "because", "vacation", "holiday", "example", "hometown", "weather",
+    "morning", "evening", "afternoon", "sometimes", "homework", "students",
+    "student", "teacher", "teachers", "parents", "popular", "country",
+    "weekend", "weekends", "clothes", "pictures", "outside", "someone",
+    "anything", "everyone", "nothing", "problems", "problem", "quickly",
+    "relaxed", "another", "between", "through", "without", "around",
+    "during", "before", "always", "feeling", "happier", "easier", "harder",
+    "playing", "working", "talking", "watching", "reading", "eating",
+    "getting", "helping", "learning", "studying", "visiting", "staying",
+    "nothing", "everything", "enjoyed", "favorite", "favourite"
+  ]);
   const B2_LEXIS_PHRASES = [
     "memorable", "unforgettable", "affordable", "convenient", "flexible", "destination",
     "destinations", "atmosphere", "breathtaking", "refreshing", "recharge", "unwind",
@@ -1126,103 +1162,169 @@
 
     const isPart2 = Boolean(question && (question.part === "part2" || /^p2_/.test(question.id || "")));
     const isOffTopic = matchedDomainCount === 0 && b1SampleHits.length === 0 && allB2Lexis.length === 0;
-    let rawScore = 0;
+
+    // Đánh giá mở rộng cho cả bài nói tự do (unscripted B2/C1) dựa trên VSTEP Band Descriptor
+    const generalHigherHits = GENERAL_HIGHER_LEXIS.filter(
+      p => !promptTokens.has(p) && !b1VocabSet.has(p) && hasWholeWordOrPhrase(lower, p)
+    );
+    const uniqueTokens = Array.from(new Set(tokens));
+    const sophisticatedWords = uniqueTokens.filter(
+      w => w.length >= 7 && !BASIC_LONG_WORDS.has(w) && !promptTokens.has(w)
+    );
+    const sophCount = sophisticatedWords.length;
+    const sentenceCount = Math.max(
+      1,
+      transcript
+        .split(/[.!?]+/)
+        .map(s => s.trim())
+        .filter(Boolean).length
+    );
+    const hasAdvancedGrammar =
+      /\b(would|could|might)\s+(?:be|have|help|allow|enable|make|prefer|choose|rather|say|love|enjoy)\b/i.test(lower) ||
+      /\b(?:have|has|had)\s+(?:been|done|made|seen|tried|learned|learnt|worked|helped|changed|improved|visited|experienced|achieved|grown|become|gained|built)\b/i.test(lower) ||
+      /\bnot\s+only\b|\bwhereas\b|\beven\s+though\b|\bdespite\b|\balthough\b/i.test(lower);
+
+    const pronErrorCount = errors.filter(e =>
+      ["stt_lie_like", "local_foot", "share_cause", "pack_close"].includes(e.key)
+    ).length;
+    const vocabErrorCount = errors.filter(e =>
+      ["effect_vs_affect", "fewer_uncountable", "repetitive_can"].includes(e.key)
+    ).length;
+    const grammarErrorCount = Math.max(0, errorTypeCount - pronErrorCount);
+
+    const roundHalf = v => Math.round(Math.max(0, Math.min(10, v)) * 2) / 2;
 
     if (isPart2) {
       // ------------------------------------------------------------------
-      // CHẤM ĐIỂM SPEAKING PART 2 (SOLUTION DISCUSSION · LÀM TRÒN 0.25)
-      // Khung dàn ý chung (First of all / Moreover / Regarding / As for / although)
-      // dùng chung cho cả B1 & B2; phân biệt B1 vs B2 dựa trên vốn từ vựng & cấu trúc nâng cao.
+      // CHẤM ĐIỂM SPEAKING PART 2 THEO 5 TIÊU CHÍ VSTEP (LÀM TRÒN 0.25)
       // ------------------------------------------------------------------
       const PART2_SHARED_OUTLINE_MARKERS = new Set([
         "first of all", "moreover", "regarding the other two options", "as for",
         "although", "in other words", "in conclusion", "step by step", "close friends",
         "important projects"
       ]);
-      const b2ContentLexis2 = allB2Lexis.filter(p => !PART2_SHARED_OUTLINE_MARKERS.has(p.toLowerCase()));
+      const b2ContentLexis2 = Array.from(
+        new Set([...allB2Lexis, ...generalHigherHits])
+      ).filter(p => !PART2_SHARED_OUTLINE_MARKERS.has(p.toLowerCase()));
+      const c1LexisHits2 = C1_SIGNAL_PHRASES.filter(
+        p => !promptTokens.has(p) && hasWholeWordOrPhrase(lower, p)
+      );
 
-      let devPts2 = 0.4;
-      if (wordCount >= 250) devPts2 = 2.75;
-      else if (wordCount >= 195) devPts2 = 2.45;
-      else if (wordCount >= 145) devPts2 = 2.05;
-      else if (wordCount >= 100) devPts2 = 1.65;
-      else if (wordCount >= 75) devPts2 = 1.35;
-      else if (wordCount >= 45) devPts2 = 0.9;
+      let gram2 = wordCount >= 75 ? 4.5 : wordCount >= 45 ? 3.5 : 2.5;
+      if (usedCompound.length > 0) gram2 += 0.5;
+      if (usedComplex.length >= 1) gram2 += 0.5;
+      if (usedComplex.length >= 2) gram2 += 0.5;
+      if (usedRelative.length >= 1) gram2 += 1.0;
+      if (usedRelative.length >= 2) gram2 += 0.5;
+      if (hasAdvancedGrammar && (usedRelative.length >= 1 || usedComplex.length >= 2)) gram2 += 0.5;
+      if (b2ContentLexis2.length >= 4 || sophCount >= 34) gram2 += 0.5;
+      gram2 -= grammarErrorCount * 1.0;
 
-      let vocabPts2 = matchedDomainCount === 0 ? 0.4 : 0.95 + Math.min(0.65, uniqueDomainWords.length * 0.05);
-      if (b1SampleHits.length > 0) vocabPts2 += Math.min(0.3, b1SampleHits.length * 0.08);
-      vocabPts2 += Math.min(1.4, b2ContentLexis2.length * 0.24);
-      vocabPts2 = Math.min(2.8, vocabPts2);
+      let vocab2 = isOffTopic ? 2.5 : matchedDomainCount >= 4 ? 4.5 : 3.5;
+      if (!isOffTopic && uniqueDomainWords.length >= 12) vocab2 += 0.5;
+      vocab2 += Math.min(2.5, Math.floor(b2ContentLexis2.length / 2) * 0.5 + (b2ContentLexis2.length >= 1 ? 0.5 : 0));
+      if (sophCount >= 32) vocab2 += 0.5;
+      if (sophCount >= 36) vocab2 += 0.5;
+      if (sophCount >= 44) vocab2 += 0.5;
+      vocab2 -= vocabErrorCount * 0.5;
 
-      let gramPts2 = wordCount >= 75 ? 1.1 : 0.8;
-      if (usedCompound.length > 0) gramPts2 += 0.2;
-      if (usedComplex.length >= 1) gramPts2 += 0.3;
-      if (usedComplex.length >= 2) gramPts2 += 0.2;
-      if (usedRelative.length >= 1) gramPts2 += 0.5;
-      if (b2ContentLexis2.length >= 4) gramPts2 += 0.3;
+      let pron2 = wordCount >= 135 ? 5.5 : wordCount >= 75 ? 5.0 : 4.0;
+      if (b2ContentLexis2.length >= 3 || sophCount >= 32) pron2 += 0.5;
+      if (pronErrorCount === 0 && wordCount >= 135 && (b2ContentLexis2.length >= 4 || sophCount >= 35)) pron2 += 1.0;
+      if (pronErrorCount === 0 && errorTypeCount === 0 && wordCount >= 160 && (c1LexisHits2.length >= 2 || wordCount >= 220)) pron2 += 1.5;
+      pron2 -= pronErrorCount * 1.5;
 
-      let fluPts2 = 0.4;
-      if (wordCount >= 195) fluPts2 = 1.45;
-      else if (wordCount >= 140) fluPts2 = 1.15;
-      else if (wordCount >= 75) fluPts2 = 0.85;
+      let flu2 = 2.5;
+      if (wordCount >= 230 || (wordCount >= 160 && errorTypeCount === 0 && c1LexisHits2.length >= 2)) flu2 = errorTypeCount === 0 ? 9.0 : 8.0;
+      else if (wordCount >= 175) flu2 = b2ContentLexis2.length >= 4 || sophCount >= 35 ? 7.5 : 6.5;
+      else if (wordCount >= 130) flu2 = b2ContentLexis2.length >= 3 || sophCount >= 30 ? 6.5 : 5.5;
+      else if (wordCount >= 100) flu2 = 5.0;
+      else if (wordCount >= 75) flu2 = 4.5;
+      else if (wordCount >= 45) flu2 = 3.5;
+      if (durationSec >= 12 && wordCount / durationSec < 0.75) flu2 -= 0.5;
+      if (errors.some(e => e.key === "repetitive_can")) flu2 -= 0.5;
 
-      rawScore = devPts2 + vocabPts2 + gramPts2 + fluPts2 - errorTypeCount * 0.55;
+      const hasStructCue2 = /\b(in conclusion|to sum up|all in all|all things considered|overall|regarding|as for|on the other hand|whereas|although|however|nevertheless)\b/i.test(lower);
+      let disc2 = isOffTopic ? 2.5 : wordCount >= 75 ? 4.5 : 3.5;
+      if (sentenceCount >= 6) disc2 += 0.5;
+      if (usedComplex.length >= 2) disc2 += 0.5;
+      if (usedRelative.length >= 1) disc2 += 0.5;
+      if (hasStructCue2) disc2 += 1.0;
+      if (usedDiscourse.length >= 2 || c1LexisHits2.length >= 2) disc2 += 0.5;
+      if (usedDiscourse.length >= 4 || c1LexisHits2.length >= 3) disc2 += 0.5;
+      if (wordCount >= 165 && c1LexisHits2.length >= 2) disc2 += 1.0;
+      if (wordCount >= 200) disc2 += 0.5;
+      if (isOffTopic) disc2 = Math.min(disc2, 2.5);
 
-      const hasB2Lexis2 = b2ContentLexis2.length >= 4;
-      const hasB2Grammar2 = usedRelative.length >= 1 || /\bis worth considering\b/i.test(lower);
+      const criterionScores2 = {
+        grammar: roundHalf(gram2),
+        vocabulary: roundHalf(vocab2),
+        pronunciation: roundHalf(pron2),
+        fluency: roundHalf(flu2),
+        discourse_management: roundHalf(disc2)
+      };
+
+      let rawScore2 =
+        (criterionScores2.grammar +
+          criterionScores2.vocabulary +
+          criterionScores2.pronunciation +
+          criterionScores2.fluency +
+          criterionScores2.discourse_management) /
+        5;
+
+      const hasB2Lexis2 = b2ContentLexis2.length >= 4 || (b2ContentLexis2.length >= 2 && sophCount >= 32);
+      const hasB2Grammar2 = usedRelative.length >= 1 || /\bis worth considering\b/i.test(lower) || (usedComplex.length >= 2 && hasAdvancedGrammar && usedDiscourse.length >= 2);
       const hasC1Profile2 =
         errorTypeCount === 0 &&
-        wordCount >= 260 &&
-        b2ContentLexis2.length >= 8 &&
-        usedRelative.length >= 2 &&
-        usedComplex.length >= 2;
+        wordCount >= 160 &&
+        usedRelative.length >= 1 &&
+        usedComplex.length >= 2 &&
+        (c1LexisHits2.length >= 2 || (wordCount >= 220 && b2ContentLexis2.length >= 6 && usedDiscourse.length >= 2));
 
-      if (isOffTopic) {
-        rawScore = Math.min(rawScore, 2.5);
-      } else if (wordCount < 45) {
-        rawScore = Math.min(rawScore, 2.5);
-      } else if (wordCount < 75 || errorTypeCount >= 3) {
-        rawScore = Math.min(rawScore, 3.5);
-      } else if (wordCount < 165 || !hasB2Lexis2 || !hasB2Grammar2 || errorTypeCount >= 2 || matchedDomainCount < 4) {
-        // Khung B1 (4.0 - 5.5)
-        rawScore = Math.min(rawScore, wordCount < 110 ? 4.5 : 5.5);
+      if (isOffTopic || wordCount < 45) {
+        rawScore2 = Math.min(rawScore2, 2.5);
+      } else if (wordCount < 75 || errorTypeCount >= 4) {
+        rawScore2 = Math.min(rawScore2, 3.5);
+      } else if (wordCount < 120 || !hasB2Lexis2 || !hasB2Grammar2 || errorTypeCount >= 2 || matchedDomainCount < 4) {
+        rawScore2 = Math.min(rawScore2, wordCount < 110 ? 4.5 : 5.5);
       } else if (hasC1Profile2) {
-        rawScore = Math.max(rawScore, 9.0);
+        rawScore2 = Math.max(rawScore2, 9.0);
       } else {
-        // Khung B2 (6.0 - 8.5)
+        // Khung B2 (6.0 - 8.5): 1 lỗi nhỏ không hệ thống vẫn có thể đạt B2 theo VSTEP Band Descriptor
         if (errorTypeCount === 0) {
-          rawScore = Math.max(rawScore, 6.75);
+          rawScore2 = Math.max(rawScore2, 6.75);
         } else {
-          rawScore = Math.min(rawScore, 6.5);
+          rawScore2 = Math.max(6.0, Math.min(rawScore2, 7.0));
         }
-        rawScore = Math.min(rawScore, 8.5);
+        rawScore2 = Math.min(rawScore2, 8.5);
       }
 
-      const finalScore = roundQuarterStep(Math.max(0, Math.min(10, rawScore)));
+      const finalScore = roundQuarterStep(Math.max(0, Math.min(10, rawScore2)));
       const { levelLabel, badgeTone } = scoreToBandInfo(finalScore);
       const timeNote = durationSec ? ` / ${durationSec} giây` : "";
       const notes = [];
       if (errorTypeCount === 0) {
-        notes.push(`Không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
+        notes.push(`Diễn đạt mạch lạc, không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
       }
       if (isOffTopic) {
-        notes.push("Nội dung chưa bám sát tình huống; hãy nêu rõ lựa chọn trong 3 phương án của đề.");
+        notes.push("Nội dung chưa bám sát tình huống; hãy nêu rõ lựa chọn trong 3 phương án của đề và lý do chọn.");
       } else if (wordCount < 70) {
-        notes.push(`Bài nói Part 2 còn ngắn (${wordCount} từ${timeNote}). Hãy triển khai đủ 3 phần: Mở bài → Thân bài (2 lý do chọn + lý do bỏ 2 phương án còn lại) → Kết bài (~105+ từ) để đạt mức B1.`);
+        notes.push(`Bài nói Part 2 mới dừng ở mức ngắn (${wordCount} từ${timeNote}). Bạn hãy triển khai đủ 3 phần: Mở bài → Thân bài (2 lý do chọn + so sánh 2 phương án còn lại) → Kết bài (~105+ từ) để đạt mức B1.`);
       } else if (badgeTone === "below") {
-        notes.push(`Bài nói còn ${errorTypeCount} dạng lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); hãy sửa các lỗi trên để đạt mức B1.`);
+        notes.push(`Bạn đã có ý trả lời (${wordCount} từ${timeNote}), tuy nhiên cần khắc phục ${errorTypeCount} dạng lỗi bên trên để đạt mức B1.`);
       } else if (badgeTone === "b1" || levelLabel === "Xấp xỉ B1") {
-        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Giữ đủ 3 phần Mở – Thân – Kết và nâng cấp thêm từ vựng ở Mục V để lên B2.`);
+        notes.push(`Bài nói đạt ${levelLabel} (${wordCount} từ${timeNote}). Để vươn lên B2, bạn có thể bổ sung thêm từ nối đa dạng, mệnh đề quan hệ (which/who/where) và từ vựng tự nhiên hơn.`);
       } else if (badgeTone === "c1") {
-        notes.push(`Đạt C1 (${wordCount} từ${timeNote}), triển khai tự nhiên, giàu từ vựng và cấu trúc linh hoạt.`);
+        notes.push(`Xuất sắc (${levelLabel} · ${wordCount} từ${timeNote}): lập luận chặt chẽ, từ vựng phong phú và kiểm soát cấu trúc linh hoạt.`);
       } else {
-        notes.push(`${levelLabel} (${wordCount} từ${timeNote}), trình bày mạch lạc đủ 3 phần với cụm từ vựng tự nhiên.`);
+        notes.push(`Rất tốt (${levelLabel} · ${wordCount} từ${timeNote}): trình bày mạch lạc, tự nhiên và biết so sánh hợp lý giữa các lựa chọn.`);
       }
 
       return {
         hasTranscript: true,
         score: finalScore,
         scoreText: finalScore.toFixed(2),
+        criterionScores: criterionScores2,
         levelLabel,
         badgeTone,
         errorTypeCount,
@@ -1235,85 +1337,105 @@
     }
 
     // ------------------------------------------------------------------
-    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP (PART 1 · LÀM TRÒN 0.25 · TÍNH THEO DẠNG LỖI)
-    // - 0.00 - 3.50 : Chưa đạt B1
-    // - 3.75        : Xấp xỉ B1
-    // - 4.00 - 5.50 : Đạt B1
-    // - 5.75        : Xấp xỉ B2
-    // - 6.00 - 8.50 : Đạt B2
-    // - 8.75        : Xấp xỉ C1
-    // - 9.00 - 10.0 : Đạt C1
+    // CHẤM ĐIỂM THANG 10 CHUẨN VSTEP (PART 1 · 5 TIÊU CHÍ · LÀM TRÒN 0.25)
     // ------------------------------------------------------------------
-    // 1. Task Development & Length (0.3 - 2.6 pts)
-    let devPts = 0.3;
-    if (wordCount >= 55) devPts = 2.6;
-    else if (wordCount >= 45) devPts = 2.5;
-    else if (wordCount >= 34) devPts = 2.15;
-    else if (wordCount >= 28) devPts = 1.8;
-    else if (wordCount >= 22) devPts = 1.5;
-    else if (wordCount >= 15) devPts = 1.0;
-    else if (wordCount >= 10) devPts = 0.65;
+    const richLexis1 = Array.from(new Set([...allB2Lexis, ...generalHigherHits]));
 
-    // 2. Vocabulary & Topic Lexical Resource (0.4 - 2.7 pts)
-    let vocabPts = matchedDomainCount === 0 ? 0.4 : 0.85 + Math.min(0.45, uniqueDomainWords.length * 0.08);
-    if (b1SampleHits.length > 0) vocabPts += Math.min(0.25, b1SampleHits.length * 0.09);
-    vocabPts += Math.min(1.2, allB2Lexis.length * 0.28);
-    vocabPts = Math.min(2.7, vocabPts);
+    let gram1 = wordCount >= 22 ? 4.5 : wordCount >= 15 ? 3.5 : 2.5;
+    if (usedCompound.length > 0) gram1 += 0.5;
+    if (usedComplex.length >= 1 && wordCount >= 20) gram1 += 0.5;
+    if (usedComplex.length >= 2 && wordCount >= 28) gram1 += 0.5;
+    if (usedRelative.length >= 1) gram1 += 1.0;
+    if (usedRelative.length >= 2) gram1 += 0.5;
+    if (usedDiscourse.length >= 1) gram1 += 0.5;
+    if (hasAdvancedGrammar && (usedRelative.length >= 1 || usedComplex.length >= 1)) gram1 += 0.5;
+    if (sophCount >= 8 && wordCount >= 48) gram1 += 0.5;
+    gram1 -= grammarErrorCount * 1.0;
 
-    // 3. Grammar Range (0.8 - 2.6 pts; lỗi trừ theo dạng lỗi bên dưới)
-    let gramPts = wordCount >= 22 ? 1.05 : 0.8;
-    if (usedCompound.length > 0) gramPts += 0.15;
-    if (usedComplex.length > 0 && wordCount >= 20) gramPts += 0.25;
-    if (usedRelative.length > 0) gramPts += 0.45;
-    if (usedDiscourse.length >= 1) gramPts += 0.25;
-    if (usedDiscourse.length >= 2) gramPts += 0.2;
-    if (usedComplex.length >= 2 && usedRelative.length >= 1) gramPts += 0.25;
+    let vocab1 = isOffTopic ? 2.5 : matchedDomainCount >= 2 ? 4.5 : 3.5;
+    if (!isOffTopic && uniqueDomainWords.length >= 4) vocab1 += 0.5;
+    if (b1SampleHits.length >= 2) vocab1 += 0.5;
+    vocab1 += Math.min(2.5, richLexis1.length * 0.5);
+    if (sophCount >= 4) vocab1 += 0.5;
+    if (sophCount >= 8) vocab1 += 0.5;
+    if (sophCount >= 12) vocab1 += 0.5;
+    vocab1 -= vocabErrorCount * 0.5;
 
-    // 4. Fluency & Delivery Pacing (0.25 - 1.5 pts)
-    let fluPts = 0.35;
-    if (wordCount >= 45) fluPts = 1.3;
-    else if (wordCount >= 34) fluPts = 1.05;
-    else if (wordCount >= 22) fluPts = 0.85;
-    else if (wordCount >= 15) fluPts = 0.55;
-    if (usedDiscourse.length >= 1 && wordCount >= 36) fluPts = Math.min(1.5, fluPts + 0.2);
-    if (durationSec >= 12 && wordCount / durationSec < 0.75) {
-      fluPts = Math.max(0.25, fluPts - 0.2);
-    }
+    let pron1 = wordCount >= 34 ? 5.5 : wordCount >= 22 ? 5.0 : 4.0;
+    if (richLexis1.length >= 2 || sophCount >= 5) pron1 += 0.5;
+    if (pronErrorCount === 0 && wordCount >= 36 && (richLexis1.length >= 3 || sophCount >= 6)) pron1 += 1.0;
+    if (pronErrorCount === 0 && errorTypeCount === 0 && wordCount >= 50 && (richLexis1.length >= 4 || sophCount >= 9)) pron1 += 1.0;
+    pron1 -= pronErrorCount * 1.5;
 
-    // Trừ trực tiếp 0.55 điểm cho mỗi DẠNG LỖI khác nhau phát hiện được
-    rawScore = devPts + vocabPts + gramPts + fluPts - errorTypeCount * 0.55;
+    let flu1 = 2.5;
+    if (wordCount >= 55) flu1 = errorTypeCount === 0 && (usedDiscourse.length >= 2 || usedComplex.length >= 2) ? 9.0 : 7.5;
+    else if (wordCount >= 42) flu1 = usedDiscourse.length >= 1 || usedComplex.length >= 1 ? 7.0 : 6.0;
+    else if (wordCount >= 34) flu1 = usedDiscourse.length >= 1 || usedRelative.length >= 1 ? 6.5 : 5.5;
+    else if (wordCount >= 22) flu1 = 4.5;
+    else if (wordCount >= 15) flu1 = 3.5;
+    if (durationSec >= 12 && wordCount / durationSec < 0.75) flu1 -= 0.5;
+    if (errors.some(e => e.key === "repetitive_can")) flu1 -= 0.5;
 
-    const hasB2Lexis = allB2Lexis.length >= 3 || (allB2Lexis.length >= 2 && (usedRelative.length > 0 || usedDiscourse.length > 0));
-    const hasB2Grammar = usedRelative.length > 0 || usedDiscourse.length > 0;
+    let disc1 = isOffTopic ? 2.5 : wordCount >= 22 ? 4.5 : 3.5;
+    if (sentenceCount >= 3) disc1 += 0.5;
+    if (usedComplex.length >= 1) disc1 += 0.5;
+    if (usedRelative.length >= 1) disc1 += 0.5;
+    disc1 += Math.min(1.5, usedDiscourse.length * 0.5);
+    if (wordCount >= 48 && sentenceCount >= 3) disc1 += 0.5;
+    if (wordCount >= 60 && usedDiscourse.length >= 2 && (usedComplex.length >= 1 || usedRelative.length >= 1)) disc1 += 0.5;
+    if (isOffTopic) disc1 = Math.min(disc1, 2.5);
+
+    const criterionScores1 = {
+      grammar: roundHalf(gram1),
+      vocabulary: roundHalf(vocab1),
+      pronunciation: roundHalf(pron1),
+      fluency: roundHalf(flu1),
+      discourse_management: roundHalf(disc1)
+    };
+
+    let rawScore =
+      (criterionScores1.grammar +
+        criterionScores1.vocabulary +
+        criterionScores1.pronunciation +
+        criterionScores1.fluency +
+        criterionScores1.discourse_management) /
+      5;
+
+    const hasB2Lexis =
+      richLexis1.length >= 3 ||
+      (richLexis1.length >= 2 && (usedRelative.length > 0 || usedDiscourse.length > 0)) ||
+      (sophCount >= 6 && (usedRelative.length > 0 || usedDiscourse.length > 0 || hasAdvancedGrammar));
+    const hasB2Grammar =
+      usedRelative.length > 0 ||
+      usedDiscourse.length > 0 ||
+      (usedComplex.length >= 2 && hasAdvancedGrammar && sophCount >= 6);
     const hasC1Profile =
       errorTypeCount === 0 &&
-      wordCount >= 55 &&
-      allB2Lexis.length >= 5 &&
+      wordCount >= 52 &&
+      (richLexis1.length >= 4 || (richLexis1.length >= 2 && sophCount >= 8)) &&
       usedRelative.length >= 1 &&
       usedComplex.length >= 1 &&
       usedDiscourse.length >= 2;
 
-    if (isOffTopic) {
-      rawScore = Math.min(rawScore, 2.5);
-    } else if (wordCount < 15) {
+    if (isOffTopic || wordCount < 15) {
       rawScore = Math.min(rawScore, 2.5);
     } else if (wordCount < 22) {
       rawScore = Math.min(rawScore, errorTypeCount >= 2 ? 2.5 : 3.5);
     } else if (errorTypeCount >= 3) {
       rawScore = Math.min(rawScore, 3.5);
-    } else if (errorTypeCount >= 2 || wordCount < 34 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2) {
+    } else if (wordCount < 34 || !hasB2Lexis || !hasB2Grammar || matchedDomainCount < 2 || errorTypeCount >= 2) {
       // Khung B1 tối đa 5.5 (bài ngắn 22-27 từ tối đa 4.5)
       rawScore = Math.min(rawScore, wordCount < 28 ? 4.5 : 5.5);
     } else if (hasC1Profile) {
       rawScore = Math.max(rawScore, 9.0);
     } else {
-      // Đủ chuẩn vào khung B2 (6.0 - 8.5)
+      // Đủ chuẩn vào khung B2 (6.0 - 8.5): 1 lỗi nhỏ không hệ thống vẫn giữ mức B2
       if (errorTypeCount === 0) {
         rawScore = Math.max(rawScore, 6.5);
       } else {
-        rawScore = Math.min(rawScore, 6.5);
+        rawScore = Math.max(6.0, Math.min(rawScore, 7.0));
       }
-      if (wordCount < 45 && allB2Lexis.length < 4) {
+      if (wordCount < 45 && richLexis1.length < 4 && sophCount < 8) {
         rawScore = Math.min(rawScore, 7.5);
       } else {
         rawScore = Math.min(rawScore, 8.5);
@@ -1326,35 +1448,36 @@
     const timeNote = durationSec ? ` / ${durationSec} giây` : "";
     const notes = [];
     if (errorTypeCount === 0) {
-      notes.push(`Không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
+      notes.push(`Diễn đạt rõ ràng, không phát hiện lỗi ngữ pháp/từ vựng đáng kể (${wordCount} từ${timeNote}).`);
     }
 
     if (isOffTopic) {
-      notes.push("Nội dung chưa bám sát từ khóa câu hỏi; cần trả lời trực tiếp vào trọng tâm đề bài.");
+      notes.push("Nội dung chưa bám sát từ khóa câu hỏi; hãy trả lời trực tiếp vào trọng tâm đề bài.");
     } else if (wordCount < 22) {
-      notes.push(`Độ dài còn quá ngắn (${wordCount} từ${timeNote}). Cần nói ít nhất 22–35 từ (3 câu ngắn gọn theo công thức A-R-E: Trả lời + Lý do → Ví dụ → Cảm xúc) để đạt mức B1.`);
+      notes.push(`Câu trả lời còn ngắn (${wordCount} từ${timeNote}). Hãy thử triển khai 3 câu theo A-R-E (Trả lời + Lý do → Ví dụ → Cảm xúc) để đạt mức B1.`);
     } else if (badgeTone === "below") {
-      notes.push(`Bài nói còn ${errorTypeCount} dạng lỗi ảnh hưởng đến độ chính xác (${wordCount} từ${timeNote}); cần sửa các lỗi trên để đạt mức B1.`);
+      notes.push(`Bạn đã có ý trả lời (${wordCount} từ${timeNote}), hãy chỉnh ${errorTypeCount} dạng lỗi bên trên để vững vàng ở mức B1.`);
     } else if (badgeTone === "b1" || levelLabel === "Xấp xỉ B1") {
       if (wordCount < 34) {
-        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Để lên B2, hãy giữ 3 câu theo A-R-E khoảng 35+ từ, thêm cụm từ vựng tự nhiên ở Mục V và từ nối/mệnh đề quan hệ.`);
+        notes.push(`Đạt ${levelLabel} (${wordCount} từ${timeNote}). Để nâng lên B2, hãy mở rộng nhẹ khoảng 35+ từ, thêm từ nối tự nhiên (Honestly / Actually) và mệnh đề quan hệ (which/who/where).`);
       } else if (errorTypeCount > 0) {
-        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Hãy sửa dạng lỗi trên và dùng thêm từ nối/cụm tự nhiên B2 để hướng tới mức B2.`);
+        notes.push(`Đạt ${levelLabel} (${wordCount} từ${timeNote}). Chỉnh nhẹ điểm lỗi bên trên và thêm cụm từ tự nhiên B2 sẽ giúp bạn bật lên mức B2.`);
       } else {
-        notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Để lên B2, hãy dùng thêm các cụm tự nhiên ở Mục V (Honestly / tend to / unwind / , which...).`);
+        notes.push(`Đạt ${levelLabel} (${wordCount} từ${timeNote}). Bạn đã nói đúng ngữ pháp; hãy thêm 1–2 cụm tự nhiên (Honestly / tend to / , which...) để tiến lên B2.`);
       }
     } else if (badgeTone === "c1") {
-      notes.push(`Đạt C1 (${wordCount} từ${timeNote}), triển khai tự nhiên, giàu từ vựng và cấu trúc linh hoạt.`);
+      notes.push(`Xuất sắc (${levelLabel} · ${wordCount} từ${timeNote}): vốn từ rộng, liên kết tự nhiên và cấu trúc câu linh hoạt.`);
     } else if (errorTypeCount > 0) {
-      notes.push(`${levelLabel} (${wordCount} từ${timeNote}). Khắc phục lỗi nhỏ bên trên để giữ vững phong độ B2.`);
+      notes.push(`Tốt (${levelLabel} · ${wordCount} từ${timeNote}). Bạn đã đạt độ linh hoạt mức B2; khắc phục thêm lỗi nhỏ bên trên sẽ giúp bài nói mượt mà hơn nữa.`);
     } else {
-      notes.push(`${levelLabel} (${wordCount} từ${timeNote}), triển khai tự nhiên đúng cấu trúc A-R-E và dùng được cụm từ nâng cao.`);
+      notes.push(`Rất tốt (${levelLabel} · ${wordCount} từ${timeNote}): trả lời tự nhiên, mạch lạc và dùng được cấu trúc/từ vựng nâng cao.`);
     }
 
     return {
       hasTranscript: true,
       score: finalScore,
       scoreText: finalScore.toFixed(2),
+      criterionScores: criterionScores1,
       levelLabel,
       badgeTone,
       errorTypeCount,

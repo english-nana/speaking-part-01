@@ -552,6 +552,7 @@
   function getSpeakingCategoryBadgeClass(cat) {
     const lower = String(cat || "").toLowerCase();
     if (lower.includes("vietlish") || lower.includes("việt")) return "cat-vietlish";
+    if (lower.includes("nâng cấp") || lower.includes("upgrade")) return "cat-upgrade";
     if (lower.includes("từ vựng") || lower.includes("tự nhiên") || lower.includes("vocab")) return "cat-vocab";
     return "cat-grammar";
   }
@@ -686,6 +687,7 @@
     return String(text || "")
       .replace(/[·\-–—]?\s*\(?\s*\d+([.,]\d+)?\s*\/\s*10\s*\)?/gi, "")
       .replace(/\(\s*\d+([.,]\d+)?\s*(?:điểm|đ|pts?)\s*\)/gi, "")
+      .replace(/\b(?:band|mức điểm|số điểm)\s*\d+([.,]\d+)?\b/gi, "")
       .replace(/\s{2,}/g, " ")
       .trim();
   }
@@ -711,7 +713,9 @@
     const lower = String(bandLabel || "").toLowerCase();
     if (lower.includes("chưa đạt")) return "band-below";
     if (lower.includes("xấp xỉ")) return "band-approx";
-    return "band-achieved";
+    if (lower.includes("c1")) return "band-achieved band-c1";
+    if (lower.includes("b2")) return "band-achieved band-b2";
+    return "band-achieved band-b1";
   }
 
   function renderSpeakingReviewHtml(originalTranscript, reviewJson, meta) {
@@ -732,6 +736,10 @@
         ? reviewJson.idea_additions
         : [];
     const criteria = reviewJson.criteria || {};
+    const criterionScores =
+      reviewJson.criterion_scores && typeof reviewJson.criterion_scores === "object"
+        ? reviewJson.criterion_scores
+        : null;
     const naturalVersion = String(reviewJson.natural_spoken_version || reviewJson.revised_version || "").trim();
     const roundedInternalScore =
       reviewJson.internal_score !== null &&
@@ -746,24 +754,56 @@
     );
     const rawAssessClean = stripNumericScores(reviewJson.level_assessment);
     const cleanOverallComment = stripNumericScores(reviewJson.overall_comment);
+    const cleanNextTip = stripNumericScores(reviewJson.next_level_tip);
     const showAssessNote =
       rawAssessClean &&
       rawAssessClean.toLowerCase() !== cleanBand.toLowerCase() &&
       rawAssessClean.length > cleanBand.length + 4;
 
-    const criteriaItems = [
-      { key: "pronunciation_intonation", label: "🎙️ Phát âm & Ngữ điệu" },
-      { key: "grammar", label: "📐 Ngữ pháp & Chia thì" },
-      { key: "vocabulary_vietlish", label: "💬 Dùng từ tự nhiên & Lỗi Vietlish" },
-      { key: "coherence_logic", label: "🧭 Sắp xếp ý logic & Dễ theo dõi" }
-    ].filter(item => criteria[item.key]);
+    const rawSuggestedLevel = String(reviewJson.suggested_level || "").trim().toUpperCase();
+    const suggestedLevelLabel =
+      rawSuggestedLevel === "C1" || rawSuggestedLevel === "B2" || rawSuggestedLevel === "B1"
+        ? rawSuggestedLevel
+        : cleanBand.includes("C1")
+          ? "C1"
+          : cleanBand.includes("B2")
+            ? "B2"
+            : targetLevel;
+
+    const hasFiveCriterionSchema = Boolean(
+      criteria.vocabulary ||
+        criteria.pronunciation ||
+        criteria.fluency ||
+        criteria.discourse_management
+    );
+
+    const criteriaItems = (
+      hasFiveCriterionSchema
+        ? [
+            { key: "grammar", scoreKey: "grammar", label: "📐 Ngữ pháp (Grammar)" },
+            { key: "vocabulary", scoreKey: "vocabulary", label: "💬 Từ vựng (Vocabulary)" },
+            { key: "pronunciation", scoreKey: "pronunciation", label: "🎙️ Phát âm (Pronunciation)" },
+            { key: "fluency", scoreKey: "fluency", label: "⚡ Độ trôi chảy (Fluency)" },
+            {
+              key: "discourse_management",
+              scoreKey: "discourse_management",
+              label: "🧭 Tổ chức & Phát triển ý (Discourse Management)"
+            }
+          ]
+        : [
+            { key: "pronunciation_intonation", scoreKey: "pronunciation", label: "🎙️ Phát âm & Ngữ điệu" },
+            { key: "grammar", scoreKey: "grammar", label: "📐 Ngữ pháp & Chia thì" },
+            { key: "vocabulary_vietlish", scoreKey: "vocabulary", label: "💬 Dùng từ tự nhiên & Lỗi Vietlish" },
+            { key: "coherence_logic", scoreKey: "discourse_management", label: "🧭 Sắp xếp ý logic & Dễ theo dõi" }
+          ]
+    ).filter(item => criteria[item.key]);
 
     return `
       <div class="ai-review-panel">
         <div class="ai-review-summary">
           <div class="ai-review-badges">
-            <span class="ai-level-badge">Mục tiêu Level ${escapeHtml(targetLevel)}</span>
             ${cleanBand ? `<span class="ai-band-badge ${getBandToneClass(cleanBand)}">Đánh giá: ${escapeHtml(cleanBand)}</span>` : ""}
+            <span class="ai-level-badge">Bài luyện: Level ${escapeHtml(targetLevel)}</span>
             ${
               isTeacherView && roundedInternalScore !== null
                 ? `<span class="ai-level-badge" style="background:#FEF3C7;color:#92400E;border-color:#D97706;">Điểm quy đổi (GV): ${escapeHtml(roundedInternalScore.toFixed(2))}/10</span>`
@@ -772,20 +812,40 @@
             ${showAssessNote ? `<span class="ai-assess-text">${escapeHtml(rawAssessClean)}</span>` : ""}
           </div>
           ${cleanOverallComment ? `<p class="ai-overall-comment">${escapeHtml(cleanOverallComment)}</p>` : ""}
+          ${
+            cleanNextTip
+              ? `<div class="ai-next-step-tip"><strong>💡 Hướng nâng cấp tiếp theo:</strong> ${escapeHtml(cleanNextTip)}</div>`
+              : ""
+          }
 
           ${
             criteriaItems.length > 0
               ? `
               <div class="ai-criteria-grid">
                 ${criteriaItems
-                  .map(
-                    item => `
+                  .map(item => {
+                    const rawCritScore = criterionScores ? Number(criterionScores[item.scoreKey]) : NaN;
+                    const showCritScore =
+                      isTeacherView &&
+                      criterionScores &&
+                      criterionScores[item.scoreKey] !== null &&
+                      criterionScores[item.scoreKey] !== undefined &&
+                      criterionScores[item.scoreKey] !== "" &&
+                      Number.isFinite(rawCritScore);
+                    return `
                     <div class="ai-criteria-item">
-                      <div class="ai-criteria-label">${escapeHtml(item.label)}</div>
+                      <div class="ai-criteria-head">
+                        <div class="ai-criteria-label">${escapeHtml(item.label)}</div>
+                        ${
+                          showCritScore
+                            ? `<span class="ai-criteria-score-tag">${escapeHtml(rawCritScore.toFixed(1))}/10</span>`
+                            : ""
+                        }
+                      </div>
                       <div class="ai-criteria-text">${escapeHtml(stripNumericScores(criteria[item.key]))}</div>
                     </div>
-                  `
-                  )
+                  `;
+                  })
                   .join("")}
               </div>
             `
@@ -832,10 +892,10 @@
         </div>
 
         <div class="ai-review-block">
-          <div class="ai-block-title">3. Sửa Ngữ pháp, Dùng từ tự nhiên &amp; Chữa diễn đạt "Vietlish" (${corrections.length} mục)</div>
+          <div class="ai-block-title">3. Góp ý Ngữ pháp, Dùng từ tự nhiên &amp; Nâng cấp diễn đạt (${corrections.length} mục)</div>
           ${
             corrections.length === 0
-              ? `<p class="ai-clean-note">✓ Câu trả lời dùng từ tự nhiên, đúng ngữ pháp ở mức Level ${escapeHtml(targetLevel)} và không bị dịch từng chữ (Vietlish).</p>`
+              ? `<p class="ai-clean-note">✓ Câu trả lời diễn đạt tự nhiên, rõ ý và chuẩn xác.</p>`
               : `
               <div class="ai-corr-table-wrap">
                 <table class="ai-corr-table">
@@ -880,7 +940,7 @@
           ideaExpansions.length > 0
             ? `
             <div class="ai-review-block">
-              <div class="ai-block-title">4. Ý tưởng hơi "cụt" — Cách diễn đạt lại &amp; Mở rộng cho mạch lạc (chuẩn Level ${escapeHtml(targetLevel)})</div>
+              <div class="ai-block-title">4. Gợi ý mở rộng &amp; phát triển ý sâu hơn</div>
               <div class="ai-ideas-list">
                 ${ideaExpansions
                   .map(it => {
@@ -909,7 +969,7 @@
             ? `
             <details class="ai-revised-details" open>
               <summary class="ai-revised-summary">
-                <span>✨ Bài nói 3 câu hoàn chỉnh, tự nhiên (giữ nguyên ý của bạn · Level ${escapeHtml(targetLevel)})</span>
+                <span>✨ Phiên bản diễn đạt hoàn chỉnh, tự nhiên (giữ nguyên ý của bạn${suggestedLevelLabel ? ` · Gợi ý mức ${escapeHtml(suggestedLevelLabel)}` : ""})</span>
               </summary>
               <div class="ai-revised-body">
                 <div style="margin-bottom:8px;">“${escapeHtml(naturalVersion)}”</div>
@@ -948,6 +1008,7 @@
     invokeGradeSpeaking,
     invokeProcessSpeakingQueue,
     formatCleanBandLabel,
+    getBandToneClass,
     renderSpeakingReviewHtml
   };
 })();

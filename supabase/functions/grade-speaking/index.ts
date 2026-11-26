@@ -265,61 +265,92 @@ function buildSpeakingGradingPrompt(params: {
   targetLevel: string;
   hasAudio: boolean;
 }) {
-  const level = String(params.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
+  const practiceTabLevel = String(params.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
   const isPart2 =
     /^part2[-_]/i.test(params.topicId || "") || /^p2_/i.test(params.questionId || "");
 
   const partLabel = isPart2
-    ? "VSTEP Speaking Part 2 (Solution Discussion — chọn 1 trong 3 phương án theo bố cục 3 phần: Mở bài dẫn nhập & chọn phương án -> Thân bài nêu 2 lý do chọn & lý do không chọn 2 phương án còn lại -> Kết bài khẳng định lại lựa chọn)"
-    : "VSTEP Speaking Part 1 (Social Interaction — trả lời ngắn gọn, tự nhiên trong 2-3 câu)";
+    ? "VSTEP Speaking Part 2 (Solution Discussion — chọn 1 trong 3 phương án, nêu lý do thuyết phục, đối chiếu/so sánh với các phương án còn lại và kết luận rõ ràng)"
+    : "VSTEP Speaking Part 1 (Social Interaction — trả lời tự nhiên, rõ ý, có giải thích và ví dụ/cảm xúc ngắn gọn)";
 
-  const levelGuidance = isPart2
-    ? level === "B2"
-      ? `Mục tiêu của học viên là trình độ B2 (Speaking Part 2):
-- Đánh giá theo bố cục 3 phần dùng chung (~170-210 từ): Mở bài ("The situation here is that... If I were in this situation/him/her, I think I would... I believe it's the best option because of the following reasons.") -> Thân bài ("First of all,... This is because... For example,... Because of this,... Another reason is that... In other words,... Moreover,... This can help/allow... Regarding the other two options, although... is worth considering,... As for..., I don't think it's a good idea because...") -> Kết bài ("In conclusion, I believe... is the most suitable option in this situation.").
-- Chỉ ra các chỗ bị "Vietlish" hoặc lập luận chưa chặt, gợi ý diễn đạt tự nhiên mức B2 chứ KHÔNG ép từ C1/C2 cứng nhắc.`
-      : `Mục tiêu của học viên là trình độ B1 (Speaking Part 2):
-- Chỉ cần bài nói đủ 3 phần (~130-165 từ) theo đúng khung dàn ý chung: Mở bài ("The situation here is that... If I were in this situation/him/her, I think I would...") -> Thân bài nêu 2 lý do đời thường (First of all... This is because... For example... Because of this... / Another reason is that... In other words... Moreover... This can help...) và phản biện 2 phương án còn lại (Regarding the other two options, although... is a good option,... As for..., I don't think it's a good idea because...) -> Kết bài ("In conclusion, I believe... is the most suitable option in this situation.").
-- KHÔNG ép học viên dùng từ vựng phức tạp. Nếu nói rõ ý, tự nhiên ở mức B1 thì khen ngợi và giữ nguyên.`
-    : level === "B2"
-      ? `Mục tiêu của học viên là trình độ B2:
-- Đánh giá và hướng dẫn cách nói tự nhiên ở chuẩn B2 giao tiếp thực tế (khoảng 3 câu mạch lạc ~35-48 từ theo hướng: Trả lời trực tiếp kèm discourse marker tự nhiên như "Honestly,", "I'd say", "Actually," + Lý do -> Ví dụ đời thực -> Cảm xúc/Kết quả).
-- Chỉ ra các chỗ diễn đạt còn đơn điệu hoặc bị "Vietlish", gợi ý collocations văn nói tự nhiên (như "hang out with close friends", "unwind", "clear my mind", "affordable", "convenient", "in advance", "boost my productivity", mệnh đề "which...") nhưng KHÔNG ép dùng từ C1/C2 sách vở cứng nhắc.`
-      : `Mục tiêu của học viên là trình độ B1:
-- Chỉ cần bài nói rõ ý, phát âm dễ nghe, đúng ngữ pháp cơ bản, dùng từ tự nhiên gần gũi đời sống (~28-38 từ, khoảng 2-3 câu ngắn gọn theo mạch: Trả lời + Lý do -> Ví dụ cụ thể -> Cảm xúc).
-- KHÔNG ép học viên dùng từ vựng phức tạp hay cấu trúc B2/C1. Nếu câu học viên nói đơn giản nhưng tự nhiên, đúng ngữ pháp ở mức B1 thì khen ngợi và GIỮ NGUYÊN.
-- Khi sửa lỗi "Vietlish" hoặc mở rộng ý bị "cụt", hãy gợi ý các câu tiếng Anh giao tiếp đời thường, dễ nhớ, dễ nói đối với học viên B1 Việt Nam.`;
+  const partCalibration = isPart2
+    ? `CHUẨN ĐÁNH GIÁ THEO PART 2 (Solution Discussion):
+- Bài nói tốt thường dài khoảng 1.5–3 phút (~120–240+ từ): nêu rõ lựa chọn trong 3 phương án, phát triển các lý do thuyết phục kèm ví dụ/giải thích cụ thể, có đề cập hợp lý đến 2 phương án còn lại và kết luận tự nhiên.
+- KHÔNG chấm rập khuôn theo một mẫu câu cố định nào: miễn là học viên lựa chọn rõ ràng, lập luận mạch lạc và phát triển ý tự nhiên bằng BẤT KỲ cách diễn đạt tiếng Anh chuẩn nào thì đều đánh giá đúng theo năng lực thực tế (B1, B2 hoặc C1).`
+    : `CHUẨN ĐÁNH GIÁ THEO PART 1 (Social Interaction):
+- Trong đề thi VSTEP Part 1, câu trả lời tự nhiên thường dài khoảng 20–45 giây (~30–80 từ). KHÔNG trừ điểm chỉ vì bài Part 1 ngắn gọn theo đúng định dạng phỏng vấn: một câu trả lời ~35–70 từ nhưng phát âm tự nhiên, trôi chảy, từ vựng chính xác/linh hoạt, có mệnh đề phức và ví dụ/giải thích rõ ràng HOÀN TOÀN có thể đạt B2 (6.0–8.5) hoặc C1 (9.0–10.0).
+- KHÔNG ép dùng từ C1/C2 sách vở cứng nhắc; văn nói tự nhiên, lưu loát, đúng ngữ cảnh luôn được đánh giá cao.`;
 
   const audioContextNote = params.hasAudio
     ? `ĐÃ ĐÍNH KÈM FILE GHI ÂM THẬT CỦA HỌC VIÊN (thời lượng ~${params.durationSec || 0} giây).
 - Hãy NGHE KỸ file ghi âm đính kèm làm nguồn chính để:
   1) Ghi lại ĐẦY ĐỦ, chính xác những gì học viên thực sự nói vào trường "recognized_transcript" (transcript trình duyệt bên dưới chỉ để tham khảo vì đôi khi bị thiếu hoặc nhận diện nhầm).
-  2) Chấm trực tiếp PHÁT ÂM (có rõ chữ, dễ nghe không; đặc biệt bắt lỗi mất final sound /s/, /z/ khi đó là âm cuối gốc của từ như nice, house, place, office, because, always, relax, stress, bus, class, famous...; âm cuối /t/, /d/; trọng âm từ) và NGỮ ĐIỆU (có nhấn nhá từ khóa, lên xuống giọng tự nhiên không, hay đang nói đều đều một tông / đọc chữ / ngập ngừng).`
+  2) Chấm trực tiếp PHÁT ÂM & ĐỘ TRÔI CHẢY (độ rõ chữ, dễ hiểu, trọng âm từ/câu, ngữ điệu lên xuống tự nhiên, nhịp nói và ngập ngừng thực tế). Lưu ý: giọng có âm sắc tiếng Việt nhẹ nhưng phát âm rõ ràng, dễ hiểu và tự nhiên vẫn hoàn toàn có thể đạt Band 7–9 theo VSTEP Speaking Scoring Guide.`
     : `Không tải được file âm thanh gốc, chỉ có transcript văn bản (~${params.durationSec || 0} giây):
-- Dựa vào transcript và thời lượng nói để nhận xét tốc độ/độ trôi chảy và lưu ý phát âm/ngữ điệu những từ có final sound dễ sai trong câu trả lời.`;
+- Dựa vào transcript và thời lượng nói để đánh giá công bằng độ trôi chảy (tốc độ/độ dài diễn đạt) và lưu ý phát âm/ngữ điệu những từ khóa quan trọng nếu cần.`;
 
-  return `Bạn là giám khảo và giáo viên hướng dẫn VSTEP Speaking tận tâm, giàu kinh nghiệm dạy học viên Việt Nam.
+  return `Bạn là giám khảo chấm thi VSTEP Speaking chính thức và là giáo viên hướng dẫn tận tâm, công tâm, giàu tính xây dựng (constructive) dành cho học viên Việt Nam.
 
-THÔNG TIN CÂU HỎI & BÀI NÓI:
+THÔNG TIN BÀI NÓI:
 - Phần thi: ${partLabel}
 - Chủ đề: ${params.topicTitle || (isPart2 ? "Speaking Part 2" : "Speaking Part 1")}
 - Câu hỏi / Tình huống của giám khảo: "${params.promptText || "(Không có câu hỏi)"}"
-- Trình độ mục tiêu học viên chọn: Level ${level}
+- Tab bài luyện học viên đang mở: Level ${practiceTabLevel} (CHỈ LÀ NGỮ CẢNH THAM KHẢO — TUYỆT ĐỐI KHÔNG DÙNG ĐỂ KHỐNG CHẾ HAY ÉP ĐIỂM)
 - Thời lượng ghi âm: ${params.durationSec || 0} giây
 - Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Trình duyệt chưa nhận diện được văn bản - hãy nghe trực tiếp file âm thanh)"}"
 - Tình trạng âm thanh: ${audioContextNote}
 
+NGUYÊN TẮC CHỐNG THIÊN LỆCH TRÌNH ĐỘ (CỰC KỲ QUAN TRỌNG):
+- Tab "Level ${practiceTabLevel}" CHỈ là thẻ luyện tập học viên bấm vào khi ghi âm, KHÔNG PHẢI trình độ thật của học viên.
+- Nếu học viên chọn nhầm tab B1 nhưng nói lưu loát, tự nhiên, giàu từ vựng và cấu trúc câu ở mức B2 hoặc C1, BẠN PHẢI CHẤM ĐÚNG MỨC B2 HOẶC C1 THỰC TẾ CỦA HỌ — TUYỆT ĐỐI KHÔNG kéo điểm xuống hoặc giữ ở ngưỡng B1.
+- Ngược lại, đánh giá hoàn toàn khách quan theo năng lực thể hiện thực tế trong bài nói qua thang 7 mức: Chưa đạt B1 | Xấp xỉ B1 | Đạt B1 | Xấp xỉ B2 | Đạt B2 | Xấp xỉ C1 | Đạt C1.
+- Theo VSTEP Speaking Scoring Guide chính thức, người nói đạt Band 6–8 (B2) và Band 9 (C1) VẪN ĐƯỢC PHÉP có một vài lỗi nhỏ không mang tính hệ thống (non-systematic errors) hoặc tự sửa (self-correction) miễn không gây hiểu nhầm. KHÔNG hạ một bài nói B2/C1 xuống B1 chỉ vì 1–3 lỗi nhỏ hoặc vì không dùng đúng câu chữ trong bài mẫu.
+
+${partCalibration}
+
+BẢNG MÔ TẢ CHUẨN VSTEP SPEAKING SCORING GUIDE (5 TIÊU CHÍ ĐỒNG TRỌNG SỐ, THANG 0–10):
+Hãy chấm điểm từng tiêu chí theo bước 0.5 (ví dụ: 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5):
+
+1. GRAMMAR (Ngữ pháp - 20%):
+   - Band 2–3 (Chưa đạt B1): Chỉ kiểm soát hạn chế vài mẫu câu đơn giản hoặc dùng câu đơn còn sai lỗi cơ bản mang tính hệ thống.
+   - Band 4–5 (B1): Dùng tương đối chính xác các cấu trúc đơn giản quen thuộc; có vài lỗi nhưng vẫn dễ hiểu; ở Band 5 có cố gắng dùng câu phức nhưng còn nhiều lỗi.
+   - Band 6–8 (B2): Dùng linh hoạt, chính xác cấu trúc đơn và thể hiện khả năng kiểm soát câu phức (Band 6: kiểm soát một số câu phức; Band 7: kiểm soát tốt câu phức; Band 8: dùng linh hoạt, chính xác nhiều cấu trúc phức tạp). Lỗi không mang tính hệ thống đôi khi vẫn xuất hiện (hoặc có tự sửa lỗi ở Band 8) nhưng KHÔNG gây hiểu nhầm.
+   - Band 9–10 (C1): Dùng linh hoạt và chính xác đa dạng cấu trúc ngữ pháp; Band 9 thỉnh thoảng có lỗi nhỏ không hệ thống; Band 10 hầu như không mắc lỗi.
+
+2. VOCABULARY (Từ vựng - 20%):
+   - Band 2–3 (Chưa đạt B1): Vốn từ cơ bản/hẹp, chỉ đủ xử lý tình huống quen thuộc hoặc từ rời rạc.
+   - Band 4–5 (B1): Đủ/khá đa dạng từ vựng cho chủ đề quen thuộc nhưng đôi khi lặp từ; còn lúng túng và mắc lỗi dùng từ ở chủ đề lạ.
+   - Band 6–8 (B2): Có vốn từ tốt cho hầu hết chủ đề và nỗ lực tránh lặp từ; độ chính xác từ vựng khá cao/cao dù thỉnh thoảng vẫn có nhầm lẫn nhỏ hoặc chọn từ chưa tối ưu; Band 8 chủ động dùng một số từ ít phổ biến và cụm diễn đạt tự nhiên/idiomatic.
+   - Band 9–10 (C1): Làm chủ vốn từ rộng, bao gồm từ ít phổ biến, thành ngữ (idiomatic expressions) và cách nói tự nhiên (colloquialisms); có thể tìm cách diễn đạt thay thế khi cần; hầu như không có lỗi từ vựng đáng kể (Band 9 có thể có sơ suất nhỏ).
+
+3. PRONUNCIATION (Phát âm - 20%):
+   - Band 2–3 (Chưa đạt B1): Khó hiểu hoặc chỉ phát âm được từ/cụm đơn giản, người nghe đôi khi phải hỏi lại.
+   - Band 4–5 (B1): Nhìn chung dễ hiểu, phát âm khá rõ nhưng thỉnh thoảng sai âm đơn lẻ; có cố gắng nhấn trọng âm từ dù còn phát âm sai một số từ.
+   - Band 6–8 (B2): Dễ hiểu, phát âm khá rõ và tự nhiên (Band 8 rất rõ và tự nhiên); phát âm rõ hầu hết âm đơn lẻ; đặt trọng âm từ nhìn chung đúng; có nỗ lực với trọng âm câu và ngữ điệu (Band 6 chưa rõ trọng âm câu, Band 7 có cố gắng rõ hơn, Band 8 thể hiện tốt ngữ điệu và trọng âm từ/câu).
+   - Band 9–10 (C1): Dễ hiểu, phát âm rõ ràng các âm, đặt chính xác cả trọng âm từ và trọng âm câu, ngữ điệu phù hợp và linh hoạt để truyền tải sắc thái ý nghĩa.
+
+4. FLUENCY (Độ trôi chảy - 20%):
+   - Band 2–3 (Chưa đạt B1): Chỉ nói được từ/cụm ngắn, ngập ngừng rõ rệt, nhiều lần bắt đầu lại hoặc lặp lại.
+   - Band 4–5 (B1): Giữ được mạch nói dễ hiểu ở chủ đề quen thuộc, nói được câu trả lời có độ dài nhất định nhưng vẫn còn ngập ngừng rõ/một chút để tìm ngữ pháp và từ vựng, có dấu hiệu tự sửa lỗi.
+   - Band 6–8 (B2): Xử lý chủ đề quen thuộc và lạ tương đối thoải mái/dễ dàng với độ trôi chảy tốt và tốc độ khá đều; ngập ngừng tìm từ/ngữ pháp ít gây chú ý (Band 6: chưa quá lộ; Band 7: thỉnh thoảng mới thấy; Band 8: hiếm khi thấy); nói được đoạn dài mạch lạc với ít lần lặp lại hoặc tự sửa lỗi.
+   - Band 9–10 (C1): Thường xuyên nói các đoạn dài với rất ít ngập ngừng, duy trì dòng chảy tự nhiên, dễ dàng, hiếm khi lặp hay sửa lỗi; nếu có dừng lại chủ yếu là để tìm ý cho khái niệm khó.
+
+5. DISCOURSE MANAGEMENT (Tổ chức & Phát triển ý - 20%):
+   - Band 2–3 (Chưa đạt B1): Hầu như chưa phát triển được ý hoặc liên quan hạn chế, dựa vào lặp lại đề bài, nối ý bằng từ cơ bản (and, but, because, then).
+   - Band 4–5 (B1): Trả lời đúng trọng tâm, phát triển ý theo dạng liệt kê đơn giản; có cố gắng mở rộng (chi tiết/ví dụ) nhưng còn mơ hồ hoặc lặp ý; dùng từ nối đơn giản khá linh hoạt (Band 5).
+   - Band 6–8 (B2): Phát triển ý đúng trọng tâm tương đối thoải mái/dễ dàng, mở rộng bằng chi tiết và ví dụ phù hợp; Band 6 dùng từ nối phức tạp hơn (đôi khi đánh dấu quan hệ ý chưa thật sắc); Band 7–8 dùng đa dạng từ nối hiệu quả để thể hiện rõ ràng mối quan hệ giữa các ý.
+   - Band 9–10 (C1): Phát triển ý mạch lạc, sâu sắc với chi tiết và ví dụ phong phú, biết kết/chốt ý gọn gàng; lời nói trôi chảy, cấu trúc chặt chẽ, sử dụng nhuần nhuyễn các mô hình tổ chức ý và phương tiện liên kết (cohesive devices).
+
 QUY TẮC ĐẶC BIỆT BẮT BUỘC PHẢI TUÂN THỦ:
 - QUY TẮC 1 (BỎ QUA ĐUÔI CHIA ĐỘNG TỪ "-s", "-es", "-ed" — CHỈ BẮT FINAL SOUND CỐ HỮU CỦA TỪ):
   + BỎ QUA HOÀN TOÀN lỗi thiếu hoặc phát âm thiếu đuôi "-s", "-es", "-ed" khi chia động từ (bao gồm quên thêm "-s/-es" ở động từ ngôi thứ 3 số ít hiện tại đơn như "it help", "he like", "my mother cook", "weather affect" VÀ phát âm thiếu âm cuối "-s/-es/-ed" của động từ chia thì như "worked", "played", "visited", "watched", "helped", "makes"...). TUYỆT ĐỐI không trừ điểm, không bắt lỗi trong phần ngữ pháp hay phát âm, không đưa vào "language_corrections" hay "pronunciation_fixes".
-  + NHƯNG VẪN PHẢI BẮT KỸ lỗi quên phát âm âm "s" (/s/, /z/, /ɪz/) khi đó là FINAL SOUND CỐ HỮU CỦA TỪ GỐC (ví dụ: nice /naɪs/, house /haʊs/, place /pleɪs/, price /praɪs/, office /ˈɔːfɪs/, because /bɪˈkɔːz/, always /ˈɔːlweɪz/, sometimes /ˈsʌmtaɪmz/, relax /rɪˈlæks/, stress /stres/, bus /bʌs/, class /klæs/, famous /ˈfeɪməs/, delicious /dɪˈlɪʃəs/... hoặc danh từ số nhiều cần thiết như friends). Nếu học viên nuốt mất final sound gốc này trong file ghi âm thì chỉ rõ trong "criteria.pronunciation_intonation" và "pronunciation_fixes".
-- QUY TẮC 2 (TÍNH THEO DẠNG LỖI — KHÔNG TÍNH TỔNG SỐ LẦN LẶP LỖI):
-  + KHÔNG cộng dồn tổng số lần lặp lại của cùng một lỗi khi trừ điểm.
-  + Ví dụ: nếu trong bài nói học viên phát âm sai cùng 1 từ 3 lần (ví dụ đọc sai từ "because" hoặc "comfortable" 3 lần) thì VẪN CHỈ TÍNH LÀ 1 LỖI DUY NHẤT và chỉ liệt kê 1 lần trong "pronunciation_fixes".
-  + Tương tự, nếu bài nói lặp cùng 1 dạng lỗi ngữ pháp hoặc cùng 1 dạng diễn đạt Vietlish nhiều lần thì chỉ tính là 1 dạng lỗi khi tính điểm, không trừ điểm lặp lại nhiều lần cho cùng 1 dạng lỗi.
-- QUY TẮC 3 (TÍNH ĐIỂM NỘI BỘ LÀM TRÒN 0.25 & QUY ĐỔI MỨC — KHÔNG HIỆN SỐ CHO HỌC VIÊN):
-  + Tính điểm tổng nội bộ trên thang 10 và làm tròn theo bước 0.25 (0.00, 0.25, 0.50, 0.75, ..., 10.00) vào trường số "internal_score" dựa trên chất lượng tổng thể (phát âm/ngữ điệu, ngữ pháp, từ vựng/Vietlish, độ mạch lạc/mở rộng ý) và số DẠNG LỖI khác nhau.
-  + Quy đổi "internal_score" sang "estimated_band" theo đúng thang sau:
+  + NHƯNG vẫn lưu ý nhẹ nhàng, mang tính xây dựng nếu học viên nuốt mất final sound CỐ HỮU của từ gốc gây khó phân biệt nghĩa (ví dụ: nice /naɪs/, house /haʊs/, place /pleɪs/, price /praɪs/, office /ˈɔːfɪs/, because /bɪˈkɔːz/, always /ˈɔːlweɪz/, relax /rɪˈlæks/, stress /stres/, bus /bʌs/, class /klæs/, famous /ˈfeɪməs/...).
+- QUY TẮC 2 (TÍNH THEO DẠNG LỖI — KHÔNG CỘNG DỒN LẶP LỖI):
+  + Nếu cùng 1 từ bị phát âm chưa chuẩn hoặc cùng 1 dạng lỗi ngữ pháp/Vietlish lặp lại nhiều lần trong bài thì chỉ tính là 1 DẠNG LỖI DUY NHẤT, không trừ điểm lặp lại và chỉ liệt kê 1 lần.
+- QUY TẮC 3 (TÍNH ĐIỂM 5 TIÊU CHÍ & QUY ĐỔI MỨC — KHÔNG HIỆN CON SỐ ĐIỂM CHO HỌC VIÊN):
+  + Chấm 5 điểm thành phần (0.0 – 10.0, bước 0.5) vào "criterion_scores": grammar, vocabulary, pronunciation, fluency, discourse_management.
+  + "internal_score" phải đúng bằng trung bình cộng 5 tiêu chí trên và làm tròn theo bước 0.25 (0.00, 0.25, 0.50, 0.75, ..., 10.00).
+  + Quy đổi "internal_score" sang "estimated_band":
     * 0.00 – 3.50 : "Chưa đạt B1"
     * 3.75        : "Xấp xỉ B1"
     * 4.00 – 5.50 : "Đạt B1"
@@ -327,80 +358,69 @@ QUY TẮC ĐẶC BIỆT BẮT BUỘC PHẢI TUÂN THỦ:
     * 6.00 – 8.50 : "Đạt B2"
     * 8.75        : "Xấp xỉ C1"
     * 9.00 – 10.00: "Đạt C1"
-  + TUYỆT ĐỐI KHÔNG viết con số điểm (ví dụ 5.5/10, 6.25 điểm, 7.0...) trong "overall_comment", "level_assessment", hay "criteria" vì học viên chỉ được xem kết quả theo mức.
+  + TUYỆT ĐỐI KHÔNG viết con số điểm (ví dụ 5.5/10, 6.25 điểm, band 7.5...) trong "overall_comment", "level_assessment", "next_level_tip" hay bất kỳ trường nào trong "criteria" vì học viên chỉ xem mức trình độ (B1/B2/C1) và nhận xét chữ.
 
-YÊU CẦU CHẤM & SỬA CHI TIẾT:
-1. PHÁT ÂM CÓ DỄ NGHE KHÔNG & CÓ NGỮ ĐIỆU KHÔNG ("criteria.pronunciation_intonation" + "pronunciation_fixes"):
-   - Nhận xét thẳng thắn, dễ hiểu xem người nghe có dễ nghe, dễ nắm bắt lời học viên nói không; chú ý các từ bị mất final sound gốc (đặc biệt là final sound /s/, /z/ của từ như nice, house, place, because, relax...).
-   - Nhận xét rõ về NGỮ ĐIỆU (intonation) & nhịp nói: giọng nói có sự lên xuống tự nhiên, biết nhấn vào từ mang nội dung (content words) và ngắt cụm hợp lý không, hay đang nói đều đều một tông (monotone), ngập ngừng?
-   - Liệt kê tối đa 4 TỪ KHÁC NHAU trong bài nói mà học viên phát âm chưa chuẩn (sai nguyên âm/phụ âm, sai trọng âm, hoặc mất final sound gốc của từ — KHÔNG liệt kê lỗi thiếu đuôi -s/-es/-ed chia động từ; mỗi từ chỉ liệt kê đúng 1 lần dù bị sai nhiều lần trong bài) vào mảng "pronunciation_fixes" kèm US IPA và mẹo sửa. Nếu phát âm tốt, trả về [].
+PHONG CÁCH NHẬN XÉT MANG TÍNH XÂY DỰNG (CONSTRUCTIVE COACHING):
+- Luôn ghi nhận rõ điểm làm tốt trước tiên (từ phát âm, sự tự tin, từ vựng hay, cấu trúc câu đẹp, đến cách triển khai ý), rồi mới chỉ ra 1–2 điểm ưu tiên cải thiện để tiến lên band tiếp theo (hoặc duy trì phong độ C1).
+- Ở cả 5 mục trong "criteria", mỗi mục viết 2–3 câu rõ ràng: (1) Đánh giá công tâm điểm mạnh đạt được theo chuẩn VSTEP Band Descriptor + (2) Gợi ý cụ thể, tích cực để nâng cấp hơn nữa (nếu đã rất tốt ở mức B2/C1 thì khen ngợi và gợi mở tinh tế chứ không bới móc lỗi vặt).
+- "next_level_tip": Đưa ra 1 lời khuyên hành động thực tế nhất (actionable tip) giúp học viên bước lên trình độ cao hơn (ví dụ: từ B1 lên B2 hoặc từ B2 lên C1).
+- "language_corrections": Tối đa 5 mục thực sự giá trị. Chỉ điền "category" là 1 trong 4 nhãn: "Ngữ pháp", "Vietlish", "Từ vựng tự nhiên", hoặc "Nâng cấp diễn đạt".
+  + Với bài nói đã chuẩn tự nhiên ở mức B2/C1, KHÔNG tự bịa lỗi sai; có thể chọn 1–2 cụm câu hay của học viên để gợi ý cách "Nâng cấp diễn đạt" lên sắc thái mượt hơn/idiomatic hơn nếu hữu ích, hoặc trả về [] nếu không cần chỉnh.
+  + "original" phải trích NGUYÊN VĂN từ "recognized_transcript" (2–10 từ). "corrected" phải phù hợp với trình độ thực tế của học viên (TUYỆT ĐỐI không sửa câu B2/C1 thành câu đơn giản cấp B1).
+- "idea_expansions": Tối đa 2 gợi ý mang tính mở rộng chiều sâu (chi tiết, ví dụ, so sánh hoặc kết nối ý) nếu ý còn hơi mỏng; nếu bài nói đã phát triển ý đầy đủ, mạch lạc ở mức hiện tại thì trả về [].
+- "natural_spoken_version" & "suggested_level": Đặt "suggested_level" là "B1", "B2" hoặc "C1" tương ứng với năng lực thực tế của bài nói (hoặc nhỉnh hơn 1 nấc nhẹ để học viên học hỏi), rồi viết lại phiên bản hoàn chỉnh dựa trên CHÍNH Ý TƯỞNG CỦA HỌC VIÊN ở đúng "suggested_level" đó — giữ nguyên phong thái tự nhiên, KHÔNG hạ cấp câu B2/C1 xuống B1.
 
-2. NGỮ PHÁP ("criteria.grammar" + "language_corrections"):
-   - Kiểm tra thì của động từ theo câu hỏi (quá khứ, tương lai, hiện tại), cấu trúc câu, giới từ, dạng từ (V-ing / to V).
-   - Nhắc lại: BỎ QUA lỗi thiếu đuôi "-s", "-es", "-ed" khi chia động từ (cả phát âm lẫn ngữ pháp); không bắt lỗi dấu câu/viết hoa; mỗi dạng lỗi lặp lại nhiều lần chỉ tính 1 dạng lỗi khi đánh giá.
-
-3. DÙNG TỪ TỰ NHIÊN & PHÁT HIỆN LỖI "VIETLISH" ("criteria.vocabulary_vietlish" + "language_corrections"):
-   - Đánh giá cách dùng từ đã tự nhiên như giao tiếp đời thực chưa.
-   - ĐẶC BIỆT tìm các cụm từ bị "Vietlish" (dịch từng chữ từ tiếng Việt sang tiếng Anh hoặc ghép từ thiếu tự nhiên mà người Việt hay mắc, ví dụ: "very like" -> "really like", "go play with friends" -> "hang out with my friends", "eat many delicious foods" -> "try lots of tasty food", "traffic is very crowded" -> "the streets are really crowded / traffic is heavy"...).
-   - Trong mảng "language_corrections":
-     + "original": trích NGUYÊN VĂN cụm từ trong "recognized_transcript" của học viên (2-10 từ) để hệ thống gạch chân/đối chiếu trực tiếp.
-     + "corrected": cách nói lại tự nhiên, chuẩn xác ở mức ${level}.
-     + "category": chỉ điền đúng 1 trong 3 nhãn: "Vietlish", "Từ vựng tự nhiên", hoặc "Ngữ pháp".
-     + "explanation_vi": giải thích ngắn gọn tại sao cách nói cũ bị sai ngữ pháp hoặc hơi "Vietlish", và cách nói mới tự nhiên hơn thế nào.
-
-4. SẮP XẾP CÁC Ý CÓ LOGIC, DỄ THEO DÕI KHÔNG ("criteria.coherence_logic"):
-   - Nhận xét xem bài nói có đi thẳng vào tình huống/câu hỏi không, thứ tự các ý có logic, mạch lạc, dễ theo dõi không (${isPart2 ? "mạch chuẩn Part 2: Mở bài dẫn nhập & chọn phương án -> Thân bài nêu 2 lý do chọn + giải thích tại sao không chọn 2 phương án còn lại -> Kết bài khẳng định lại lựa chọn" : "mạch chuẩn Part 1: Trả lời trực tiếp + Lý do -> Ví dụ thực tế -> Cảm xúc/Kết quả"}), và đã có từ nối tự nhiên trong văn nói chưa.
-
-5. Ý TƯỞNG HƠI "CỤT" — CẦN DIỄN ĐẠT LẠI & MỞ RỘNG NHƯ THẾ NÀO ("idea_expansions"):
-   - Kiểm tra xem bài nói có bị quá ngắn hoặc thiếu phần nào (chẳng hạn ở Part 2 bị thiếu lý do giải thích tại sao không chọn 2 phương án còn lại, thiếu Mở/Kết bài, hoặc ý đưa ra còn chung chung chưa có ví dụ).
-   - Trong mảng "idea_expansions" (tối đa 3 mục): chỉ rõ chỗ nào bị "cụt" ("where_vi"), giải thích hướng diễn đạt lại & mở rộng sao cho tự nhiên, logic ("issue_vi"), đưa ra 1-2 câu tiếng Anh mẫu đúng chuẩn Level ${level} ("suggested_en") và dịch nghĩa tiếng Việt ("meaning_vi"). Nếu bài nói đã đầy đủ, tròn trịa chuẩn mức ${level}, trả về [].
-
-6. ${levelGuidance}
-
-7. PHIÊN BẢN BÀI NÓI HOÀN CHỈNH TỰ NHIÊN ("natural_spoken_version"):
-   - Dựa trên CHÍNH Ý TƯỞNG GỐC của học viên, hãy viết lại thành 1 bài nói hoàn chỉnh tự nhiên, trôi chảy, sạch lỗi Vietlish/ngữ pháp, ${isPart2 ? "đủ 3 phần Mở bài – Thân bài (2 lý do chọn + lý do bỏ 2 phương án kia) – Kết bài" : "gồm 3 câu gọn gàng"} ở đúng Level ${level} để học viên nghe và luyện nói theo.
-
-8. NẾU FILE GHI ÂM IM LẶNG HOẶC CHỈ CÓ TIẾNG ỒN / KHÔNG CÓ TIẾNG ANH:
-   - Vẫn trả về JSON hợp lệ, đặt "internal_score": 0, "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng trong "overall_comment" để học viên kiểm tra micro và ghi âm lại rõ hơn, đồng thời gợi ý cách trả lời trong "idea_expansions" và "natural_spoken_version".
+NẾU FILE GHI ÂM IM LẶNG HOẶC KHÔNG CÓ TIẾNG ANH:
+- Trả về JSON hợp lệ với các điểm "criterion_scores" = 0, "internal_score": 0, "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng để học viên kiểm tra micro và ghi âm lại, kèm gợi ý trong "idea_expansions" và "natural_spoken_version".
 
 TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) theo đúng cấu trúc sau:
 {
   "recognized_transcript": "Lời nói tiếng Anh thực tế của học viên nghe được từ file âm thanh",
-  "internal_score": 5.5,
-  "level_assessment": "Nhận xét ngắn gọn 1 cụm về mức độ đáp ứng (TUYỆT ĐỐI không ghi điểm số)",
-  "estimated_band": "Quy đổi từ internal_score (0-3.5: Chưa đạt B1 | 3.75: Xấp xỉ B1 | 4.0-5.5: Đạt B1 | 5.75: Xấp xỉ B2 | 6.0-8.5: Đạt B2 | 8.75: Xấp xỉ C1 | 9.0-10: Đạt C1)",
-  "overall_comment": "2-3 câu nhận xét tổng quan bằng tiếng Việt (TUYỆT ĐỐI không ghi con số điểm): khen điểm tốt trước, sau đó chỉ rõ trọng tâm cần cải thiện.",
+  "criterion_scores": {
+    "grammar": "<số 0.0-10.0 bước 0.5>",
+    "vocabulary": "<số 0.0-10.0 bước 0.5>",
+    "pronunciation": "<số 0.0-10.0 bước 0.5>",
+    "fluency": "<số 0.0-10.0 bước 0.5>",
+    "discourse_management": "<số 0.0-10.0 bước 0.5>"
+  },
+  "internal_score": "<trung bình cộng 5 tiêu chí trên, làm tròn bước 0.25>",
+  "level_assessment": "Nhận xét ngắn gọn 1 cụm về năng lực thực tế (TUYỆT ĐỐI không ghi điểm số)",
+  "estimated_band": "Chưa đạt B1 | Xấp xỉ B1 | Đạt B1 | Xấp xỉ B2 | Đạt B2 | Xấp xỉ C1 | Đạt C1",
+  "suggested_level": "B1 | B2 | C1",
+  "overall_comment": "2-3 câu nhận xét tổng quan mang tính khích lệ và xây dựng bằng tiếng Việt (TUYỆT ĐỐI không ghi con số điểm): khen rõ điểm nổi bật trước, rồi nêu định hướng cải thiện trọng tâm.",
+  "next_level_tip": "1-2 câu gợi ý bước đi cụ thể nhất để nâng cấp bài nói lên mức tiếp theo (TUYỆT ĐỐI không ghi con số điểm).",
   "criteria": {
-    "pronunciation_intonation": "Nhận xét chi tiết về độ dễ nghe, final sound của từ và ngữ điệu/nhịp nói",
-    "grammar": "Nhận xét ngắn gọn, rõ ràng về ngữ pháp & chia thì (bỏ qua lỗi quên s khi chia động từ)",
-    "vocabulary_vietlish": "Nhận xét về cách dùng từ tự nhiên và các chỗ hơi bị Vietlish (nếu có)",
-    "coherence_logic": "Nhận xét về cách sắp xếp các ý có logic, mạch lạc, dễ theo dõi không"
+    "grammar": "Nhận xét mang tính xây dựng về độ đa dạng và độ chính xác cấu trúc câu theo VSTEP Band Descriptor (bỏ qua đuôi -s/-es/-ed chia động từ).",
+    "vocabulary": "Nhận xét về vốn từ, độ tự nhiên, collocations/idioms và các chỗ Vietlish (nếu có).",
+    "pronunciation": "Nhận xét về độ rõ chữ, dễ hiểu, âm cuối gốc của từ, trọng âm và ngữ điệu.",
+    "fluency": "Nhận xét về độ trôi chảy, tốc độ, nhịp nói, ngập ngừng và khả năng tự sửa lỗi.",
+    "discourse_management": "Nhận xét về độ bám sát đề, cách sắp xếp mạch ý, phát triển chi tiết/ví dụ và từ nối."
   },
   "pronunciation_fixes": [
     {
       "word": "từ phát âm chưa chuẩn hoặc mất final sound gốc",
       "ipa": "/phiên âm US IPA/",
-      "issue_vi": "Mô tả lỗi phát âm/final sound/trọng âm nghe được và mẹo đọc đúng"
+      "issue_vi": "Mô tả nhẹ nhàng, dễ hiểu lỗi phát âm/trọng âm và mẹo đọc chuẩn"
     }
   ],
   "language_corrections": [
     {
       "id": 1,
       "original": "cụm từ gốc trong bài nói",
-      "corrected": "cách diễn đạt lại tự nhiên chuẩn Level ${level}",
-      "category": "Vietlish",
-      "explanation_vi": "Giải thích tại sao cách nói cũ bị Vietlish/chưa tự nhiên hoặc sai ngữ pháp"
+      "corrected": "cách diễn đạt chuẩn xác, tự nhiên hơn phù hợp năng lực học viên",
+      "category": "Ngữ pháp | Vietlish | Từ vựng tự nhiên | Nâng cấp diễn đạt",
+      "explanation_vi": "Giải thích ngắn gọn, tích cực lý do và hiệu quả của cách diễn đạt mới"
     }
   ],
   "idea_expansions": [
     {
-      "where_vi": "Chỗ ý tưởng đang hơi cụt",
-      "issue_vi": "Cần diễn đạt lại và mở rộng thêm lý do / ví dụ / cảm xúc như thế nào",
-      "suggested_en": "1-2 câu tiếng Anh nói tự nhiên chuẩn Level ${level}",
+      "where_vi": "Phần có thể đào sâu thêm",
+      "issue_vi": "Gợi ý mở rộng thêm chi tiết, ví dụ hoặc góc nhìn để bài nói thuyết phục hơn",
+      "suggested_en": "1-2 câu tiếng Anh mẫu tự nhiên",
       "meaning_vi": "Nghĩa tiếng Việt tương ứng"
     }
   ],
-  "natural_spoken_version": "${isPart2 ? "Bài nói hoàn chỉnh đủ 3 phần (Mở bài – Thân bài – Kết bài), tự nhiên, giữ nguyên ý học viên" : "Bài nói 3 câu hoàn chỉnh, tự nhiên, giữ nguyên ý học viên"} ở mức Level ${level}"
+  "natural_spoken_version": "Phiên bản bài nói hoàn chỉnh, tự nhiên, giữ nguyên ý tưởng của học viên ở đúng mức suggested_level"
 }`;
 }
 
@@ -425,6 +445,7 @@ function stripNumericScores(text: string): string {
   return String(text || "")
     .replace(/[·\-–—]?\s*\(?\s*\d+([.,]\d+)?\s*\/\s*10\s*\)?/gi, "")
     .replace(/\(\s*\d+([.,]\d+)?\s*(?:điểm|đ|pts?)\s*\)/gi, "")
+    .replace(/\b(?:band|mức điểm|số điểm)\s*\d+([.,]\d+)?\b/gi, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -557,11 +578,16 @@ function parseModelJson(rawText: string): Record<string, unknown> {
     obj.criteria && typeof obj.criteria === "object" && !Array.isArray(obj.criteria)
       ? (obj.criteria as Record<string, unknown>)
       : null;
+  const critScoresObj =
+    obj.criterion_scores && typeof obj.criterion_scores === "object" && !Array.isArray(obj.criterion_scores)
+      ? (obj.criterion_scores as Record<string, unknown>)
+      : null;
   const hasRealContent =
     (typeof obj.overall_comment === "string" && obj.overall_comment.trim().length > 0) ||
     (typeof obj.estimated_band === "string" && obj.estimated_band.trim().length > 0) ||
     (typeof obj.natural_spoken_version === "string" && obj.natural_spoken_version.trim().length > 0) ||
-    Boolean(critObj && Object.values(critObj).some(v => typeof v === "string" && v.trim().length > 0));
+    Boolean(critObj && Object.values(critObj).some(v => typeof v === "string" && v.trim().length > 0)) ||
+    Boolean(critScoresObj && Object.values(critScoresObj).some(v => typeof v === "number" && Number.isFinite(v)));
   if (!hasRealContent) {
     throw new Error("Phản hồi AI thiếu nội dung chấm bài hợp lệ");
   }
@@ -1224,13 +1250,51 @@ async function gradeSingleAttempt(
 
     const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
 
+    const rawCritScores = (
+      parsedReview?.criterion_scores &&
+      typeof parsedReview.criterion_scores === "object" &&
+      !Array.isArray(parsedReview.criterion_scores)
+        ? parsedReview.criterion_scores
+        : {}
+    ) as Record<string, unknown>;
+
+    const parseHalfStepScore = (val: unknown): number | null => {
+      if (val === null || val === undefined || val === "") return null;
+      const n = Number(val);
+      if (!Number.isFinite(n)) return null;
+      const clamped = Math.max(0, Math.min(10, n));
+      return Math.round(clamped * 2) / 2;
+    };
+
+    const criterionScores = {
+      grammar: parseHalfStepScore(rawCritScores.grammar),
+      vocabulary: parseHalfStepScore(rawCritScores.vocabulary),
+      pronunciation: parseHalfStepScore(rawCritScores.pronunciation),
+      fluency: parseHalfStepScore(rawCritScores.fluency),
+      discourse_management: parseHalfStepScore(rawCritScores.discourse_management)
+    };
+
+    const critScoreValues = [
+      criterionScores.grammar,
+      criterionScores.vocabulary,
+      criterionScores.pronunciation,
+      criterionScores.fluency,
+      criterionScores.discourse_management
+    ];
+    const hasAllFiveCriterionScores = critScoreValues.every((v): v is number => v !== null);
+
     const rawInternalScore = Number(parsedReview?.internal_score);
     const hasValidScore =
       Number.isFinite(rawInternalScore) &&
       parsedReview?.internal_score !== "" &&
       parsedReview?.internal_score !== null &&
       parsedReview?.internal_score !== undefined;
-    const roundedScore = hasValidScore ? roundQuarterStep(rawInternalScore) : null;
+
+    const roundedScore = hasAllFiveCriterionScores
+      ? roundQuarterStep(critScoreValues.reduce((sum, v) => sum + v, 0) / 5)
+      : hasValidScore
+        ? roundQuarterStep(rawInternalScore)
+        : null;
 
     const cleanBandLabel =
       roundedScore !== null
@@ -1264,6 +1328,14 @@ async function gradeSingleAttempt(
       : [];
 
     // Deduplicate language corrections by (category + normalized original)
+    const normalizeLangCategory = (rawCat: string): string => {
+      const low = String(rawCat || "").toLowerCase();
+      if (low.includes("vietlish") || low.includes("việt")) return "Vietlish";
+      if (low.includes("nâng cấp") || low.includes("upgrade")) return "Nâng cấp diễn đạt";
+      if (low.includes("ngữ pháp") || low.includes("grammar")) return "Ngữ pháp";
+      return "Từ vựng tự nhiên";
+    };
+
     const seenLangKeys = new Set<string>();
     const dedupedLangCorrections = Array.isArray(parsedReview?.language_corrections)
       ? parsedReview.language_corrections
@@ -1272,7 +1344,7 @@ async function gradeSingleAttempt(
             return {
               original: String(c.original || "").trim(),
               corrected: String(c.corrected || "").trim(),
-              category: String(c.category || "Từ vựng tự nhiên").trim(),
+              category: normalizeLangCategory(String(c.category || "Từ vựng tự nhiên")),
               explanation_vi: String(c.explanation_vi || "").trim()
             };
           })
@@ -1297,17 +1369,31 @@ async function gradeSingleAttempt(
         : {}
     ) as Record<string, unknown>;
 
+    const rawSuggestedLevel = String(parsedReview?.suggested_level || "").trim().toUpperCase();
+    const cleanSuggestedLevel =
+      rawSuggestedLevel === "C1" || rawSuggestedLevel === "B2" || rawSuggestedLevel === "B1"
+        ? rawSuggestedLevel
+        : cleanBandLabel.includes("C1")
+          ? "C1"
+          : cleanBandLabel.includes("B2")
+            ? "B2"
+            : "B1";
+
     const normalizedReview = {
       recognized_transcript: recognizedTranscript,
+      criterion_scores: criterionScores,
       internal_score: roundedScore,
       level_assessment: stripNumericScores(String(parsedReview?.level_assessment || "")),
       estimated_band: cleanBandLabel,
+      suggested_level: cleanSuggestedLevel,
       overall_comment: stripNumericScores(String(parsedReview?.overall_comment || "")),
+      next_level_tip: stripNumericScores(String(parsedReview?.next_level_tip || "")),
       criteria: {
-        pronunciation_intonation: stripNumericScores(String(rawCriteria.pronunciation_intonation || "")),
         grammar: stripNumericScores(String(rawCriteria.grammar || "")),
-        vocabulary_vietlish: stripNumericScores(String(rawCriteria.vocabulary_vietlish || "")),
-        coherence_logic: stripNumericScores(String(rawCriteria.coherence_logic || ""))
+        vocabulary: stripNumericScores(String(rawCriteria.vocabulary || rawCriteria.vocabulary_vietlish || "")),
+        pronunciation: stripNumericScores(String(rawCriteria.pronunciation || rawCriteria.pronunciation_intonation || "")),
+        fluency: stripNumericScores(String(rawCriteria.fluency || "")),
+        discourse_management: stripNumericScores(String(rawCriteria.discourse_management || rawCriteria.coherence_logic || ""))
       },
       pronunciation_fixes: dedupedPronFixes,
       language_corrections: dedupedLangCorrections,
