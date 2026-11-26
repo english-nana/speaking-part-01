@@ -264,8 +264,10 @@ function buildSpeakingGradingPrompt(params: {
   durationSec: number;
   targetLevel: string;
   hasAudio: boolean;
+  correctionOnly?: boolean;
 }) {
   const practiceTabLevel = String(params.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
+  const isCorrectionOnly = Boolean(params.correctionOnly);
   const isPart2 =
     /^part2[-_]/i.test(params.topicId || "") || /^p2_/i.test(params.questionId || "");
 
@@ -300,11 +302,19 @@ THÔNG TIN BÀI NÓI:
 - Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Trình duyệt chưa nhận diện được văn bản - hãy nghe trực tiếp file âm thanh)"}"
 - Tình trạng âm thanh: ${audioContextNote}
 
-NGUYÊN TẮC CHỐNG THIÊN LỆCH TRÌNH ĐỘ (CỰC KỲ QUAN TRỌNG):
+${
+  isCorrectionOnly
+    ? `CHẾ ĐỘ CHỈ SỬA LỖI & GÓP Ý CHUYÊN SÂU (DÀNH RIÊNG CHO HỌC VIÊN LỚP C1):
+- Học viên này thuộc lớp C1 và CHỈ CẦN SỬA LỖI + NÂNG CẤP DIỄN ĐẠT, KHÔNG chấm band hay xếp loại B1/B2/C1 và KHÔNG chấm điểm số.
+- TUYỆT ĐỐI KHÔNG nhắc tới nhãn trình độ ("B1", "B2", "C1", "Đạt B1/B2/C1", "Xấp xỉ...") hoặc bất kỳ con số điểm nào trong "overall_comment", "next_level_tip", hay bất kỳ trường nào trong "criteria".
+- Đặt "estimated_band": "", "level_assessment": "", "suggested_level": "", "internal_score": null, "criterion_scores": null.
+- Tập trung hoàn toàn vào: (1) chỉ ra lỗi phát âm/trọng âm/ngữ điệu thực tế, (2) sửa lỗi ngữ pháp & chỗ diễn đạt còn gượng/Vietlish, (3) gợi ý collocations, cách nói tự nhiên/sắc nét hơn, và (4) viết lại phiên bản hoàn chỉnh mượt mà, giữ nguyên ý của học viên.`
+    : `NGUYÊN TẮC CHỐNG THIÊN LỆCH TRÌNH ĐỘ (CỰC KỲ QUAN TRỌNG):
 - Tab "Level ${practiceTabLevel}" CHỈ là thẻ luyện tập học viên bấm vào khi ghi âm, KHÔNG PHẢI trình độ thật của học viên.
 - Nếu học viên chọn nhầm tab B1 nhưng nói lưu loát, tự nhiên, giàu từ vựng và cấu trúc câu ở mức B2 hoặc C1, BẠN PHẢI CHẤM ĐÚNG MỨC B2 HOẶC C1 THỰC TẾ CỦA HỌ — TUYỆT ĐỐI KHÔNG kéo điểm xuống hoặc giữ ở ngưỡng B1.
 - Ngược lại, đánh giá hoàn toàn khách quan theo năng lực thể hiện thực tế trong bài nói qua thang 7 mức: Chưa đạt B1 | Xấp xỉ B1 | Đạt B1 | Xấp xỉ B2 | Đạt B2 | Xấp xỉ C1 | Đạt C1.
-- Theo VSTEP Speaking Scoring Guide chính thức, người nói đạt Band 6–8 (B2) và Band 9 (C1) VẪN ĐƯỢC PHÉP có một vài lỗi nhỏ không mang tính hệ thống (non-systematic errors) hoặc tự sửa (self-correction) miễn không gây hiểu nhầm. KHÔNG hạ một bài nói B2/C1 xuống B1 chỉ vì 1–3 lỗi nhỏ hoặc vì không dùng đúng câu chữ trong bài mẫu.
+- Theo VSTEP Speaking Scoring Guide chính thức, người nói đạt Band 6–8 (B2) và Band 9 (C1) VẪN ĐƯỢC PHÉP có một vài lỗi nhỏ không mang tính hệ thống (non-systematic errors) hoặc tự sửa (self-correction) miễn không gây hiểu nhầm. KHÔNG hạ một bài nói B2/C1 xuống B1 chỉ vì 1–3 lỗi nhỏ hoặc vì không dùng đúng câu chữ trong bài mẫu.`
+}
 
 ${partCalibration}
 
@@ -801,6 +811,18 @@ async function gradeSingleAttempt(
   const topicTitle = String(options.overrideTopicTitle || att.topic_title || att.topic_id || "Speaking Part 1").trim();
   const promptText = String(options.overridePromptText || att.prompt_text || att.question_id || "").trim();
 
+  let isCorrectionOnlyClass = false;
+  try {
+    const { data: profData } = await admin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", att.user_id)
+      .maybeSingle();
+    isCorrectionOnlyClass = /^\[C1\]\s*/i.test(String(profData?.full_name || "").trim());
+  } catch (_e) {
+    isCorrectionOnlyClass = false;
+  }
+
   const lockNowMs = Date.now();
   const lockNowIso = new Date(lockNowMs).toISOString();
   const submittedMs = new Date(att.submitted_at || att.created_at || lockNowMs).getTime();
@@ -963,7 +985,8 @@ async function gradeSingleAttempt(
       browserTranscript,
       durationSec: Number(att.duration_sec) || 0,
       targetLevel,
-      hasAudio: Boolean(audioBase64)
+      hasAudio: Boolean(audioBase64),
+      correctionOnly: isCorrectionOnlyClass
     });
 
     const buildUserParts = (includeAudio: boolean): Array<Record<string, unknown>> => {
@@ -986,7 +1009,8 @@ async function gradeSingleAttempt(
               browserTranscript,
               durationSec: Number(att.duration_sec) || 0,
               targetLevel,
-              hasAudio: false
+              hasAudio: false,
+              correctionOnly: isCorrectionOnlyClass
             })
           : promptWithAudio;
         parts.push({ text: textOnlyPrompt });
@@ -1381,11 +1405,14 @@ async function gradeSingleAttempt(
 
     const normalizedReview = {
       recognized_transcript: recognizedTranscript,
-      criterion_scores: criterionScores,
-      internal_score: roundedScore,
-      level_assessment: stripNumericScores(String(parsedReview?.level_assessment || "")),
-      estimated_band: cleanBandLabel,
-      suggested_level: cleanSuggestedLevel,
+      correction_only: isCorrectionOnlyClass,
+      criterion_scores: isCorrectionOnlyClass ? null : criterionScores,
+      internal_score: isCorrectionOnlyClass ? null : roundedScore,
+      level_assessment: isCorrectionOnlyClass
+        ? ""
+        : stripNumericScores(String(parsedReview?.level_assessment || "")),
+      estimated_band: isCorrectionOnlyClass ? "" : cleanBandLabel,
+      suggested_level: isCorrectionOnlyClass ? "" : cleanSuggestedLevel,
       overall_comment: stripNumericScores(String(parsedReview?.overall_comment || "")),
       next_level_tip: stripNumericScores(String(parsedReview?.next_level_tip || "")),
       criteria: {

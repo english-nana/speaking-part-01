@@ -1010,6 +1010,14 @@
   // ==========================================================================
   // HELPERS & STATE ACCESSORS
   // ==========================================================================
+  function isCorrectionOnlyStudent() {
+    return Boolean(
+      currentAccount &&
+        typeof CLOUD.isCorrectionOnlyClass === "function" &&
+        CLOUD.isCorrectionOnlyClass(currentAccount.className)
+    );
+  }
+
   function getInitials(name) {
     return CLOUD.getInitials ? CLOUD.getInitials(name) : "HV";
   }
@@ -1964,7 +1972,9 @@
             (Array.isArray(rj.pronunciation_fixes) ? rj.pronunciation_fixes.length : 0) +
             (Array.isArray(rj.language_corrections) ? rj.language_corrections.length : 0) +
             (Array.isArray(rj.idea_expansions) ? rj.idea_expansions.length : 0);
-          const cleanBand = CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score);
+          const cleanBand = isCorrectionOnlyStudent()
+            ? ""
+            : CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score);
           const bandText = cleanBand ? ` · ${cleanBand}` : "";
           const title = `${it.qMeta.partLabel} · ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · ${it.qMeta.part === "part2" ? "TH" : "Câu"} ${it.qMeta.questionNum}`;
           return `
@@ -1981,7 +1991,7 @@
               </div>
               <div class="notif-item-title">${escapeHtml(title)}</div>
               <div class="notif-item-sub">
-                Level ${escapeHtml(rev.target_level || it.targetLevel)}${escapeHtml(bandText)} · ${fixCount} mục góp ý · Xem chi tiết →
+                ${isCorrectionOnlyStudent() ? `${fixCount} mục góp ý · Xem chi tiết →` : `Level ${escapeHtml(rev.target_level || it.targetLevel)}${escapeHtml(bandText)} · ${fixCount} mục góp ý · Xem chi tiết →`}
               </div>
             </button>
           `;
@@ -2689,10 +2699,13 @@
                   );
 
                   let statusPillHtml = "";
+                  const correctionOnlyMode = isCorrectionOnlyStudent();
                   if (rev) {
                     const isUnread = !rev.student_seen_at;
                     const rjHist = rev.review_json || {};
-                    const cleanBandHist = CLOUD.formatCleanBandLabel(rjHist.estimated_band, rjHist.level_assessment, rjHist.internal_score);
+                    const cleanBandHist = correctionOnlyMode
+                      ? ""
+                      : CLOUD.formatCleanBandLabel(rjHist.estimated_band, rjHist.level_assessment, rjHist.internal_score);
                     const band = cleanBandHist ? ` · ${cleanBandHist}` : "";
                     statusPillHtml = isUnread
                       ? `<span class="notif-item-tag new-dot">Mới · Đã có bài sửa${escapeHtml(band)}</span>`
@@ -2712,7 +2725,7 @@
                             ${escapeHtml(it.qMeta.partLabel || "Part 1")} · ${escapeHtml(it.qMeta.topicNumber)} · ${it.qMeta.part === "part2" ? "Tình huống" : "Câu"} ${it.qMeta.questionNum}
                           </span>
                           <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#F4F4F5;color:#18181B;">
-                            Mục tiêu Level ${escapeHtml(it.targetLevel)}${att ? ` · ${formatDuration(att.durationSec)}` : ""}
+                            ${correctionOnlyMode ? (att ? `Thời lượng ${formatDuration(att.durationSec)}` : "Đã nộp") : `Mục tiêu Level ${escapeHtml(it.targetLevel)}${att ? ` · ${formatDuration(att.durationSec)}` : ""}`}
                           </span>
                           ${statusPillHtml}
                           ${
@@ -2772,20 +2785,23 @@
 
     const releasedReview = getReleasedReview(qId);
     const targetLevel = (releasedReview && releasedReview.target_level) || qData.targetLevel || att.targetLevel || "B1";
+    const correctionOnlyMode = isCorrectionOnlyStudent();
 
     if (releasedReview && typeof CLOUD.renderSpeakingReviewHtml === "function") {
       const relTime = CLOUD.formatDateTime(releasedReview.release_at);
       blocks.push(`
         <div class="speaking-ready-banner">
           <span style="font-weight:800;">
-            ✅ Bài chấm &amp; sửa Speaking chi tiết đã sẵn sàng${relTime ? ` · Trả lúc ${escapeHtml(relTime)}` : ""}
+            ✅ ${correctionOnlyMode ? "Bài sửa Speaking chi tiết đã sẵn sàng" : "Bài chấm &amp; sửa Speaking chi tiết đã sẵn sàng"}${relTime ? ` · Trả lúc ${escapeHtml(relTime)}` : ""}
           </span>
           <span style="font-family:var(--font-mono);font-size:11.5px;font-weight:700;">
-            Thời lượng ${formatDuration(att.durationSec)} · Level ${escapeHtml(targetLevel)}
+            ${correctionOnlyMode ? `Thời lượng ${formatDuration(att.durationSec)}` : `Thời lượng ${formatDuration(att.durationSec)} · Level ${escapeHtml(targetLevel)}`}
           </span>
         </div>
         ${CLOUD.renderSpeakingReviewHtml(att.transcript || "", releasedReview.review_json, {
-          targetLevel
+          targetLevel,
+          studentClass: currentAccount ? currentAccount.className : "",
+          hideBandAndScore: correctionOnlyMode
         })}
       `);
     } else {

@@ -709,6 +709,10 @@
     return cleaned || "";
   }
 
+  function isCorrectionOnlyClass(className) {
+    return String(className || "").trim().toUpperCase() === "C1";
+  }
+
   function getBandToneClass(bandLabel) {
     const lower = String(bandLabel || "").toLowerCase();
     if (lower.includes("chưa đạt")) return "band-below";
@@ -722,6 +726,10 @@
     if (!reviewJson || typeof reviewJson !== "object") return "";
     const info = meta || {};
     const isTeacherView = Boolean(info.isTeacherView);
+    const hideBandAndScore =
+      Boolean(info.hideBandAndScore) ||
+      isCorrectionOnlyClass(info.studentClass) ||
+      Boolean(reviewJson.correction_only);
     const targetLevel = String(info.targetLevel || "B1").toUpperCase();
     const spokenText = String(reviewJson.recognized_transcript || originalTranscript || "").trim();
     const pronFixes = Array.isArray(reviewJson.pronunciation_fixes) ? reviewJson.pronunciation_fixes : [];
@@ -737,32 +745,37 @@
         : [];
     const criteria = reviewJson.criteria || {};
     const criterionScores =
-      reviewJson.criterion_scores && typeof reviewJson.criterion_scores === "object"
+      !hideBandAndScore && reviewJson.criterion_scores && typeof reviewJson.criterion_scores === "object"
         ? reviewJson.criterion_scores
         : null;
     const naturalVersion = String(reviewJson.natural_spoken_version || reviewJson.revised_version || "").trim();
     const roundedInternalScore =
+      !hideBandAndScore &&
       reviewJson.internal_score !== null &&
       reviewJson.internal_score !== undefined &&
       reviewJson.internal_score !== ""
         ? roundQuarterStep(reviewJson.internal_score)
         : null;
-    const cleanBand = formatCleanBandLabel(
-      reviewJson.estimated_band,
-      reviewJson.level_assessment,
-      roundedInternalScore
-    );
-    const rawAssessClean = stripNumericScores(reviewJson.level_assessment);
+    const cleanBand = hideBandAndScore
+      ? ""
+      : formatCleanBandLabel(
+          reviewJson.estimated_band,
+          reviewJson.level_assessment,
+          roundedInternalScore
+        );
+    const rawAssessClean = hideBandAndScore ? "" : stripNumericScores(reviewJson.level_assessment);
     const cleanOverallComment = stripNumericScores(reviewJson.overall_comment);
     const cleanNextTip = stripNumericScores(reviewJson.next_level_tip);
     const showAssessNote =
+      !hideBandAndScore &&
       rawAssessClean &&
       rawAssessClean.toLowerCase() !== cleanBand.toLowerCase() &&
       rawAssessClean.length > cleanBand.length + 4;
 
     const rawSuggestedLevel = String(reviewJson.suggested_level || "").trim().toUpperCase();
-    const suggestedLevelLabel =
-      rawSuggestedLevel === "C1" || rawSuggestedLevel === "B2" || rawSuggestedLevel === "B1"
+    const suggestedLevelLabel = hideBandAndScore
+      ? ""
+      : rawSuggestedLevel === "C1" || rawSuggestedLevel === "B2" || rawSuggestedLevel === "B1"
         ? rawSuggestedLevel
         : cleanBand.includes("C1")
           ? "C1"
@@ -802,14 +815,20 @@
       <div class="ai-review-panel">
         <div class="ai-review-summary">
           <div class="ai-review-badges">
-            ${cleanBand ? `<span class="ai-band-badge ${getBandToneClass(cleanBand)}">Đánh giá: ${escapeHtml(cleanBand)}</span>` : ""}
-            <span class="ai-level-badge">Bài luyện: Level ${escapeHtml(targetLevel)}</span>
             ${
-              isTeacherView && roundedInternalScore !== null
-                ? `<span class="ai-level-badge" style="background:#FEF3C7;color:#92400E;border-color:#D97706;">Điểm quy đổi (GV): ${escapeHtml(roundedInternalScore.toFixed(2))}/10</span>`
-                : ""
+              hideBandAndScore
+                ? `<span class="ai-level-badge">Chỉnh sửa &amp; Góp ý bài nói</span>`
+                : `
+                  ${cleanBand ? `<span class="ai-band-badge ${getBandToneClass(cleanBand)}">Đánh giá: ${escapeHtml(cleanBand)}</span>` : ""}
+                  <span class="ai-level-badge">Bài luyện: Level ${escapeHtml(targetLevel)}</span>
+                  ${
+                    isTeacherView && roundedInternalScore !== null
+                      ? `<span class="ai-level-badge" style="background:#FEF3C7;color:#92400E;border-color:#D97706;">Điểm quy đổi (GV): ${escapeHtml(roundedInternalScore.toFixed(2))}/10</span>`
+                      : ""
+                  }
+                  ${showAssessNote ? `<span class="ai-assess-text">${escapeHtml(rawAssessClean)}</span>` : ""}
+                `
             }
-            ${showAssessNote ? `<span class="ai-assess-text">${escapeHtml(rawAssessClean)}</span>` : ""}
           </div>
           ${cleanOverallComment ? `<p class="ai-overall-comment">${escapeHtml(cleanOverallComment)}</p>` : ""}
           ${
@@ -969,7 +988,7 @@
             ? `
             <details class="ai-revised-details" open>
               <summary class="ai-revised-summary">
-                <span>✨ Phiên bản diễn đạt hoàn chỉnh, tự nhiên (giữ nguyên ý của bạn${suggestedLevelLabel ? ` · Gợi ý mức ${escapeHtml(suggestedLevelLabel)}` : ""})</span>
+                <span>✨ Phiên bản diễn đạt hoàn chỉnh, tự nhiên (giữ nguyên ý của bạn${!hideBandAndScore && suggestedLevelLabel ? ` · Gợi ý mức ${escapeHtml(suggestedLevelLabel)}` : ""})</span>
               </summary>
               <div class="ai-revised-body">
                 <div style="margin-bottom:8px;">“${escapeHtml(naturalVersion)}”</div>
@@ -1007,6 +1026,7 @@
     clearSignedAudioUrlCache,
     invokeGradeSpeaking,
     invokeProcessSpeakingQueue,
+    isCorrectionOnlyClass,
     formatCleanBandLabel,
     getBandToneClass,
     renderSpeakingReviewHtml
