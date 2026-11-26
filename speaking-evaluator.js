@@ -70,6 +70,7 @@
     "exhibit", "objects", "photographs", "guided", "tour", "tours", "guide", "guides", "explanations",
     "dates", "figures", "relevant", "subtitles", "footage", "interviews", "artifacts", "vietnamese", "vietnam", "war"
   ];
+  const TOPIC_DOMAIN_WORD_SET = new Set(TOPIC_DOMAIN_WORDS);
 
   const COMPOUND_MARKERS = ["and", "but", "so", "or"];
   const COMPLEX_MARKERS = [
@@ -143,6 +144,8 @@
       .filter(Boolean);
   }
 
+  const phraseRegexCache = new Map();
+
   function hasWholeWordOrPhrase(textLower, phrase) {
     const clean = String(phrase || "")
       .replace(/<[^>]*>?/gm, "")
@@ -151,12 +154,17 @@
       .trim()
       .toLowerCase();
     if (!clean || clean.length < 2) return false;
-    const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    try {
-      return new RegExp(`\\b${escaped}\\b`, "i").test(textLower);
-    } catch (e) {
-      return false;
+    let re = phraseRegexCache.get(clean);
+    if (re === undefined) {
+      const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      try {
+        re = new RegExp(`\\b${escaped}\\b`, "i");
+      } catch (e) {
+        re = null;
+      }
+      phraseRegexCache.set(clean, re);
     }
+    return re ? re.test(textLower) : false;
   }
 
   function collectQuestionKeywords(question) {
@@ -1005,7 +1013,9 @@
 
     patches.forEach(err => {
       const escaped = err.replaceTarget.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const re = new RegExp(`\\b${escaped}\\b`, "i");
+      const startB = /^\w/.test(err.replaceTarget) ? "\\b" : "";
+      const endB = /\w$/.test(err.replaceTarget) ? "\\b" : "";
+      const re = new RegExp(`${startB}${escaped}${endB}`, "i");
       if (re.test(rewritten)) {
         rewritten = rewritten.replace(re, err.rewriteText);
         didRewrite = true;
@@ -1071,9 +1081,9 @@
     const lower = transcript.toLowerCase();
     const promptTokens = new Set(tokenize((question && question.prompt) || ""));
     const questionKeywords = collectQuestionKeywords(question);
-    const matchedDomainCount = tokens.filter(w => TOPIC_DOMAIN_WORDS.includes(w) || questionKeywords.has(w)).length;
+    const matchedDomainCount = tokens.filter(w => TOPIC_DOMAIN_WORD_SET.has(w) || questionKeywords.has(w)).length;
     const uniqueDomainWords = Array.from(
-      new Set(tokens.filter(w => TOPIC_DOMAIN_WORDS.includes(w) || questionKeywords.has(w)))
+      new Set(tokens.filter(w => TOPIC_DOMAIN_WORD_SET.has(w) || questionKeywords.has(w)))
     );
 
     const b1SampleHits = [];

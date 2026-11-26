@@ -47,7 +47,8 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function formatDuration(sec) {
@@ -135,6 +136,14 @@
     `;
   }
 
+  const SIGNED_URL_TTL_SEC = 7200;
+  const SIGNED_URL_CACHE_MS = 90 * 60 * 1000;
+  const SIGNED_URL_MAX_ENTRIES = 1000;
+  const UPLOAD_TIMEOUT_MS = 30000;
+  const signedUrlCache = new Map();
+  const inFlightSignedUrls = new Map();
+  let refreshSessionInFlight = null;
+
   function pickAudioExtension(mimeType) {
     const m = String(mimeType || "").toLowerCase();
     if (m.includes("mp4") || m.includes("m4a")) return "mp4";
@@ -143,22 +152,169 @@
     return "webm";
   }
 
+  function isTransientClientError(err) {
+    if (!err) return false;
+    const status = Number(err.statusCode || err.status || 0);
+    if (status === 408 || status === 429 || status >= 500) return true;
+    const msg = String(err.message || err || "").toLowerCase();
+    return /timeout|network|fetch|connection|econnreset|abort|temporarily|rate/i.test(msg);
+  }
+
+  function promiseWithTimeout(promise, timeoutMs, label) {
+    let timer = null;
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const err = new Error(`${label || "Request"} timeout (${Math.round(timeoutMs / 1000)}s)`);
+          err.name = "TimeoutError";
+          err.status = 408;
+          reject(err);
+        }, timeoutMs);
+      })
+    ]).finally(() => {
+      if (timer) clearTimeout(timer);
+    });
+  }
+
+  async function fetchAllRows(buildQueryFn, pageSize) {
+    const size = Math.max(100, Math.min(1000, Number(pageSize) || 1000));
+    const maxPages = 50;
+    const allRows = [];
+    for (let page = 0; page < maxPages; page++) {
+      const from = page * size;
+      const to = from + size - 1;
+      let res = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          res = await buildQueryFn().range(from, to);
+          if (!res.error || attempt === 1 || !isTransientClientError(res.error)) {
+            break;
+          }
+        } catch (err) {
+          res = { data: null, error: err };
+          if (attempt === 1 || !isTransientClientError(err)) break;
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
+      const { data, error } = res || { data: null, error: new Error("Query failed") };
+      if (error) {
+        return { data: allRows, error };
+      }
+      const chunk = Array.isArray(data) ? data : [];
+      for (let i = 0; i < chunk.length; i++) {
+        allRows.push(chunk[i]);
+      }
+      if (chunk.length < size) break;
+    }
+    return { data: allRows, error: null };
+  }
+
+  async function refreshSessionDeduplicated(client) {
+    if (refreshSessionInFlight) {
+      return refreshSessionInFlight;
+    }
+    refreshSessionInFlight = (async () => {
+      try {
+        const { data: refData } = await client.auth.refreshSession();
+        return refData && refData.session && refData.session.access_token ? refData.session.access_token : "";
+      } catch (_e) {
+        return "";
+      } finally {
+        refreshSessionInFlight = null;
+      }
+    })();
+    return refreshSessionInFlight;
+  }
+
+  async function getValidAccessToken(client, forceRefresh) {
+    if (!client) return "";
+    try {
+      if (forceRefresh) {
+        const refreshed = await refreshSessionDeduplicated(client);
+        if (refreshed) return refreshed;
+      }
+      const { data: sessionData } = await client.auth.getSession();
+      const session = sessionData && sessionData.session ? sessionData.session : null;
+      if (!session || !session.access_token) return "";
+      const expSec = Number(session.expires_at || 0);
+      if (expSec > 0 && expSec * 1000 - Date.now() < 60000) {
+        const refreshed = await refreshSessionDeduplicated(client);
+        if (refreshed) return refreshed;
+      }
+      return session.access_token;
+    } catch (_e) {
+      return "";
+    }
+  }
+
+  async function fetchWithTimeout(url, init, timeoutMs) {
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer =
+      controller && timeoutMs > 0
+        ? setTimeout(() => {
+            try {
+              controller.abort();
+            } catch (_e) {}
+          }, timeoutMs)
+        : null;
+    try {
+      return await fetch(url, controller ? { ...init, signal: controller.signal } : init);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   async function uploadRecording(userId, questionId, takeId, blob) {
     const client = getClient();
     if (!client || !blob) return { path: "", error: null };
     const rawMime = String(blob.type || "audio/webm");
     const cleanMimeType = rawMime.split(";")[0].trim() || "audio/webm";
     const path = `${userId}/${questionId}/${takeId}.${pickAudioExtension(cleanMimeType)}`;
-    const { error } = await client.storage.from(AUDIO_BUCKET).upload(path, blob, {
-      contentType: cleanMimeType,
-      upsert: true
-    });
-    return error ? { path: "", error } : { path, error: null };
+    const maxAttempts = 3;
+    const baseDelays = [500, 1500];
+    let lastError = null;
+    let refreshedAuth = false;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const { error } = await promiseWithTimeout(
+          client.storage.from(AUDIO_BUCKET).upload(path, blob, {
+            contentType: cleanMimeType,
+            upsert: true
+          }),
+          UPLOAD_TIMEOUT_MS,
+          "Audio upload"
+        );
+        if (!error) {
+          return { path, error: null };
+        }
+        lastError = error;
+        const statusCode = Number(error.statusCode || error.status || 0);
+        if (statusCode === 401 && !refreshedAuth) {
+          refreshedAuth = true;
+          await getValidAccessToken(client, true);
+          continue;
+        }
+        // Không retry các lỗi phân quyền / payload không hợp lệ (4xx trừ 408/429)
+        if (statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+      if (attempt < maxAttempts - 1) {
+        const jitter = Math.floor(Math.random() * 350);
+        await new Promise(r => setTimeout(r, (baseDelays[attempt] || 1500) + jitter));
+      }
+    }
+    return { path: "", error: lastError };
   }
 
   async function deleteRecording(audioPath) {
     const client = getClient();
     if (!client || !audioPath) return;
+    signedUrlCache.delete(audioPath);
     try {
       await client.storage.from(AUDIO_BUCKET).remove([audioPath]);
     } catch (e) {}
@@ -168,6 +324,7 @@
     const client = getClient();
     if (!client || !Array.isArray(audioPaths)) return;
     const unique = Array.from(new Set(audioPaths.filter(Boolean)));
+    unique.forEach(p => signedUrlCache.delete(p));
     const BATCH = 100;
     for (let i = 0; i < unique.length; i += BATCH) {
       try {
@@ -176,23 +333,113 @@
     }
   }
 
+  function invalidateSignedAudioUrl(audioPath) {
+    if (audioPath) signedUrlCache.delete(audioPath);
+  }
+
+  function clearSignedAudioUrlCache() {
+    signedUrlCache.clear();
+  }
+
+  function pruneSignedUrlCache(nowMs) {
+    if (signedUrlCache.size > 300) {
+      for (const [k, v] of signedUrlCache.entries()) {
+        if (!v || v.expiresAt <= nowMs) {
+          signedUrlCache.delete(k);
+        }
+      }
+    }
+    while (signedUrlCache.size > SIGNED_URL_MAX_ENTRIES) {
+      const oldestKey = signedUrlCache.keys().next().value;
+      if (oldestKey === undefined) break;
+      signedUrlCache.delete(oldestKey);
+    }
+  }
+
   async function getSignedAudioUrls(paths) {
     const client = getClient();
     const map = {};
     if (!client || !Array.isArray(paths)) return map;
     const uniquePaths = Array.from(new Set(paths.filter(Boolean)));
-    const BATCH = 50;
-    for (let i = 0; i < uniquePaths.length; i += BATCH) {
-      try {
-        const { data, error } = await client.storage
-          .from(AUDIO_BUCKET)
-          .createSignedUrls(uniquePaths.slice(i, i + BATCH), 7200);
-        if (!error && Array.isArray(data)) {
-          data.forEach(item => {
-            if (item && item.path && item.signedUrl) map[item.path] = item.signedUrl;
+    if (uniquePaths.length === 0) return map;
+
+    const nowMs = Date.now();
+    pruneSignedUrlCache(nowMs);
+
+    const pendingJoin = [];
+    const missingPaths = [];
+    for (let i = 0; i < uniquePaths.length; i++) {
+      const p = uniquePaths[i];
+      const cached = signedUrlCache.get(p);
+      if (cached && cached.expiresAt > nowMs) {
+        map[p] = cached.url;
+      } else {
+        signedUrlCache.delete(p);
+        const inflight = inFlightSignedUrls.get(p);
+        if (inflight) {
+          pendingJoin.push(
+            inflight.then(u => {
+              if (u) map[p] = u;
+            })
+          );
+        } else {
+          missingPaths.push(p);
+        }
+      }
+    }
+
+    if (missingPaths.length > 0) {
+      const BATCH = 50;
+      const batches = [];
+      for (let i = 0; i < missingPaths.length; i += BATCH) {
+        batches.push(missingPaths.slice(i, i + BATCH));
+      }
+
+      const resolvers = {};
+      missingPaths.forEach(p => {
+        let resolveFn = null;
+        const prom = new Promise(resolve => {
+          resolveFn = resolve;
+        });
+        resolvers[p] = resolveFn;
+        inFlightSignedUrls.set(p, prom);
+      });
+
+      let nextIdx = 0;
+      const workers = Array.from({ length: Math.min(3, batches.length) }, async () => {
+        while (nextIdx < batches.length) {
+          const chunk = batches[nextIdx++];
+          const resolvedChunk = {};
+          try {
+            const { data, error } = await client.storage
+              .from(AUDIO_BUCKET)
+              .createSignedUrls(chunk, SIGNED_URL_TTL_SEC);
+            if (!error && Array.isArray(data)) {
+              const expAt = Date.now() + SIGNED_URL_CACHE_MS;
+              data.forEach(item => {
+                if (item && item.path && item.signedUrl) {
+                  map[item.path] = item.signedUrl;
+                  resolvedChunk[item.path] = item.signedUrl;
+                  signedUrlCache.set(item.path, { url: item.signedUrl, expiresAt: expAt });
+                }
+              });
+            }
+          } catch (e) {}
+          chunk.forEach(p => {
+            inFlightSignedUrls.delete(p);
+            if (resolvers[p]) {
+              resolvers[p](resolvedChunk[p] || "");
+              delete resolvers[p];
+            }
           });
         }
-      } catch (e) {}
+      });
+      await Promise.all(workers);
+      pruneSignedUrlCache(Date.now());
+    }
+
+    if (pendingJoin.length > 0) {
+      await Promise.all(pendingJoin);
     }
     return map;
   }
@@ -200,99 +447,106 @@
   // ==========================================================================
   // AI SPEAKING GRADING INVOCATION (6-HOUR SCHEDULED RELEASE + RETRY QUEUE)
   // ==========================================================================
-  async function invokeGradeSpeaking(attemptId, options) {
-    const client = getClient();
-    const cfg = window.SUPABASE_CONFIG || {};
-    const baseUrl = String(cfg.url || "").trim().replace(/\/+$/, "");
-    const anonKey = String(cfg.anonKey || "").trim();
-    if (!client || !baseUrl || !anonKey || !attemptId) {
-      return { ok: false, error: "Chưa kết nối Supabase." };
-    }
-    const opts = options || {};
-    try {
-      const { data: sessionData } = await client.auth.getSession();
-      const accessToken = sessionData && sessionData.session ? sessionData.session.access_token : "";
-      if (!accessToken) {
-        return { ok: false, error: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." };
-      }
-
-      const res = await fetch(`${baseUrl}/functions/v1/grade-speaking`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": anonKey,
-          "Authorization": `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          attempt_id: attemptId,
-          prompt_text: opts.promptText || "",
-          topic_title: opts.topicTitle || "",
-          target_level: opts.targetLevel || "B1",
-          force_teacher: Boolean(opts.forceTeacher),
-          release_now: Boolean(opts.releaseNow)
-        })
-      });
-
-      const rawText = await res.text().catch(() => "");
-      let parsed = null;
-      try {
-        parsed = rawText ? JSON.parse(rawText) : null;
-      } catch (e) {}
-
-      if (!res.ok || !parsed || parsed.ok !== true) {
-        const detail =
-          (parsed && (parsed.error || parsed.message || parsed.msg)) ||
-          (rawText ? rawText.slice(0, 220) : `HTTP ${res.status}`);
-        return {
-          ok: false,
-          error: `[HTTP ${res.status}] ${detail}`
-        };
-      }
-      return parsed;
-    } catch (err) {
-      return { ok: false, error: err && err.message ? err.message : "Lỗi kết nối hệ thống chấm bài." };
-    }
-  }
-
-  async function invokeProcessSpeakingQueue(batchSize) {
+  async function invokeEdgeFunction(payload, timeoutMs, fallbackErrMsg) {
     const client = getClient();
     const cfg = window.SUPABASE_CONFIG || {};
     const baseUrl = String(cfg.url || "").trim().replace(/\/+$/, "");
     const anonKey = String(cfg.anonKey || "").trim();
     if (!client || !baseUrl || !anonKey) {
+      return { ok: false, httpStatus: 0, error: "Chưa kết nối Supabase." };
+    }
+    const endpoint = `${baseUrl}/functions/v1/grade-speaking`;
+
+    for (let authTry = 0; authTry < 2; authTry++) {
+      try {
+        const accessToken = await getValidAccessToken(client, authTry > 0);
+        if (!accessToken) {
+          return { ok: false, httpStatus: 401, error: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." };
+        }
+
+        const res = await fetchWithTimeout(
+          endpoint,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": anonKey,
+              "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(payload)
+          },
+          timeoutMs
+        );
+
+        if (res.status === 401 && authTry === 0) {
+          continue;
+        }
+
+        const rawText = await res.text().catch(() => "");
+        let parsed = null;
+        try {
+          parsed = rawText ? JSON.parse(rawText) : null;
+        } catch (e) {}
+
+        if (!res.ok || !parsed || parsed.ok !== true) {
+          const detail =
+            (parsed && (parsed.error || parsed.message || parsed.msg)) ||
+            (rawText ? rawText.slice(0, 220) : `HTTP ${res.status}`);
+          return {
+            ok: false,
+            httpStatus: res.status,
+            error: `[HTTP ${res.status}] ${detail}`
+          };
+        }
+        return parsed;
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          return {
+            ok: false,
+            httpStatus: 0,
+            isTimeout: true,
+            error: "Kết nối tới hệ thống chấm bài bị quá thời gian chờ."
+          };
+        }
+        return {
+          ok: false,
+          httpStatus: 0,
+          isTimeout: false,
+          error: err && err.message ? err.message : fallbackErrMsg
+        };
+      }
+    }
+    return { ok: false, httpStatus: 401, error: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." };
+  }
+
+  async function invokeGradeSpeaking(attemptId, options) {
+    if (!attemptId) {
       return { ok: false, error: "Chưa kết nối Supabase." };
     }
-    try {
-      const { data: sessionData } = await client.auth.getSession();
-      const accessToken = sessionData && sessionData.session ? sessionData.session.access_token : "";
-      if (!accessToken) {
-        return { ok: false, error: "Phiên đăng nhập đã hết hạn." };
-      }
-      const res = await fetch(`${baseUrl}/functions/v1/grade-speaking`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": anonKey,
-          "Authorization": `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          mode: "process_queue",
-          batch_size: batchSize || 5
-        })
-      });
-      const rawText = await res.text().catch(() => "");
-      let parsed = null;
-      try {
-        parsed = rawText ? JSON.parse(rawText) : null;
-      } catch (e) {}
-      if (!res.ok || !parsed || parsed.ok !== true) {
-        const detail = (parsed && (parsed.error || parsed.message)) || rawText.slice(0, 200) || `HTTP ${res.status}`;
-        return { ok: false, error: `[HTTP ${res.status}] ${detail}` };
-      }
-      return parsed;
-    } catch (err) {
-      return { ok: false, error: err && err.message ? err.message : "Lỗi chạy hàng đợi chấm bài." };
-    }
+    const opts = options || {};
+    return invokeEdgeFunction(
+      {
+        attempt_id: attemptId,
+        prompt_text: opts.promptText || "",
+        topic_title: opts.topicTitle || "",
+        target_level: opts.targetLevel || "B1",
+        force_teacher: Boolean(opts.forceTeacher),
+        release_now: Boolean(opts.releaseNow)
+      },
+      70000,
+      "Lỗi kết nối hệ thống chấm bài."
+    );
+  }
+
+  async function invokeProcessSpeakingQueue(batchSize) {
+    return invokeEdgeFunction(
+      {
+        mode: "process_queue",
+        batch_size: batchSize || 6
+      },
+      130000,
+      "Lỗi chạy hàng đợi chấm bài."
+    );
   }
 
   function getSpeakingCategoryBadgeClass(cat) {
@@ -318,31 +572,59 @@
       occupied.some(r => start < r.end && end > r.start);
 
     list.forEach((c, idx) => {
-      const needle = String(c.original || "").trim();
+      const needle = String(c.original || "").trim().replace(/\s+/g, " ");
       if (!needle) return;
       const num = c.id || idx + 1;
-      let searchFrom = 0;
+      let matchedPos = -1;
+      let matchedLen = needle.length;
+      const escapedNeedle = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "\\s+");
+      const startWord = /^\w/.test(needle) ? "\\b" : "";
+      const endWord = /\w$/.test(needle) ? "\\b" : "";
 
-      while (searchFrom < text.length) {
-        let pos = text.indexOf(needle, searchFrom);
-        if (pos === -1) {
-          pos = lowerText.indexOf(needle.toLowerCase(), searchFrom);
+      if (startWord || endWord) {
+        try {
+          const wordRe = new RegExp(`${startWord}${escapedNeedle}${endWord}`, "gi");
+          let wm;
+          while ((wm = wordRe.exec(text)) !== null) {
+            const endPos = wm.index + wm[0].length;
+            if (!overlaps(wm.index, endPos)) {
+              matchedPos = wm.index;
+              matchedLen = wm[0].length;
+              break;
+            }
+          }
+        } catch (_e) {}
+      }
+
+      if (matchedPos === -1) {
+        let searchFrom = 0;
+        while (searchFrom < text.length) {
+          let pos = text.indexOf(needle, searchFrom);
+          if (pos === -1) {
+            pos = lowerText.indexOf(needle.toLowerCase(), searchFrom);
+          }
+          if (pos === -1) break;
+          const endPos = pos + needle.length;
+          if (!overlaps(pos, endPos)) {
+            matchedPos = pos;
+            matchedLen = needle.length;
+            break;
+          }
+          searchFrom = pos + 1;
         }
-        if (pos === -1) break;
-        const endPos = pos + needle.length;
-        if (!overlaps(pos, endPos)) {
-          occupied.push({ start: pos, end: endPos });
-          matches.push({
-            start: pos,
-            end: endPos,
-            num,
-            original: text.slice(pos, endPos),
-            corrected: String(c.corrected || ""),
-            explanation: String(c.explanation_vi || "")
-          });
-          break;
-        }
-        searchFrom = pos + 1;
+      }
+
+      if (matchedPos !== -1) {
+        const endPos = matchedPos + matchedLen;
+        occupied.push({ start: matchedPos, end: endPos });
+        matches.push({
+          start: matchedPos,
+          end: endPos,
+          num,
+          original: text.slice(matchedPos, endPos),
+          corrected: String(c.corrected || ""),
+          explanation: String(c.explanation_vi || "")
+        });
       }
     });
 
@@ -656,10 +938,13 @@
     parseFullNameAndClass,
     formatStoredFullName,
     renderGoogleIconSvg,
+    fetchAllRows,
     uploadRecording,
     deleteRecording,
     deleteRecordings,
     getSignedAudioUrls,
+    invalidateSignedAudioUrl,
+    clearSignedAudioUrlCache,
     invokeGradeSpeaking,
     invokeProcessSpeakingQueue,
     formatCleanBandLabel,

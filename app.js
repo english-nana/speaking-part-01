@@ -25,6 +25,8 @@
     authError: "",
     authInfo: "",
     authLoading: false,
+    authEmail: "",
+    authName: "",
     isTeacher: false,
     needsProfileSetup: false,
     profileFormName: "",
@@ -48,6 +50,7 @@
     selectedLevel: "b1", // "b1" | "b2"
     isPreparingMic: false,
     isRecording: false,
+    isFinalizingRecording: false,
     recordingSeconds: 0,
     liveTranscript: "",
     isSubmitting: false,
@@ -61,6 +64,7 @@
   let activeMicMonitorStop = null;
   let isStartingRecording = false;
   let recordingSessionSeq = 0;
+  let finalizedSessionSeq = 0;
   let recordingTimer = null;
   let speechRecognizer = null;
   let persistedTranscript = "";
@@ -70,6 +74,9 @@
   let notifPollTimer = null;
   let lastReviewsRefreshMs = 0;
   let reviewsRefreshInFlight = false;
+  let lastActiveSyncMs = 0;
+  let loadingUserId = "";
+  let loadingUserPromise = null;
   const noteSaveTimers = {};
   const pendingDraftUploads = {};
 
@@ -135,110 +142,284 @@
     return questionsData[qId];
   }
 
-  async function loadCloudStudentData(sessionUser) {
-    const client = CLOUD.getClient();
-    if (!client || !sessionUser) return;
+  function clearAllNoteSaveTimers() {
+    Object.keys(noteSaveTimers).forEach(k => {
+      clearTimeout(noteSaveTimers[k]);
+      delete noteSaveTimers[k];
+    });
+  }
 
-    const uid = sessionUser.id;
-    const email = String(sessionUser.email || "").trim().toLowerCase();
-    const isAdminEmail = email === ADMIN_EMAIL;
-    const isStudentPreview = new URLSearchParams(window.location.search).get("view") === "student";
-
-    // Tự động nhận diện tài khoản admin (mtung0208@gmail.com) và chuyển thẳng vào trang quản trị
-    if (isAdminEmail && !isStudentPreview) {
-      window.location.replace("./teacher.html");
-      return;
+  function revokeTakeBlobUrl(takeObj) {
+    if (takeObj && takeObj._isLocalBlobUrl && takeObj.audioDataUrl) {
+      try {
+        URL.revokeObjectURL(takeObj.audioDataUrl);
+      } catch (_e) {}
+      takeObj.audioDataUrl = null;
+      takeObj._isLocalBlobUrl = false;
     }
+  }
 
-    const meta = sessionUser.user_metadata || {};
-    const appMeta = sessionUser.app_metadata || {};
-    const fallbackName =
-      String(meta.full_name || meta.name || "").trim() ||
-      email
-        .split("@")[0]
-        .replace(/[._-]+/g, " ")
-        .replace(/\b\w/g, c => c.toUpperCase());
-    const avatarUrl = meta.avatar_url || meta.picture || "";
-    const provider = appMeta.provider || "email";
+  function revokeAllLocalBlobUrls() {
+    if (!currentAccount || !currentAccount.questionsData) return;
+    Object.values(currentAccount.questionsData).forEach(qd => {
+      (qd && qd.attempts ? qd.attempts : []).forEach(att => revokeTakeBlobUrl(att));
+    });
+  }
 
-    renderApp();
+  function isAnyAudioPlaying() {
+    const players = document.querySelectorAll("audio");
+    for (let i = 0; i < players.length; i++) {
+      if (!players[i].paused && !players[i].ended) return true;
+    }
+    return false;
+  }
 
-    const [profileRes, vocabRes, attemptsRes, notesRes, reviewsRes, teacherRes] = await Promise.all([
-      client.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      client.from("student_vocab").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      client.from("speaking_attempts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-      client.from("question_notes").select("*").eq("user_id", uid),
-      client.from("speaking_ai_reviews").select("*").eq("user_id", uid),
-      client.rpc("is_teacher")
-    ]);
+  function touchLastActive(force) {
+    const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
+    const nowMs = Date.now();
+    if (!force && nowMs - lastActiveSyncMs < 120000) return;
+    lastActiveSyncMs = nowMs;
+    client
+      .from("profiles")
+      .update({ last_active_at: new Date(nowMs).toISOString() })
+      .eq("id", currentAccount.id)
+      .then(() => {})
+      .catch(() => {});
+  }
 
-    state.isTeacher = isAdminEmail && Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
-
-    const rawStoredName =
-      profileRes && profileRes.data && profileRes.data.full_name
-        ? profileRes.data.full_name
-        : fallbackName;
-    const parsed = CLOUD.parseFullNameAndClass(rawStoredName);
-    const metaClass = CLOUD.normalizeClassName(meta.class_name);
-    const resolvedClass = parsed.className || metaClass || "";
-    const resolvedName = parsed.fullName || fallbackName;
-    const storedFullName = CLOUD.formatStoredFullName(resolvedName, resolvedClass);
-
+  function generateUniqueTakeId() {
+    const uidPrefix = currentAccount && currentAccount.id ? String(currentAccount.id).slice(0, 8) : "u";
+    let rand = "";
     try {
-      await client.from("profiles").upsert(
-        {
-          id: uid,
-          email: email,
-          full_name: storedFullName,
-          avatar_url: avatarUrl,
-          auth_provider: provider,
-          last_active_at: new Date().toISOString()
-        },
-        { onConflict: "id" }
-      );
-    } catch (e) {}
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        rand = crypto.randomUUID().slice(0, 8);
+      }
+    } catch (_e) {}
+    if (!rand) {
+      rand = Math.random().toString(36).slice(2, 10);
+    }
+    return `take_${uidPrefix}_${Date.now()}_${rand}`;
+  }
 
-    const savedVocab = Array.isArray(vocabRes.data)
-      ? vocabRes.data.map(row => ({
-          word: row.word,
-          ipa: row.ipa || "",
-          pos: row.pos || "",
-          meaning: row.meaning || "",
-          example: row.example || "",
-          topic: row.topic || ""
-        }))
-      : [];
+  function updateTakeUploadBadgeInPlace(takeObj) {
+    if (!takeObj || !takeObj.id) return;
+    const badgeEl = document.querySelector(`[data-upload-badge="${takeObj.id}"]`);
+    if (!badgeEl) return;
+    if (takeObj.uploadStatus === "uploading") {
+      badgeEl.innerHTML = `<span style="font-size:11px;font-weight:600;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;padding:2px 7px;border-radius:4px;">⏳ Đang lưu âm thanh...</span>`;
+    } else if (takeObj.uploadStatus === "failed") {
+      badgeEl.innerHTML = `<span style="font-size:11px;font-weight:600;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;padding:2px 7px;border-radius:4px;">⚠️ Lưu âm thanh lỗi</span>`;
+    } else {
+      badgeEl.innerHTML = "";
+    }
+  }
 
-    const questionsData = {};
+  function updateTakeTranscriptInPlace(takeObj) {
+    if (!takeObj || !takeObj.id) return;
+    const pEl = document.querySelector(`[data-take-transcript="${takeObj.id}"]`);
+    if (!pEl) return;
+    if (takeObj.transcript) {
+      pEl.classList.remove("placeholder");
+      pEl.textContent = `“${takeObj.transcript}”`;
+    }
+  }
 
-    const noteRows = Array.isArray(notesRes && notesRes.data) ? notesRes.data : [];
-    noteRows.forEach(n => {
-      if (n && n.question_id) {
-        const qd = ensureQuestionData(questionsData, n.question_id);
-        qd.ideaNote = n.idea_note || "";
+  async function ensureSignedUrlsForQuestion(qId) {
+    if (!currentAccount || !qId) return;
+    const qData = getQuestionData(qId);
+    const attempts = qData.attempts || [];
+    const missingPaths = attempts
+      .filter(a => a && a.audioPath && !a.audioDataUrl)
+      .map(a => a.audioPath);
+    if (missingPaths.length === 0) return;
+
+    const urlMap = await CLOUD.getSignedAudioUrls(missingPaths);
+    if (!currentAccount) return;
+
+    let updatedAny = false;
+    attempts.forEach(a => {
+      if (a && a.audioPath && !a.audioDataUrl && urlMap[a.audioPath]) {
+        a.audioDataUrl = urlMap[a.audioPath];
+        a._isLocalBlobUrl = false;
+        updatedAny = true;
+        const audioEl = document.querySelector(`audio[data-take-id="${a.id}"]`);
+        if (audioEl && !audioEl.getAttribute("src")) {
+          audioEl.src = a.audioDataUrl;
+        }
       }
     });
 
-    const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
-    const signedUrlMap = await CLOUD.getSignedAudioUrls(attemptRows.map(r => r.audio_path).filter(Boolean));
+    if (
+      updatedAny &&
+      state.view === "practice" &&
+      getCurrentQuestion().id === qId &&
+      !state.isRecording &&
+      !isAnyAudioPlaying()
+    ) {
+      // Ensure DOM elements without src (e.g. if <audio> was omitted before) render cleanly
+      const hasUnmountedAudio = attempts.some(
+        a => a && a.audioDataUrl && !document.querySelector(`audio[data-take-id="${a.id}"]`)
+      );
+      if (hasUnmountedAudio) {
+        renderApp();
+      }
+    }
+  }
 
-    attemptRows.forEach(row => {
-      const qd = ensureQuestionData(questionsData, row.question_id);
-      qd.attempts.push({
-        id: row.id,
-        num: row.take_number || qd.attempts.length + 1,
-        createdAt: CLOUD.formatDateTime(row.created_at),
-        durationSec: row.duration_sec || 0,
-        audioDataUrl: row.audio_path && signedUrlMap[row.audio_path] ? signedUrlMap[row.audio_path] : null,
-        audioPath: row.audio_path || "",
-        transcript: row.transcript || "",
-        targetLevel: String(row.target_level || "B1").toUpperCase(),
-        teacherFeedback: row.teacher_feedback || "",
-        teacherScore: row.teacher_score || "",
-        aiStatus: row.ai_status || "",
-        aiReleaseAt: row.ai_release_at || ""
+  async function loadCloudStudentData(sessionUser) {
+    const client = CLOUD.getClient();
+    if (!client || !sessionUser) return;
+    const uid = sessionUser.id;
+    if (loadingUserId === uid && loadingUserPromise) {
+      return loadingUserPromise;
+    }
+
+    loadingUserId = uid;
+    loadingUserPromise = (async () => {
+      const email = String(sessionUser.email || "").trim().toLowerCase();
+      const isAdminEmail = email === ADMIN_EMAIL;
+      const isStudentPreview = new URLSearchParams(window.location.search).get("view") === "student";
+
+      // Tự động nhận diện tài khoản admin (mtung0208@gmail.com) và chuyển thẳng vào trang quản trị
+      if (isAdminEmail && !isStudentPreview) {
+        window.location.replace("./teacher.html");
+        return;
+      }
+
+      const meta = sessionUser.user_metadata || {};
+      const appMeta = sessionUser.app_metadata || {};
+      const fallbackName =
+        String(meta.full_name || meta.name || "").trim() ||
+        email
+          .split("@")[0]
+          .replace(/[._-]+/g, " ")
+          .replace(/\b\w/g, c => c.toUpperCase());
+      const avatarUrl = meta.avatar_url || meta.picture || "";
+      const provider = appMeta.provider || "email";
+
+      renderApp();
+
+      const [profileRes, vocabRes, attemptsRes, notesRes, reviewsRes, teacherRes] = await Promise.all([
+        client.from("profiles").select("*").eq("id", uid).maybeSingle(),
+        CLOUD.fetchAllRows(() =>
+          client
+            .from("student_vocab")
+            .select("*")
+            .eq("user_id", uid)
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+        ),
+        CLOUD.fetchAllRows(() =>
+          client
+            .from("speaking_attempts")
+            .select("*")
+            .eq("user_id", uid)
+            .order("created_at", { ascending: true })
+            .order("id", { ascending: true })
+        ),
+        client.from("question_notes").select("*").eq("user_id", uid),
+        client.from("speaking_ai_reviews").select("*").eq("user_id", uid),
+        isAdminEmail ? client.rpc("is_teacher") : Promise.resolve({ data: false, error: null })
+      ]);
+
+      state.isTeacher = isAdminEmail && Boolean(teacherRes && !teacherRes.error && teacherRes.data === true);
+
+      const rawStoredName =
+        profileRes && profileRes.data && profileRes.data.full_name
+          ? profileRes.data.full_name
+          : fallbackName;
+      const parsed = CLOUD.parseFullNameAndClass(rawStoredName);
+      const metaClass = CLOUD.normalizeClassName(meta.class_name);
+      const resolvedClass = parsed.className || metaClass || "";
+      const resolvedName = parsed.fullName || fallbackName;
+      const storedFullName = CLOUD.formatStoredFullName(resolvedName, resolvedClass);
+
+      try {
+        lastActiveSyncMs = Date.now();
+        const activeIso = new Date(lastActiveSyncMs).toISOString();
+        if (profileRes && !profileRes.error) {
+          if (
+            profileRes.data &&
+            profileRes.data.full_name === storedFullName &&
+            (profileRes.data.avatar_url || "") === avatarUrl
+          ) {
+            await client.from("profiles").update({ last_active_at: activeIso }).eq("id", uid);
+          } else {
+            await client.from("profiles").upsert(
+              {
+                id: uid,
+                email: email,
+                full_name: storedFullName,
+                avatar_url: avatarUrl,
+                auth_provider: provider,
+                last_active_at: activeIso
+              },
+              { onConflict: "id" }
+            );
+          }
+        } else {
+          await client.from("profiles").update({ last_active_at: activeIso }).eq("id", uid);
+        }
+      } catch (e) {}
+
+      const savedVocab = Array.isArray(vocabRes.data)
+        ? vocabRes.data.map(row => ({
+            word: row.word,
+            ipa: row.ipa || "",
+            pos: row.pos || "",
+            meaning: row.meaning || "",
+            example: row.example || "",
+            topic: row.topic || ""
+          }))
+        : [];
+
+      const questionsData = {};
+
+      const noteRows = Array.isArray(notesRes && notesRes.data) ? notesRes.data : [];
+      noteRows.forEach(n => {
+        if (n && n.question_id) {
+          const qd = ensureQuestionData(questionsData, n.question_id);
+          qd.ideaNote = n.idea_note || "";
+        }
       });
-      if (row.is_submitted || Boolean(row.submitted_at)) {
+
+      const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
+
+      const submittedCandidateByQ = {};
+      attemptRows.forEach(row => {
+        const qd = ensureQuestionData(questionsData, row.question_id);
+        qd.attempts.push({
+          id: row.id,
+          num: row.take_number || qd.attempts.length + 1,
+          createdAt: CLOUD.formatDateTime(row.created_at),
+          durationSec: row.duration_sec || 0,
+          audioDataUrl: null,
+          _isLocalBlobUrl: false,
+          audioPath: row.audio_path || "",
+          transcript: row.transcript || "",
+          targetLevel: String(row.target_level || "B1").toUpperCase(),
+          teacherFeedback: row.teacher_feedback || "",
+          teacherScore: row.teacher_score || "",
+          aiStatus: row.ai_status || "",
+          aiReleaseAt: row.ai_release_at || ""
+        });
+        if (row.is_submitted || Boolean(row.submitted_at)) {
+          const prevCand = submittedCandidateByQ[row.question_id];
+          const currIsPrimary = Boolean(row.is_submitted);
+          const prevIsPrimary = prevCand ? Boolean(prevCand.is_submitted) : false;
+          const currTime = new Date(row.submitted_at || row.created_at || 0).getTime();
+          const prevTime = prevCand ? new Date(prevCand.submitted_at || prevCand.created_at || 0).getTime() : -1;
+          if (!prevCand || (currIsPrimary && !prevIsPrimary) || (currIsPrimary === prevIsPrimary && currTime >= prevTime)) {
+            submittedCandidateByQ[row.question_id] = row;
+          }
+        }
+      });
+
+      Object.keys(submittedCandidateByQ).forEach(qId => {
+        const row = submittedCandidateByQ[qId];
+        const qd = questionsData[qId];
+        if (!qd || !row) return;
         const subIso = row.submitted_at || row.created_at || "";
         qd.submittedTakeId = row.id;
         qd.submittedAt = CLOUD.formatDateTime(subIso);
@@ -249,67 +430,116 @@
           row.ai_release_at ||
           (subIso ? new Date(new Date(subIso).getTime() + RELEASE_HOURS * 3600 * 1000).toISOString() : "");
         qd.selectedTakeId = row.id;
+      });
+
+      Object.values(questionsData).forEach(qd => {
+        if (!qd.selectedTakeId && qd.attempts.length > 0) {
+          qd.selectedTakeId = qd.attempts[qd.attempts.length - 1].id;
+        }
+      });
+
+      const reviewsMap = {};
+      const reviewRows = Array.isArray(reviewsRes && reviewsRes.data) ? reviewsRes.data : [];
+      reviewRows.forEach(r => {
+        if (r && r.question_id) {
+          reviewsMap[r.question_id] = r;
+        }
+      });
+      state.reviewsByQuestionId = reviewsMap;
+      lastReviewsRefreshMs = Date.now();
+
+      const displayUserName = isAdminEmail ? "admin" : resolvedName;
+
+      currentAccount = {
+        id: uid,
+        name: displayUserName,
+        className: resolvedClass,
+        email: email,
+        isAdmin: isAdminEmail,
+        savedVocab: savedVocab,
+        questionsData: questionsData
+      };
+
+      state.needsProfileSetup = !resolvedClass && !state.isTeacher && !isAdminEmail;
+      state.profileFormName = resolvedName;
+      state.profileFormClass = resolvedClass || CLOUD.CLASS_LIST[0];
+      state.profileFormError = "";
+      state.authError = "";
+      state.authInfo = "";
+      state.authLoading = false;
+      state.authEmail = "";
+      state.authName = "";
+      if (state.view === "auth") state.view = "home";
+
+      startNotificationPolling();
+      renderApp();
+
+      if (state.view === "practice") {
+        ensureSignedUrlsForQuestion(getCurrentQuestion().id);
       }
-    });
+    })();
 
-    Object.values(questionsData).forEach(qd => {
-      if (!qd.selectedTakeId && qd.attempts.length > 0) {
-        qd.selectedTakeId = qd.attempts[qd.attempts.length - 1].id;
+    try {
+      await loadingUserPromise;
+    } finally {
+      if (loadingUserId === uid) {
+        loadingUserId = "";
+        loadingUserPromise = null;
       }
-    });
+    }
+  }
 
-    const reviewsMap = {};
-    const reviewRows = Array.isArray(reviewsRes && reviewsRes.data) ? reviewsRes.data : [];
-    reviewRows.forEach(r => {
-      if (r && r.question_id) {
-        reviewsMap[r.question_id] = r;
-      }
-    });
-    state.reviewsByQuestionId = reviewsMap;
-    lastReviewsRefreshMs = Date.now();
-
-    const displayUserName = isAdminEmail ? "admin" : resolvedName;
-
-    currentAccount = {
-      id: uid,
-      name: displayUserName,
-      className: resolvedClass,
-      email: email,
-      isAdmin: isAdminEmail,
-      savedVocab: savedVocab,
-      questionsData: questionsData
-    };
-
-    state.needsProfileSetup = !resolvedClass && !state.isTeacher && !isAdminEmail;
-    state.profileFormName = resolvedName;
-    state.profileFormClass = resolvedClass || CLOUD.CLASS_LIST[0];
-    state.profileFormError = "";
-    state.authError = "";
-    state.authInfo = "";
-    state.authLoading = false;
-    if (state.view === "auth") state.view = "home";
-
-    startNotificationPolling();
-    renderApp();
+  function saveIdeaNoteImmediate(qId, noteVal) {
+    if (noteSaveTimers[qId]) {
+      clearTimeout(noteSaveTimers[qId]);
+      delete noteSaveTimers[qId];
+    }
+    const client = CLOUD.getClient();
+    if (!client || !currentAccount) return;
+    client
+      .from("question_notes")
+      .upsert(
+        {
+          user_id: currentAccount.id,
+          question_id: qId,
+          idea_note: String(noteVal || ""),
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: "user_id,question_id" }
+      )
+      .then(() => {})
+      .catch(() => {});
   }
 
   function scheduleSaveIdeaNote(qId, noteVal) {
     if (noteSaveTimers[qId]) clearTimeout(noteSaveTimers[qId]);
-    noteSaveTimers[qId] = setTimeout(async () => {
-      const client = CLOUD.getClient();
-      if (!client || !currentAccount) return;
-      try {
-        await client.from("question_notes").upsert(
-          {
-            user_id: currentAccount.id,
-            question_id: qId,
-            idea_note: String(noteVal || ""),
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: "user_id,question_id" }
-        );
-      } catch (e) {}
+    noteSaveTimers[qId] = setTimeout(() => {
+      delete noteSaveTimers[qId];
+      saveIdeaNoteImmediate(qId, noteVal);
     }, 650);
+  }
+
+  function updateNotificationBellBadgeInPlace() {
+    const bellBtn = document.getElementById("topbar-notif-btn");
+    if (!bellBtn || !currentAccount) return;
+    const unreadCount = getAllSubmittedItems().filter(
+      it => it.releasedReview && !it.releasedReview.student_seen_at
+    ).length;
+    bellBtn.classList.toggle("has-unread", unreadCount > 0);
+    const existingBadge = bellBtn.querySelector(".notif-unread-badge");
+    if (unreadCount > 0) {
+      const text = unreadCount > 9 ? "9+" : String(unreadCount);
+      if (existingBadge) {
+        existingBadge.textContent = text;
+      } else {
+        const span = document.createElement("span");
+        span.className = "notif-unread-badge";
+        span.textContent = text;
+        bellBtn.appendChild(span);
+      }
+    } else if (existingBadge) {
+      existingBadge.remove();
+    }
   }
 
   function getReleasedReview(qId) {
@@ -338,8 +568,9 @@
   async function refreshStudentReviews(force) {
     const client = CLOUD.getClient();
     if (!client || !currentAccount || reviewsRefreshInFlight || state.isRecording) return;
+    if (!force && getAllSubmittedItems().length === 0) return;
     const now = Date.now();
-    if (!force && now - lastReviewsRefreshMs < 10000) return;
+    if (!force && now - lastReviewsRefreshMs < 30000) return;
 
     reviewsRefreshInFlight = true;
     try {
@@ -360,14 +591,18 @@
         revRes.data.forEach(r => {
           if (r && r.question_id) nextMap[r.question_id] = r;
         });
-        if (JSON.stringify(Object.keys(nextMap)) !== JSON.stringify(Object.keys(state.reviewsByQuestionId))) {
+        const oldKeys = Object.keys(state.reviewsByQuestionId || {}).sort();
+        const newKeys = Object.keys(nextMap).sort();
+        if (JSON.stringify(newKeys) !== JSON.stringify(oldKeys)) {
           changed = true;
         } else {
-          Object.keys(nextMap).forEach(k => {
+          newKeys.forEach(k => {
             const oldR = state.reviewsByQuestionId[k];
             const newR = nextMap[k];
             if (
               !oldR ||
+              oldR.attempt_id !== newR.attempt_id ||
+              oldR.status !== newR.status ||
               oldR.updated_at !== newR.updated_at ||
               oldR.release_at !== newR.release_at ||
               oldR.student_seen_at !== newR.student_seen_at
@@ -379,8 +614,10 @@
         state.reviewsByQuestionId = nextMap;
       }
 
-      if (Array.isArray(subAttRes.data) && currentAccount.questionsData) {
+      if (!subAttRes.error && Array.isArray(subAttRes.data) && currentAccount.questionsData) {
+        const activeSubByQ = {};
         subAttRes.data.forEach(row => {
+          if (row && row.question_id) activeSubByQ[row.question_id] = row;
           const qd = currentAccount.questionsData[row.question_id];
           if (!qd) return;
           if (row.ai_release_at && qd.aiReleaseAt !== row.ai_release_at) {
@@ -407,12 +644,42 @@
             }
           }
         });
+
+        // Phát hiện bài nộp đã bị giáo viên xóa để làm lại
+        if (!state.isSubmitting) {
+          Object.keys(currentAccount.questionsData).forEach(qId => {
+            const qd = currentAccount.questionsData[qId];
+            if (!qd || !qd.submittedTakeId) return;
+            const serverSub = activeSubByQ[qId];
+            if (!serverSub) {
+              const oldSubId = qd.submittedTakeId;
+              const removedAtt = (qd.attempts || []).find(a => a.id === oldSubId);
+              if (removedAtt && removedAtt.uploadStatus === "uploading") return;
+              if (removedAtt) {
+                revokeTakeBlobUrl(removedAtt);
+                qd.attempts = (qd.attempts || []).filter(a => a.id !== oldSubId);
+              }
+              qd.submittedTakeId = null;
+              qd.submittedAt = null;
+              qd.submittedAtIso = "";
+              qd.aiStatus = "";
+              qd.aiReleaseAt = "";
+              if (qd.selectedTakeId === oldSubId) {
+                qd.selectedTakeId = qd.attempts.length > 0 ? qd.attempts[qd.attempts.length - 1].id : null;
+              }
+              delete state.reviewsByQuestionId[qId];
+              changed = true;
+            }
+          });
+        }
       }
 
       const activeTag = document.activeElement ? document.activeElement.tagName : "";
       const isTyping = activeTag === "INPUT" || activeTag === "TEXTAREA";
-      if ((changed || force) && !isTyping && !state.isRecording) {
+      if ((changed || force) && !isTyping && !state.isRecording && !state.isFinalizingRecording && !isAnyAudioPlaying()) {
         renderApp();
+      } else if (changed) {
+        updateNotificationBellBadgeInPlace();
       }
     } catch (e) {
     } finally {
@@ -422,19 +689,29 @@
 
   function startNotificationPolling() {
     if (notifPollTimer) {
-      clearInterval(notifPollTimer);
+      clearTimeout(notifPollTimer);
       notifPollTimer = null;
     }
-    notifPollTimer = setInterval(() => {
-      if (currentAccount && document.visibilityState === "visible") {
-        refreshStudentReviews(false);
-      }
-    }, 60000);
+    const scheduleNext = () => {
+      const hasWaiting = getAllSubmittedItems().some(it => !it.releasedReview);
+      const baseMs = hasWaiting ? 60000 : 90000;
+      const jitterRange = hasWaiting ? 20000 : 30000;
+      const delayMs = baseMs + Math.floor(Math.random() * jitterRange);
+      notifPollTimer = setTimeout(async () => {
+        if (currentAccount && document.visibilityState === "visible") {
+          await refreshStudentReviews(false);
+        }
+        if (currentAccount) {
+          scheduleNext();
+        }
+      }, delayMs);
+    };
+    scheduleNext();
   }
 
   function stopNotificationPolling() {
     if (notifPollTimer) {
-      clearInterval(notifPollTimer);
+      clearTimeout(notifPollTimer);
       notifPollTimer = null;
     }
   }
@@ -472,17 +749,25 @@
 
   async function cloudCreateAttempt(qId, takeObj, audioBlob) {
     const client = CLOUD.getClient();
-    if (!client || !currentAccount || !takeObj) return;
+    if (!client || !currentAccount || !takeObj || takeObj._deleted) return;
 
+    const ownerUserId = currentAccount.id;
     const runTask = (async () => {
       let audioPath = takeObj.audioPath || "";
       if (!audioPath && audioBlob && audioBlob.size > 0) {
         takeObj.uploadStatus = "uploading";
-        if (!takeObj._submittingOrSubmitted) renderApp();
-        const upRes = await CLOUD.uploadRecording(currentAccount.id, qId, takeObj.id, audioBlob);
+        updateTakeUploadBadgeInPlace(takeObj);
+        const upRes = await CLOUD.uploadRecording(ownerUserId, qId, takeObj.id, audioBlob);
+        if (takeObj._deleted) {
+          if (upRes && upRes.path) {
+            CLOUD.deleteRecording(upRes.path);
+          }
+          return;
+        }
         if (upRes.error) {
           takeObj.uploadStatus = "failed";
-          if (!takeObj._submittingOrSubmitted) {
+          updateTakeUploadBadgeInPlace(takeObj);
+          if (!takeObj._submittingOrSubmitted && !state.isRecording && !isAnyAudioPlaying()) {
             state.submitErrorMsg = "Chưa tải được file âm thanh: " + (upRes.error.message || "Lỗi quyền Storage");
             renderApp();
           }
@@ -492,19 +777,25 @@
           audioPath = upRes.path;
           takeObj.audioPath = audioPath;
           takeObj.uploadStatus = "uploaded";
+          takeObj.rawBlob = null;
+          updateTakeUploadBadgeInPlace(takeObj);
         }
       } else if (audioPath) {
         takeObj.uploadStatus = "uploaded";
+        takeObj.rawBlob = null;
+        updateTakeUploadBadgeInPlace(takeObj);
       }
 
-      // Nếu học viên đã bấm "Nộp bài chính thức" trong lúc đang tải file nháp,
+      // Nếu học viên đã xóa hoặc đã bấm "Nộp bài chính thức" trong lúc đang tải file nháp,
       // TUYỆT ĐỐI không ghi đè is_submitted = false lên bản ghi đã nộp!
-      if (takeObj._submittingOrSubmitted) return;
+      if (takeObj._deleted || takeObj._submittingOrSubmitted || !currentAccount || currentAccount.id !== ownerUserId) {
+        return;
+      }
 
       const { error } = await client.from("speaking_attempts").upsert(
         {
           id: takeObj.id,
-          user_id: currentAccount.id,
+          user_id: ownerUserId,
           topic_id: getTopicIdForQuestion(qId),
           question_id: qId,
           take_number: takeObj.num,
@@ -517,21 +808,14 @@
       );
 
       if (error) {
-        if (!takeObj._submittingOrSubmitted) {
+        if (!takeObj._submittingOrSubmitted && !takeObj._deleted && !state.isRecording && !isAnyAudioPlaying()) {
           state.submitErrorMsg = "Lỗi lưu bản ghi vào cơ sở dữ liệu: " + error.message;
           renderApp();
         }
         return;
       }
 
-      await client
-        .from("profiles")
-        .update({ last_active_at: new Date().toISOString() })
-        .eq("id", currentAccount.id);
-
-      if (!takeObj._submittingOrSubmitted) {
-        renderApp();
-      }
+      touchLastActive(false);
     })();
 
     pendingDraftUploads[takeObj.id] = runTask;
@@ -547,6 +831,9 @@
   async function cloudDeleteAttempt(takeObj) {
     const client = CLOUD.getClient();
     if (!client || !currentAccount || !takeObj) return;
+    takeObj._deleted = true;
+    revokeTakeBlobUrl(takeObj);
+    takeObj.rawBlob = null;
     try {
       await client.from("speaking_attempts").delete().eq("id", takeObj.id).eq("user_id", currentAccount.id);
       if (takeObj.audioPath) {
@@ -584,6 +871,8 @@
       }
       if (upRes.path) {
         takeObj.audioPath = upRes.path;
+        takeObj.uploadStatus = "uploaded";
+        takeObj.rawBlob = null;
       }
     }
 
@@ -605,18 +894,6 @@
     const nowMs = Date.now();
     const nowIso = new Date(nowMs).toISOString();
     const defaultReleaseIso = new Date(nowMs + RELEASE_HOURS * 3600 * 1000).toISOString();
-
-    const { error: resetErr } = await client
-      .from("speaking_attempts")
-      .update({ is_submitted: false, submitted_at: null })
-      .eq("user_id", currentAccount.id)
-      .eq("question_id", qId)
-      .neq("id", takeObj.id);
-
-    if (resetErr) {
-      takeObj._submittingOrSubmitted = false;
-      return { ok: false, error: resetErr.message };
-    }
 
     const basePayload = {
       id: takeObj.id,
@@ -651,46 +928,75 @@
     }
 
     if (upsertErr) {
+      takeObj._submittingOrSubmitted = false;
       return { ok: false, error: upsertErr.message };
     }
 
-    await client
-      .from("profiles")
-      .update({ last_active_at: nowIso })
-      .eq("id", currentAccount.id);
+    // Chỉ hạ is_submitted của các bản cũ SAU KHI bản mới đã lưu thành công
+    try {
+      await client
+        .from("speaking_attempts")
+        .update({ is_submitted: false, submitted_at: null })
+        .eq("user_id", currentAccount.id)
+        .eq("question_id", qId)
+        .neq("id", takeObj.id);
+    } catch (_resetErr) {}
+
+    touchLastActive(true);
 
     // Clear previous review cache for this question while new 6-hour AI review is scheduled
     delete state.reviewsByQuestionId[qId];
 
-    // Trigger AI grading Edge Function asynchronously in the background
+    // Trigger AI grading Edge Function asynchronously with jitter to prevent thundering herd across 50 students
     if (typeof CLOUD.invokeGradeSpeaking === "function") {
-      CLOUD.invokeGradeSpeaking(takeObj.id, {
-        promptText,
-        topicTitle,
-        targetLevel
-      })
-        .then(gradeRes => {
-          if (!currentAccount || !currentAccount.questionsData) return;
-          const qd = currentAccount.questionsData[qId];
-          if (gradeRes && gradeRes.ok) {
-            if (qd) {
-              qd.aiStatus = gradeRes.status || "scheduled";
-              if (gradeRes.release_at) qd.aiReleaseAt = gradeRes.release_at;
-            }
-            if (
-              gradeRes.recognized_transcript &&
-              gradeRes.recognized_transcript.trim().length > (takeObj.transcript || "").trim().length
-            ) {
-              takeObj.transcript = gradeRes.recognized_transcript;
-            }
-            if (state.isTeacher) {
-              refreshStudentReviews(true);
-            } else if (!state.isRecording) {
-              renderApp();
-            }
-          }
+      const jitterMs = 400 + Math.floor(Math.random() * 2400);
+      const ownerId = currentAccount.id;
+      const runGradeCall = canRetry => {
+        if (!currentAccount || currentAccount.id !== ownerId || !currentAccount.questionsData) return;
+        const qdCheck = currentAccount.questionsData[qId];
+        if (qdCheck && qdCheck.submittedTakeId && qdCheck.submittedTakeId !== takeObj.id) return;
+
+        CLOUD.invokeGradeSpeaking(takeObj.id, {
+          promptText,
+          topicTitle,
+          targetLevel
         })
-        .catch(() => {});
+          .then(gradeRes => {
+            if (!currentAccount || currentAccount.id !== ownerId || !currentAccount.questionsData) return;
+            const qd = currentAccount.questionsData[qId];
+            if (gradeRes && gradeRes.ok) {
+              if (qd) {
+                qd.aiStatus = gradeRes.status || "scheduled";
+                if (gradeRes.release_at) qd.aiReleaseAt = gradeRes.release_at;
+              }
+              if (
+                gradeRes.recognized_transcript &&
+                gradeRes.recognized_transcript.trim().length > (takeObj.transcript || "").trim().length
+              ) {
+                takeObj.transcript = gradeRes.recognized_transcript;
+                updateTakeTranscriptInPlace(takeObj);
+              }
+              if (state.isTeacher) {
+                refreshStudentReviews(true);
+              } else {
+                const activeTag = document.activeElement ? document.activeElement.tagName : "";
+                const isTyping = activeTag === "INPUT" || activeTag === "TEXTAREA";
+                if (!state.isRecording && !state.isFinalizingRecording && !isTyping && !isAnyAudioPlaying()) {
+                  renderApp();
+                }
+              }
+              return;
+            }
+            const status = Number((gradeRes && gradeRes.httpStatus) || 0);
+            const isTransient = status === 0 || status === 429 || status >= 500;
+            if (canRetry && isTransient && qd && qd.submittedTakeId === takeObj.id && !state.reviewsByQuestionId[qId]) {
+              const retryDelay = 8000 + Math.floor(Math.random() * 7000);
+              setTimeout(() => runGradeCall(false), retryDelay);
+            }
+          })
+          .catch(() => {});
+      };
+      setTimeout(() => runGradeCall(true), jitterMs);
     }
 
     return {
@@ -732,6 +1038,16 @@
 
   function getCurrentQuestion() {
     const topic = getCurrentTopic();
+    if (!topic || !Array.isArray(topic.questions) || topic.questions.length === 0) {
+      return {
+        id: "unknown",
+        num: 1,
+        prompt: "",
+        analysis: { questionType: "", tense: "", length: "" },
+        pitfalls: [],
+        levels: { b1: { strategy: [], modelAnswer: "", vocab: [] }, b2: { strategy: [], modelAnswer: "", vocab: [] } }
+      };
+    }
     const idx = Math.max(0, Math.min(topic.questions.length - 1, state.currentQuestionIndex));
     state.currentQuestionIndex = idx;
     return topic.questions[idx];
@@ -835,6 +1151,8 @@
       rec.lang = "en-US";
       rec.continuous = true;
       rec.interimResults = true;
+      let recFatalError = false;
+      let recRestartCount = 0;
 
       rec.onresult = event => {
         let sFinal = "";
@@ -860,8 +1178,15 @@
         }
 
         // If final words arrive right after clicking Stop, append them into the newly created take
-        if (!state.isRecording && latestCreatedTake && fullText.length > (latestCreatedTake.transcript || "").length) {
+        if (
+          !state.isRecording &&
+          latestCreatedTake &&
+          !latestCreatedTake._deleted &&
+          !latestCreatedTake._submittingOrSubmitted &&
+          fullText.length > (latestCreatedTake.transcript || "").length
+        ) {
           latestCreatedTake.transcript = fullText;
+          updateTakeTranscriptInPlace(latestCreatedTake);
           const client = CLOUD.getClient();
           if (client && currentAccount) {
             client
@@ -872,11 +1197,15 @@
               .then(() => {})
               .catch(() => {});
           }
-          renderApp();
         }
       };
 
-      rec.onerror = () => {};
+      rec.onerror = event => {
+        const errCode = String((event && event.error) || "");
+        if (errCode === "not-allowed" || errCode === "service-not-allowed" || errCode === "audio-capture") {
+          recFatalError = true;
+        }
+      };
       rec.onend = () => {
         const uncommitted = [sessionFinalText, sessionInterimText].filter(Boolean).join(" ").trim();
         if (uncommitted) {
@@ -886,10 +1215,15 @@
         sessionInterimText = "";
         state.liveTranscript = persistedTranscript;
 
-        if (state.isRecording && speechRecognizer === rec) {
-          try {
-            rec.start();
-          } catch (e) {}
+        if (!recFatalError && state.isRecording && speechRecognizer === rec && recRestartCount < 8) {
+          recRestartCount++;
+          setTimeout(() => {
+            if (!recFatalError && state.isRecording && speechRecognizer === rec) {
+              try {
+                rec.start();
+              } catch (e) {}
+            }
+          }, 250);
         }
       };
 
@@ -965,11 +1299,18 @@
           "Bản ghi âm quá nhỏ hoặc không thu được dữ liệu từ Micro. Hãy kiểm tra quyền Micro (hoặc mở bằng Chrome/Safari) và ghi âm lại nhé!"
       };
     }
+    if (blob.size > 14 * 1024 * 1024) {
+      return {
+        ok: false,
+        reason:
+          "Tệp ghi âm vượt quá dung lượng cho phép (14 MB). Bạn hãy ghi âm ngắn gọn hơn và thử lại nhé!"
+      };
+    }
 
     let finalBlob = blob;
     try {
       const ab = await blob.arrayBuffer();
-      const head = new Uint8Array(ab.slice(0, 16));
+      const head = new Uint8Array(ab, 0, Math.min(16, ab.byteLength));
       const detectedMime = detectValidAudioBlobMime(head);
       if (!detectedMime) {
         return {
@@ -1029,6 +1370,9 @@
     if (!AudioCtx || !stream) return tracker;
     try {
       const ctx = new AudioCtx();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+        ctx.resume().catch(() => {});
+      }
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
@@ -1036,6 +1380,7 @@
       const data = new Uint8Array(analyser.fftSize);
       const iv = setInterval(() => {
         try {
+          if (ctx.state !== "running") return;
           analyser.getByteTimeDomainData(data);
           tracker.sampled = true;
           for (let i = 0; i < data.length; i++) {
@@ -1065,6 +1410,7 @@
     isStartingRecording = false;
     state.isPreparingMic = false;
     state.isRecording = false;
+    state.isFinalizingRecording = false;
     if (recordingTimer) {
       clearInterval(recordingTimer);
       recordingTimer = null;
@@ -1098,12 +1444,33 @@
     }
   }
 
+  function createMediaRecorderWithBitrate(stream, chosenMime) {
+    const candidates = chosenMime
+      ? [
+          { mimeType: chosenMime, audioBitsPerSecond: 32000 },
+          { mimeType: chosenMime },
+          {}
+        ]
+      : [{ audioBitsPerSecond: 32000 }, {}];
+    let lastErr = null;
+    for (let i = 0; i < candidates.length; i++) {
+      try {
+        return Object.keys(candidates[i]).length > 0
+          ? new MediaRecorder(stream, candidates[i])
+          : new MediaRecorder(stream);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error("MediaRecorder unsupported");
+  }
+
   function startRecording(qId) {
     if (state.isRecording) {
       stopRecording(qId);
       return;
     }
-    if (isStartingRecording) {
+    if (isStartingRecording || state.isFinalizingRecording) {
       return;
     }
 
@@ -1124,6 +1491,7 @@
     isStartingRecording = true;
     state.isPreparingMic = true;
     const mySessionSeq = ++recordingSessionSeq;
+    const myUserId = currentAccount ? currentAccount.id : "";
 
     state.submitErrorMsg = "";
     state.liveTranscript = "";
@@ -1141,8 +1509,8 @@
       .then(stream => {
         isStartingRecording = false;
         state.isPreparingMic = false;
-        // Nếu người dùng đã bấm dừng/chuyển câu trong lúc chờ cấp quyền Micro thì đóng ngay luồng này
-        if (mySessionSeq !== recordingSessionSeq) {
+        // Nếu người dùng đã bấm dừng/chuyển câu hoặc đăng xuất trong lúc chờ cấp quyền Micro thì đóng ngay luồng này
+        if (mySessionSeq !== recordingSessionSeq || !currentAccount || currentAccount.id !== myUserId) {
           try {
             stream.getTracks().forEach(t => t.stop());
           } catch (e) {}
@@ -1155,7 +1523,7 @@
         let chosenMime = "";
         try {
           chosenMime = pickSupportedAudioMimeType();
-          recorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+          recorder = createMediaRecorderWithBitrate(stream, chosenMime);
         } catch (recErr) {
           stream.getTracks().forEach(t => t.stop());
           state.isRecording = false;
@@ -1188,44 +1556,67 @@
         };
         recorder.onstop = async () => {
           const capturedSec = state.recordingSeconds;
-          micMonitor.stop();
-          if (activeMicMonitorStop === micMonitor.stop) activeMicMonitorStop = null;
-          stream.getTracks().forEach(t => t.stop());
-          if (activeMediaStream === stream) activeMediaStream = null;
-          if (mediaRecorder === recorder) mediaRecorder = null;
+          try {
+            micMonitor.stop();
+            if (activeMicMonitorStop === micMonitor.stop) activeMicMonitorStop = null;
+            stream.getTracks().forEach(t => t.stop());
+            if (activeMediaStream === stream) activeMediaStream = null;
+            if (mediaRecorder === recorder) mediaRecorder = null;
 
-          const firstTypedChunk = localChunks.find(c => c && c.type);
-          const rawMime =
-            (recorder && recorder.mimeType) ||
-            (firstTypedChunk && firstTypedChunk.type) ||
-            chosenMime ||
-            "audio/webm";
-          const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
-          const rawBlob = new Blob(localChunks, { type: cleanMime });
+            if (!currentAccount || currentAccount.id !== myUserId) {
+              return;
+            }
 
-          // Chờ Web Speech API chốt câu cuối (nếu đang chạy trên máy tính)
-          await new Promise(r => setTimeout(r, 350));
+            const firstTypedChunk = localChunks.find(c => c && c.type);
+            const rawMime =
+              (recorder && recorder.mimeType) ||
+              (firstTypedChunk && firstTypedChunk.type) ||
+              chosenMime ||
+              "audio/webm";
+            const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
+            const rawBlob = new Blob(localChunks, { type: cleanMime });
 
-          const recognizedSoFar = (composeCurrentTranscript() || state.liveTranscript || "").trim();
-          const hasSpokenWords = recognizedSoFar.split(/\s+/).filter(Boolean).length >= 2;
+            // Chờ Web Speech API chốt câu cuối (nếu đang chạy trên máy tính)
+            await new Promise(r => setTimeout(r, 350));
 
-          // Lớp bảo vệ 1: Phát hiện Micro bị tắt tiếng (im lặng 100%)
-          if (capturedSec >= 2 && micMonitor.sampled && micMonitor.peak < 0.008 && !hasSpokenWords) {
-            state.submitErrorMsg =
-              "Micro đang bị im lặng (không thu được tiếng nói). Hãy kiểm tra xem Micro có đang bị tắt tiếng / tai nghe Bluetooth có bị mất mic không rồi ghi âm lại nhé!";
-            renderApp();
-            return;
+            if (!currentAccount || currentAccount.id !== myUserId) {
+              return;
+            }
+
+            const recognizedSoFar = (composeCurrentTranscript() || state.liveTranscript || "").trim();
+            const hasSpokenWords = recognizedSoFar.split(/\s+/).filter(Boolean).length >= 2;
+
+            // Lớp bảo vệ 1: Phát hiện Micro bị tắt tiếng (im lặng 100%)
+            if (capturedSec >= 2 && micMonitor.sampled && micMonitor.peak < 0.008 && !hasSpokenWords) {
+              state.isFinalizingRecording = false;
+              state.submitErrorMsg =
+                "Micro đang bị im lặng (không thu được tiếng nói). Hãy kiểm tra xem Micro có đang bị tắt tiếng / tai nghe Bluetooth có bị mất mic không rồi ghi âm lại nhé!";
+              renderApp();
+              return;
+            }
+
+            // Lớp bảo vệ 2: Tự kiểm tra cấu trúc file & khả năng phát lại trước khi lưu/tải lên Supabase
+            const check = await validateRecordedAudioBlob(rawBlob);
+            if (!currentAccount || currentAccount.id !== myUserId) {
+              if (check && check.previewUrl) {
+                try {
+                  URL.revokeObjectURL(check.previewUrl);
+                } catch (_e) {}
+              }
+              return;
+            }
+            if (!check.ok) {
+              state.isFinalizingRecording = false;
+              state.submitErrorMsg = check.reason;
+              renderApp();
+              return;
+            }
+
+            state.isFinalizingRecording = false;
+            finalizeNewTake(qId, check.previewUrl, check.blob, capturedSec, mySessionSeq);
+          } finally {
+            state.isFinalizingRecording = false;
           }
-
-          // Lớp bảo vệ 2: Tự kiểm tra cấu trúc file & khả năng phát lại trước khi lưu/tải lên Supabase
-          const check = await validateRecordedAudioBlob(rawBlob);
-          if (!check.ok) {
-            state.submitErrorMsg = check.reason;
-            renderApp();
-            return;
-          }
-
-          finalizeNewTake(qId, check.previewUrl, check.blob);
         };
 
         // Không truyền timeslice (250ms) vì Safari/iOS dễ tạo file MP4 phân mảnh bị lỗi không phát được trên Chrome
@@ -1250,6 +1641,7 @@
           recordingTimer = null;
         }
         state.isRecording = false;
+        state.isFinalizingRecording = false;
         mediaRecorder = null;
         state.submitErrorMsg = formatMicErrorMessage(err);
         renderApp();
@@ -1257,6 +1649,8 @@
   }
 
   function stopRecording(qId) {
+    const capturedSec = state.recordingSeconds;
+    const activeSeq = recordingSessionSeq;
     recordingSessionSeq++;
     isStartingRecording = false;
     state.isPreparingMic = false;
@@ -1276,9 +1670,13 @@
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       try {
+        state.isFinalizingRecording = true;
+        renderApp();
         mediaRecorder.stop();
         return;
-      } catch (e) {}
+      } catch (e) {
+        state.isFinalizingRecording = false;
+      }
     }
 
     if (activeMicMonitorStop) {
@@ -1295,17 +1693,29 @@
       activeMediaStream = null;
     }
 
+    const myUserId = currentAccount ? currentAccount.id : "";
     setTimeout(() => {
-      finalizeNewTake(qId, null, null);
+      if (!currentAccount || currentAccount.id !== myUserId) return;
+      const recognizedText = (composeCurrentTranscript() || state.liveTranscript || "").trim();
+      const wc = recognizedText.split(/\s+/).filter(Boolean).length;
+      if (wc >= 2) {
+        finalizeNewTake(qId, null, null, capturedSec, activeSeq);
+      } else {
+        renderApp();
+      }
     }, 350);
   }
 
-  function finalizeNewTake(qId, audioUrl, rawBlob) {
-    const dur = Math.max(1, state.recordingSeconds);
+  function finalizeNewTake(qId, audioUrl, rawBlob, capturedSec, sessionSeq) {
+    if (!currentAccount) return;
+    if (sessionSeq && sessionSeq === finalizedSessionSeq) return;
+    if (sessionSeq) finalizedSessionSeq = sessionSeq;
+    const dur = Math.max(1, Number(capturedSec != null ? capturedSec : state.recordingSeconds) || 1);
     const recognizedText = (composeCurrentTranscript() || state.liveTranscript || "").trim();
     const qData = getQuestionData(qId);
-    const nextNum = qData.attempts.length + 1;
-    const takeId = "take_" + Date.now() + "_" + nextNum;
+    const nextNum =
+      Math.max(0, ...(qData.attempts || []).map(a => Number(a && a.num) || 0)) + 1;
+    const takeId = generateUniqueTakeId();
 
     const newTake = {
       id: takeId,
@@ -1313,6 +1723,7 @@
       createdAt: CLOUD.formatDateTime(new Date().toISOString()),
       durationSec: dur,
       audioDataUrl: audioUrl,
+      _isLocalBlobUrl: Boolean(audioUrl),
       audioPath: "",
       rawBlob: rawBlob || null,
       transcript: recognizedText,
@@ -1386,7 +1797,7 @@
                 ? `
               <div class="form-field">
                 <label class="form-label" for="inp-auth-name">Họ và tên đầy đủ</label>
-                <input type="text" id="inp-auth-name" class="form-input" placeholder="Ví dụ: Nguyễn Minh Tùng" required />
+                <input type="text" id="inp-auth-name" class="form-input" placeholder="Ví dụ: Nguyễn Minh Tùng" value="${escapeHtml(state.authName || "")}" required />
               </div>
 
               <div class="form-field">
@@ -1409,7 +1820,7 @@
 
             <div class="form-field">
               <label class="form-label" for="inp-auth-email">Email</label>
-              <input type="email" id="inp-auth-email" class="form-input" placeholder="Nhập email của bạn..." required />
+              <input type="email" id="inp-auth-email" class="form-input" placeholder="Nhập email của bạn..." value="${escapeHtml(state.authEmail || "")}" required />
             </div>
 
             <div class="form-field">
@@ -1580,7 +1991,7 @@
       const pendingHtml = pendingList
         .map(it => {
           const remain = CLOUD.formatRemainingTime(it.aiReleaseAt);
-          const title = `Đề ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · Câu ${it.qMeta.questionNum}`;
+          const title = `${it.qMeta.partLabel} · ${it.qMeta.topicNumber}: ${it.qMeta.topicTitle} · ${it.qMeta.part === "part2" ? "TH" : "Câu"} ${it.qMeta.questionNum}`;
           return `
             <button
               type="button"
@@ -2377,10 +2788,6 @@
           targetLevel
         })}
       `);
-
-      if (state.view === "practice" && getCurrentQuestion().id === qId) {
-        markReviewAsSeen(qId);
-      }
     } else {
       const attHasAudio = Boolean(att && (att.audioPath || att.audioDataUrl));
       const attWordCount = String((att && att.transcript) || "")
@@ -2510,12 +2917,16 @@
                   type="button"
                   class="record-btn ${state.isRecording ? "recording" : ""}"
                   id="btn-record-toggle"
-                  ${state.isPreparingMic ? "disabled" : ""}
+                  ${state.isPreparingMic || state.isFinalizingRecording ? "disabled" : ""}
                 >
                   ${
                     state.isPreparingMic
                       ? `
                     <span>⏳ Đang bật Micro...</span>
+                  `
+                      : state.isFinalizingRecording
+                      ? `
+                    <span>⏳ Đang lưu bản ghi...</span>
                   `
                       : state.isRecording
                       ? `
@@ -2586,34 +2997,36 @@
                       return `
                         <div
                           class="take-item-card ${isSelected ? "selected-take" : ""} ${isSubmitted ? "submitted-take" : ""}"
+                          data-take-card="${escapeHtml(att.id)}"
                           ${isSubmitted ? 'id="submitted-take-anchor"' : ""}
                         >
                           <div class="take-item-top">
                             <label class="take-select-label">
                               <input
                                 type="radio"
-                                name="select_take_${qId}"
-                                value="${att.id}"
+                                name="select_take_${escapeHtml(qId)}"
+                                value="${escapeHtml(att.id)}"
                                 ${isSelected ? "checked" : ""}
-                                data-select-take="${att.id}"
+                                data-select-take="${escapeHtml(att.id)}"
                               />
                               <span>Bản ghi âm #${idx + 1} (${formatDuration(att.durationSec)})</span>
                               <span class="take-meta-time">· ${escapeHtml(att.createdAt || "")}</span>
                             </label>
 
                             <div style="display:flex;align-items:center;gap:6px;">
-                              ${
+                              <span data-upload-badge="${escapeHtml(att.id)}">${
                                 att.uploadStatus === "uploading"
                                   ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;padding:2px 7px;border-radius:4px;">⏳ Đang lưu âm thanh...</span>`
                                   : att.uploadStatus === "failed"
                                     ? `<span style="font-size:11px;font-weight:600;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;padding:2px 7px;border-radius:4px;">⚠️ Lưu âm thanh lỗi</span>`
                                     : ""
-                              }
+                              }</span>
                               ${isSubmitted ? `<span class="submitted-badge">✓ Bản đã nộp</span>` : ""}
                               <button
                                 type="button"
                                 class="take-delete-btn"
-                                data-delete-take="${att.id}"
+                                data-delete-take="${escapeHtml(att.id)}"
+                                ${state.isSubmitting ? "disabled" : ""}
                                 title="Xóa bản ghi âm này"
                               >Xóa</button>
                             </div>
@@ -2621,10 +3034,10 @@
 
                           ${
                             att.audioDataUrl
-                              ? `<audio controls src="${att.audioDataUrl}" class="student-audio-player"></audio>`
+                              ? `<audio controls preload="metadata" src="${escapeHtml(att.audioDataUrl)}" data-take-id="${escapeHtml(att.id)}" data-audio-path="${escapeHtml(att.audioPath || "")}" class="student-audio-player"></audio>`
                               : !att.audioPath
                                 ? `<div style="font-size:12px;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;padding:7px 10px;border-radius:6px;margin-bottom:8px;font-weight:600;">⚠️ Bản ghi này không có tệp âm thanh — hãy ghi âm lại sau khi bật quyền Micro.</div>`
-                                : ""
+                                : `<audio controls preload="metadata" data-take-id="${escapeHtml(att.id)}" data-audio-path="${escapeHtml(att.audioPath || "")}" class="student-audio-player"></audio>`
                           }
 
                           <div class="transcript-result-box">
@@ -2633,10 +3046,10 @@
                             </div>
                             ${
                               att.transcript
-                                ? `<p class="transcript-text-content">“${escapeHtml(att.transcript)}”</p>`
+                                ? `<p class="transcript-text-content" data-take-transcript="${escapeHtml(att.id)}">“${escapeHtml(att.transcript)}”</p>`
                                 : att.audioDataUrl || att.audioPath
-                                  ? `<p class="transcript-text-content placeholder">Trình duyệt chưa tạo transcript trực tiếp — bản ghi âm của bạn vẫn được lưu đầy đủ khi nộp bài.</p>`
-                                  : `<p class="transcript-text-content placeholder">Chưa thu được âm thanh hoặc transcript từ Micro.</p>`
+                                  ? `<p class="transcript-text-content placeholder" data-take-transcript="${escapeHtml(att.id)}">Trình duyệt chưa tạo transcript trực tiếp — bản ghi âm của bạn vẫn được lưu đầy đủ khi nộp bài.</p>`
+                                  : `<p class="transcript-text-content placeholder" data-take-transcript="${escapeHtml(att.id)}">Chưa thu được âm thanh hoặc transcript từ Micro.</p>`
                             }
                           </div>
 
@@ -2957,10 +3370,8 @@
   // ==========================================================================
   // STUDENT VOCABULARY BANK MODAL ("KHO TỪ VỰNG CỦA TÔI")
   // ==========================================================================
-  function renderModals() {
-    if (!state.vocabModalOpen || !currentAccount) return "";
-
-    const allWords = currentAccount.savedVocab || [];
+  function getFilteredVocabItems() {
+    const allWords = (currentAccount && currentAccount.savedVocab) || [];
     const q = state.vocabSearchQuery.trim().toLowerCase();
     const filtered = q
       ? allWords.filter(
@@ -2970,6 +3381,74 @@
             (v.topic && v.topic.toLowerCase().includes(q))
         )
       : allWords;
+    return { allWords, filtered };
+  }
+
+  function renderVocabListInnerHtml(filtered) {
+    if (filtered.length === 0) {
+      return `<p style="font-size:14px;color:#71717A;padding:20px 0;">Chưa có từ vựng nào khớp. Hãy bấm nút <strong>+ Lưu vào kho từ</strong> ở bảng Từ vựng nên dùng khi học từng đề!</p>`;
+    }
+    return `
+      <div class="vocab-table-wrap">
+        <table class="vocab-table">
+          <thead>
+            <tr>
+              <th>Từ / cụm từ (Bấm để nghe)</th>
+              <th>Loại từ</th>
+              <th>Nghĩa</th>
+              <th>Ví dụ &amp; Chủ đề</th>
+              <th style="width:50px;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered
+              .map(item => `
+                <tr>
+                  <td class="td-word">
+                    <button
+                      type="button"
+                      class="vocab-word-click-btn"
+                      data-speak-word="${escapeHtml(item.word)}"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                      <span>${escapeHtml(item.word)}</span>
+                    </button>
+                    ${
+                      item.ipa
+                        ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(item.word)}">${escapeHtml(item.ipa)}</span>`
+                        : ""
+                    }
+                  </td>
+                  <td class="td-pos">${escapeHtml(item.pos || "")}</td>
+                  <td class="td-meaning"><strong>${escapeHtml(item.meaning || "")}</strong></td>
+                  <td class="td-example">
+                    <div>${escapeHtml(item.example || "")}</div>
+                    ${
+                      item.topic
+                        ? `<span style="display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;background:#F4F4F5;border-radius:4px;color:#52525B;">Đề: ${escapeHtml(item.topic)}</span>`
+                        : ""
+                    }
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="take-delete-btn"
+                      data-remove-saved-vocab="${escapeHtml(item.word)}"
+                    >Xóa</button>
+                  </td>
+                </tr>
+              `)
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderModals() {
+    if (!state.vocabModalOpen || !currentAccount) return "";
+
+    const { allWords, filtered } = getFilteredVocabItems();
 
     return `
       <div class="modal-backdrop" id="vocab-modal-backdrop">
@@ -3012,68 +3491,12 @@
                 placeholder="Tìm từ vựng theo tiếng Anh, nghĩa hoặc chủ đề..."
                 value="${escapeHtml(state.vocabSearchQuery)}"
               />
-              <span style="font-size:12px;color:#71717A;font-weight:600;">Hiển thị ${filtered.length}/${allWords.length} từ</span>
+              <span id="vocab-search-count" style="font-size:12px;color:#71717A;font-weight:600;">Hiển thị ${filtered.length}/${allWords.length} từ</span>
             </div>
 
-            ${
-              filtered.length === 0
-                ? `<p style="font-size:14px;color:#71717A;padding:20px 0;">Chưa có từ vựng nào khớp. Hãy bấm nút <strong>+ Lưu vào kho từ</strong> ở bảng Từ vựng nên dùng khi học từng đề!</p>`
-                : `
-                <div class="vocab-table-wrap">
-                  <table class="vocab-table">
-                    <thead>
-                      <tr>
-                        <th>Từ / cụm từ (Bấm để nghe)</th>
-                        <th>Loại từ</th>
-                        <th>Nghĩa</th>
-                        <th>Ví dụ &amp; Chủ đề</th>
-                        <th style="width:50px;">Xóa</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${filtered
-                        .map(item => `
-                          <tr>
-                            <td class="td-word">
-                              <button
-                                type="button"
-                                class="vocab-word-click-btn"
-                                data-speak-word="${escapeHtml(item.word)}"
-                              >
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                                <span>${escapeHtml(item.word)}</span>
-                              </button>
-                              ${
-                                item.ipa
-                                  ? `<span class="vocab-ipa-line" data-speak-word="${escapeHtml(item.word)}">${escapeHtml(item.ipa)}</span>`
-                                  : ""
-                              }
-                            </td>
-                            <td class="td-pos">${escapeHtml(item.pos || "")}</td>
-                            <td class="td-meaning"><strong>${escapeHtml(item.meaning || "")}</strong></td>
-                            <td class="td-example">
-                              <div>${escapeHtml(item.example || "")}</div>
-                              ${
-                                item.topic
-                                  ? `<span style="display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;background:#F4F4F5;border-radius:4px;color:#52525B;">Đề: ${escapeHtml(item.topic)}</span>`
-                                  : ""
-                              }
-                            </td>
-                            <td>
-                              <button
-                                type="button"
-                                class="take-delete-btn"
-                                data-remove-saved-vocab="${escapeHtml(item.word)}"
-                              >Xóa</button>
-                            </td>
-                          </tr>
-                        `)
-                        .join("")}
-                    </tbody>
-                  </table>
-                </div>
-              `
-            }
+            <div id="vocab-modal-list-wrap">
+              ${renderVocabListInnerHtml(filtered)}
+            </div>
           </div>
         </div>
       </div>
@@ -3141,7 +3564,13 @@
     }
 
     state.view = "practice";
+    if (qObj) {
+      markReviewAsSeen(qObj.id);
+    }
     renderApp();
+    if (qObj) {
+      ensureSignedUrlsForQuestion(qObj.id);
+    }
 
     if (scrollToSubmitted) {
       setTimeout(() => {
@@ -3161,7 +3590,6 @@
   function openQuestionById(qId, scrollToSubmitted) {
     const meta = QUESTION_META_BY_ID[qId];
     if (!meta) return;
-    markReviewAsSeen(qId);
     openTopicAndQuestion(meta.topicId, meta.questionIndex, scrollToSubmitted);
   }
 
@@ -3172,7 +3600,14 @@
     else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
     state.currentQuestionIndex = newIndex;
     state.submitErrorMsg = "";
+    const nextQ = getCurrentQuestion();
+    if (nextQ) {
+      markReviewAsSeen(nextQ.id);
+    }
     renderApp();
+    if (nextQ) {
+      ensureSignedUrlsForQuestion(nextQ.id);
+    }
     const lp = document.querySelector(".left-pane");
     const rp = document.querySelector(".right-pane");
     if (lp) lp.scrollTop = 0;
@@ -3183,6 +3618,10 @@
     const btnTabLogin = document.getElementById("btn-tab-login");
     if (btnTabLogin) {
       btnTabLogin.onclick = () => {
+        const emailEl = document.getElementById("inp-auth-email");
+        const nameEl = document.getElementById("inp-auth-name");
+        if (emailEl) state.authEmail = emailEl.value;
+        if (nameEl) state.authName = nameEl.value;
         state.authMode = "login";
         state.authError = "";
         renderApp();
@@ -3192,6 +3631,10 @@
     const btnTabReg = document.getElementById("btn-tab-register");
     if (btnTabReg) {
       btnTabReg.onclick = () => {
+        const emailEl = document.getElementById("inp-auth-email");
+        const nameEl = document.getElementById("inp-auth-name");
+        if (emailEl) state.authEmail = emailEl.value;
+        if (nameEl) state.authName = nameEl.value;
         state.authMode = "register";
         state.authError = "";
         renderApp();
@@ -3308,6 +3751,8 @@
         const email = (emailEl ? emailEl.value : "").trim().toLowerCase();
         const password = (passEl ? passEl.value : "").trim();
         const chosenClass = state.regSelectedClass || CLOUD.CLASS_LIST[0];
+        state.authEmail = email;
+        if (nameEl) state.authName = name;
 
         if (!email || !password) {
           state.authError = "Vui lòng nhập đầy đủ Email và Mật khẩu.";
@@ -3388,7 +3833,12 @@
     if (btnLogout) {
       btnLogout.onclick = async () => {
         state.accountMenuOpen = false;
-        if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        forceCleanupActiveRecordingResources();
+        clearAllNoteSaveTimers();
+        revokeAllLocalBlobUrls();
+        if (typeof CLOUD.clearSignedAudioUrlCache === "function") {
+          CLOUD.clearSignedAudioUrlCache();
+        }
         stopNotificationPolling();
         const client = CLOUD.getClient();
         if (client) {
@@ -3405,6 +3855,8 @@
         state.authMode = "login";
         state.authError = "";
         state.authInfo = "";
+        state.authEmail = "";
+        state.authName = "";
         if (window.location.search) {
           try {
             window.history.replaceState({}, "", "./index.html");
@@ -3419,6 +3871,7 @@
       btn.onclick = () => {
         const target = btn.getAttribute("data-sb-nav");
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
         state.view = target === "my-submissions" ? "my-submissions" : "home";
         state.prevDashboardView = state.view;
         state.mobileSidebarOpen = false;
@@ -3462,6 +3915,7 @@
       btn.onclick = () => {
         const partId = btn.getAttribute("data-open-part") || "part1";
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
         state.selectedPart = partId;
         state.view = "part-topics";
         state.prevDashboardView = "part-topics";
@@ -3559,6 +4013,7 @@
     if (btnBackHome) {
       btnBackHome.onclick = () => {
         if (state.isRecording) stopRecording(getCurrentQuestion().id);
+        else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
         if (state.prevDashboardView === "my-submissions") {
           state.view = "my-submissions";
         } else {
@@ -3582,14 +4037,41 @@
           qData.ideaNote = e.target.value;
           scheduleSaveIdeaNote(question.id, qData.ideaNote);
         };
+        ideaInput.onblur = e => {
+          qData.ideaNote = e.target.value;
+          saveIdeaNoteImmediate(question.id, qData.ideaNote);
+        };
       }
 
       document.querySelectorAll("[data-toggle-prompt-sent]").forEach(el => {
         el.onclick = () => {
           const sentKey = el.getAttribute("data-toggle-prompt-sent");
           if (!sentKey) return;
-          state.revealedPromptSentences[sentKey] = !state.revealedPromptSentences[sentKey];
-          renderApp();
+          const nextState = !state.revealedPromptSentences[sentKey];
+          state.revealedPromptSentences[sentKey] = nextState;
+          el.classList.toggle("revealed", nextState);
+          const existingVi = el.querySelector(".p2-sent-vi");
+          if (nextState) {
+            if (!existingVi) {
+              const idxPart = parseInt(sentKey.split("__").pop(), 10);
+              const sentObj =
+                Array.isArray(question.promptSentences) && !isNaN(idxPart)
+                  ? question.promptSentences[idxPart]
+                  : null;
+              if (sentObj && sentObj.vi) {
+                el.appendChild(document.createTextNode(" "));
+                const span = document.createElement("span");
+                span.className = "p2-sent-vi";
+                span.textContent = sentObj.vi;
+                el.appendChild(span);
+              }
+            }
+          } else if (existingVi) {
+            if (existingVi.previousSibling && existingVi.previousSibling.nodeType === 3) {
+              existingVi.previousSibling.remove();
+            }
+            existingVi.remove();
+          }
         };
       });
 
@@ -3600,16 +4082,43 @@
 
       document.querySelectorAll("[data-select-take]").forEach(radio => {
         radio.onchange = () => {
-          qData.selectedTakeId = radio.getAttribute("data-select-take");
+          const newTakeId = radio.getAttribute("data-select-take");
+          qData.selectedTakeId = newTakeId;
           state.submitErrorMsg = "";
-          renderApp();
+          document.querySelectorAll("[data-take-card]").forEach(card => {
+            card.classList.toggle("selected-take", card.getAttribute("data-take-card") === newTakeId);
+          });
+          const submitBtn = document.getElementById("btn-submit-selected-take");
+          if (submitBtn && !state.isSubmitting) {
+            const attempts = qData.attempts || [];
+            const selectedIdx = attempts.findIndex(a => a.id === newTakeId);
+            const submittedIdx = qData.submittedTakeId
+              ? attempts.findIndex(a => a.id === qData.submittedTakeId)
+              : -1;
+            const isCurrentSub = Boolean(qData.submittedTakeId && qData.submittedTakeId === newTakeId);
+            submitBtn.classList.toggle("is-submitted", isCurrentSub);
+            submitBtn.disabled = isCurrentSub;
+            if (isCurrentSub) {
+              submitBtn.innerHTML = `<span>✓ Đã nộp Bản ghi âm #${submittedIdx >= 0 ? submittedIdx + 1 : 1}</span>`;
+            } else {
+              submitBtn.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span>Bấm để nộp bài (Bản ghi âm #${selectedIdx >= 0 ? selectedIdx + 1 : 1}) →</span>
+              `;
+            }
+          }
         };
       });
 
       document.querySelectorAll("[data-delete-take]").forEach(btn => {
         btn.onclick = async () => {
+          if (state.isSubmitting) return;
           const delId = btn.getAttribute("data-delete-take");
           const delObj = (qData.attempts || []).find(a => a.id === delId);
+          if (delObj) {
+            delObj._deleted = true;
+            revokeTakeBlobUrl(delObj);
+          }
           qData.attempts = (qData.attempts || []).filter(a => a.id !== delId);
           if (qData.selectedTakeId === delId) {
             qData.selectedTakeId =
@@ -3661,7 +4170,7 @@
           qData.submittedAtIso = res.submittedAtIso;
           qData.submittedAt = CLOUD.formatDateTime(res.submittedAtIso);
           qData.targetLevel = targetLevelUpper;
-          qData.aiStatus = "scheduled";
+          qData.aiStatus = "pending";
           qData.aiReleaseAt = res.releaseAtIso;
           renderApp();
         };
@@ -3681,12 +4190,35 @@
             switchQuestion(state.currentQuestionIndex + 1);
           } else {
             if (state.isRecording) stopRecording(question.id);
+            else if (state.isPreparingMic) forceCleanupActiveRecordingResources();
             state.selectedPart = (topic && topic.part) || "part1";
             state.view = "part-topics";
             renderApp();
           }
         };
       }
+
+      document.querySelectorAll("audio.student-audio-player").forEach(audioEl => {
+        audioEl.addEventListener("error", async () => {
+          const audioPath = audioEl.getAttribute("data-audio-path") || "";
+          const takeId = audioEl.getAttribute("data-take-id") || "";
+          if (!audioPath || audioEl.dataset.urlRefreshed === "1") return;
+          audioEl.dataset.urlRefreshed = "1";
+          if (typeof CLOUD.invalidateSignedAudioUrl === "function") {
+            CLOUD.invalidateSignedAudioUrl(audioPath);
+          }
+          const urlMap = await CLOUD.getSignedAudioUrls([audioPath]);
+          if (urlMap && urlMap[audioPath]) {
+            const attObj = (qData.attempts || []).find(a => a.id === takeId);
+            if (attObj) {
+              attObj.audioDataUrl = urlMap[audioPath];
+              attObj._isLocalBlobUrl = false;
+            }
+            audioEl.src = urlMap[audioPath];
+            audioEl.load();
+          }
+        });
+      });
 
       document.querySelectorAll("[data-jump-q]").forEach(btn => {
         btn.onclick = () => switchQuestion(parseInt(btn.getAttribute("data-jump-q"), 10));
@@ -3721,9 +4253,11 @@
         const existingIdx = currentAccount.savedVocab.findIndex(
           v => v.word.toLowerCase() === word.toLowerCase()
         );
+        let nowSaved = false;
         if (existingIdx >= 0) {
           currentAccount.savedVocab.splice(existingIdx, 1);
           cloudRemoveVocab(word);
+          nowSaved = false;
         } else {
           const newItem = {
             word: word,
@@ -3735,8 +4269,16 @@
           };
           currentAccount.savedVocab.unshift(newItem);
           cloudAddVocab(newItem);
+          nowSaved = true;
         }
-        renderApp();
+        btn.classList.toggle("saved", nowSaved);
+        const spanEl = btn.querySelector("span");
+        if (spanEl) {
+          spanEl.textContent = nowSaved ? "✓ Đã lưu vào kho" : "+ Lưu vào kho từ";
+        }
+        document.querySelectorAll(".account-menu-count").forEach(cnt => {
+          cnt.textContent = String(currentAccount.savedVocab.length);
+        });
       };
     });
 
@@ -3750,16 +4292,41 @@
       }
     });
 
+    const bindVocabListActions = () => {
+      const wrap = document.getElementById("vocab-modal-list-wrap");
+      if (!wrap) return;
+      wrap.querySelectorAll("[data-speak-word]").forEach(el => {
+        el.onclick = e => {
+          e.stopPropagation();
+          speakEnglishText(el.getAttribute("data-speak-word"));
+        };
+      });
+      wrap.querySelectorAll("[data-remove-saved-vocab]").forEach(btn => {
+        btn.onclick = () => {
+          if (!currentAccount || !currentAccount.savedVocab) return;
+          const word = btn.getAttribute("data-remove-saved-vocab");
+          currentAccount.savedVocab = currentAccount.savedVocab.filter(
+            v => v.word.toLowerCase() !== word.toLowerCase()
+          );
+          cloudRemoveVocab(word);
+          renderApp();
+        };
+      });
+    };
+
     const vocabSearchInp = document.getElementById("vocab-search-input");
     if (vocabSearchInp) {
       vocabSearchInp.oninput = e => {
         state.vocabSearchQuery = e.target.value;
-        const pos = e.target.selectionStart;
-        renderApp();
-        const nextInp = document.getElementById("vocab-search-input");
-        if (nextInp) {
-          nextInp.focus();
-          nextInp.setSelectionRange(pos, pos);
+        const { allWords, filtered } = getFilteredVocabItems();
+        const wrap = document.getElementById("vocab-modal-list-wrap");
+        const countEl = document.getElementById("vocab-search-count");
+        if (wrap) {
+          wrap.innerHTML = renderVocabListInnerHtml(filtered);
+          bindVocabListActions();
+        }
+        if (countEl) {
+          countEl.textContent = `Hiển thị ${filtered.length}/${allWords.length} từ`;
         }
       };
     }
@@ -3816,12 +4383,13 @@
   });
 
   document.addEventListener("click", e => {
+    const target = e.target && typeof e.target.closest === "function" ? e.target : null;
     let changed = false;
-    if (state.notifOpen && !e.target.closest("#topbar-notif-wrap")) {
+    if (state.notifOpen && (!target || !target.closest("#topbar-notif-wrap"))) {
       state.notifOpen = false;
       changed = true;
     }
-    if (state.accountMenuOpen && !e.target.closest("#topbar-account-menu-wrap")) {
+    if (state.accountMenuOpen && (!target || !target.closest("#topbar-account-menu-wrap"))) {
       state.accountMenuOpen = false;
       changed = true;
     }
@@ -3841,6 +4409,12 @@
 
   window.addEventListener("focus", () => {
     if (currentAccount) {
+      refreshStudentReviews(false);
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && currentAccount) {
       refreshStudentReviews(false);
     }
   });
@@ -3865,11 +4439,19 @@
           await loadCloudStudentData(session.user);
         }
       } else if (event === "SIGNED_OUT") {
+        forceCleanupActiveRecordingResources();
+        clearAllNoteSaveTimers();
+        revokeAllLocalBlobUrls();
+        if (typeof CLOUD.clearSignedAudioUrlCache === "function") {
+          CLOUD.clearSignedAudioUrlCache();
+        }
         stopNotificationPolling();
         currentAccount = null;
         state.isTeacher = false;
         state.needsProfileSetup = false;
         state.reviewsByQuestionId = {};
+        state.authEmail = "";
+        state.authName = "";
         state.view = "auth";
         if (window.location.search) {
           try {

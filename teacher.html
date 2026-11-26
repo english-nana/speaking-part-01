@@ -12,16 +12,16 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261126e" />
+  <link rel="stylesheet" href="./styles.css?v=20261126g" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="teacher-app"></div>
-  <script src="./supabase-config.js?v=20261126e"></script>
-  <script src="./supabase-client.js?v=20261126e"></script>
-  <script src="./travel-data.js?v=20261126e"></script>
-  <script src="./part2-data.js?v=20261126e"></script>
-  <script src="./speaking-evaluator.js?v=20261126e"></script>
+  <script src="./supabase-config.js?v=20261126g"></script>
+  <script src="./supabase-client.js?v=20261126g"></script>
+  <script src="./travel-data.js?v=20261126g"></script>
+  <script src="./part2-data.js?v=20261126g"></script>
+  <script src="./speaking-evaluator.js?v=20261126g"></script>
   <script>
     (function () {
       const TOPICS = window.SPEAKING_TOPICS || [];
@@ -63,6 +63,10 @@
         aiTableNotice: "",
         students: [],
         submissions: [],
+        submissionsByStudentId: {},
+        vocabCacheByStudentId: {},
+        loadingVocabStudentId: "",
+        signingAudioStudentId: "",
         filterClass: "all", // "all" | "ONB204" | "CB221" | "unassigned"
         filterLevel: "all", // "all" | "B1" | "B2"
         filterPart: "all", // "all" | "part1" | "part2" | "part3"
@@ -70,6 +74,10 @@
         filterStatus: "all", // "all" | "submitted" | "unread_review" | "ungraded" | "graded"
         savedToastId: ""
       };
+      const savingGradeIds = new Set();
+      const activeAudioBlobUrls = new Set();
+      let authVerifyInFlight = false;
+      let dashboardLoadSeq = 0;
 
       function isHiddenAdminAccount(email, rawName) {
         const lowerEmail = String(email || "").trim().toLowerCase();
@@ -140,280 +148,464 @@
           window.location.replace("./index.html");
           return;
         }
+        if (authVerifyInFlight) return;
+        authVerifyInFlight = true;
 
-        const userEmail = String(user.email || "").trim().toLowerCase();
-        if (userEmail !== ADMIN_EMAIL) {
-          window.location.replace("./index.html");
+        try {
+          const userEmail = String(user.email || "").trim().toLowerCase();
+          if (userEmail !== ADMIN_EMAIL) {
+            window.location.replace("./index.html");
+            return;
+          }
+
+          tState.loading = true;
+          tState.authError = "";
+          tState.unauthorizedEmail = "";
+          renderTeacherApp();
+
+          const { data: isTeacherFlag, error: rpcError } = await client.rpc("is_teacher");
+          if (rpcError || !isTeacherFlag) {
+            window.location.replace("./index.html");
+            return;
+          }
+
+          tState.authenticated = true;
+          tState.teacherEmail = user.email || "";
+          tState.teacherUserId = user.id || "";
+          await refreshCloudDashboardData();
+        } finally {
+          authVerifyInFlight = false;
+        }
+      }
+
+      async function ensureSignedUrlsForStudent(studentId) {
+        if (!studentId) return;
+        const subs = tState.submissionsByStudentId[studentId] || [];
+        const missingPaths = subs
+          .filter(s => s && s.audioPath && !s.audioUrl)
+          .map(s => s.audioPath);
+        if (missingPaths.length === 0) return;
+
+        tState.signingAudioStudentId = studentId;
+        try {
+          const urlMap = await CLOUD.getSignedAudioUrls(missingPaths);
+          let updatedAny = false;
+          subs.forEach(s => {
+            if (s && s.audioPath && !s.audioUrl && urlMap[s.audioPath]) {
+              s.audioUrl = urlMap[s.audioPath];
+              updatedAny = true;
+            }
+          });
+          if (updatedAny && tState.selectedStudentId === studentId) {
+            renderTeacherApp();
+          }
+        } finally {
+          if (tState.signingAudioStudentId === studentId) {
+            tState.signingAudioStudentId = "";
+          }
+        }
+      }
+
+      async function openStudentInfoModal(studentId) {
+        const client = CLOUD.getClient();
+        if (!studentId) return;
+        tState.infoModalStudentId = studentId;
+        if (tState.vocabCacheByStudentId[studentId] || !client) {
+          renderTeacherApp();
           return;
         }
-
-        tState.loading = true;
-        tState.authError = "";
-        tState.unauthorizedEmail = "";
+        tState.loadingVocabStudentId = studentId;
         renderTeacherApp();
-
-        const { data: isTeacherFlag, error: rpcError } = await client.rpc("is_teacher");
-        if (rpcError || !isTeacherFlag) {
-          window.location.replace("./index.html");
-          return;
+        try {
+          const { data, error } = await CLOUD.fetchAllRows(() =>
+            client
+              .from("student_vocab")
+              .select("word, meaning, topic")
+              .eq("user_id", studentId)
+              .order("created_at", { ascending: false })
+          );
+          if (!error && Array.isArray(data)) {
+            tState.vocabCacheByStudentId[studentId] = data.map(v => ({
+              word: v.word || "",
+              meaning: v.meaning || "",
+              topic: v.topic || ""
+            }));
+          } else {
+            tState.vocabCacheByStudentId[studentId] = [];
+          }
+        } catch (_e) {
+          tState.vocabCacheByStudentId[studentId] = [];
+        } finally {
+          if (tState.loadingVocabStudentId === studentId) {
+            tState.loadingVocabStudentId = "";
+          }
+          if (tState.infoModalStudentId === studentId) {
+            renderTeacherApp();
+          }
         }
+      }
 
-        tState.authenticated = true;
-        tState.teacherEmail = user.email || "";
-        tState.teacherUserId = user.id || "";
-        await refreshCloudDashboardData();
+      function rebuildSubmissionsByStudentId() {
+        const grouped = {};
+        tState.submissions.forEach(s => {
+          if (!grouped[s.studentId]) grouped[s.studentId] = [];
+          grouped[s.studentId].push(s);
+        });
+        tState.submissionsByStudentId = grouped;
       }
 
       async function refreshCloudDashboardData() {
         const client = CLOUD.getClient();
         if (!client) return;
 
+        const myLoadSeq = ++dashboardLoadSeq;
+        revokeTeacherAudioBlobUrls();
         tState.loading = true;
         tState.dbError = "";
         tState.aiTableNotice = "";
+        tState.vocabCacheByStudentId = {};
         renderTeacherApp();
 
-        const [profilesRes, vocabRes, attemptsRes, reviewsRes] = await Promise.all([
-          client.from("profiles").select("*").order("last_active_at", { ascending: false }),
-          client.from("student_vocab").select("user_id, word, meaning, topic").order("created_at", { ascending: false }),
-          client.from("speaking_attempts").select("*").order("created_at", { ascending: false }),
-          client.from("speaking_ai_reviews").select("*")
-        ]);
+        try {
+          const [profilesRes, attemptsRes, reviewsRes] = await Promise.all([
+            CLOUD.fetchAllRows(() =>
+              client
+                .from("profiles")
+                .select("id, email, full_name, created_at, last_active_at")
+                .order("last_active_at", { ascending: false })
+                .order("id", { ascending: true })
+            ),
+            CLOUD.fetchAllRows(() =>
+              client
+                .from("speaking_attempts")
+                .select("*")
+                .or("is_submitted.eq.true,submitted_at.not.is.null")
+                .order("submitted_at", { ascending: false, nullsFirst: false })
+                .order("created_at", { ascending: false })
+                .order("id", { ascending: true })
+            ),
+            CLOUD.fetchAllRows(() =>
+              client
+                .from("speaking_ai_reviews")
+                .select("*")
+                .order("updated_at", { ascending: false })
+                .order("id", { ascending: true })
+            )
+          ]);
 
-        const firstErr = profilesRes.error || attemptsRes.error || vocabRes.error;
-        if (firstErr) {
-          tState.dbError =
-            "Không thể đọc dữ liệu từ Supabase (" +
-            (firstErr.code ? firstErr.code + ": " : "") +
-            firstErr.message +
-            "). Vui lòng kiểm tra đã chạy đủ lệnh GRANT trong SQL Editor chưa.";
-        }
+          if (myLoadSeq !== dashboardLoadSeq) return;
 
-        if (reviewsRes.error) {
-          tState.aiTableNotice =
-            "Chưa thấy bảng speaking_ai_reviews trên Supabase — hãy chạy file supabase-setup.sql mới nhất và deploy Edge Function grade-speaking để bật chấm tự động trả sau 6 tiếng.";
-        }
-
-        const rawProfiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
-        const vocabRows = Array.isArray(vocabRes.data) ? vocabRes.data : [];
-        const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
-        const reviewRows = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
-
-        // Loại bỏ tài khoản admin (mtung0208) khỏi danh sách học viên & thống kê
-        const hiddenAdminIds = new Set();
-        rawProfiles.forEach(p => {
-          if (isHiddenAdminAccount(p.email, p.full_name)) {
-            hiddenAdminIds.add(p.id);
+          const firstErr = profilesRes.error || attemptsRes.error;
+          if (firstErr) {
+            tState.dbError =
+              "Không thể đọc dữ liệu từ Supabase (" +
+              (firstErr.code ? firstErr.code + ": " : "") +
+              firstErr.message +
+              "). Vui lòng kiểm tra đã chạy đủ lệnh GRANT trong SQL Editor chưa.";
           }
-        });
-        const profiles = rawProfiles.filter(p => !hiddenAdminIds.has(p.id));
 
-        const reviewByKey = {};
-        const reviewByAttemptId = {};
-        reviewRows.forEach(r => {
-          if (r && r.id) reviewByKey[r.id] = r;
-          if (r && r.attempt_id) reviewByAttemptId[r.attempt_id] = r;
-        });
-
-        const vocabListByUser = {};
-        vocabRows.forEach(v => {
-          if (!v || !v.user_id || hiddenAdminIds.has(v.user_id)) return;
-          if (!vocabListByUser[v.user_id]) vocabListByUser[v.user_id] = [];
-          vocabListByUser[v.user_id].push({
-            word: v.word || "",
-            meaning: v.meaning || "",
-            topic: v.topic || ""
-          });
-        });
-
-        const profileById = {};
-        const parsedById = {};
-        profiles.forEach(p => {
-          profileById[p.id] = p;
-          parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
-        });
-
-        // Chỉ ghi nhận bài đã nộp chính thức (bỏ qua bản ghi nháp chưa nộp).
-        // Đồng thời phục hồi các bài đã bấm nộp chính thức (có submitted_at hoặc đã có bài sửa)
-        // nhưng trước đây bị lỗi lưu nháp nền ghi đè is_submitted = false.
-        const isOfficiallySubmittedRow = a =>
-          Boolean(a && (a.is_submitted || a.submitted_at || reviewByAttemptId[a.id]));
-
-        const studentAttemptRows = attemptRows.filter(
-          a => isOfficiallySubmittedRow(a) && !hiddenAdminIds.has(a.user_id)
-        );
-        const signedUrlMap = await CLOUD.getSignedAudioUrls(
-          studentAttemptRows.map(a => a.audio_path).filter(Boolean)
-        );
-
-        const grouped = {};
-        studentAttemptRows.forEach(att => {
-          const k = `${att.user_id}__${att.question_id}`;
-          if (!grouped[k]) grouped[k] = [];
-          grouped[k].push(att);
-        });
-
-        const qMetaMap = buildQuestionMetaMap();
-        const nowMs = Date.now();
-        const submissions = [];
-
-        Object.keys(grouped).forEach(k => {
-          const list = grouped[k];
-          const chosen = list.find(a => a.is_submitted) || list[0];
-          if (!chosen) return;
-          const prof = profileById[chosen.user_id] || {
-            id: chosen.user_id,
-            full_name: "Học viên",
-            email: ""
-          };
-          if (isHiddenAdminAccount(prof.email, prof.full_name)) return;
-
-          const parsedProf = parsedById[chosen.user_id] || CLOUD.parseFullNameAndClass(prof.full_name || "");
-          const qMeta = qMetaMap[chosen.question_id] || {
-            partId: "part1",
-            topicId: chosen.topic_id || "other",
-            topicTitle: chosen.topic_title || chosen.topic_id || "Chủ đề",
-            prompt: chosen.prompt_text || chosen.question_id,
-            num: 1
-          };
-
-          const matchedReview = reviewByAttemptId[chosen.id] || reviewByKey[k] || null;
-          const activeAiReview =
-            matchedReview && (!matchedReview.attempt_id || matchedReview.attempt_id === chosen.id)
-              ? matchedReview
-              : null;
-
-          const rj = activeAiReview && activeAiReview.review_json ? activeAiReview.review_json : null;
-          const evaluatedBand =
-            rj && typeof CLOUD.formatCleanBandLabel === "function"
-              ? CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score)
-              : "";
-          const hasReadyReview = Boolean(activeAiReview && activeAiReview.status === "ready" && rj);
-          const relMs = activeAiReview && activeAiReview.release_at ? new Date(activeAiReview.release_at).getTime() : 0;
-          const isReviewReleased = hasReadyReview && relMs > 0 && relMs <= nowMs;
-          const isReviewSeen = isReviewReleased && Boolean(activeAiReview.student_seen_at);
-
-          submissions.push({
-            attemptId: chosen.id,
-            reviewKey: k,
-            studentId: chosen.user_id,
-            studentName: parsedProf.fullName || prof.email || "Học viên",
-            studentClass: parsedProf.className || "",
-            studentEmail: prof.email || "",
-            partId: qMeta.partId || "part1",
-            partLabel: getPartShortLabel(qMeta.partId || "part1"),
-            qId: chosen.question_id,
-            topicId: qMeta.topicId,
-            topicTitle: qMeta.topicTitle,
-            questionNum: qMeta.num,
-            prompt: qMeta.prompt,
-            targetLevel: String(chosen.target_level || (activeAiReview && activeAiReview.target_level) || "B1").toUpperCase(),
-            evaluatedBand,
-            isOfficiallySubmitted: true,
-            isReviewReleased,
-            isReviewSeen,
-            submittedAt: CLOUD.formatDateTime(chosen.submitted_at || chosen.created_at),
-            rawTime: new Date(chosen.submitted_at || chosen.created_at || 0).getTime(),
-            durationSec: chosen.duration_sec || 0,
-            takeNum: chosen.take_number || 1,
-            totalAttemptsCount: list.length,
-            audioPath: chosen.audio_path || "",
-            audioUrl: chosen.audio_path ? signedUrlMap[chosen.audio_path] || "" : "",
-            transcript: chosen.transcript || (rj && rj.recognized_transcript) || "",
-            teacherFeedback: chosen.teacher_feedback || "",
-            teacherScore: chosen.teacher_score || "",
-            aiStatus: chosen.ai_status || "",
-            aiReleaseAt: chosen.ai_release_at || "",
-            aiReview: activeAiReview
-          });
-        });
-
-        submissions.sort((a, b) => {
-          if (a.isOfficiallySubmitted !== b.isOfficiallySubmitted) {
-            return a.isOfficiallySubmitted ? -1 : 1;
+          if (reviewsRes.error) {
+            tState.aiTableNotice =
+              "Chưa thấy bảng speaking_ai_reviews trên Supabase — hãy chạy file supabase-setup.sql mới nhất và deploy Edge Function grade-speaking để bật chấm tự động trả sau 6 tiếng.";
           }
-          return (b.rawTime || 0) - (a.rawTime || 0);
-        });
 
-        tState.students = profiles.map(p => {
-          const parsedProf = parsedById[p.id] || CLOUD.parseFullNameAndClass(p.full_name || "");
-          const vocabItems = vocabListByUser[p.id] || [];
-          return {
-            id: p.id,
-            name: parsedProf.fullName || p.email,
-            className: parsedProf.className || "",
-            email: p.email,
-            createdAt: CLOUD.formatDateTime(p.created_at),
-            lastActiveAt: CLOUD.formatDateTime(p.last_active_at),
-            vocabCount: vocabItems.length,
-            vocabItems
-          };
-        });
+          const rawProfiles = Array.isArray(profilesRes.data) ? profilesRes.data : [];
+          const attemptRows = Array.isArray(attemptsRes.data) ? attemptsRes.data : [];
+          const reviewRows = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
 
-        tState.submissions = submissions;
-        if (tState.selectedStudentId && !tState.students.some(s => s.id === tState.selectedStudentId)) {
-          tState.selectedStudentId = "";
+          // Phục hồi các bản ghi cũ đã có review nhưng trước đây bị ghi đè is_submitted = false & submitted_at = null
+          const loadedAttemptIds = new Set(attemptRows.map(a => a.id));
+          const orphanReviewAttemptIds = Array.from(
+            new Set(reviewRows.map(r => r && r.attempt_id).filter(id => Boolean(id) && !loadedAttemptIds.has(id)))
+          );
+          for (let i = 0; i < orphanReviewAttemptIds.length; i += 100) {
+            const chunkIds = orphanReviewAttemptIds.slice(i, i + 100);
+            try {
+              const { data: extraAtts } = await client
+                .from("speaking_attempts")
+                .select("*")
+                .in("id", chunkIds);
+              if (Array.isArray(extraAtts)) {
+                extraAtts.forEach(a => {
+                  if (a && !loadedAttemptIds.has(a.id)) {
+                    loadedAttemptIds.add(a.id);
+                    attemptRows.push(a);
+                  }
+                });
+              }
+            } catch (_e) {}
+          }
+
+          if (myLoadSeq !== dashboardLoadSeq) return;
+
+          // Loại bỏ tài khoản admin (mtung0208) khỏi danh sách học viên & thống kê
+          const hiddenAdminIds = new Set();
+          rawProfiles.forEach(p => {
+            if (isHiddenAdminAccount(p.email, p.full_name)) {
+              hiddenAdminIds.add(p.id);
+            }
+          });
+          const profiles = rawProfiles.filter(p => !hiddenAdminIds.has(p.id));
+
+          const reviewByKey = {};
+          const reviewByAttemptId = {};
+          reviewRows.forEach(r => {
+            if (r && r.id) reviewByKey[r.id] = r;
+            if (r && r.attempt_id) reviewByAttemptId[r.attempt_id] = r;
+          });
+
+          const profileById = {};
+          const parsedById = {};
+          profiles.forEach(p => {
+            profileById[p.id] = p;
+            parsedById[p.id] = CLOUD.parseFullNameAndClass(p.full_name || "");
+          });
+
+          // Chỉ ghi nhận bài đã nộp chính thức (bỏ qua bản ghi nháp chưa nộp).
+          const isOfficiallySubmittedRow = a =>
+            Boolean(a && (a.is_submitted || a.submitted_at || reviewByAttemptId[a.id]));
+
+          const studentAttemptRows = attemptRows.filter(
+            a => isOfficiallySubmittedRow(a) && !hiddenAdminIds.has(a.user_id)
+          );
+
+          const grouped = {};
+          studentAttemptRows.forEach(att => {
+            const k = `${att.user_id}__${att.question_id}`;
+            if (!grouped[k]) grouped[k] = [];
+            grouped[k].push(att);
+          });
+
+          const qMetaMap = buildQuestionMetaMap();
+          const nowMs = Date.now();
+          const submissions = [];
+
+          Object.keys(grouped).forEach(k => {
+            const list = grouped[k];
+            list.sort((a, b) => {
+              const aSub = a.is_submitted ? 1 : 0;
+              const bSub = b.is_submitted ? 1 : 0;
+              if (aSub !== bSub) return bSub - aSub;
+              const ta = new Date(a.submitted_at || a.created_at || 0).getTime();
+              const tb = new Date(b.submitted_at || b.created_at || 0).getTime();
+              return tb - ta;
+            });
+            const chosen = list[0];
+            if (!chosen) return;
+            const prof = profileById[chosen.user_id] || {
+              id: chosen.user_id,
+              full_name: "Học viên",
+              email: ""
+            };
+            if (isHiddenAdminAccount(prof.email, prof.full_name)) return;
+
+            const parsedProf = parsedById[chosen.user_id] || CLOUD.parseFullNameAndClass(prof.full_name || "");
+            const qMeta = qMetaMap[chosen.question_id] || {
+              partId: "part1",
+              topicId: chosen.topic_id || "other",
+              topicTitle: chosen.topic_title || chosen.topic_id || "Chủ đề",
+              prompt: chosen.prompt_text || chosen.question_id,
+              num: 1
+            };
+
+            const matchedReview = reviewByAttemptId[chosen.id] || reviewByKey[k] || null;
+            const activeAiReview =
+              matchedReview && (!matchedReview.attempt_id || matchedReview.attempt_id === chosen.id)
+                ? matchedReview
+                : null;
+
+            const rj = activeAiReview && activeAiReview.review_json ? activeAiReview.review_json : null;
+            const evaluatedBand =
+              rj && typeof CLOUD.formatCleanBandLabel === "function"
+                ? CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score)
+                : "";
+            const hasReadyReview = Boolean(activeAiReview && activeAiReview.status === "ready" && rj);
+            const relMs = activeAiReview && activeAiReview.release_at ? new Date(activeAiReview.release_at).getTime() : 0;
+            const isReviewReleased = hasReadyReview && relMs > 0 && relMs <= nowMs;
+            const isReviewSeen = isReviewReleased && Boolean(activeAiReview.student_seen_at);
+
+            submissions.push({
+              attemptId: chosen.id,
+              reviewKey: k,
+              studentId: chosen.user_id,
+              studentName: parsedProf.fullName || prof.email || "Học viên",
+              studentClass: parsedProf.className || "",
+              studentEmail: prof.email || "",
+              partId: qMeta.partId || "part1",
+              partLabel: getPartShortLabel(qMeta.partId || "part1"),
+              qId: chosen.question_id,
+              topicId: qMeta.topicId,
+              topicTitle: qMeta.topicTitle,
+              questionNum: qMeta.num,
+              prompt: qMeta.prompt,
+              targetLevel: String(chosen.target_level || (activeAiReview && activeAiReview.target_level) || "B1").toUpperCase(),
+              evaluatedBand,
+              isOfficiallySubmitted: true,
+              isReviewReleased,
+              isReviewSeen,
+              submittedAt: CLOUD.formatDateTime(chosen.submitted_at || chosen.created_at),
+              rawTime: new Date(chosen.submitted_at || chosen.created_at || 0).getTime(),
+              durationSec: chosen.duration_sec || 0,
+              takeNum: chosen.take_number || 1,
+              totalAttemptsCount: list.length,
+              audioPath: chosen.audio_path || "",
+              audioUrl: "",
+              transcript: chosen.transcript || (rj && rj.recognized_transcript) || "",
+              teacherFeedback: chosen.teacher_feedback || "",
+              teacherScore: chosen.teacher_score || "",
+              aiStatus: chosen.ai_status || "",
+              aiReleaseAt: chosen.ai_release_at || "",
+              aiReview: activeAiReview
+            });
+          });
+
+          submissions.sort((a, b) => {
+            if (a.isOfficiallySubmitted !== b.isOfficiallySubmitted) {
+              return a.isOfficiallySubmitted ? -1 : 1;
+            }
+            return (b.rawTime || 0) - (a.rawTime || 0);
+          });
+
+          tState.students = profiles.map(p => {
+            const parsedProf = parsedById[p.id] || CLOUD.parseFullNameAndClass(p.full_name || "");
+            return {
+              id: p.id,
+              name: parsedProf.fullName || p.email,
+              className: parsedProf.className || "",
+              email: p.email,
+              createdAt: CLOUD.formatDateTime(p.created_at),
+              lastActiveAt: CLOUD.formatDateTime(p.last_active_at)
+            };
+          });
+
+          tState.submissions = submissions;
+          rebuildSubmissionsByStudentId();
+          if (tState.selectedStudentId && !tState.students.some(s => s.id === tState.selectedStudentId)) {
+            tState.selectedStudentId = "";
+          }
+          if (tState.infoModalStudentId && !tState.students.some(s => s.id === tState.infoModalStudentId)) {
+            tState.infoModalStudentId = "";
+          }
+          tState.loading = false;
+          renderTeacherApp();
+
+          if (tState.selectedStudentId) {
+            await ensureSignedUrlsForStudent(tState.selectedStudentId);
+          }
+        } finally {
+          if (myLoadSeq === dashboardLoadSeq) {
+            tState.loading = false;
+          }
         }
-        if (tState.infoModalStudentId && !tState.students.some(s => s.id === tState.infoModalStudentId)) {
-          tState.infoModalStudentId = "";
-        }
-        tState.loading = false;
-        renderTeacherApp();
       }
 
-      async function saveCloudGrade(attemptId, scoreVal, feedbackVal) {
+      async function saveCloudGrade(attemptId, scoreVal, feedbackVal, triggerBtn) {
         const client = CLOUD.getClient();
-        if (!client) return;
-        const { error } = await client
-          .from("speaking_attempts")
-          .update({
-            teacher_score: scoreVal,
-            teacher_feedback: feedbackVal
-          })
-          .eq("id", attemptId);
-        if (!error) {
-          const item = tState.submissions.find(s => s.attemptId === attemptId);
-          if (item) {
-            item.teacherScore = scoreVal;
-            item.teacherFeedback = feedbackVal;
-          }
-          tState.savedToastId = attemptId;
-          renderTeacherApp();
-          setTimeout(() => {
-            if (tState.savedToastId === attemptId) {
-              tState.savedToastId = "";
-              renderTeacherApp();
+        if (!client || !attemptId || savingGradeIds.has(attemptId)) return;
+        savingGradeIds.add(attemptId);
+        if (triggerBtn) {
+          triggerBtn.disabled = true;
+          triggerBtn.textContent = "Đang lưu...";
+        }
+        try {
+          const { error } = await client
+            .from("speaking_attempts")
+            .update({
+              teacher_score: scoreVal,
+              teacher_feedback: feedbackVal
+            })
+            .eq("id", attemptId);
+          if (!error) {
+            const item = tState.submissions.find(s => s.attemptId === attemptId);
+            if (item) {
+              item.teacherScore = scoreVal;
+              item.teacherFeedback = feedbackVal;
             }
-          }, 2200);
-        } else {
-          alert("Lỗi lưu nhận xét: " + error.message);
+            tState.savedToastId = attemptId;
+            if (triggerBtn) {
+              triggerBtn.disabled = false;
+              triggerBtn.textContent = "✓ Đã lưu!";
+            }
+            setTimeout(() => {
+              if (tState.savedToastId === attemptId) {
+                tState.savedToastId = "";
+                const btnEl = document.querySelector(`[data-save-grade="${attemptId}"]`);
+                if (btnEl) btnEl.textContent = "Lưu nhận xét";
+              }
+            }, 2200);
+          } else {
+            if (triggerBtn) {
+              triggerBtn.disabled = false;
+              triggerBtn.textContent = "Lưu nhận xét";
+            }
+            alert("Lỗi lưu nhận xét: " + error.message);
+          }
+        } finally {
+          savingGradeIds.delete(attemptId);
         }
       }
 
       async function triggerTeacherAiGrade(attemptId) {
         if (!attemptId || tState.gradingAttemptId) return;
+        const client = CLOUD.getClient();
         const subObj = tState.submissions.find(s => s.attemptId === attemptId);
         tState.gradingAttemptId = attemptId;
         renderTeacherApp();
 
-        const res = await CLOUD.invokeGradeSpeaking(attemptId, {
-          forceTeacher: true,
-          releaseNow: false,
-          promptText: subObj ? subObj.prompt : "",
-          topicTitle: subObj ? subObj.topicTitle : "",
-          targetLevel: subObj ? subObj.targetLevel : "B1"
-        });
-        tState.gradingAttemptId = "";
-        if (!res.ok) {
+        try {
+          const res = await CLOUD.invokeGradeSpeaking(attemptId, {
+            forceTeacher: true,
+            releaseNow: false,
+            promptText: subObj ? subObj.prompt : "",
+            topicTitle: subObj ? subObj.topicTitle : "",
+            targetLevel: subObj ? subObj.targetLevel : "B1"
+          });
+          if (!res.ok) {
+            alert(
+              "Không chạy được chấm bài: " +
+                (res.error ||
+                  "Vui lòng kiểm tra đã deploy Edge Function grade-speaking và cài GEMINI_API_KEY chưa.")
+            );
+            return;
+          }
+
+          if (client && subObj) {
+            const [attRes, revRes] = await Promise.all([
+              client
+                .from("speaking_attempts")
+                .select("ai_status, ai_release_at, transcript")
+                .eq("id", attemptId)
+                .maybeSingle(),
+              client
+                .from("speaking_ai_reviews")
+                .select("*")
+                .eq("user_id", subObj.studentId)
+                .eq("question_id", subObj.qId)
+                .maybeSingle()
+            ]);
+            if (!attRes.error && attRes.data && !revRes.error && revRes.data) {
+              subObj.aiStatus = attRes.data.ai_status || subObj.aiStatus;
+              subObj.aiReleaseAt = attRes.data.ai_release_at || subObj.aiReleaseAt;
+              if (attRes.data.transcript && attRes.data.transcript.trim().length > (subObj.transcript || "").trim().length) {
+                subObj.transcript = attRes.data.transcript;
+              }
+              subObj.aiReview = revRes.data;
+              const rj = revRes.data.review_json || null;
+              subObj.evaluatedBand =
+                rj && typeof CLOUD.formatCleanBandLabel === "function"
+                  ? CLOUD.formatCleanBandLabel(rj.estimated_band, rj.level_assessment, rj.internal_score)
+                  : "";
+              const relMs = revRes.data.release_at ? new Date(revRes.data.release_at).getTime() : 0;
+              subObj.isReviewReleased = Boolean(revRes.data.status === "ready" && rj && relMs > 0 && relMs <= Date.now());
+              subObj.isReviewSeen = subObj.isReviewReleased && Boolean(revRes.data.student_seen_at);
+              return;
+            }
+          }
+          await refreshCloudDashboardData();
+        } finally {
+          tState.gradingAttemptId = "";
           renderTeacherApp();
-          alert(
-            "Không chạy được chấm bài: " +
-              (res.error ||
-                "Vui lòng kiểm tra đã deploy Edge Function grade-speaking và cài GEMINI_API_KEY chưa.")
-          );
-          return;
         }
-        await refreshCloudDashboardData();
       }
 
       async function releaseAiReviewNow(attemptId) {
@@ -422,33 +614,57 @@
         tState.releasingAttemptId = attemptId;
         renderTeacherApp();
 
-        const { error } = await client.rpc("teacher_release_speaking_review_now", {
-          p_attempt_id: attemptId
-        });
-        tState.releasingAttemptId = "";
-        if (error) {
+        try {
+          const { error } = await client.rpc("teacher_release_speaking_review_now", {
+            p_attempt_id: attemptId
+          });
+          if (error) {
+            alert("Không trả bài sớm được: " + error.message);
+            return;
+          }
+          const subObj = tState.submissions.find(s => s.attemptId === attemptId);
+          if (subObj) {
+            const nowIso = new Date().toISOString();
+            subObj.aiReleaseAt = nowIso;
+            subObj.aiStatus = "ready";
+            if (subObj.aiReview) {
+              subObj.aiReview.release_at = nowIso;
+              subObj.aiReview.student_seen_at = null;
+              subObj.aiReview.updated_at = nowIso;
+            }
+            subObj.isReviewReleased = Boolean(subObj.aiReview && subObj.aiReview.status === "ready" && subObj.aiReview.review_json);
+            subObj.isReviewSeen = false;
+          } else {
+            await refreshCloudDashboardData();
+          }
+        } finally {
+          tState.releasingAttemptId = "";
           renderTeacherApp();
-          alert("Không trả bài sớm được: " + error.message);
-          return;
         }
-        await refreshCloudDashboardData();
       }
 
       async function flushPendingQueueNow() {
         if (tState.flushingQueue) return;
         tState.flushingQueue = true;
         renderTeacherApp();
-        const res = await CLOUD.invokeProcessSpeakingQueue(5);
-        tState.flushingQueue = false;
-        if (!res.ok) {
+        try {
+          const res = await CLOUD.invokeProcessSpeakingQueue(10);
+          if (!res.ok) {
+            alert("Không chạy được hàng đợi chấm bài: " + (res.error || "Lỗi không xác định"));
+            return;
+          }
+          await refreshCloudDashboardData();
+          const remainingNote =
+            res.pending_total > res.processed
+              ? ` (còn ${res.pending_total - res.processed} bài đang trong hàng đợi tiếp theo)`
+              : "";
+          alert(
+            `Đã xử lý ${res.processed || 0} bài nói chờ: thành công ${res.succeeded || 0} bài, còn chờ thử lại ${res.failed || 0} bài${remainingNote}.`
+          );
+        } finally {
+          tState.flushingQueue = false;
           renderTeacherApp();
-          alert("Không chạy được hàng đợi chấm bài: " + (res.error || "Lỗi không xác định"));
-          return;
         }
-        await refreshCloudDashboardData();
-        alert(
-          `Đã xử lý ${res.processed || 0} bài nói chờ: thành công ${res.succeeded || 0} bài, còn chờ thử lại ${res.failed || 0} bài.`
-        );
       }
 
       async function deleteStudentAccount(studentId, studentName, studentEmail) {
@@ -471,10 +687,13 @@
         renderTeacherApp();
 
         try {
-          const { data: attRows } = await client
-            .from("speaking_attempts")
-            .select("audio_path")
-            .eq("user_id", studentId);
+          const { data: attRows } = await CLOUD.fetchAllRows(() =>
+            client
+              .from("speaking_attempts")
+              .select("id, audio_path")
+              .eq("user_id", studentId)
+              .order("id", { ascending: true })
+          );
           const audioPaths = Array.isArray(attRows) ? attRows.map(r => r.audio_path).filter(Boolean) : [];
           if (audioPaths.length > 0) {
             await CLOUD.deleteRecordings(audioPaths);
@@ -482,8 +701,6 @@
 
           const { error } = await client.rpc("teacher_delete_student", { target_user_id: studentId });
           if (error) {
-            tState.deletingUserId = "";
-            renderTeacherApp();
             alert(
               "Không xoá được tài khoản: " +
                 error.message +
@@ -493,15 +710,19 @@
           }
 
           if (tState.selectedStudentId === studentId) {
+            revokeTeacherAudioBlobUrls();
             tState.selectedStudentId = "";
           }
           tState.infoModalStudentId = "";
-          tState.deletingUserId = "";
-          await refreshCloudDashboardData();
+          tState.students = tState.students.filter(st => st.id !== studentId);
+          tState.submissions = tState.submissions.filter(s => s.studentId !== studentId);
+          delete tState.vocabCacheByStudentId[studentId];
+          rebuildSubmissionsByStudentId();
         } catch (err) {
+          alert("Lỗi khi xoá tài khoản: " + (err && err.message ? err.message : "Không xác định"));
+        } finally {
           tState.deletingUserId = "";
           renderTeacherApp();
-          alert("Lỗi khi xoá tài khoản: " + (err && err.message ? err.message : "Không xác định"));
         }
       }
 
@@ -568,27 +789,28 @@
                 .select("id");
 
           if (delErr) {
-            tState.deletingAttemptId = "";
-            renderTeacherApp();
             alert("Không xoá được bài nộp: " + delErr.message);
             return;
           }
 
           if (!Array.isArray(deletedRows) || deletedRows.length === 0) {
-            tState.deletingAttemptId = "";
-            renderTeacherApp();
             alert(
               "Supabase chưa xoá được dòng bài nộp (0 dòng bị xoá). Vui lòng kiểm tra policy DELETE trên bảng speaking_attempts trong supabase-setup.sql."
             );
             return;
           }
 
-          tState.deletingAttemptId = "";
-          await refreshCloudDashboardData();
+          tState.submissions = tState.submissions.filter(s =>
+            targetQuestionId
+              ? !(s.studentId === sub.studentId && (s.qId || s.questionId) === targetQuestionId)
+              : s.attemptId !== attemptId
+          );
+          rebuildSubmissionsByStudentId();
         } catch (err) {
+          alert("Lỗi khi xoá bài nộp: " + (err && err.message ? err.message : "Không xác định"));
+        } finally {
           tState.deletingAttemptId = "";
           renderTeacherApp();
-          alert("Lỗi khi xoá bài nộp: " + (err && err.message ? err.message : "Không xác định"));
         }
       }
 
@@ -642,8 +864,8 @@
       }
 
       function getStudentScopedMetrics(studentId) {
-        const userSubs = tState.submissions.filter(sub => {
-          if (sub.studentId !== studentId) return false;
+        const rawList = (tState.submissionsByStudentId && tState.submissionsByStudentId[studentId]) || [];
+        const userSubs = rawList.filter(sub => {
           if (!matchesPartFilter(sub.partId)) return false;
           if (!matchesTopicFilter(sub.topicId)) return false;
           if (!matchesLevelFilter(sub)) return false;
@@ -680,8 +902,10 @@
       }
 
       function getFilteredSubmissionsForStudent(studentId) {
-        return tState.submissions.filter(sub => {
-          if (studentId && sub.studentId !== studentId) return false;
+        const pool = studentId
+          ? (tState.submissionsByStudentId && tState.submissionsByStudentId[studentId]) || []
+          : tState.submissions;
+        return pool.filter(sub => {
           if (!matchesClassFilter(sub.studentClass)) return false;
           if (!matchesPartFilter(sub.partId)) return false;
           if (!matchesTopicFilter(sub.topicId)) return false;
@@ -708,7 +932,11 @@
       // EXPORT CSV (EXCEL-READY WITH UTF-8 BOM)
       // ======================================================================
       function exportCsvReport(rows) {
-        const csvCell = v => `"${String(v || "").replace(/"/g, '""')}"`;
+        const csvCell = v => {
+          const s = String(v || "");
+          const safe = /^[=+@]/.test(s.trimStart()) ? "'" + s : s;
+          return `"${safe.replace(/"/g, '""')}"`;
+        };
         const header = [
           "Học viên",
           "Lớp",
@@ -929,7 +1157,7 @@
             <div style="padding:36px 20px;text-align:center;border:2px dashed #D4D4D8;background:#FFFFFF;color:#52525B;border-radius:10px;">
               <p style="font-size:15px;font-weight:700;margin-bottom:4px;">Chưa có học viên nào khớp bộ lọc hiện tại.</p>
               ${
-                tState.filterPart === "part2" || tState.filterPart === "part3"
+                tState.filterPart === "part3"
                   ? `<p style="font-size:13px;">Nội dung ${escapeHtml(getPartShortLabel(tState.filterPart))} sẽ sớm được bổ sung.</p>`
                   : ""
               }
@@ -1125,7 +1353,9 @@
                                    <div class="audio-diag-note" style="display:none;font-size:12px;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;margin-top:4px;margin-bottom:6px;line-height:1.45;"></div>
                                  </div>`
                               : sub.audioPath
-                                ? `<div style="font-size:12.5px;color:#B45309;margin-bottom:6px;"><em>(Có tệp âm thanh trên máy chủ nhưng chưa tải được link nghe — thử bấm Làm mới)</em></div>`
+                                ? tState.signingAudioStudentId === sub.studentId
+                                  ? `<div style="font-size:12.5px;color:#52525B;margin-bottom:6px;"><em>⏳ Đang tải tệp âm thanh...</em></div>`
+                                  : `<div style="font-size:12.5px;color:#B45309;margin-bottom:6px;"><em>(Có tệp âm thanh trên máy chủ nhưng chưa tải được link nghe — thử bấm Làm mới)</em></div>`
                                 : `<div style="font-size:12.5px;color:#71717A;margin-bottom:6px;"><em>(Không có tệp âm thanh đính kèm — máy học viên chưa tải được file ghi âm lên hệ thống)</em></div>`
                           }
                           <div class="transcript-result-box">
@@ -1216,7 +1446,12 @@
         const st = tState.students.find(s => s.id === tState.infoModalStudentId);
         if (!st) return "";
 
-        const vocabItems = st.vocabItems || [];
+        const cachedVocab = tState.vocabCacheByStudentId[st.id];
+        const isLoadingVocab = tState.loadingVocabStudentId === st.id && !cachedVocab;
+        const vocabItems = Array.isArray(cachedVocab) ? cachedVocab : [];
+        const vocabCountText = isLoadingVocab
+          ? "Đang tải..."
+          : `<strong>${vocabItems.length}</strong> từ đã lưu`;
 
         return `
           <div class="modal-backdrop" id="student-info-backdrop">
@@ -1252,7 +1487,7 @@
 
                   <div class="student-info-row">
                     <span class="student-info-label">Kho từ vựng</span>
-                    <span class="student-info-value"><strong>${st.vocabCount}</strong> từ đã lưu</span>
+                    <span class="student-info-value">${vocabCountText}</span>
                   </div>
                 </div>
 
@@ -1401,6 +1636,226 @@
         `;
       }
 
+      function revokeTeacherAudioBlobUrls() {
+        activeAudioBlobUrls.forEach(u => {
+          try {
+            URL.revokeObjectURL(u);
+          } catch (_e) {}
+        });
+        activeAudioBlobUrls.clear();
+      }
+
+      function detectAudioContainerAndOffset(u8) {
+        if (!u8 || u8.length < 12) return { mime: "", offset: 0 };
+        if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
+          return { mime: "audio/webm", offset: 0 };
+        }
+        const box4 = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
+        if (
+          box4 === "ftyp" ||
+          box4 === "styp" ||
+          box4 === "moof" ||
+          box4 === "moov" ||
+          box4 === "mdat" ||
+          box4 === "wide" ||
+          box4 === "free"
+        ) {
+          return { mime: "audio/mp4", offset: 0 };
+        }
+        if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return { mime: "audio/ogg", offset: 0 };
+        if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return { mime: "audio/wav", offset: 0 };
+        if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return { mime: "audio/flac", offset: 0 };
+        if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
+          return { mime: "audio/mpeg", offset: 0 };
+        }
+
+        // Phục hồi các bản ghi cũ bị dính chunk rác của bản ghi trước ở đầu file:
+        // quét tìm chữ ký EBML (1A 45 DF A3 - WebM) hoặc ftyp (MP4) để cắt bỏ phần rác đầu file.
+        const scanMax = Math.min(u8.length - 8, 262144);
+        for (let i = 1; i <= scanMax; i++) {
+          if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
+            return { mime: "audio/webm", offset: i };
+          }
+        }
+        for (let i = 4; i <= scanMax; i++) {
+          if (
+            u8[i] === 0x66 &&
+            u8[i + 1] === 0x74 &&
+            u8[i + 2] === 0x79 &&
+            u8[i + 3] === 0x70 &&
+            u8[i - 4] === 0x00 &&
+            u8[i - 3] === 0x00
+          ) {
+            return { mime: "audio/mp4", offset: i - 4 };
+          }
+        }
+        return { mime: "", offset: 0 };
+      }
+
+      function audioBufferToWavBlob(audioBuffer) {
+        const numCh = Math.min(audioBuffer.numberOfChannels || 1, 2);
+        const sampleRate = audioBuffer.sampleRate || 44100;
+        const length = audioBuffer.length;
+        const bytesPerSample = 2;
+        const blockAlign = numCh * bytesPerSample;
+        const dataSize = length * blockAlign;
+        const ab = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(ab);
+        const writeStr = (off, s) => {
+          for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+        };
+        writeStr(0, "RIFF");
+        view.setUint32(4, 36 + dataSize, true);
+        writeStr(8, "WAVE");
+        writeStr(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numCh, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, 16, true);
+        writeStr(36, "data");
+        view.setUint32(40, dataSize, true);
+        let offset = 44;
+        const channels = [];
+        for (let c = 0; c < numCh; c++) channels.push(audioBuffer.getChannelData(c));
+        for (let i = 0; i < length; i++) {
+          for (let c = 0; c < numCh; c++) {
+            const s = Math.max(-1, Math.min(1, channels[c][i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            offset += 2;
+          }
+        }
+        return new Blob([ab], { type: "audio/wav" });
+      }
+
+      function repairInterleavedWebmBytes(u8, ebmlOff) {
+        if (!u8 || ebmlOff < 0 || ebmlOff >= u8.length - 16) return null;
+        const clusterOffsets = [];
+        for (let i = ebmlOff; i <= u8.length - 12; i++) {
+          if (u8[i] === 0x1f && u8[i + 1] === 0x43 && u8[i + 2] === 0xb6 && u8[i + 3] === 0x75) {
+            clusterOffsets.push(i);
+          }
+        }
+        if (clusterOffsets.length < 2) {
+          return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+        }
+
+        const parseCluster = (start, end) => {
+          let p = start + 4;
+          const sb = u8[p];
+          let sLen = 1;
+          for (let bit = 0x80; bit > 0 && !(sb & bit); bit >>= 1) sLen++;
+          p += sLen;
+          if (p >= end || u8[p] !== 0xe7) return null;
+          const tcLen = u8[p + 1] & 0x7f;
+          if (tcLen === 0 || tcLen > 6 || p + 2 + tcLen > end) return null;
+          let tc = 0;
+          for (let k = 0; k < tcLen; k++) tc = tc * 256 + u8[p + 2 + k];
+          const headerEnd = p + 2 + tcLen;
+          const headerBytes = u8.slice(start, headerEnd);
+          const blocks = [];
+          let q = headerEnd;
+          while (q < end) {
+            if (u8[q] !== 0xa3) break;
+            const b0 = u8[q + 1];
+            let vLen = 1;
+            let bSize = 0;
+            if (b0 & 0x80) {
+              vLen = 1;
+              bSize = b0 & 0x7f;
+            } else if (b0 & 0x40) {
+              vLen = 2;
+              bSize = ((b0 & 0x3f) << 8) | u8[q + 2];
+            } else if (b0 & 0x20) {
+              vLen = 3;
+              bSize = ((b0 & 0x1f) << 16) | (u8[q + 2] << 8) | u8[q + 3];
+            } else {
+              break;
+            }
+            const dataStart = q + 1 + vLen;
+            const blockEnd = dataStart + bSize;
+            if (blockEnd > end || bSize < 4) break;
+            const relTcRaw = (u8[dataStart + 1] << 8) | u8[dataStart + 2];
+            const relTc = relTcRaw >= 0x8000 ? relTcRaw - 0x10000 : relTcRaw;
+            blocks.push({ relTc, bytes: u8.slice(q, blockEnd) });
+            q = blockEnd;
+          }
+          return { tc, headerBytes, blocks };
+        };
+
+        const clusters = [];
+        for (let i = 0; i < clusterOffsets.length; i++) {
+          const end = i + 1 < clusterOffsets.length ? clusterOffsets[i + 1] : u8.length;
+          const c = parseCluster(clusterOffsets[i], end);
+          if (c) clusters.push(c);
+        }
+        if (clusters.length < 2) {
+          return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+        }
+
+        let hasInterleaving = false;
+        for (let i = 1; i < clusters.length; i++) {
+          const diff = clusters[i].tc - clusters[i - 1].tc;
+          if (diff < 0 || diff > 10000) {
+            hasInterleaving = true;
+            break;
+          }
+        }
+        if (!hasInterleaving) {
+          return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
+        }
+
+        const outParts = [u8.slice(ebmlOff, clusterOffsets[0])];
+        let expectedTc = clusters[0].tc;
+        for (let i = 0; i < clusters.length; i++) {
+          const c = clusters[i];
+          if (c.tc >= expectedTc && c.tc - expectedTc <= 5000) {
+            outParts.push(c.headerBytes);
+            let lastRel = -1;
+            for (let j = 0; j < c.blocks.length; j++) {
+              const blk = c.blocks[j];
+              if (blk.relTc > lastRel) {
+                outParts.push(blk.bytes);
+                lastRel = blk.relTc;
+              } else {
+                break;
+              }
+            }
+            if (i + 1 < clusters.length) {
+              const nextC = clusters[i + 1];
+              const nextIsForeign = nextC.tc < c.tc || nextC.tc - c.tc > 10000;
+              if (nextIsForeign && nextC.blocks.length > 0) {
+                for (let j = 0; j < nextC.blocks.length; j++) {
+                  const fBlk = nextC.blocks[j];
+                  if (fBlk.relTc >= lastRel + 40 && fBlk.relTc <= lastRel + 90) {
+                    outParts.push(fBlk.bytes);
+                    lastRel = fBlk.relTc;
+                  }
+                }
+              }
+            }
+            expectedTc = c.tc + 1;
+          }
+        }
+
+        const totalLen = outParts.reduce((s, p) => s + p.length, 0);
+        const out = new Uint8Array(totalLen);
+        let pos = 0;
+        for (let i = 0; i < outParts.length; i++) {
+          out.set(outParts[i], pos);
+          pos += outParts[i].length;
+        }
+        return out;
+      }
+
+      function buildForceDownloadUrl(signedUrl, fileName) {
+        if (!signedUrl) return "";
+        const sep = signedUrl.includes("?") ? "&" : "?";
+        return `${signedUrl}${sep}download=${encodeURIComponent(fileName || "recording.webm")}`;
+      }
+
       function renderTeacherApp() {
         const root = document.getElementById("teacher-app");
         if (!root) return;
@@ -1426,6 +1881,10 @@
         if (btnLogout) {
           btnLogout.onclick = async () => {
             tState.accountMenuOpen = false;
+            revokeTeacherAudioBlobUrls();
+            if (typeof CLOUD.clearSignedAudioUrlCache === "function") {
+              CLOUD.clearSignedAudioUrlCache();
+            }
             const client = CLOUD.getClient();
             if (client) {
               try {
@@ -1439,6 +1898,7 @@
         const btnBrandReset = document.getElementById("btn-brand-reset-view");
         if (btnBrandReset) {
           btnBrandReset.onclick = () => {
+            if (tState.selectedStudentId) revokeTeacherAudioBlobUrls();
             tState.selectedStudentId = "";
             renderTeacherApp();
           };
@@ -1447,6 +1907,7 @@
         const btnBackStudents = document.getElementById("btn-back-to-students");
         if (btnBackStudents) {
           btnBackStudents.onclick = () => {
+            if (tState.selectedStudentId) revokeTeacherAudioBlobUrls();
             tState.selectedStudentId = "";
             tState.filterStatus = "all";
             renderTeacherApp();
@@ -1484,8 +1945,8 @@
         document.querySelectorAll("[data-open-student-info]").forEach(btn => {
           btn.onclick = e => {
             e.stopPropagation();
-            tState.infoModalStudentId = btn.getAttribute("data-open-student-info") || "";
-            renderTeacherApp();
+            const sid = btn.getAttribute("data-open-student-info") || "";
+            openStudentInfoModal(sid);
           };
         });
 
@@ -1501,9 +1962,14 @@
 
         document.querySelectorAll("[data-view-student-subs]").forEach(btn => {
           btn.onclick = () => {
-            tState.selectedStudentId = btn.getAttribute("data-view-student-subs") || "";
+            const sid = btn.getAttribute("data-view-student-subs") || "";
+            if (tState.selectedStudentId && tState.selectedStudentId !== sid) {
+              revokeTeacherAudioBlobUrls();
+            }
+            tState.selectedStudentId = sid;
             renderTeacherApp();
             window.scrollTo({ top: 0, behavior: "smooth" });
+            ensureSignedUrlsForStudent(sid);
           };
         });
 
@@ -1569,7 +2035,8 @@
             await saveCloudGrade(
               attId,
               scoreInp ? scoreInp.value.trim() : "",
-              fbInp ? fbInp.value.trim() : ""
+              fbInp ? fbInp.value.trim() : "",
+              btn
             );
           };
         });
@@ -1593,224 +2060,13 @@
           };
         });
 
-        function detectAudioContainerAndOffset(u8) {
-          if (!u8 || u8.length < 12) return { mime: "", offset: 0 };
-          if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
-            return { mime: "audio/webm", offset: 0 };
-          }
-          const box4 = String.fromCharCode(u8[4], u8[5], u8[6], u8[7]);
-          if (
-            box4 === "ftyp" ||
-            box4 === "styp" ||
-            box4 === "moof" ||
-            box4 === "moov" ||
-            box4 === "mdat" ||
-            box4 === "wide" ||
-            box4 === "free"
-          ) {
-            return { mime: "audio/mp4", offset: 0 };
-          }
-          if (u8[0] === 0x4f && u8[1] === 0x67 && u8[2] === 0x67 && u8[3] === 0x53) return { mime: "audio/ogg", offset: 0 };
-          if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46) return { mime: "audio/wav", offset: 0 };
-          if (u8[0] === 0x66 && u8[1] === 0x4c && u8[2] === 0x61 && u8[3] === 0x43) return { mime: "audio/flac", offset: 0 };
-          if ((u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) || (u8[0] === 0xff && (u8[1] & 0xe0) === 0xe0)) {
-            return { mime: "audio/mpeg", offset: 0 };
-          }
-
-          // Phục hồi các bản ghi cũ bị dính chunk rác của bản ghi trước ở đầu file:
-          // quét tìm chữ ký EBML (1A 45 DF A3 - WebM) hoặc ftyp (MP4) để cắt bỏ phần rác đầu file.
-          const scanMax = Math.min(u8.length - 8, 262144);
-          for (let i = 1; i <= scanMax; i++) {
-            if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
-              return { mime: "audio/webm", offset: i };
-            }
-          }
-          for (let i = 4; i <= scanMax; i++) {
-            if (
-              u8[i] === 0x66 &&
-              u8[i + 1] === 0x74 &&
-              u8[i + 2] === 0x79 &&
-              u8[i + 3] === 0x70 &&
-              u8[i - 4] === 0x00 &&
-              u8[i - 3] === 0x00
-            ) {
-              return { mime: "audio/mp4", offset: i - 4 };
-            }
-          }
-          return { mime: "", offset: 0 };
-        }
-
-        function audioBufferToWavBlob(audioBuffer) {
-          const numCh = Math.min(audioBuffer.numberOfChannels || 1, 2);
-          const sampleRate = audioBuffer.sampleRate || 44100;
-          const length = audioBuffer.length;
-          const bytesPerSample = 2;
-          const blockAlign = numCh * bytesPerSample;
-          const dataSize = length * blockAlign;
-          const ab = new ArrayBuffer(44 + dataSize);
-          const view = new DataView(ab);
-          const writeStr = (off, s) => {
-            for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
-          };
-          writeStr(0, "RIFF");
-          view.setUint32(4, 36 + dataSize, true);
-          writeStr(8, "WAVE");
-          writeStr(12, "fmt ");
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true);
-          view.setUint16(22, numCh, true);
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, sampleRate * blockAlign, true);
-          view.setUint16(32, blockAlign, true);
-          view.setUint16(34, 16, true);
-          writeStr(36, "data");
-          view.setUint32(40, dataSize, true);
-          let offset = 44;
-          const channels = [];
-          for (let c = 0; c < numCh; c++) channels.push(audioBuffer.getChannelData(c));
-          for (let i = 0; i < length; i++) {
-            for (let c = 0; c < numCh; c++) {
-              const s = Math.max(-1, Math.min(1, channels[c][i]));
-              view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-              offset += 2;
-            }
-          }
-          return new Blob([ab], { type: "audio/wav" });
-        }
-
-        function repairInterleavedWebmBytes(u8, ebmlOff) {
-          if (!u8 || ebmlOff < 0 || ebmlOff >= u8.length - 16) return null;
-          const clusterOffsets = [];
-          for (let i = ebmlOff; i <= u8.length - 12; i++) {
-            if (u8[i] === 0x1f && u8[i + 1] === 0x43 && u8[i + 2] === 0xb6 && u8[i + 3] === 0x75) {
-              clusterOffsets.push(i);
-            }
-          }
-          if (clusterOffsets.length < 2) {
-            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
-          }
-
-          const parseCluster = (start, end) => {
-            let p = start + 4;
-            const sb = u8[p];
-            let sLen = 1;
-            for (let bit = 0x80; bit > 0 && !(sb & bit); bit >>= 1) sLen++;
-            p += sLen;
-            if (p >= end || u8[p] !== 0xe7) return null;
-            const tcLen = u8[p + 1] & 0x7f;
-            if (tcLen === 0 || tcLen > 6 || p + 2 + tcLen > end) return null;
-            let tc = 0;
-            for (let k = 0; k < tcLen; k++) tc = tc * 256 + u8[p + 2 + k];
-            const headerEnd = p + 2 + tcLen;
-            const headerBytes = u8.slice(start, headerEnd);
-            const blocks = [];
-            let q = headerEnd;
-            while (q < end) {
-              if (u8[q] !== 0xa3) break;
-              const b0 = u8[q + 1];
-              let vLen = 1;
-              let bSize = 0;
-              if (b0 & 0x80) {
-                vLen = 1;
-                bSize = b0 & 0x7f;
-              } else if (b0 & 0x40) {
-                vLen = 2;
-                bSize = ((b0 & 0x3f) << 8) | u8[q + 2];
-              } else if (b0 & 0x20) {
-                vLen = 3;
-                bSize = ((b0 & 0x1f) << 16) | (u8[q + 2] << 8) | u8[q + 3];
-              } else {
-                break;
-              }
-              const dataStart = q + 1 + vLen;
-              const blockEnd = dataStart + bSize;
-              if (blockEnd > end || bSize < 4) break;
-              const relTcRaw = (u8[dataStart + 1] << 8) | u8[dataStart + 2];
-              const relTc = relTcRaw >= 0x8000 ? relTcRaw - 0x10000 : relTcRaw;
-              blocks.push({ relTc, bytes: u8.slice(q, blockEnd) });
-              q = blockEnd;
-            }
-            return { tc, headerBytes, blocks };
-          };
-
-          const clusters = [];
-          for (let i = 0; i < clusterOffsets.length; i++) {
-            const end = i + 1 < clusterOffsets.length ? clusterOffsets[i + 1] : u8.length;
-            const c = parseCluster(clusterOffsets[i], end);
-            if (c) clusters.push(c);
-          }
-          if (clusters.length < 2) {
-            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
-          }
-
-          let hasInterleaving = false;
-          for (let i = 1; i < clusters.length; i++) {
-            const diff = clusters[i].tc - clusters[i - 1].tc;
-            if (diff < 0 || diff > 10000) {
-              hasInterleaving = true;
-              break;
-            }
-          }
-          if (!hasInterleaving) {
-            return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
-          }
-
-          const outParts = [u8.slice(ebmlOff, clusterOffsets[0])];
-          let expectedTc = clusters[0].tc;
-          for (let i = 0; i < clusters.length; i++) {
-            const c = clusters[i];
-            if (c.tc >= expectedTc && c.tc - expectedTc <= 5000) {
-              outParts.push(c.headerBytes);
-              let lastRel = -1;
-              for (let j = 0; j < c.blocks.length; j++) {
-                const blk = c.blocks[j];
-                if (blk.relTc > lastRel) {
-                  outParts.push(blk.bytes);
-                  lastRel = blk.relTc;
-                } else {
-                  break;
-                }
-              }
-              if (i + 1 < clusters.length) {
-                const nextC = clusters[i + 1];
-                const nextIsForeign = nextC.tc < c.tc || nextC.tc - c.tc > 10000;
-                if (nextIsForeign && nextC.blocks.length > 0) {
-                  for (let j = 0; j < nextC.blocks.length; j++) {
-                    const fBlk = nextC.blocks[j];
-                    if (fBlk.relTc >= lastRel + 40 && fBlk.relTc <= lastRel + 90) {
-                      outParts.push(fBlk.bytes);
-                      lastRel = fBlk.relTc;
-                    }
-                  }
-                }
-              }
-              expectedTc = c.tc + 1;
-            }
-          }
-
-          const totalLen = outParts.reduce((s, p) => s + p.length, 0);
-          const out = new Uint8Array(totalLen);
-          let pos = 0;
-          for (let i = 0; i < outParts.length; i++) {
-            out.set(outParts[i], pos);
-            pos += outParts[i].length;
-          }
-          return out;
-        }
-
-        function buildForceDownloadUrl(signedUrl, fileName) {
-          if (!signedUrl) return "";
-          const sep = signedUrl.includes("?") ? "&" : "?";
-          return `${signedUrl}${sep}download=${encodeURIComponent(fileName || "recording.webm")}`;
-        }
-
         document.querySelectorAll("audio.student-audio-player").forEach(audioEl => {
           const wrap = audioEl.closest(".teacher-audio-wrap");
           const noteEl = wrap ? wrap.querySelector(".audio-diag-note") : null;
-          const rawUrl = audioEl.getAttribute("data-audio-url") || "";
+          let rawUrl = audioEl.getAttribute("data-audio-url") || "";
           const rawPath = audioEl.getAttribute("data-audio-path") || "";
           const baseName = rawPath ? rawPath.split("/").pop() : "recording.webm";
-          const downloadHref = buildForceDownloadUrl(rawUrl, baseName);
+          let downloadHref = buildForceDownloadUrl(rawUrl, baseName);
 
           const handleAudioFailure = async () => {
             if (!rawUrl || audioEl.dataset.recovering === "1") return;
@@ -1820,7 +2076,22 @@
               audioEl.dataset.recovering = "1";
               audioEl.dataset.blobTried = "1";
               try {
-                const res = await fetch(rawUrl);
+                let res = await fetch(rawUrl);
+                if (!res.ok && (res.status === 400 || res.status === 403) && rawPath && audioEl.dataset.urlRefreshed !== "1") {
+                  audioEl.dataset.urlRefreshed = "1";
+                  if (typeof CLOUD.invalidateSignedAudioUrl === "function") {
+                    CLOUD.invalidateSignedAudioUrl(rawPath);
+                  }
+                  const freshMap = await CLOUD.getSignedAudioUrls([rawPath]);
+                  if (freshMap && freshMap[rawPath]) {
+                    rawUrl = freshMap[rawPath];
+                    downloadHref = buildForceDownloadUrl(rawUrl, baseName);
+                    audioEl.setAttribute("data-audio-url", rawUrl);
+                    const subItem = tState.submissions.find(s => s.audioPath === rawPath);
+                    if (subItem) subItem.audioUrl = rawUrl;
+                    res = await fetch(rawUrl);
+                  }
+                }
                 if (!res.ok) {
                   audioEl.dataset.recovering = "0";
                   if (noteEl) {
@@ -1849,6 +2120,7 @@
 
                 if (cleanBuf.byteLength >= 400 && detectedMime) {
                   const blobUrl = URL.createObjectURL(new Blob([cleanBuf], { type: detectedMime }));
+                  activeAudioBlobUrls.add(blobUrl);
                   audioEl.dataset.recovering = "0";
                   audioEl.src = blobUrl;
                   audioEl.load();
@@ -1858,18 +2130,24 @@
                 // Thử giải mã trực tiếp bằng Web Audio API rồi chuyển sang WAV
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (AudioCtx && cleanBuf.byteLength >= 400) {
+                  let ctx = null;
                   try {
-                    const ctx = new AudioCtx();
+                    ctx = new AudioCtx();
                     const decoded = await ctx.decodeAudioData(cleanBuf.slice(0));
-                    await ctx.close().catch(() => {});
                     if (decoded && decoded.duration > 0) {
                       const wavUrl = URL.createObjectURL(audioBufferToWavBlob(decoded));
+                      activeAudioBlobUrls.add(wavUrl);
                       audioEl.dataset.recovering = "0";
                       audioEl.src = wavUrl;
                       audioEl.load();
                       return;
                     }
-                  } catch (_decodeErr) {}
+                  } catch (_decodeErr) {
+                  } finally {
+                    if (ctx && typeof ctx.close === "function") {
+                      await ctx.close().catch(() => {});
+                    }
+                  }
                 }
 
                 audioEl.dataset.recovering = "0";
@@ -1915,7 +2193,8 @@
       }
 
       document.addEventListener("click", e => {
-        if (tState.accountMenuOpen && !e.target.closest("#teacher-account-menu-wrap")) {
+        const target = e.target && typeof e.target.closest === "function" ? e.target : null;
+        if (tState.accountMenuOpen && (!target || !target.closest("#teacher-account-menu-wrap"))) {
           tState.accountMenuOpen = false;
           renderTeacherApp();
         }
@@ -1928,6 +2207,8 @@
           renderTeacherApp();
         }
       });
+
+      window.addEventListener("pagehide", revokeTeacherAudioBlobUrls);
 
       window.addEventListener("DOMContentLoaded", async () => {
         const client = CLOUD.getClient();

@@ -30,7 +30,41 @@ const AUDIO_BUCKET = "speaking-recordings";
 const RELEASE_DELAY_HOURS = 6;
 const MAX_STUDENT_GRADES_PER_QUESTION = 5;
 const MAX_AUTO_RETRIES = 20;
-const RETRY_COOLDOWN_MS = 90 * 1000;
+const STALE_GRADING_MS = 3 * 60 * 1000;
+const MAX_INLINE_AUDIO_BYTES = 14 * 1024 * 1024;
+const GEMINI_TIMEOUT_MS = 45 * 1000;
+const STORAGE_DOWNLOAD_TIMEOUT_MS = 15 * 1000;
+const QUEUE_TIME_BUDGET_MS = 95 * 1000;
+
+function getRetryCooldownMs(retryCount: number): number {
+  if (retryCount <= 2) return 60 * 1000;
+  if (retryCount <= 5) return 180 * 1000;
+  return 600 * 1000;
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function promiseWithTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout (${Math.round(timeoutMs / 1000)}s)`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -42,7 +76,7 @@ function jsonResponse(body: unknown, status = 200) {
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = "";
-  const chunkSize = 0x8000;
+  const chunkSize = 0x4000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
   }
@@ -167,12 +201,16 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
   return out;
 }
 
+function toExactArrayBuffer(u8: Uint8Array): ArrayBuffer {
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+}
+
 function trimCorruptedAudioPrefix(buffer: ArrayBuffer, fallbackMime: string): { buffer: ArrayBuffer; mimeType: string } {
   const u8 = new Uint8Array(buffer);
   if (u8.length < 16) return { buffer, mimeType: fallbackMime };
   if (u8[0] === 0x1a && u8[1] === 0x45 && u8[2] === 0xdf && u8[3] === 0xa3) {
     const deinterleaved = repairInterleavedWebmBytes(u8, 0);
-    return { buffer: deinterleaved ? deinterleaved.buffer : buffer, mimeType: "audio/webm" };
+    return { buffer: deinterleaved ? toExactArrayBuffer(deinterleaved) : buffer, mimeType: "audio/webm" };
   }
   if (u8[4] === 0x66 && u8[5] === 0x74 && u8[6] === 0x79 && u8[7] === 0x70) {
     return { buffer, mimeType: "audio/mp4" };
@@ -181,7 +219,7 @@ function trimCorruptedAudioPrefix(buffer: ArrayBuffer, fallbackMime: string): { 
   for (let i = 1; i <= scanMax; i++) {
     if (u8[i] === 0x1a && u8[i + 1] === 0x45 && u8[i + 2] === 0xdf && u8[i + 3] === 0xa3) {
       const deinterleaved = repairInterleavedWebmBytes(u8, i);
-      return { buffer: deinterleaved ? deinterleaved.buffer : buffer.slice(i), mimeType: "audio/webm" };
+      return { buffer: deinterleaved ? toExactArrayBuffer(deinterleaved) : buffer.slice(i), mimeType: "audio/webm" };
     }
   }
   for (let i = 4; i <= scanMax; i++) {
@@ -362,7 +400,7 @@ TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) 
       "meaning_vi": "Nghĩa tiếng Việt tương ứng"
     }
   ],
-  "natural_spoken_version": "Bài nói 3 câu hoàn chỉnh, tự nhiên, giữ nguyên ý học viên ở mức Level ${level}"
+  "natural_spoken_version": "${isPart2 ? "Bài nói hoàn chỉnh đủ 3 phần (Mở bài – Thân bài – Kết bài), tự nhiên, giữ nguyên ý học viên" : "Bài nói 3 câu hoàn chỉnh, tự nhiên, giữ nguyên ý học viên"} ở mức Level ${level}"
 }`;
 }
 
@@ -482,14 +520,52 @@ function isIgnoredVerbInflectionFix(original: string, corrected: string, categor
   return singularSubjects.has(prevWord);
 }
 
-function parseModelJson(rawText: string) {
+function parseModelJson(rawText: string): Record<string, unknown> {
   const trimmed = String(rawText || "").trim();
   const unfenced = trimmed
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
-  return JSON.parse(unfenced);
+
+  const tryParse = (str: string): unknown => {
+    try {
+      return JSON.parse(str);
+    } catch (_e) {
+      return JSON.parse(str.replace(/,\s*([}\]])/g, "$1"));
+    }
+  };
+
+  let parsed: unknown;
+  try {
+    parsed = tryParse(unfenced);
+  } catch (_e) {
+    const firstBrace = unfenced.indexOf("{");
+    const lastBrace = unfenced.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      parsed = tryParse(unfenced.slice(firstBrace, lastBrace + 1));
+    } else {
+      throw _e;
+    }
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Phản hồi AI không phải JSON object hợp lệ");
+  }
+  const obj = parsed as Record<string, unknown>;
+  const critObj =
+    obj.criteria && typeof obj.criteria === "object" && !Array.isArray(obj.criteria)
+      ? (obj.criteria as Record<string, unknown>)
+      : null;
+  const hasRealContent =
+    (typeof obj.overall_comment === "string" && obj.overall_comment.trim().length > 0) ||
+    (typeof obj.estimated_band === "string" && obj.estimated_band.trim().length > 0) ||
+    (typeof obj.natural_spoken_version === "string" && obj.natural_spoken_version.trim().length > 0) ||
+    Boolean(critObj && Object.values(critObj).some(v => typeof v === "string" && v.trim().length > 0));
+  if (!hasRealContent) {
+    throw new Error("Phản hồi AI thiếu nội dung chấm bài hợp lệ");
+  }
+  return obj;
 }
 
 interface AttemptRow {
@@ -506,6 +582,7 @@ interface AttemptRow {
   audio_path?: string;
   is_submitted?: boolean;
   submitted_at?: string;
+  ai_status?: string;
   ai_release_at?: string;
   created_at?: string;
 }
@@ -513,11 +590,110 @@ interface AttemptRow {
 interface ReviewRow {
   id: string;
   attempt_id: string;
+  user_id?: string;
+  question_id?: string;
   grade_count?: number;
   retry_count?: number;
   release_at?: string;
   status?: string;
+  review_json?: Record<string, unknown> | null;
   updated_at?: string;
+}
+
+async function claimGradingLock(
+  admin: SupabaseClient,
+  att: AttemptRow,
+  existingReview: ReviewRow | null,
+  forceTeacher: boolean
+): Promise<boolean> {
+  const staleSec = Math.floor(STALE_GRADING_MS / 1000);
+  try {
+    const { data: rpcData, error: rpcErr } = await admin.rpc("claim_speaking_attempt_lock", {
+      p_attempt_id: att.id,
+      p_stale_seconds: staleSec,
+      p_force: Boolean(forceTeacher)
+    });
+    if (!rpcErr && typeof rpcData === "boolean") {
+      return rpcData;
+    }
+    const errMsg = String(rpcErr?.message || "");
+    const errCode = String(rpcErr?.code || "");
+    const isMissingRpc =
+      errCode === "PGRST202" ||
+      errCode === "42883" ||
+      /claim_speaking_attempt_lock|schema cache|does not exist/i.test(errMsg);
+    if (!isMissingRpc && rpcErr) {
+      return false;
+    }
+  } catch (_e) {
+    // Fallback to conditional PostgREST update below
+  }
+
+  if (forceTeacher) {
+    await admin.from("speaking_attempts").update({ ai_status: "grading" }).eq("id", att.id);
+    return true;
+  }
+
+  if (att.ai_status !== "grading") {
+    const { data: claimedRows, error: claimErr } = await admin
+      .from("speaking_attempts")
+      .update({ ai_status: "grading" })
+      .eq("id", att.id)
+      .neq("ai_status", "grading")
+      .select("id");
+    if (claimErr) return false;
+    return Array.isArray(claimedRows) && claimedRows.length > 0;
+  }
+
+  if (isGradingLockActive(att, existingReview, Date.now())) {
+    return false;
+  }
+
+  // Reclaim stale lock atomically via updated_at CAS on existingReview if available
+  if (existingReview && existingReview.id && existingReview.updated_at) {
+    const { data: reclaimed } = await admin
+      .from("speaking_ai_reviews")
+      .update({ status: "grading", updated_at: new Date().toISOString() })
+      .eq("id", existingReview.id)
+      .eq("updated_at", existingReview.updated_at)
+      .select("id");
+    if (!Array.isArray(reclaimed) || reclaimed.length === 0) {
+      return false;
+    }
+  }
+  await admin.from("speaking_attempts").update({ ai_status: "grading" }).eq("id", att.id);
+  return true;
+}
+
+async function isAttemptSuperseded(admin: SupabaseClient, att: AttemptRow): Promise<boolean> {
+  try {
+    const { data: latestSub } = await admin
+      .from("speaking_attempts")
+      .select("id, submitted_at, created_at")
+      .eq("user_id", att.user_id)
+      .eq("question_id", att.question_id)
+      .eq("is_submitted", true)
+      .order("submitted_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!latestSub || latestSub.id === att.id) return false;
+    const latestMs = new Date(latestSub.submitted_at || latestSub.created_at || 0).getTime();
+    const attMs = new Date(att.submitted_at || att.created_at || 0).getTime();
+    return latestMs >= attMs;
+  } catch (_e) {
+    return false;
+  }
+}
+
+function isGradingLockActive(att: AttemptRow, rev: ReviewRow | null, nowMs: number): boolean {
+  const isAttGrading = att.ai_status === "grading";
+  const isRevGrading = Boolean(rev && rev.attempt_id === att.id && rev.status === "grading");
+  if (!isAttGrading && !isRevGrading) return false;
+  const refIso = (rev && rev.attempt_id === att.id && rev.updated_at) || att.submitted_at || att.created_at;
+  if (!refIso) return false;
+  const refMs = new Date(refIso).getTime();
+  return !isNaN(refMs) && nowMs - refMs < STALE_GRADING_MS;
 }
 
 async function gradeSingleAttempt(
@@ -528,69 +704,31 @@ async function gradeSingleAttempt(
   existingReview: ReviewRow | null,
   options: {
     isTeacherOrCron: boolean;
+    forceTeacher?: boolean;
     releaseNow: boolean;
+    timeBudgetMs?: number;
     overridePromptText?: string;
     overrideTopicTitle?: string;
     overrideTargetLevel?: string;
   }
 ) {
-  const reviewId = `${att.user_id}__${att.question_id}`;
-  const browserTranscript = String(att.transcript || "").trim();
-  const wordCount = browserTranscript.split(/\s+/).filter(Boolean).length;
+  const reviewId = existingReview?.id || `${att.user_id}__${att.question_id}`;
+  const nowMs = Date.now();
+  const hasExistingReadyReview = Boolean(
+    existingReview && existingReview.attempt_id === att.id && existingReview.status === "ready"
+  );
 
-  let audioBase64 = "";
-  let audioMimeType = "audio/webm";
-
-  if (att.audio_path) {
-    try {
-      const { data: audioBlob, error: dlErr } = await admin.storage
-        .from(AUDIO_BUCKET)
-        .download(att.audio_path);
-      if (!dlErr && audioBlob && audioBlob.size > 0) {
-        const rawAb = await audioBlob.arrayBuffer();
-        const rawMime = resolveCleanAudioMimeType(att.audio_path, audioBlob.type);
-        const cleaned = trimCorruptedAudioPrefix(rawAb, rawMime);
-        audioBase64 = arrayBufferToBase64(cleaned.buffer);
-        audioMimeType = cleaned.mimeType;
-      }
-    } catch (_e) {
-      // Fallback to transcript if storage download fails
-    }
-  }
-
-  if (!audioBase64 && wordCount < 2) {
-    const noAudioMsg =
-      "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm (thường do học viên chưa cấp quyền micro hoặc dùng trình duyệt trong Zalo/Facebook). Học viên cần ghi âm lại và nộp lại.";
-    const nowIsoNoAudio = new Date().toISOString();
-    await admin.from("speaking_ai_reviews").upsert(
-      {
-        id: reviewId,
-        attempt_id: att.id,
-        user_id: att.user_id,
-        topic_id: att.topic_id || "",
-        topic_title: String(options.overrideTopicTitle || att.topic_title || att.topic_id || "Speaking Part 1").trim(),
-        question_id: att.question_id,
-        prompt_text: String(options.overridePromptText || att.prompt_text || att.question_id || "").trim(),
-        target_level:
-          String(options.overrideTargetLevel || att.target_level || "B1").toUpperCase() === "B2" ? "B2" : "B1",
-        status: "no_audio",
-        release_at: att.ai_release_at || nowIsoNoAudio,
-        error_message: noAudioMsg,
-        grade_count: existingReview?.grade_count || 0,
-        retry_count: MAX_AUTO_RETRIES,
-        updated_at: nowIsoNoAudio
-      },
-      { onConflict: "id" }
-    );
-    await admin
-      .from("speaking_attempts")
-      .update({ ai_status: "no_audio" })
-      .eq("id", att.id);
-
+  // Deduplication: if this exact attempt is already graded, return cached review unless teacher forced re-grade
+  if (hasExistingReadyReview && !options.forceTeacher) {
+    const cachedReleaseAt = existingReview?.release_at || att.ai_release_at || new Date(nowMs).toISOString();
+    const isAlreadyRel = new Date(cachedReleaseAt).getTime() <= nowMs;
     return {
-      ok: false,
-      status: 400,
-      error: noAudioMsg
+      ok: true,
+      status: 200,
+      ai_status: isAlreadyRel ? "ready" : "scheduled",
+      release_at: cachedReleaseAt,
+      recognized_transcript: String((existingReview?.review_json as Record<string, unknown>)?.recognized_transcript || att.transcript || "").trim(),
+      review_json: existingReview?.review_json || undefined
     };
   }
 
@@ -605,6 +743,31 @@ async function gradeSingleAttempt(
     };
   }
 
+  // Fast-path concurrency guard before atomic lock claim
+  if (!options.forceTeacher && isGradingLockActive(att, existingReview, nowMs)) {
+    return {
+      ok: true,
+      status: 200,
+      ai_status: "grading",
+      release_at: existingReview?.release_at || att.ai_release_at || new Date(nowMs + RELEASE_DELAY_HOURS * 3600 * 1000).toISOString(),
+      recognized_transcript: String(att.transcript || "").trim()
+    };
+  }
+
+  // Claim atomic row lock BEFORE downloading audio or calling Gemini
+  const lockAcquired = await claimGradingLock(admin, att, existingReview, Boolean(options.forceTeacher));
+  if (!lockAcquired) {
+    return {
+      ok: true,
+      status: 200,
+      ai_status: "grading",
+      release_at: existingReview?.release_at || att.ai_release_at || new Date(nowMs + RELEASE_DELAY_HOURS * 3600 * 1000).toISOString(),
+      recognized_transcript: String(att.transcript || "").trim()
+    };
+  }
+
+  const browserTranscript = String(att.transcript || "").trim();
+  const wordCount = browserTranscript.split(/\s+/).filter(Boolean).length;
   const targetLevel =
     String(options.overrideTargetLevel || att.target_level || "B1").toUpperCase() === "B2"
       ? "B2"
@@ -612,383 +775,670 @@ async function gradeSingleAttempt(
   const topicTitle = String(options.overrideTopicTitle || att.topic_title || att.topic_id || "Speaking Part 1").trim();
   const promptText = String(options.overridePromptText || att.prompt_text || att.question_id || "").trim();
 
-  const nowMs = Date.now();
-  const nowIso = new Date(nowMs).toISOString();
-  const submittedMs = new Date(att.submitted_at || att.created_at || nowMs).getTime();
-  const baseSubmitMs = isNaN(submittedMs) ? nowMs : submittedMs;
+  const lockNowMs = Date.now();
+  const lockNowIso = new Date(lockNowMs).toISOString();
+  const submittedMs = new Date(att.submitted_at || att.created_at || lockNowMs).getTime();
+  const baseSubmitMs = isNaN(submittedMs) ? lockNowMs : submittedMs;
 
   let releaseAtIso = new Date(baseSubmitMs + RELEASE_DELAY_HOURS * 60 * 60 * 1000).toISOString();
   if (options.isTeacherOrCron && options.releaseNow) {
-    releaseAtIso = nowIso;
+    releaseAtIso = lockNowIso;
   } else if (existingReview && existingReview.attempt_id === att.id && existingReview.release_at) {
     releaseAtIso = existingReview.release_at;
   } else if (att.ai_release_at) {
     releaseAtIso = att.ai_release_at;
   }
 
-  await admin
-    .from("speaking_attempts")
-    .update({
-      ai_status: "grading",
-      ai_release_at: releaseAtIso,
-      target_level: targetLevel,
-      topic_title: topicTitle,
-      prompt_text: promptText
-    })
-    .eq("id", att.id);
-
-  const promptWithAudio = buildSpeakingGradingPrompt({
-    topicId: att.topic_id || "",
-    questionId: att.question_id || "",
-    topicTitle,
-    promptText,
-    browserTranscript,
-    durationSec: Number(att.duration_sec) || 0,
-    targetLevel,
-    hasAudio: Boolean(audioBase64)
-  });
-
-  const buildUserParts = (includeAudio: boolean): Array<Record<string, unknown>> => {
-    const parts: Array<Record<string, unknown>> = [];
-    if (includeAudio && audioBase64) {
-      parts.push({
-        inlineData: {
-          mimeType: audioMimeType,
-          data: audioBase64
-        }
-      });
-      parts.push({ text: promptWithAudio });
-    } else {
-      const textOnlyPrompt = audioBase64
-        ? buildSpeakingGradingPrompt({
-            topicId: att.topic_id || "",
-            questionId: att.question_id || "",
-            topicTitle,
-            promptText,
-            browserTranscript,
-            durationSec: Number(att.duration_sec) || 0,
-            targetLevel,
-            hasAudio: false
-          })
-        : promptWithAudio;
-      parts.push({ text: textOnlyPrompt });
-    }
-    return parts;
+  const restoreAttemptOnPreservedReady = async () => {
+    const existingRelIso = existingReview?.release_at || releaseAtIso;
+    const isAlreadyRel = new Date(existingRelIso).getTime() <= Date.now();
+    await admin
+      .from("speaking_attempts")
+      .update({ ai_status: isAlreadyRel ? "ready" : "scheduled", ai_release_at: existingRelIso })
+      .eq("id", att.id);
   };
 
-  const RETIRED_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp"]);
-  const fallbackModels = Array.from(
-    new Set([
-      geminiModel,
-      "gemini-flash-latest",
-      "gemini-3.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-2.5-flash"
-    ])
-  ).filter(m => Boolean(m) && !RETIRED_MODELS.has(m));
+  try {
+    await admin
+      .from("speaking_attempts")
+      .update({
+        ai_status: "grading",
+        ai_release_at: releaseAtIso,
+        target_level: targetLevel,
+        topic_title: topicTitle,
+        prompt_text: promptText
+      })
+      .eq("id", att.id);
 
-  const extractGeminiErrorMessage = (rawText: string): string => {
-    const trimmed = String(rawText || "").trim();
-    if (!trimmed) return "";
-    try {
-      const parsed = JSON.parse(trimmed);
-      const msg = parsed?.error?.message || parsed?.message;
-      if (msg) return String(msg).replace(/\s+/g, " ").trim();
-    } catch (_e) {
-      // keep raw text fallback
+    if (!hasExistingReadyReview) {
+      await admin.from("speaking_ai_reviews").upsert(
+        {
+          id: reviewId,
+          attempt_id: att.id,
+          user_id: att.user_id,
+          topic_id: att.topic_id || "",
+          topic_title: topicTitle,
+          question_id: att.question_id,
+          prompt_text: promptText,
+          target_level: targetLevel,
+          status: "grading",
+          release_at: releaseAtIso,
+          error_message: "",
+          grade_count: prevCount,
+          retry_count: prevRetry,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: "id" }
+      );
     }
-    return trimmed.replace(/\s+/g, " ").trim();
-  };
 
-  const callGeminiWithParts = async (parts: Array<Record<string, unknown>>) => {
-    let okRes: Response | null = null;
-    const errors: Array<{ model: string; status: number; detail: string }> = [];
+    let audioBase64 = "";
+    let audioMimeType = "audio/webm";
+    let audioTooLarge = false;
 
-    for (const modelName of fallbackModels) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
-      let modelStatus = 500;
-      let modelErrText = "";
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts }],
-            generationConfig: {
-              temperature: 0.25,
-              responseMimeType: "application/json"
+    if (att.audio_path) {
+      for (let dlTry = 0; dlTry < 2; dlTry++) {
+        try {
+          const { data: audioBlob, error: dlErr } = await promiseWithTimeout(
+            admin.storage.from(AUDIO_BUCKET).download(att.audio_path),
+            STORAGE_DOWNLOAD_TIMEOUT_MS,
+            "Storage download"
+          );
+          if (!dlErr && audioBlob && audioBlob.size > 0) {
+            if (audioBlob.size > MAX_INLINE_AUDIO_BYTES) {
+              audioTooLarge = true;
+              break;
             }
-          })
+            const rawAb = await audioBlob.arrayBuffer();
+            if (rawAb.byteLength > MAX_INLINE_AUDIO_BYTES) {
+              audioTooLarge = true;
+              break;
+            }
+            const rawMime = resolveCleanAudioMimeType(att.audio_path, audioBlob.type);
+            const cleaned = trimCorruptedAudioPrefix(rawAb, rawMime);
+            if (cleaned.buffer.byteLength > MAX_INLINE_AUDIO_BYTES) {
+              audioTooLarge = true;
+              break;
+            }
+            audioBase64 = arrayBufferToBase64(cleaned.buffer);
+            audioMimeType = cleaned.mimeType;
+            break;
+          }
+        } catch (_e) {
+          if (dlTry === 0) {
+            await new Promise(r => setTimeout(r, 600));
+          }
+        }
+      }
+    }
+
+    if (!audioBase64 && audioTooLarge && wordCount < 3) {
+      if (hasExistingReadyReview) {
+        await restoreAttemptOnPreservedReady();
+      } else {
+        await admin
+          .from("speaking_attempts")
+          .update({ ai_status: "no_audio" })
+          .eq("id", att.id);
+      }
+      return {
+        ok: false,
+        status: 400,
+        error: "File ghi âm quá lớn (> 14 MB) và không có transcript văn bản để chấm thay thế."
+      };
+    }
+
+    if (!audioBase64 && wordCount < 2) {
+      const noAudioMsg =
+        "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm (thường do học viên chưa cấp quyền micro hoặc dùng trình duyệt trong Zalo/Facebook). Học viên cần ghi âm lại và nộp lại.";
+      const nowIsoNoAudio = new Date().toISOString();
+      if (hasExistingReadyReview) {
+        await restoreAttemptOnPreservedReady();
+      } else if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
+        await admin.from("speaking_attempts").update({ ai_status: "no_audio" }).eq("id", att.id);
+      } else {
+        await admin.from("speaking_ai_reviews").upsert(
+          {
+            id: reviewId,
+            attempt_id: att.id,
+            user_id: att.user_id,
+            topic_id: att.topic_id || "",
+            topic_title: topicTitle,
+            question_id: att.question_id,
+            prompt_text: promptText,
+            target_level: targetLevel,
+            status: "no_audio",
+            release_at: att.ai_release_at || nowIsoNoAudio,
+            error_message: noAudioMsg,
+            grade_count: existingReview?.grade_count || 0,
+            retry_count: MAX_AUTO_RETRIES,
+            updated_at: nowIsoNoAudio
+          },
+          { onConflict: "id" }
+        );
+        await admin
+          .from("speaking_attempts")
+          .update({ ai_status: "no_audio" })
+          .eq("id", att.id);
+      }
+
+      return {
+        ok: false,
+        status: 400,
+        error: noAudioMsg
+      };
+    }
+
+    const promptWithAudio = buildSpeakingGradingPrompt({
+      topicId: att.topic_id || "",
+      questionId: att.question_id || "",
+      topicTitle,
+      promptText,
+      browserTranscript,
+      durationSec: Number(att.duration_sec) || 0,
+      targetLevel,
+      hasAudio: Boolean(audioBase64)
+    });
+
+    const buildUserParts = (includeAudio: boolean): Array<Record<string, unknown>> => {
+      const parts: Array<Record<string, unknown>> = [];
+      if (includeAudio && audioBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: audioMimeType,
+            data: audioBase64
+          }
         });
-        if (res.ok) {
-          okRes = res;
+        parts.push({ text: promptWithAudio });
+      } else {
+        const textOnlyPrompt = audioBase64
+          ? buildSpeakingGradingPrompt({
+              topicId: att.topic_id || "",
+              questionId: att.question_id || "",
+              topicTitle,
+              promptText,
+              browserTranscript,
+              durationSec: Number(att.duration_sec) || 0,
+              targetLevel,
+              hasAudio: false
+            })
+          : promptWithAudio;
+        parts.push({ text: textOnlyPrompt });
+      }
+      return parts;
+    };
+
+    const RETIRED_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp"]);
+    const fallbackModels = Array.from(
+      new Set([
+        geminiModel,
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-flash-lite-latest"
+      ])
+    ).filter(m => Boolean(m) && !RETIRED_MODELS.has(m));
+
+    const extractGeminiErrorMessage = (rawText: string): string => {
+      const trimmed = String(rawText || "").trim();
+      if (!trimmed) return "";
+      try {
+        const parsed = JSON.parse(trimmed);
+        const msg = parsed?.error?.message || parsed?.message;
+        if (msg) return String(msg).replace(/\s+/g, " ").trim();
+      } catch (_e) {
+        // keep raw text fallback
+      }
+      return trimmed.replace(/\s+/g, " ").trim();
+    };
+
+    const attemptDeadlineMs = Date.now() + (options.timeBudgetMs || 55_000);
+
+    const callGeminiWithParts = async (parts: Array<Record<string, unknown>>) => {
+      let okRes: Response | null = null;
+      const errors: Array<{ model: string; status: number; detail: string }> = [];
+
+      for (const modelName of fallbackModels) {
+        const remainingBeforeModel = attemptDeadlineMs - Date.now();
+        if (remainingBeforeModel < 8000) break;
+
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+        let modelStatus = 500;
+        let modelErrText = "";
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const remainingMs = attemptDeadlineMs - Date.now();
+          if (remainingMs < 8000) break;
+          const reqTimeoutMs = Math.min(GEMINI_TIMEOUT_MS, remainingMs);
+          try {
+            const res = await fetchWithTimeout(
+              endpoint,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ role: "user", parts }],
+                  generationConfig: {
+                    temperature: 0.25,
+                    maxOutputTokens: 8192,
+                    responseMimeType: "application/json"
+                  }
+                })
+              },
+              reqTimeoutMs
+            );
+            if (res.ok) {
+              okRes = res;
+              break;
+            }
+            modelStatus = res.status;
+            modelErrText = await res.text().catch(() => "");
+            // 429: chuyển ngay sang model dự phòng có quota riêng thay vì ngủ chờ trên cùng model
+            if (res.status === 429) {
+              break;
+            }
+            if (
+              (res.status === 503 || res.status === 500 || res.status === 502 || res.status === 504) &&
+              attempt === 0 &&
+              attemptDeadlineMs - Date.now() >= 18000
+            ) {
+              await new Promise(r => setTimeout(r, 800 + Math.floor(Math.random() * 900)));
+              continue;
+            }
+            break;
+          } catch (fetchErr) {
+            const isAbort = fetchErr instanceof Error && fetchErr.name === "AbortError";
+            modelStatus = isAbort ? 504 : 503;
+            modelErrText = isAbort
+              ? `Gemini timeout (${Math.round(reqTimeoutMs / 1000)}s)`
+              : fetchErr instanceof Error
+                ? fetchErr.message
+                : "Network error";
+            if (attempt === 0 && attemptDeadlineMs - Date.now() >= 18000) {
+              await new Promise(r => setTimeout(r, 800 + Math.floor(Math.random() * 900)));
+              continue;
+            }
+            break;
+          }
+        }
+        if (okRes) break;
+        errors.push({
+          model: modelName,
+          status: modelStatus,
+          detail: extractGeminiErrorMessage(modelErrText)
+        });
+        // Lỗi xác thực / payload sai (400/401/403) sẽ giống nhau trên mọi model, dừng sớm khỏi thử thêm
+        if (modelStatus === 400 || modelStatus === 401 || modelStatus === 403) {
           break;
         }
-        modelStatus = res.status;
-        modelErrText = await res.text().catch(() => "");
-        if ((res.status === 503 || res.status === 429 || res.status === 500) && attempt === 0) {
-          await new Promise(r => setTimeout(r, 1200));
-          continue;
-        }
-        break;
       }
-      if (okRes) break;
-      errors.push({
-        model: modelName,
-        status: modelStatus,
-        detail: extractGeminiErrorMessage(modelErrText)
-      });
-      // Lỗi xác thực / payload sai (400/401/403) sẽ giống nhau trên mọi model, dừng sớm khỏi thử thêm
-      if (modelStatus === 400 || modelStatus === 401 || modelStatus === 403) {
-        break;
+      return { okRes, errors };
+    };
+
+    let { okRes: geminiRes, errors: modelErrors } = await callGeminiWithParts(buildUserParts(Boolean(audioBase64)));
+
+    // Nếu file ghi âm bị lỗi định dạng / rỗng khiến Gemini báo 400 nhưng vẫn có transcript trình duyệt,
+    // tự động chấm tiếp bằng transcript để không bị kẹt 20/20 lần thử.
+    const hitAudioBadRequest =
+      !geminiRes && Boolean(audioBase64) && wordCount >= 3 && modelErrors.some(e => e.status === 400);
+    if (hitAudioBadRequest && attemptDeadlineMs - Date.now() >= 10000) {
+      const retryTextOnly = await callGeminiWithParts(buildUserParts(false));
+      if (retryTextOnly.okRes) {
+        geminiRes = retryTextOnly.okRes;
+      } else if (retryTextOnly.errors.length > 0) {
+        modelErrors = retryTextOnly.errors;
       }
     }
-    return { okRes, errors };
-  };
 
-  let { okRes: geminiRes, errors: modelErrors } = await callGeminiWithParts(buildUserParts(Boolean(audioBase64)));
+    const primaryError =
+      modelErrors.find(e => e.status !== 404) || modelErrors[0] || { model: geminiModel, status: 500, detail: "" };
+    const lastStatus = primaryError.status;
+    const triedSummary = modelErrors.map(e => `${e.model}:${e.status}`).join(", ");
+    const conciseErrDetail = primaryError.detail
+      ? `${primaryError.detail.slice(0, 160)} [${triedSummary}]`
+      : triedSummary;
 
-  // Nếu file ghi âm bị lỗi định dạng / rỗng khiến Gemini báo 400 nhưng vẫn có transcript trình duyệt,
-  // tự động chấm tiếp bằng transcript để không bị kẹt 20/20 lần thử.
-  const hitAudioBadRequest =
-    !geminiRes && Boolean(audioBase64) && wordCount >= 3 && modelErrors.some(e => e.status === 400);
-  if (hitAudioBadRequest) {
-    const retryTextOnly = await callGeminiWithParts(buildUserParts(false));
-    if (retryTextOnly.okRes) {
-      geminiRes = retryTextOnly.okRes;
-    } else if (retryTextOnly.errors.length > 0) {
-      modelErrors = retryTextOnly.errors;
+    if (!geminiRes) {
+      if (hasExistingReadyReview) {
+        await restoreAttemptOnPreservedReady();
+        return {
+          ok: false,
+          status: 502,
+          rateLimited: lastStatus === 429,
+          error: `AI tạm quá tải khi chấm lại (${lastStatus}) — đã giữ nguyên bài sửa cũ.`
+        };
+      }
+
+      if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
+        await admin.from("speaking_attempts").update({ ai_status: "" }).eq("id", att.id);
+        return {
+          ok: false,
+          status: 409,
+          error: "Đã có bản nộp mới hơn cho câu hỏi này."
+        };
+      }
+
+      const isPermanentBadAudio = lastStatus === 400 && wordCount < 3;
+      const rawNextRetry = prevRetry + 1;
+      const nextRetry = isPermanentBadAudio && rawNextRetry >= 2 ? MAX_AUTO_RETRIES : rawNextRetry;
+      const errNowIso = new Date().toISOString();
+
+      await admin.from("speaking_ai_reviews").upsert(
+        {
+          id: reviewId,
+          attempt_id: att.id,
+          user_id: att.user_id,
+          topic_id: att.topic_id || "",
+          topic_title: topicTitle,
+          question_id: att.question_id,
+          prompt_text: promptText,
+          target_level: targetLevel,
+          status: "error",
+          release_at: releaseAtIso,
+          error_message: `Gemini API lỗi (${lastStatus}): ${conciseErrDetail.slice(0, 220)}`,
+          grade_count: prevCount,
+          retry_count: nextRetry,
+          updated_at: errNowIso
+        },
+        { onConflict: "id" }
+      );
+      await admin
+        .from("speaking_attempts")
+        .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
+        .eq("id", att.id);
+
+      return {
+        ok: false,
+        status: 502,
+        rateLimited: lastStatus === 429,
+        error: `AI tạm quá tải (${lastStatus}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
+      };
     }
-  }
 
-  const primaryError =
-    modelErrors.find(e => e.status !== 404) || modelErrors[0] || { model: geminiModel, status: 500, detail: "" };
-  const lastStatus = primaryError.status;
-  const triedSummary = modelErrors.map(e => `${e.model}:${e.status}`).join(", ");
-  const conciseErrDetail = primaryError.detail
-    ? `${primaryError.detail.slice(0, 160)} [${triedSummary}]`
-    : triedSummary;
+    let parsedReview: Record<string, unknown> | null = null;
+    try {
+      const geminiJson = await geminiRes.json();
+      const firstCand = geminiJson?.candidates?.[0];
+      const finishReason = String(firstCand?.finishReason || "");
+      const candParts = Array.isArray(firstCand?.content?.parts) ? firstCand.content.parts : [];
+      const nonThoughtText = candParts
+        .filter((p: Record<string, unknown>) => !p?.thought && typeof p?.text === "string")
+        .map((p: Record<string, unknown>) => String(p.text))
+        .join("");
+      const rawCandidate = nonThoughtText || String(candParts[0]?.text || "");
+      if (!String(rawCandidate).trim()) {
+        throw new Error(`Phản hồi rỗng từ Gemini${finishReason ? ` (finishReason: ${finishReason})` : ""}`);
+      }
+      parsedReview = parseModelJson(rawCandidate);
+    } catch (parseErr) {
+      const parseMsg = parseErr instanceof Error ? parseErr.message : "JSON không hợp lệ";
+      if (hasExistingReadyReview) {
+        await restoreAttemptOnPreservedReady();
+        return {
+          ok: false,
+          status: 502,
+          error: `AI trả về dữ liệu chưa chuẩn khi chấm lại (${parseMsg.slice(0, 120)}) — đã giữ nguyên bài sửa cũ.`
+        };
+      }
 
-  if (!geminiRes) {
-    const nextRetry = prevRetry + 1;
-    await admin.from("speaking_ai_reviews").upsert(
-      {
-        id: reviewId,
-        attempt_id: att.id,
-        user_id: att.user_id,
-        topic_id: att.topic_id || "",
-        topic_title: topicTitle,
-        question_id: att.question_id,
-        prompt_text: promptText,
-        target_level: targetLevel,
-        status: "error",
-        release_at: releaseAtIso,
-        error_message: `Gemini API lỗi (${lastStatus}): ${conciseErrDetail.slice(0, 220)}`,
-        grade_count: prevCount,
-        retry_count: nextRetry,
-        updated_at: nowIso
-      },
-      { onConflict: "id" }
-    );
-    await admin
-      .from("speaking_attempts")
-      .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
-      .eq("id", att.id);
+      if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
+        await admin.from("speaking_attempts").update({ ai_status: "" }).eq("id", att.id);
+        return {
+          ok: false,
+          status: 409,
+          error: "Đã có bản nộp mới hơn cho câu hỏi này."
+        };
+      }
 
-    return {
-      ok: false,
-      status: 502,
-      error: `AI tạm quá tải (${lastStatus}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
-    };
-  }
+      const nextRetry = prevRetry + 1;
+      const parseNowIso = new Date().toISOString();
+      await admin.from("speaking_ai_reviews").upsert(
+        {
+          id: reviewId,
+          attempt_id: att.id,
+          user_id: att.user_id,
+          topic_id: att.topic_id || "",
+          topic_title: topicTitle,
+          question_id: att.question_id,
+          prompt_text: promptText,
+          target_level: targetLevel,
+          status: "error",
+          release_at: releaseAtIso,
+          error_message: `Lỗi đọc kết quả Gemini (${parseMsg.slice(0, 180)})`,
+          grade_count: prevCount,
+          retry_count: nextRetry,
+          updated_at: parseNowIso
+        },
+        { onConflict: "id" }
+      );
+      await admin
+        .from("speaking_attempts")
+        .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
+        .eq("id", att.id);
 
-  let parsedReview: Record<string, unknown> | null = null;
-  try {
-    const geminiJson = await geminiRes.json();
-    const rawCandidate = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    parsedReview = parseModelJson(rawCandidate);
-  } catch (parseErr) {
-    const nextRetry = prevRetry + 1;
-    const parseMsg = parseErr instanceof Error ? parseErr.message : "JSON không hợp lệ";
-    await admin.from("speaking_ai_reviews").upsert(
-      {
-        id: reviewId,
-        attempt_id: att.id,
-        user_id: att.user_id,
-        topic_id: att.topic_id || "",
-        topic_title: topicTitle,
-        question_id: att.question_id,
-        prompt_text: promptText,
-        target_level: targetLevel,
-        status: "error",
-        release_at: releaseAtIso,
-        error_message: `Lỗi đọc kết quả Gemini (${parseMsg.slice(0, 180)})`,
-        grade_count: prevCount,
-        retry_count: nextRetry,
-        updated_at: nowIso
-      },
-      { onConflict: "id" }
-    );
-    await admin
-      .from("speaking_attempts")
-      .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
-      .eq("id", att.id);
+      return {
+        ok: false,
+        status: 502,
+        error: `AI trả về dữ liệu chưa chuẩn (${parseMsg.slice(0, 120)}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
+      };
+    }
 
-    return {
-      ok: false,
-      status: 502,
-      error: `AI trả về dữ liệu chưa chuẩn (${parseMsg.slice(0, 120)}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
-    };
-  }
+    const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
 
-  const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
+    const rawInternalScore = Number(parsedReview?.internal_score);
+    const hasValidScore =
+      Number.isFinite(rawInternalScore) &&
+      parsedReview?.internal_score !== "" &&
+      parsedReview?.internal_score !== null &&
+      parsedReview?.internal_score !== undefined;
+    const roundedScore = hasValidScore ? roundQuarterStep(rawInternalScore) : null;
 
-  const rawInternalScore = Number(parsedReview?.internal_score);
-  const hasValidScore = Number.isFinite(rawInternalScore) && parsedReview?.internal_score !== "" && parsedReview?.internal_score !== null && parsedReview?.internal_score !== undefined;
-  const roundedScore = hasValidScore ? roundQuarterStep(rawInternalScore) : null;
+    const cleanBandLabel =
+      roundedScore !== null
+        ? scoreToBandLabel(roundedScore)
+        : normalizeLevelBandLabel(
+            String(parsedReview?.estimated_band || ""),
+            String(parsedReview?.level_assessment || "")
+          );
 
-  const cleanBandLabel =
-    roundedScore !== null
-      ? scoreToBandLabel(roundedScore)
-      : normalizeLevelBandLabel(
-          String(parsedReview?.estimated_band || ""),
-          String(parsedReview?.level_assessment || "")
-        );
+    // Deduplicate pronunciation fixes by unique word (sai 1 từ 3 lần vẫn chỉ tính 1 lỗi)
+    // và loại bỏ các mục phát âm thiếu đuôi -s/-es/-ed chia động từ
+    const seenPronWords = new Set<string>();
+    const dedupedPronFixes = Array.isArray(parsedReview?.pronunciation_fixes)
+      ? parsedReview.pronunciation_fixes
+          .map((rawItem: unknown) => {
+            const p = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
+            return {
+              word: String(p.word || "").trim(),
+              ipa: String(p.ipa || "").trim(),
+              issue_vi: String(p.issue_vi || "").trim()
+            };
+          })
+          .filter((p: { word: string; issue_vi: string }) => {
+            if (!p.word || !p.issue_vi) return false;
+            if (isIgnoredVerbInflectionPronFix(p.word, p.issue_vi)) return false;
+            const normKey = p.word.toLowerCase().replace(/[^a-z0-9']/g, "");
+            if (!normKey || seenPronWords.has(normKey)) return false;
+            seenPronWords.add(normKey);
+            return true;
+          })
+      : [];
 
-  // Deduplicate pronunciation fixes by unique word (sai 1 từ 3 lần vẫn chỉ tính 1 lỗi)
-  // và loại bỏ các mục phát âm thiếu đuôi -s/-es/-ed chia động từ
-  const seenPronWords = new Set<string>();
-  const dedupedPronFixes = Array.isArray(parsedReview?.pronunciation_fixes)
-    ? parsedReview.pronunciation_fixes
-        .map((p: Record<string, unknown>) => ({
-          word: String(p?.word || "").trim(),
-          ipa: String(p?.ipa || "").trim(),
-          issue_vi: String(p?.issue_vi || "").trim()
-        }))
-        .filter((p: { word: string; issue_vi: string }) => {
-          if (!p.word || !p.issue_vi) return false;
-          if (isIgnoredVerbInflectionPronFix(p.word, p.issue_vi)) return false;
-          const normKey = p.word.toLowerCase().replace(/[^a-z0-9']/g, "");
-          if (!normKey || seenPronWords.has(normKey)) return false;
-          seenPronWords.add(normKey);
-          return true;
-        })
-    : [];
-
-  // Deduplicate language corrections by (category + normalized original)
-  const seenLangKeys = new Set<string>();
-  const dedupedLangCorrections = Array.isArray(parsedReview?.language_corrections)
-    ? parsedReview.language_corrections
-        .map((c: Record<string, unknown>) => ({
-          original: String(c?.original || "").trim(),
-          corrected: String(c?.corrected || "").trim(),
-          category: String(c?.category || "Từ vựng tự nhiên").trim(),
-          explanation_vi: String(c?.explanation_vi || "").trim()
-        }))
-        .filter((c: { original: string; corrected: string; category: string; explanation_vi: string }) => {
-          if (!c.original || !c.corrected) return false;
-          if (c.original.toLowerCase() === c.corrected.toLowerCase()) return false;
-          if (isIgnoredVerbInflectionFix(c.original, c.corrected, c.category, c.explanation_vi)) return false;
-          const normKey = `${c.category.toLowerCase()}__${c.original.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim()}`;
-          if (seenLangKeys.has(normKey)) return false;
-          seenLangKeys.add(normKey);
-          return true;
-        })
-        .map((c: { original: string; corrected: string; category: string; explanation_vi: string }, idx: number) => ({
-          id: idx + 1,
-          ...c
-        }))
-    : [];
-
-  const normalizedReview = {
-    recognized_transcript: recognizedTranscript,
-    internal_score: roundedScore,
-    level_assessment: stripNumericScores(String(parsedReview?.level_assessment || "")),
-    estimated_band: cleanBandLabel,
-    overall_comment: stripNumericScores(String(parsedReview?.overall_comment || "")),
-    criteria: {
-      pronunciation_intonation: stripNumericScores(String(parsedReview?.criteria?.pronunciation_intonation || "")),
-      grammar: stripNumericScores(String(parsedReview?.criteria?.grammar || "")),
-      vocabulary_vietlish: stripNumericScores(String(parsedReview?.criteria?.vocabulary_vietlish || "")),
-      coherence_logic: stripNumericScores(String(parsedReview?.criteria?.coherence_logic || ""))
-    },
-    pronunciation_fixes: dedupedPronFixes,
-    language_corrections: dedupedLangCorrections,
-    idea_expansions: Array.isArray(parsedReview?.idea_expansions)
-      ? parsedReview.idea_expansions
-          .map((it: Record<string, unknown>) => ({
-            where_vi: String(it?.where_vi || "").trim(),
-            issue_vi: String(it?.issue_vi || "").trim(),
-            suggested_en: String(it?.suggested_en || "").trim(),
-            meaning_vi: String(it?.meaning_vi || "").trim()
+    // Deduplicate language corrections by (category + normalized original)
+    const seenLangKeys = new Set<string>();
+    const dedupedLangCorrections = Array.isArray(parsedReview?.language_corrections)
+      ? parsedReview.language_corrections
+          .map((rawItem: unknown) => {
+            const c = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
+            return {
+              original: String(c.original || "").trim(),
+              corrected: String(c.corrected || "").trim(),
+              category: String(c.category || "Từ vựng tự nhiên").trim(),
+              explanation_vi: String(c.explanation_vi || "").trim()
+            };
+          })
+          .filter((c: { original: string; corrected: string; category: string; explanation_vi: string }) => {
+            if (!c.original || !c.corrected) return false;
+            if (c.original.toLowerCase() === c.corrected.toLowerCase()) return false;
+            if (isIgnoredVerbInflectionFix(c.original, c.corrected, c.category, c.explanation_vi)) return false;
+            const normKey = `${c.category.toLowerCase()}__${c.original.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim()}`;
+            if (seenLangKeys.has(normKey)) return false;
+            seenLangKeys.add(normKey);
+            return true;
+          })
+          .map((c: { original: string; corrected: string; category: string; explanation_vi: string }, idx: number) => ({
+            id: idx + 1,
+            ...c
           }))
-          .filter((it: { suggested_en: string; issue_vi: string }) => it.suggested_en || it.issue_vi)
-      : [],
-    natural_spoken_version: String(parsedReview?.natural_spoken_version || "").trim()
-  };
+      : [];
 
-  const nextCount = options.isTeacherOrCron ? Math.max(1, prevCount) : prevCount + 1;
-  const isAlreadyReleased = new Date(releaseAtIso).getTime() <= Date.now();
+    const rawCriteria = (
+      parsedReview?.criteria && typeof parsedReview.criteria === "object" && !Array.isArray(parsedReview.criteria)
+        ? parsedReview.criteria
+        : {}
+    ) as Record<string, unknown>;
 
-  const { error: upsertRevErr } = await admin.from("speaking_ai_reviews").upsert(
-    {
-      id: reviewId,
-      attempt_id: att.id,
-      user_id: att.user_id,
-      topic_id: att.topic_id || "",
-      topic_title: topicTitle,
-      question_id: att.question_id,
-      prompt_text: promptText,
-      target_level: targetLevel,
-      status: "ready",
+    const normalizedReview = {
+      recognized_transcript: recognizedTranscript,
+      internal_score: roundedScore,
+      level_assessment: stripNumericScores(String(parsedReview?.level_assessment || "")),
+      estimated_band: cleanBandLabel,
+      overall_comment: stripNumericScores(String(parsedReview?.overall_comment || "")),
+      criteria: {
+        pronunciation_intonation: stripNumericScores(String(rawCriteria.pronunciation_intonation || "")),
+        grammar: stripNumericScores(String(rawCriteria.grammar || "")),
+        vocabulary_vietlish: stripNumericScores(String(rawCriteria.vocabulary_vietlish || "")),
+        coherence_logic: stripNumericScores(String(rawCriteria.coherence_logic || ""))
+      },
+      pronunciation_fixes: dedupedPronFixes,
+      language_corrections: dedupedLangCorrections,
+      idea_expansions: Array.isArray(parsedReview?.idea_expansions)
+        ? parsedReview.idea_expansions
+            .map((rawItem: unknown) => {
+              const it = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
+              return {
+                where_vi: String(it.where_vi || "").trim(),
+                issue_vi: String(it.issue_vi || "").trim(),
+                suggested_en: String(it.suggested_en || "").trim(),
+                meaning_vi: String(it.meaning_vi || "").trim()
+              };
+            })
+            .filter((it: { suggested_en: string; issue_vi: string }) => Boolean(it.suggested_en || it.issue_vi))
+        : [],
+      natural_spoken_version: String(parsedReview?.natural_spoken_version || "").trim()
+    };
+
+    if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
+      await admin.from("speaking_attempts").update({ ai_status: "" }).eq("id", att.id);
+      return {
+        ok: false,
+        status: 409,
+        error: "Đã có bản nộp mới hơn cho câu hỏi này."
+      };
+    }
+
+    const nextCount = options.isTeacherOrCron ? Math.max(1, prevCount) : prevCount + 1;
+    const isAlreadyReleased = new Date(releaseAtIso).getTime() <= Date.now();
+    const readyNowIso = new Date().toISOString();
+
+    const { error: upsertRevErr } = await admin.from("speaking_ai_reviews").upsert(
+      {
+        id: reviewId,
+        attempt_id: att.id,
+        user_id: att.user_id,
+        topic_id: att.topic_id || "",
+        topic_title: topicTitle,
+        question_id: att.question_id,
+        prompt_text: promptText,
+        target_level: targetLevel,
+        status: "ready",
+        release_at: releaseAtIso,
+        review_json: normalizedReview,
+        error_message: "",
+        grade_count: nextCount,
+        retry_count: 0,
+        student_seen_at: null,
+        updated_at: readyNowIso
+      },
+      { onConflict: "id" }
+    );
+
+    if (upsertRevErr) {
+      return {
+        ok: false,
+        status: 500,
+        error: `Lỗi lưu bài sửa vào speaking_ai_reviews: ${upsertRevErr.message}`
+      };
+    }
+
+    const attemptUpdatePayload: Record<string, unknown> = {
+      ai_status: isAlreadyReleased ? "ready" : "scheduled",
+      ai_release_at: releaseAtIso
+    };
+    if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
+      attemptUpdatePayload.transcript = recognizedTranscript;
+    }
+
+    const { error: updAttErr } = await admin
+      .from("speaking_attempts")
+      .update(attemptUpdatePayload)
+      .eq("id", att.id);
+
+    if (updAttErr) {
+      return {
+        ok: false,
+        status: 500,
+        error: `Lỗi cập nhật trạng thái speaking_attempts: ${updAttErr.message}`
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      ai_status: isAlreadyReleased ? "ready" : "scheduled",
       release_at: releaseAtIso,
-      review_json: normalizedReview,
-      error_message: "",
-      grade_count: nextCount,
-      retry_count: 0,
-      student_seen_at: null,
-      updated_at: nowIso
-    },
-    { onConflict: "id" }
-  );
-
-  if (upsertRevErr) {
+      recognized_transcript: recognizedTranscript,
+      review_json: normalizedReview
+    };
+  } catch (unexpectedErr) {
+    const errMsg = unexpectedErr instanceof Error ? unexpectedErr.message : "Lỗi ngoài ý muốn khi chấm bài";
+    try {
+      if (hasExistingReadyReview) {
+        await restoreAttemptOnPreservedReady();
+      } else if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
+        await admin.from("speaking_attempts").update({ ai_status: "" }).eq("id", att.id);
+      } else {
+        const catchNowIso = new Date().toISOString();
+        await admin.from("speaking_ai_reviews").upsert(
+          {
+            id: reviewId,
+            attempt_id: att.id,
+            user_id: att.user_id,
+            topic_id: att.topic_id || "",
+            topic_title: topicTitle,
+            question_id: att.question_id,
+            prompt_text: promptText,
+            target_level: targetLevel,
+            status: "error",
+            release_at: releaseAtIso,
+            error_message: `Lỗi hệ thống: ${errMsg.slice(0, 180)}`,
+            grade_count: prevCount,
+            retry_count: prevRetry + 1,
+            updated_at: catchNowIso
+          },
+          { onConflict: "id" }
+        );
+        await admin
+          .from("speaking_attempts")
+          .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
+          .eq("id", att.id);
+      }
+    } catch (_releaseErr) {}
     return {
       ok: false,
       status: 500,
-      error: `Lỗi lưu bài sửa vào speaking_ai_reviews: ${upsertRevErr.message}`
+      error: errMsg
     };
   }
-
-  const attemptUpdatePayload: Record<string, unknown> = {
-    ai_status: isAlreadyReleased ? "ready" : "scheduled",
-    ai_release_at: releaseAtIso
-  };
-  if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
-    attemptUpdatePayload.transcript = recognizedTranscript;
-  }
-
-  const { error: updAttErr } = await admin
-    .from("speaking_attempts")
-    .update(attemptUpdatePayload)
-    .eq("id", att.id);
-
-  if (updAttErr) {
-    return {
-      ok: false,
-      status: 500,
-      error: `Lỗi cập nhật trạng thái speaking_attempts: ${updAttErr.message}`
-    };
-  }
-
-  return {
-    ok: true,
-    status: 200,
-    ai_status: isAlreadyReleased ? "ready" : "scheduled",
-    release_at: releaseAtIso,
-    recognized_transcript: recognizedTranscript,
-    review_json: normalizedReview
-  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -1048,69 +1498,153 @@ Deno.serve(async (req: Request) => {
     }
 
     // ========================================================================
-    // MODE 1: HÀNG ĐỢI TỰ ĐỘNG CHẤM LẠI (pg_cron mỗi 5 phút hoặc Giáo viên bấm)
+    // MODE 1: HÀNG ĐỢI TỰ ĐỘNG CHẤM LẠI (pg_cron mỗi 2 phút hoặc Giáo viên bấm)
     // ========================================================================
     if (mode === "process_queue") {
       if (!isCronCall && !isTeacher) {
         return jsonResponse({ ok: false, error: "Chỉ hệ thống hoặc Giáo viên được chạy hàng đợi chấm bài." }, 403);
       }
 
-      const batchSize = Math.max(1, Math.min(5, Number(body?.batch_size) || 3));
+      const queueStartMs = Date.now();
+      const batchSize = Math.max(1, Math.min(15, Number(body?.batch_size) || 8));
 
-      const [{ data: submittedAttempts, error: attErr }, { data: allReviews }] = await Promise.all([
+      const [{ data: pendingAttemptsRaw, error: attErr }, { data: retryReviewsRaw }] = await Promise.all([
         admin
           .from("speaking_attempts")
           .select("*")
           .eq("is_submitted", true)
-          .order("submitted_at", { ascending: false })
-          .limit(150),
+          .or("ai_status.is.null,ai_status.eq.,ai_status.eq.pending,ai_status.eq.pending_retry,ai_status.eq.grading")
+          .order("submitted_at", { ascending: true })
+          .limit(500),
         admin
           .from("speaking_ai_reviews")
-          .select("id, attempt_id, status, retry_count, grade_count, release_at, updated_at")
+          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, updated_at")
+          .in("status", ["pending", "error", "grading"])
+          .lt("retry_count", MAX_AUTO_RETRIES)
+          .order("updated_at", { ascending: true })
+          .limit(150)
       ]);
 
       if (attErr) {
         return jsonResponse({ ok: false, error: "Lỗi đọc danh sách bài nói chờ chấm: " + attErr.message }, 500);
       }
 
+      const attemptPool: AttemptRow[] = Array.isArray(pendingAttemptsRaw) ? [...pendingAttemptsRaw] : [];
+      const seenAttemptIds = new Set(attemptPool.map(a => a.id));
+
+      // Bắt thêm các review pending/error bị lệch trạng thái với speaking_attempts
+      const missingAttemptIds = (retryReviewsRaw || [])
+        .map((r: ReviewRow) => r.attempt_id)
+        .filter((id): id is string => Boolean(id) && !seenAttemptIds.has(id));
+
+      if (missingAttemptIds.length > 0) {
+        for (let i = 0; i < missingAttemptIds.length; i += 100) {
+          const { data: extraAttempts } = await admin
+            .from("speaking_attempts")
+            .select("*")
+            .in("id", missingAttemptIds.slice(i, i + 100))
+            .eq("is_submitted", true);
+          (extraAttempts || []).forEach((att: AttemptRow) => {
+            if (!seenAttemptIds.has(att.id)) {
+              seenAttemptIds.add(att.id);
+              attemptPool.push(att);
+            }
+          });
+        }
+      }
+
       // Mỗi (user_id, question_id) chỉ lấy bản nộp mới nhất
       const latestByKey: Record<string, AttemptRow> = {};
-      (submittedAttempts || []).forEach((att: AttemptRow) => {
+      attemptPool.forEach((att: AttemptRow) => {
         const key = `${att.user_id}__${att.question_id}`;
-        if (!latestByKey[key]) {
+        const prev = latestByKey[key];
+        if (!prev) {
+          latestByKey[key] = att;
+          return;
+        }
+        const tPrev = new Date(prev.submitted_at || prev.created_at || 0).getTime();
+        const tCurr = new Date(att.submitted_at || att.created_at || 0).getTime();
+        if (tCurr >= tPrev) {
           latestByKey[key] = att;
         }
       });
 
-      const reviewById: Record<string, ReviewRow> = {};
-      (allReviews || []).forEach((r: ReviewRow) => {
-        if (r && r.id) reviewById[r.id] = r;
+      const reviewByKey: Record<string, ReviewRow> = {};
+      (retryReviewsRaw || []).forEach((r: ReviewRow) => {
+        if (!r) return;
+        const k = r.user_id && r.question_id ? `${r.user_id}__${r.question_id}` : r.id;
+        if (k) reviewByKey[k] = r;
       });
+
+      const missingUsers = Array.from(
+        new Set(
+          Object.entries(latestByKey)
+            .filter(([k]) => !reviewByKey[k])
+            .map(([, att]) => att.user_id)
+            .filter(Boolean)
+        )
+      );
+      for (let i = 0; i < missingUsers.length; i += 50) {
+        const chunkUsers = missingUsers.slice(i, i + 50);
+        const { data: matchedRevs } = await admin
+          .from("speaking_ai_reviews")
+          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, updated_at")
+          .in("user_id", chunkUsers);
+        (matchedRevs || []).forEach((r: ReviewRow) => {
+          if (!r) return;
+          const k = r.user_id && r.question_id ? `${r.user_id}__${r.question_id}` : r.id;
+          if (k) reviewByKey[k] = r;
+        });
+      }
 
       const nowMs = Date.now();
       const emptyNoAudioAttempts: AttemptRow[] = [];
       const pendingList = Object.values(latestByKey)
-        .sort((a, b) => {
-          const ta = new Date(a.submitted_at || a.created_at || 0).getTime();
-          const tb = new Date(b.submitted_at || b.created_at || 0).getTime();
-          return ta - tb;
-        })
         .filter((att: AttemptRow) => {
           const key = `${att.user_id}__${att.question_id}`;
-          const rev = reviewById[key];
+          const rev = reviewByKey[key] || null;
           if (rev && rev.attempt_id === att.id && (rev.status === "ready" || rev.status === "no_audio")) return false;
-          if ((att as { ai_status?: string }).ai_status === "no_audio") return false;
+          if (att.ai_status === "no_audio") return false;
+          if (isGradingLockActive(att, rev, nowMs)) return false;
           if (!isTeacher && rev && rev.attempt_id === att.id && (rev.retry_count || 0) >= MAX_AUTO_RETRIES) return false;
           const wc = String(att.transcript || "").trim().split(/\s+/).filter(Boolean).length;
           if (!att.audio_path && wc < 2) {
             emptyNoAudioAttempts.push(att);
             return false;
           }
-          if (rev && rev.attempt_id === att.id && rev.updated_at && !isTeacher) {
+          // CHỈ áp dụng cooldown khi bài đã từng lỗi (status === "error" & retry_count > 0), không chặn bài mới nộp!
+          if (
+            !isTeacher &&
+            rev &&
+            rev.attempt_id === att.id &&
+            rev.status === "error" &&
+            (rev.retry_count || 0) > 0 &&
+            rev.updated_at
+          ) {
             const lastTryMs = new Date(rev.updated_at).getTime();
-            if (!isNaN(lastTryMs) && nowMs - lastTryMs < RETRY_COOLDOWN_MS) return false;
+            const cooldownMs = getRetryCooldownMs(rev.retry_count || 0);
+            if (!isNaN(lastTryMs) && nowMs - lastTryMs < cooldownMs) return false;
           }
           return true;
+        })
+        .sort((a, b) => {
+          const keyA = `${a.user_id}__${a.question_id}`;
+          const keyB = `${b.user_id}__${b.question_id}`;
+          const revA = reviewByKey[keyA];
+          const revB = reviewByKey[keyB];
+          const isErrA = Boolean(revA && revA.attempt_id === a.id && revA.status === "error" && (revA.retry_count || 0) > 0);
+          const isErrB = Boolean(revB && revB.attempt_id === b.id && revB.status === "error" && (revB.retry_count || 0) > 0);
+          if (isErrA !== isErrB) return isErrA ? 1 : -1;
+          if (isErrA && isErrB) {
+            const retryDiff = (revA?.retry_count || 0) - (revB?.retry_count || 0);
+            if (retryDiff !== 0) return retryDiff;
+            const ua = new Date(revA?.updated_at || 0).getTime();
+            const ub = new Date(revB?.updated_at || 0).getTime();
+            if (ua !== ub) return ua - ub;
+          }
+          const ta = new Date(a.submitted_at || a.created_at || 0).getTime();
+          const tb = new Date(b.submitted_at || b.created_at || 0).getTime();
+          return ta - tb;
         });
 
       // Đánh dấu ngay các bài nộp rỗng (thiếu audio + transcript) là no_audio để không bao giờ kẹt hàng đợi
@@ -1120,9 +1654,10 @@ Deno.serve(async (req: Request) => {
           "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm. Học viên cần kiểm tra micro và ghi âm nộp lại.";
         for (const emptyAtt of emptyNoAudioAttempts.slice(0, 20)) {
           const emptyKey = `${emptyAtt.user_id}__${emptyAtt.question_id}`;
+          const emptyRevId = reviewByKey[emptyKey]?.id || emptyKey;
           await admin.from("speaking_ai_reviews").upsert(
             {
-              id: emptyKey,
+              id: emptyRevId,
               attempt_id: emptyAtt.id,
               user_id: emptyAtt.user_id,
               topic_id: emptyAtt.topic_id || "",
@@ -1133,7 +1668,7 @@ Deno.serve(async (req: Request) => {
               status: "no_audio",
               release_at: emptyAtt.ai_release_at || nowIsoSkip,
               error_message: noAudioMsg,
-              grade_count: reviewById[emptyKey]?.grade_count || 0,
+              grade_count: reviewByKey[emptyKey]?.grade_count || 0,
               retry_count: MAX_AUTO_RETRIES,
               updated_at: nowIsoSkip
             },
@@ -1145,23 +1680,37 @@ Deno.serve(async (req: Request) => {
 
       const slice = pendingList.slice(0, batchSize);
       const results: Array<{ id: string; ok: boolean; error?: string }> = [];
+      let nextIdx = 0;
+      let sharedRateLimited = false;
+      const workerCount = Math.min(3, slice.length);
 
-      for (let i = 0; i < slice.length; i++) {
-        const att = slice[i];
-        const key = `${att.user_id}__${att.question_id}`;
-        const res = await gradeSingleAttempt(
-          admin,
-          geminiApiKey,
-          geminiModel,
-          att,
-          reviewById[key] || null,
-          { isTeacherOrCron: true, releaseNow: false }
-        );
-        results.push({ id: att.id, ok: res.ok, error: res.ok ? undefined : res.error });
-        if (i < slice.length - 1) {
-          await new Promise(r => setTimeout(r, 2000));
+      const runWorker = async (workerIdx: number) => {
+        while (nextIdx < slice.length) {
+          if (Date.now() - queueStartMs >= QUEUE_TIME_BUDGET_MS - 15_000) break;
+          if (sharedRateLimited && workerIdx > 0) break;
+          const myIdx = nextIdx++;
+          const att = slice[myIdx];
+          const key = `${att.user_id}__${att.question_id}`;
+          const res = await gradeSingleAttempt(
+            admin,
+            geminiApiKey,
+            geminiModel,
+            att,
+            reviewByKey[key] || null,
+            { isTeacherOrCron: true, releaseNow: false, timeBudgetMs: 45_000 }
+          );
+          results.push({ id: att.id, ok: res.ok, error: res.ok ? undefined : res.error });
+          if ((res as { rateLimited?: boolean }).rateLimited) {
+            sharedRateLimited = true;
+            if (workerIdx > 0) break;
+            await new Promise(r => setTimeout(r, 1500));
+          } else if (nextIdx < slice.length) {
+            await new Promise(r => setTimeout(r, sharedRateLimited ? 900 : 300));
+          }
         }
-      }
+      };
+
+      await Promise.all(Array.from({ length: workerCount }, (_v, idx) => runWorker(idx)));
 
       return jsonResponse({
         ok: true,
@@ -1179,6 +1728,7 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     const attemptId = String(body?.attempt_id || "").trim();
     const releaseNow = Boolean(body?.release_now);
+    const forceTeacher = Boolean(body?.force_teacher) && isTeacher;
 
     if (!attemptId) {
       return jsonResponse({ ok: false, error: "Thiếu attempt_id." }, 400);
@@ -1203,16 +1753,18 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ ok: false, error: "Bạn không có quyền chấm bản ghi âm này." }, 403);
     }
 
-    const reviewId = `${att.user_id}__${att.question_id}`;
     const { data: existingReview } = await admin
       .from("speaking_ai_reviews")
-      .select("id, attempt_id, grade_count, retry_count, release_at, status, updated_at")
-      .eq("id", reviewId)
+      .select("id, attempt_id, user_id, question_id, grade_count, retry_count, release_at, status, review_json, updated_at")
+      .eq("user_id", att.user_id)
+      .eq("question_id", att.question_id)
       .maybeSingle();
 
     const gradeRes = await gradeSingleAttempt(admin, geminiApiKey, geminiModel, att, existingReview || null, {
       isTeacherOrCron: isTeacher,
+      forceTeacher,
       releaseNow,
+      timeBudgetMs: 55_000,
       overridePromptText: body?.prompt_text ? String(body.prompt_text) : undefined,
       overrideTopicTitle: body?.topic_title ? String(body.topic_title) : undefined,
       overrideTargetLevel: body?.target_level ? String(body.target_level) : undefined
