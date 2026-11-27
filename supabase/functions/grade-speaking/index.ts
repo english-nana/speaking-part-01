@@ -450,9 +450,10 @@ PHONG CÁCH NHẬN XÉT MANG TÍNH XÂY DỰNG (CONSTRUCTIVE COACHING):
 - Luôn ghi nhận rõ điểm làm tốt trước tiên (từ phát âm, sự tự tin, từ vựng hay, cấu trúc câu đẹp, đến cách triển khai ý), rồi mới chỉ ra 1–2 điểm ưu tiên cải thiện để tiến lên band tiếp theo (hoặc duy trì phong độ C1).
 - Ở cả 5 mục trong "criteria", mỗi mục viết 2–3 câu rõ ràng: (1) Đánh giá công tâm điểm mạnh đạt được theo chuẩn VSTEP Band Descriptor + (2) Gợi ý cụ thể, tích cực để nâng cấp hơn nữa (nếu đã rất tốt ở mức B2/C1 thì khen ngợi và gợi mở tinh tế chứ không bới móc lỗi vặt).
 - "next_level_tip": Đưa ra 1 lời khuyên hành động thực tế nhất (actionable tip) giúp học viên bước lên trình độ cao hơn (ví dụ: từ B1 lên B2 hoặc từ B2 lên C1).
-- "language_corrections": Tối đa 5 mục thực sự giá trị. Chỉ điền "category" là 1 trong 4 nhãn: "Ngữ pháp", "Vietlish", "Từ vựng tự nhiên", hoặc "Nâng cấp diễn đạt".
-  + Với bài nói đã chuẩn tự nhiên ở mức B2/C1, KHÔNG tự bịa lỗi sai; có thể chọn 1–2 cụm câu hay của học viên để gợi ý cách "Nâng cấp diễn đạt" lên sắc thái mượt hơn/idiomatic hơn nếu hữu ích, hoặc trả về [] nếu không cần chỉnh.
-  + "original" phải trích NGUYÊN VĂN từ "recognized_transcript" (2–10 từ). "corrected" phải phù hợp với trình độ thực tế của học viên (TUYỆT ĐỐI không sửa câu B2/C1 thành câu đơn giản cấp B1).
+- "language_corrections": Tối đa 8 mục thực sự giá trị. Chỉ điền "category" là 1 trong 4 nhãn: "Ngữ pháp", "Vietlish", "Từ vựng tự nhiên", hoặc "Nâng cấp diễn đạt".
+  + BẮT BUỘC rà soát kỹ từng câu trong VERBATIM TRANSCRIPT: nếu có lỗi sai rõ ràng về cấu trúc câu (thiếu chủ ngữ/động từ, sai động từ khuyết thiếu như "can makes", sai giới từ như "affect to", sai bị động như "get flood", lặp/rối câu...) hoặc lỗi dùng từ/Vietlish (chọn nhầm từ sai nghĩa/không tự nhiên) thì PHẢI liệt kê đầy đủ các lỗi quan trọng nhất, TUYỆT ĐỐI không bỏ sót hay trả về [] khi bài còn lỗi rõ ràng.
+  + Với bài nói đã sạch lỗi ở mức B2/C1, KHÔNG tự bịa lỗi sai; có thể chọn 1–2 cụm câu hay của học viên để gợi ý "Nâng cấp diễn đạt" mượt hơn/idiomatic hơn nếu hữu ích, hoặc trả về [] nếu thực sự hoàn hảo.
+  + "original" BẮT BUỘC phải COPY CHÍNH XÁC NGUYÊN VĂN TỪNG KÝ TỰ (2–10 từ, giữ đúng chính tả/lỗi sai gốc) từ đoạn "VERBATIM TRANSCRIPT" ở trên để hệ thống gạch đỏ/sửa xanh trực tiếp trên văn bản. "corrected" phải phù hợp với trình độ thực tế của học viên (TUYỆT ĐỐI không sửa câu B2/C1 thành câu đơn giản cấp B1).
 - "idea_expansions": Tối đa 2 gợi ý mang tính mở rộng chiều sâu (chi tiết, ví dụ, so sánh hoặc kết nối ý) nếu ý còn hơi mỏng; nếu bài nói đã phát triển ý đầy đủ, mạch lạc ở mức hiện tại thì trả về [].
 - "natural_spoken_version" & "suggested_level": Đặt "suggested_level" là "B1", "B2" hoặc "C1" tương ứng với năng lực thực tế của bài nói (hoặc nhỉnh hơn 1 nấc nhẹ để học viên học hỏi), rồi viết lại phiên bản hoàn chỉnh dựa trên CHÍNH Ý TƯỞNG CỦA HỌC VIÊN ở đúng "suggested_level" đó — giữ nguyên phong thái tự nhiên, KHÔNG hạ cấp câu B2/C1 xuống B1.
 
@@ -1508,7 +1509,7 @@ async function gradeSingleAttempt(
       models: gradeModels,
       parts: [{ text: stage2Prompt }],
       temperature: 0.25,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
       thinkingBudget: 1024,
       perReqTimeoutMs: GEMINI_GRADE_TIMEOUT_MS
     });

@@ -565,7 +565,14 @@
     }
     if (list.length === 0) return `“${escapeHtml(text)}”`;
 
-    const lowerText = text.toLowerCase();
+    const normChar = s =>
+      String(s || "")
+        .replace(/[\u2018\u2019\u02BC`]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[\u2013\u2014]/g, "-");
+
+    const normText = normChar(text);
+    const lowerNormText = normText.toLowerCase();
     const occupied = [];
     const matches = [];
 
@@ -573,7 +580,13 @@
       occupied.some(r => start < r.end && end > r.start);
 
     list.forEach((c, idx) => {
-      const needle = String(c.original || "").trim().replace(/\s+/g, " ");
+      const rawOrig = String(c.original || "")
+        .trim()
+        .replace(/^["“”'‘’]+|["“”'‘’]+$/g, "")
+        .replace(/^\.{2,3}\s*|\s*\.{2,3}$/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      const needle = normChar(rawOrig);
       if (!needle) return;
       const num = c.id || idx + 1;
       let matchedPos = -1;
@@ -586,7 +599,7 @@
         try {
           const wordRe = new RegExp(`${startWord}${escapedNeedle}${endWord}`, "gi");
           let wm;
-          while ((wm = wordRe.exec(text)) !== null) {
+          while ((wm = wordRe.exec(normText)) !== null) {
             const endPos = wm.index + wm[0].length;
             if (!overlaps(wm.index, endPos)) {
               matchedPos = wm.index;
@@ -599,10 +612,10 @@
 
       if (matchedPos === -1) {
         let searchFrom = 0;
-        while (searchFrom < text.length) {
-          let pos = text.indexOf(needle, searchFrom);
+        while (searchFrom < normText.length) {
+          let pos = normText.indexOf(needle, searchFrom);
           if (pos === -1) {
-            pos = lowerText.indexOf(needle.toLowerCase(), searchFrom);
+            pos = lowerNormText.indexOf(needle.toLowerCase(), searchFrom);
           }
           if (pos === -1) break;
           const endPos = pos + needle.length;
@@ -612,6 +625,30 @@
             break;
           }
           searchFrom = pos + 1;
+        }
+      }
+
+      if (matchedPos === -1) {
+        const tokens = needle
+          .split(/[^a-zA-Z0-9']+/)
+          .map(t => t.trim())
+          .filter(Boolean);
+        if (tokens.length >= 2) {
+          try {
+            const tokenPattern = tokens
+              .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+              .join("[\\s,;:.!?\\-\"'()]+");
+            const fuzzyRe = new RegExp(`\\b${tokenPattern}\\b`, "gi");
+            let fm;
+            while ((fm = fuzzyRe.exec(normText)) !== null) {
+              const endPos = fm.index + fm[0].length;
+              if (!overlaps(fm.index, endPos)) {
+                matchedPos = fm.index;
+                matchedLen = fm[0].length;
+                break;
+              }
+            }
+          } catch (_e) {}
         }
       }
 
