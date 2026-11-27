@@ -32,9 +32,10 @@ const MAX_STUDENT_GRADES_PER_QUESTION = 5;
 const MAX_AUTO_RETRIES = 20;
 const STALE_GRADING_MS = 3 * 60 * 1000;
 const MAX_INLINE_AUDIO_BYTES = 14 * 1024 * 1024;
-const GEMINI_TIMEOUT_MS = 45 * 1000;
+const GEMINI_TRANSCRIBE_TIMEOUT_MS = 60 * 1000;
+const GEMINI_GRADE_TIMEOUT_MS = 50 * 1000;
 const STORAGE_DOWNLOAD_TIMEOUT_MS = 15 * 1000;
-const QUEUE_TIME_BUDGET_MS = 95 * 1000;
+const QUEUE_TIME_BUDGET_MS = 115 * 1000;
 
 function getRetryCooldownMs(retryCount: number): number {
   if (retryCount <= 2) return 60 * 1000;
@@ -268,15 +269,67 @@ function resolveCleanAudioMimeType(audioPath: string, blobType?: string): string
   return "audio/webm";
 }
 
+interface Stage1AudioAnalysis {
+  attempt_id?: string;
+  recognized_transcript: string;
+  has_english_speech: boolean;
+  pronunciation_notes_vi: string;
+  fluency_notes_vi: string;
+  pronunciation_band_estimate: number | null;
+  fluency_band_estimate: number | null;
+  pronunciation_fixes: Array<{ word: string; ipa: string; issue_vi: string }>;
+}
+
+function buildAudioTranscribePrompt(params: {
+  topicTitle: string;
+  promptText: string;
+  durationSec: number;
+}) {
+  return `Bạn là chuyên gia phiên âm (Verbatim ASR) và giám khảo nghe Phát âm / Độ trôi chảy cho bài thi VSTEP Speaking của học viên Việt Nam.
+
+NGỮ CẢNH THAM KHẢO (CHỈ dùng để viết đúng chính tả từ khóa nếu học viên thực sự nói, TUYỆT ĐỐI KHÔNG chép lại hay tự bịa nội dung từ đề bài):
+- Chủ đề: ${params.topicTitle || "Speaking"}
+- Đề bài: "${params.promptText || "(Không có đề bài)"}"
+- Thời lượng ghi âm: ~${params.durationSec || 0} giây
+
+NHIỆM VỤ BẮT BUỘC — CHỈ NGHE FILE ÂM THANH ĐÍNH KÈM:
+1. "recognized_transcript": Chép NGUYÊN VĂN 100% (VERBATIM) từng từ tiếng Anh học viên thực sự nói từ giây đầu tiên đến giây cuối cùng của file ghi âm.
+   - TUYỆT ĐỐI KHÔNG sửa lỗi ngữ pháp, KHÔNG viết lại câu cho mượt, KHÔNG tóm tắt, KHÔNG bỏ sót bất kỳ ý/câu/đoạn nào (kể cả phần giữa và phần kết luận).
+   - Giữ nguyên lỗi nói thật và chỗ tự sửa; chỉ ghi "[inaudible]" ở đoạn thực sự mất tiếng/không thể nghe ra.
+   - Nếu toàn bộ file im lặng, chỉ có tiếng ồn hoặc hoàn toàn không có tiếng Anh thì đặt "recognized_transcript": "" và "has_english_speech": false.
+2. "pronunciation_notes_vi": 2–3 câu tiếng Việt mô tả trực tiếp những gì nghe được về độ rõ chữ, độ dễ hiểu, trọng âm từ/câu, ngữ điệu lên xuống tự nhiên (lưu ý: giọng có âm sắc Việt nhẹ nhưng rõ ràng, dễ hiểu vẫn đánh giá tích cực; BỎ QUA hoàn toàn đuôi chia động từ "-s", "-es", "-ed").
+3. "fluency_notes_vi": 2–3 câu tiếng Việt mô tả tốc độ nói, nhịp điệu, mức độ ngập ngừng/lặp từ/tự sửa lỗi nghe thấy thực tế.
+4. "pronunciation_band_estimate" và "fluency_band_estimate": điểm ước lượng thang 0.0–10.0 (bước 0.5) theo VSTEP Speaking Scoring Guide (đặt 0 nếu không có tiếng Anh).
+5. "pronunciation_fixes": tối đa 6 từ thực sự phát âm sai hoặc nuốt mất final sound CỐ HỮU của từ gốc (như nice, house, place, price, stress, relax...) nghe được trong audio. BỎ QUA lỗi thiếu đuôi chia động từ "-s/-es/-ed". Mỗi từ chỉ ghi 1 lần. Nếu nghe rõ dễ hiểu hết thì trả [].
+
+TRẢ VỀ DUY NHẤT 1 JSON HỢP LỆ (không bọc markdown):
+{
+  "has_english_speech": true,
+  "recognized_transcript": "Chép nguyên văn toàn bộ lời nói tiếng Anh từ đầu đến cuối file âm thanh",
+  "pronunciation_notes_vi": "Nhận xét ngắn gọn về phát âm, trọng âm, ngữ điệu nghe thực tế",
+  "fluency_notes_vi": "Nhận xét ngắn gọn về độ trôi chảy, tốc độ, ngập ngừng nghe thực tế",
+  "pronunciation_band_estimate": 6.5,
+  "fluency_band_estimate": 6.5,
+  "pronunciation_fixes": [
+    {
+      "word": "từ phát âm chưa chuẩn",
+      "ipa": "/US IPA/",
+      "issue_vi": "Mô tả ngắn lỗi phát âm và mẹo đọc chuẩn"
+    }
+  ]
+}`;
+}
+
 function buildSpeakingGradingPrompt(params: {
   topicId: string;
   questionId: string;
   topicTitle: string;
   promptText: string;
-  browserTranscript: string;
+  spokenTranscript: string;
   durationSec: number;
   targetLevel: string;
   hasAudio: boolean;
+  audioAnalysis?: Stage1AudioAnalysis | null;
   correctionOnly?: boolean;
 }) {
   const practiceTabLevel = String(params.targetLevel || "B1").toUpperCase() === "B2" ? "B2" : "B1";
@@ -296,19 +349,20 @@ function buildSpeakingGradingPrompt(params: {
 - Trong đề thi VSTEP Part 1, câu trả lời tự nhiên thường dài khoảng 20–45 giây (~30–80 từ). KHÔNG trừ điểm chỉ vì bài Part 1 ngắn gọn theo đúng định dạng phỏng vấn: một câu trả lời ~35–70 từ nhưng phát âm tự nhiên, trôi chảy, từ vựng chính xác/linh hoạt, có mệnh đề phức và ví dụ/giải thích rõ ràng HOÀN TOÀN có thể đạt B2 (6.0–8.5) hoặc C1 (9.0–10.0).
 - KHÔNG ép dùng từ C1/C2 sách vở cứng nhắc; văn nói tự nhiên, lưu loát, đúng ngữ cảnh luôn được đánh giá cao.`;
 
-  const audioContextNote = params.hasAudio
-    ? `ĐÃ ĐÍNH KÈM FILE GHI ÂM THẬT CỦA HỌC VIÊN (thời lượng ~${params.durationSec || 0} giây).
-- Nguồn sự thật DUY NHẤT là file ghi âm đính kèm (TUYỆT ĐỐI KHÔNG tự đoán, không tự bịa câu chữ theo đề bài).
-- Hãy NGHE KỸ từng giây của file ghi âm đính kèm để:
-  1) Ghi lại CHÍNH XÁC NGUYÊN VĂN những gì học viên thực sự nói vào trường "recognized_transcript" (giữ nguyên lỗi ngữ pháp/từ vựng/ngập ngừng thật của học viên; chỗ nào bị mất tiếng/không nghe rõ từ gì thì ghi "[inaudible]", TUYỆT ĐỐI không tự điền câu trả lời giả định cho khớp đề bài; nếu file chỉ có tiếng ồn/im lặng/tiếng Việt không có tiếng Anh thì đặt "recognized_transcript": "").
-  2) Chấm trực tiếp PHÁT ÂM & ĐỘ TRÔI CHẢY (độ rõ chữ, dễ hiểu, trọng âm từ/câu, ngữ điệu lên xuống tự nhiên, nhịp nói và ngập ngừng thực tế). Lưu ý: giọng có âm sắc tiếng Việt nhẹ nhưng phát âm rõ ràng, dễ hiểu và tự nhiên vẫn hoàn toàn có thể đạt Band 7–9 theo VSTEP Speaking Scoring Guide.`
-    : `CẢNH BÁO: Không đọc được file âm thanh gốc, hệ thống chỉ có transcript văn bản sơ bộ từ trình duyệt (~${params.durationSec || 0} giây):
-- Dựa vào transcript văn bản và thời lượng nói để đánh giá công bằng độ trôi chảy (tốc độ/độ dài diễn đạt) và lưu ý phát âm/ngữ điệu những từ khóa quan trọng nếu cần.
-- Đặt "recognized_transcript" bám sát đúng nội dung transcript văn bản đã cung cấp, TUYỆT ĐỐI không tự bịa thêm câu nói mới không có trong transcript.`;
-
-  const browserTranscriptLine = params.hasAudio
-    ? `- Nguồn chép lời: Nghe trực tiếp từ file âm thanh đính kèm (bỏ qua hoàn toàn nhận diện sơ bộ của trình duyệt để tránh sai lệch).`
-    : `- Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Không có transcript văn bản)"}"`;
+  const audioObs = params.audioAnalysis;
+  const audioContextNote =
+    params.hasAudio && audioObs
+      ? `BƯỚC 1 ĐÃ NGHE TRỰC TIẾP FILE GHI ÂM THẬT CỦA HỌC VIÊN (~${params.durationSec || 0} giây) VÀ GHI NHẬN:
+- Phát âm nghe thực tế: ${audioObs.pronunciation_notes_vi || "(Không có ghi chú riêng)"} ${audioObs.pronunciation_band_estimate !== null ? `(ước lượng ~${audioObs.pronunciation_band_estimate}/10)` : ""}
+- Độ trôi chảy nghe thực tế: ${audioObs.fluency_notes_vi || "(Không có ghi chú riêng)"} ${audioObs.fluency_band_estimate !== null ? `(ước lượng ~${audioObs.fluency_band_estimate}/10)` : ""}
+- Các từ phát âm chưa chuẩn nghe thấy: ${
+          audioObs.pronunciation_fixes.length > 0
+            ? audioObs.pronunciation_fixes.map(p => `${p.word} (${p.ipa || ""}): ${p.issue_vi}`).join(" | ")
+            : "Không phát hiện từ phát âm sai gây khó hiểu."
+        }
+- HÃY DỰA VÀO ĐÚNG GHI NHẬN NGHE THỰC TẾ NÀY cho tiêu chí Pronunciation & Fluency (không tự bịa thêm lỗi phát âm không có trong ghi nhận).`
+      : `CẢNH BÁO: Không đọc được file âm thanh gốc, hệ thống chỉ có transcript văn bản sơ bộ từ trình duyệt (~${params.durationSec || 0} giây):
+- Dựa vào transcript văn bản và thời lượng nói để đánh giá công bằng độ trôi chảy (tốc độ/độ dài diễn đạt) và lưu ý phát âm/ngữ điệu những từ khóa quan trọng nếu cần.`;
 
   return `Bạn là giám khảo chấm thi VSTEP Speaking chính thức và là giáo viên hướng dẫn tận tâm, công tâm, giàu tính xây dựng (constructive) dành cho học viên Việt Nam.
 
@@ -318,8 +372,11 @@ THÔNG TIN BÀI NÓI:
 - Câu hỏi / Tình huống của giám khảo: "${params.promptText || "(Không có câu hỏi)"}"
 - Tab bài luyện học viên đang mở: Level ${practiceTabLevel} (CHỈ LÀ NGỮ CẢNH THAM KHẢO — TUYỆT ĐỐI KHÔNG DÙNG ĐỂ KHỐNG CHẾ HAY ÉP ĐIỂM)
 - Thời lượng ghi âm: ${params.durationSec || 0} giây
-${browserTranscriptLine}
-- Tình trạng âm thanh: ${audioContextNote}
+- Lời nói nguyên văn của học viên (VERBATIM TRANSCRIPT — TUYỆT ĐỐI KHÔNG THAY ĐỔI, KHÔNG THÊM BỚT):
+"""
+${params.spokenTranscript || ""}
+"""
+- Ghi nhận âm thanh: ${audioContextNote}
 
 ${
   isCorrectionOnly
@@ -405,7 +462,6 @@ NẾU FILE GHI ÂM IM LẶNG, CHỈ CÓ TIẾNG ỒN, HOẶC KHÔNG CÓ TIẾNG 
 
 TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) theo đúng cấu trúc sau:
 {
-  "recognized_transcript": "Chép nguyên văn chính xác từng từ tiếng Anh thực tế nghe được từ file âm thanh (tuyệt đối không sửa ngữ pháp, không thêm bớt hay bịa lời; trả về \"\" nếu không nghe thấy tiếng Anh)",
   "criterion_scores": {
     "grammar": "<số 0.0-10.0 bước 0.5>",
     "vocabulary": "<số 0.0-10.0 bước 0.5>",
@@ -571,7 +627,15 @@ function isIgnoredVerbInflectionFix(original: string, corrected: string, categor
   return singularSubjects.has(prevWord);
 }
 
-function parseModelJson(rawText: string): Record<string, unknown> {
+function parseHalfStepScore(val: unknown): number | null {
+  if (val === null || val === undefined || val === "") return null;
+  const n = Number(val);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.max(0, Math.min(10, n));
+  return Math.round(clamped * 2) / 2;
+}
+
+function extractRawJsonObject(rawText: string): Record<string, unknown> {
   const trimmed = String(rawText || "").trim();
   const unfenced = trimmed
     .replace(/^```json\s*/i, "")
@@ -603,7 +667,93 @@ function parseModelJson(rawText: string): Record<string, unknown> {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("Phản hồi AI không phải JSON object hợp lệ");
   }
-  const obj = parsed as Record<string, unknown>;
+  return parsed as Record<string, unknown>;
+}
+
+function normalizePronFixesList(rawList: unknown, limit = 6): Array<{ word: string; ipa: string; issue_vi: string }> {
+  if (!Array.isArray(rawList)) return [];
+  const seen = new Set<string>();
+  const out: Array<{ word: string; ipa: string; issue_vi: string }> = [];
+  for (const rawItem of rawList) {
+    const p = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
+    const word = String(p.word || "").trim();
+    const ipa = String(p.ipa || "").trim();
+    const issue_vi = String(p.issue_vi || "").trim();
+    if (!word || !issue_vi) continue;
+    if (isIgnoredVerbInflectionPronFix(word, issue_vi)) continue;
+    const normKey = word.toLowerCase().replace(/[^a-z0-9']/g, "");
+    if (!normKey || seen.has(normKey)) continue;
+    seen.add(normKey);
+    out.push({ word, ipa, issue_vi });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function parseStage1AudioJson(rawText: string): Stage1AudioAnalysis {
+  const obj = extractRawJsonObject(rawText);
+  if (typeof obj.recognized_transcript !== "string") {
+    throw new Error("Bước 1 thiếu trường recognized_transcript hợp lệ");
+  }
+  const transcript = obj.recognized_transcript.trim();
+  const hasSpeech =
+    typeof obj.has_english_speech === "boolean" ? obj.has_english_speech && transcript.length > 0 : transcript.length > 0;
+  return {
+    recognized_transcript: hasSpeech ? transcript : "",
+    has_english_speech: hasSpeech,
+    pronunciation_notes_vi: stripNumericScores(String(obj.pronunciation_notes_vi || "")),
+    fluency_notes_vi: stripNumericScores(String(obj.fluency_notes_vi || "")),
+    pronunciation_band_estimate: parseHalfStepScore(obj.pronunciation_band_estimate),
+    fluency_band_estimate: parseHalfStepScore(obj.fluency_band_estimate),
+    pronunciation_fixes: normalizePronFixesList(obj.pronunciation_fixes, 6)
+  };
+}
+
+function extractGeminiCandidateText(geminiJson: Record<string, unknown>): string {
+  const candidates = Array.isArray(geminiJson?.candidates) ? geminiJson.candidates : [];
+  const firstCand = (candidates[0] && typeof candidates[0] === "object" ? candidates[0] : {}) as Record<string, unknown>;
+  const finishReason = String(firstCand?.finishReason || "");
+  const content = (firstCand?.content && typeof firstCand.content === "object" ? firstCand.content : {}) as Record<string, unknown>;
+  const candParts = Array.isArray(content?.parts) ? content.parts : [];
+  const nonThoughtText = candParts
+    .filter((p: Record<string, unknown>) => !p?.thought && typeof p?.text === "string")
+    .map((p: Record<string, unknown>) => String(p.text))
+    .join("");
+  const rawCandidate = nonThoughtText || String((candParts[0] as Record<string, unknown> | undefined)?.text || "");
+  if (!String(rawCandidate).trim()) {
+    throw new Error(`Phản hồi rỗng từ Gemini${finishReason ? ` (finishReason: ${finishReason})` : ""}`);
+  }
+  return rawCandidate;
+}
+
+function buildGeminiGenerationConfig(
+  modelName: string,
+  opts: { temperature: number; maxOutputTokens: number; thinkingBudget: number; includeThinkingConfig?: boolean }
+): Record<string, unknown> {
+  const cfg: Record<string, unknown> = {
+    temperature: opts.temperature,
+    maxOutputTokens: opts.maxOutputTokens,
+    responseMimeType: "application/json"
+  };
+  if (opts.includeThinkingConfig !== false) {
+    const lower = String(modelName || "").toLowerCase();
+    const supportsThinking =
+      lower.includes("2.5") ||
+      lower.includes("flash-latest") ||
+      lower.includes("flash-lite-latest") ||
+      lower.includes("gemini-3");
+    if (supportsThinking) {
+      const isPro = lower.includes("-pro");
+      cfg.thinkingConfig = {
+        thinkingBudget: isPro ? Math.max(128, opts.thinkingBudget) : Math.max(0, opts.thinkingBudget)
+      };
+    }
+  }
+  return cfg;
+}
+
+function parseModelJson(rawText: string): Record<string, unknown> {
+  const obj = extractRawJsonObject(rawText);
   const critObj =
     obj.criteria && typeof obj.criteria === "object" && !Array.isArray(obj.criteria)
       ? (obj.criteria as Record<string, unknown>)
@@ -763,6 +913,8 @@ async function gradeSingleAttempt(
     forceTeacher?: boolean;
     releaseNow: boolean;
     timeBudgetMs?: number;
+    transcribeModel?: string;
+    gradeModel?: string;
     overridePromptText?: string;
     overrideTopicTitle?: string;
     overrideTargetLevel?: string;
@@ -903,12 +1055,38 @@ async function gradeSingleAttempt(
       );
     }
 
+    // Kiểm tra checkpoint Bước 1 (audio đã được nghe & chép lời sẵn từ lần chạy trước cùng attempt_id)
+    const rawCachedStage1 =
+      !options.forceTeacher &&
+      existingReview &&
+      existingReview.attempt_id === att.id &&
+      existingReview.review_json &&
+      typeof existingReview.review_json === "object"
+        ? ((existingReview.review_json as Record<string, unknown>).stage1_cache as Record<string, unknown> | undefined)
+        : undefined;
+
+    let stage1Result: Stage1AudioAnalysis | null =
+      rawCachedStage1 &&
+      rawCachedStage1.attempt_id === att.id &&
+      typeof rawCachedStage1.recognized_transcript === "string"
+        ? {
+            attempt_id: att.id,
+            recognized_transcript: String(rawCachedStage1.recognized_transcript || "").trim(),
+            has_english_speech: Boolean(rawCachedStage1.has_english_speech),
+            pronunciation_notes_vi: String(rawCachedStage1.pronunciation_notes_vi || "").trim(),
+            fluency_notes_vi: String(rawCachedStage1.fluency_notes_vi || "").trim(),
+            pronunciation_band_estimate: parseHalfStepScore(rawCachedStage1.pronunciation_band_estimate),
+            fluency_band_estimate: parseHalfStepScore(rawCachedStage1.fluency_band_estimate),
+            pronunciation_fixes: normalizePronFixesList(rawCachedStage1.pronunciation_fixes, 6)
+          }
+        : null;
+
     let audioBase64 = "";
     let audioMimeType = "audio/webm";
     let audioTooLarge = false;
     let audioDownloadErrorMsg = "";
 
-    if (att.audio_path) {
+    if (!stage1Result && att.audio_path) {
       for (let dlTry = 0; dlTry < 2; dlTry++) {
         try {
           const { data: audioBlob, error: dlErr } = await promiseWithTimeout(
@@ -948,7 +1126,7 @@ async function gradeSingleAttempt(
       }
     }
 
-    let usedAudio = Boolean(audioBase64);
+    let usedAudio = Boolean(stage1Result || audioBase64);
     let audioFallbackReason = "";
     if (!usedAudio) {
       if (audioTooLarge) {
@@ -962,7 +1140,7 @@ async function gradeSingleAttempt(
       }
     }
 
-    if (!audioBase64 && audioTooLarge && wordCount < 3) {
+    if (!stage1Result && !audioBase64 && audioTooLarge && wordCount < 3) {
       if (hasExistingReadyReview) {
         await restoreAttemptOnPreservedReady();
       } else {
@@ -978,7 +1156,7 @@ async function gradeSingleAttempt(
       };
     }
 
-    if (!audioBase64 && wordCount < 2) {
+    if (!stage1Result && !audioBase64 && wordCount < 2) {
       const noAudioMsg =
         "Bản nộp không có tệp âm thanh và không có transcript văn bản để chấm (thường do học viên chưa cấp quyền micro hoặc dùng trình duyệt trong Zalo/Facebook). Học viên cần ghi âm lại và nộp lại.";
       const nowIsoNoAudio = new Date().toISOString();
@@ -1019,57 +1197,21 @@ async function gradeSingleAttempt(
       };
     }
 
-    const promptWithAudio = buildSpeakingGradingPrompt({
-      topicId: att.topic_id || "",
-      questionId: att.question_id || "",
-      topicTitle,
-      promptText,
-      browserTranscript,
-      durationSec: Number(att.duration_sec) || 0,
-      targetLevel,
-      hasAudio: Boolean(audioBase64),
-      correctionOnly: isCorrectionOnlyClass
-    });
-
-    const buildUserParts = (includeAudio: boolean): Array<Record<string, unknown>> => {
-      const parts: Array<Record<string, unknown>> = [];
-      if (includeAudio && audioBase64) {
-        parts.push({
-          inlineData: {
-            mimeType: audioMimeType,
-            data: audioBase64
-          }
-        });
-        parts.push({ text: promptWithAudio });
-      } else {
-        const textOnlyPrompt = audioBase64
-          ? buildSpeakingGradingPrompt({
-              topicId: att.topic_id || "",
-              questionId: att.question_id || "",
-              topicTitle,
-              promptText,
-              browserTranscript,
-              durationSec: Number(att.duration_sec) || 0,
-              targetLevel,
-              hasAudio: false,
-              correctionOnly: isCorrectionOnlyClass
-            })
-          : promptWithAudio;
-        parts.push({ text: textOnlyPrompt });
-      }
-      return parts;
-    };
-
     const RETIRED_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp"]);
-    const fallbackModels = Array.from(
-      new Set([
-        geminiModel,
-        "gemini-flash-latest",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-flash-lite-latest"
-      ])
-    ).filter(m => Boolean(m) && !RETIRED_MODELS.has(m));
+    const buildModelChain = (primaryOverride?: string): string[] =>
+      Array.from(
+        new Set([
+          primaryOverride || "",
+          geminiModel,
+          "gemini-2.5-flash",
+          "gemini-flash-latest",
+          "gemini-2.5-flash-lite",
+          "gemini-flash-lite-latest"
+        ])
+      ).filter(m => Boolean(m) && !RETIRED_MODELS.has(m));
+
+    const transcribeModels = buildModelChain(options.transcribeModel);
+    const gradeModels = buildModelChain(options.gradeModel);
 
     const extractGeminiErrorMessage = (rawText: string): string => {
       const trimmed = String(rawText || "").trim();
@@ -1084,23 +1226,33 @@ async function gradeSingleAttempt(
       return trimmed.replace(/\s+/g, " ").trim();
     };
 
-    const attemptDeadlineMs = Date.now() + (options.timeBudgetMs || 55_000);
+    const attemptDeadlineMs = Date.now() + (options.timeBudgetMs || 115_000);
 
-    const callGeminiWithParts = async (parts: Array<Record<string, unknown>>) => {
+    const callGeminiStage = async (cfg: {
+      models: string[];
+      parts: Array<Record<string, unknown>>;
+      temperature: number;
+      maxOutputTokens: number;
+      thinkingBudget: number;
+      perReqTimeoutMs: number;
+    }) => {
       let okRes: Response | null = null;
+      let usedModel = "";
       const errors: Array<{ model: string; status: number; detail: string }> = [];
 
-      for (const modelName of fallbackModels) {
+      for (const modelName of cfg.models) {
         const remainingBeforeModel = attemptDeadlineMs - Date.now();
         if (remainingBeforeModel < 8000) break;
 
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
         let modelStatus = 500;
         let modelErrText = "";
+        let includeThinkingConfig = true;
+
         for (let attempt = 0; attempt < 2; attempt++) {
           const remainingMs = attemptDeadlineMs - Date.now();
           if (remainingMs < 8000) break;
-          const reqTimeoutMs = Math.min(GEMINI_TIMEOUT_MS, remainingMs);
+          const reqTimeoutMs = Math.min(cfg.perReqTimeoutMs, remainingMs);
           try {
             const res = await fetchWithTimeout(
               endpoint,
@@ -1108,23 +1260,34 @@ async function gradeSingleAttempt(
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  contents: [{ role: "user", parts }],
-                  generationConfig: {
-                    temperature: 0.25,
-                    maxOutputTokens: 8192,
-                    responseMimeType: "application/json"
-                  }
+                  contents: [{ role: "user", parts: cfg.parts }],
+                  generationConfig: buildGeminiGenerationConfig(modelName, {
+                    temperature: cfg.temperature,
+                    maxOutputTokens: cfg.maxOutputTokens,
+                    thinkingBudget: cfg.thinkingBudget,
+                    includeThinkingConfig
+                  })
                 })
               },
               reqTimeoutMs
             );
             if (res.ok) {
               okRes = res;
+              usedModel = modelName;
               break;
             }
             modelStatus = res.status;
             modelErrText = await res.text().catch(() => "");
-            // 429: chuyển ngay sang model dự phòng có quota riêng thay vì ngủ chờ trên cùng model
+            // Nếu model không hỗ trợ thinkingConfig (HTTP 400), tự thử lại ngay không kèm thinkingConfig
+            if (
+              res.status === 400 &&
+              includeThinkingConfig &&
+              /thinking/i.test(modelErrText)
+            ) {
+              includeThinkingConfig = false;
+              continue;
+            }
+            // 429: chuyển ngay sang model dự phòng có quota riêng
             if (res.status === 429) {
               break;
             }
@@ -1145,7 +1308,7 @@ async function gradeSingleAttempt(
               : fetchErr instanceof Error
                 ? fetchErr.message
                 : "Network error";
-            if (attempt === 0 && attemptDeadlineMs - Date.now() >= 18000) {
+            if (attempt === 0 && attemptDeadlineMs - Date.now() >= 20000) {
               await new Promise(r => setTimeout(r, 800 + Math.floor(Math.random() * 900)));
               continue;
             }
@@ -1163,42 +1326,29 @@ async function gradeSingleAttempt(
           break;
         }
       }
-      return { okRes, errors };
+      return { okRes, usedModel, errors };
     };
 
-    let { okRes: geminiRes, errors: modelErrors } = await callGeminiWithParts(buildUserParts(Boolean(audioBase64)));
+    const failWithRetryOrPreserve = async (
+      stageLabel: string,
+      lastStatus: number,
+      conciseDetail: string,
+      isPermanentBadAudio = false
+    ) => {
+      const reasonLabel =
+        lastStatus === 504
+          ? `AI xử lý quá thời gian chờ ở ${stageLabel}`
+          : lastStatus === 429
+            ? `AI tạm chạm giới hạn lượt gọi ở ${stageLabel}`
+            : `AI tạm gặp lỗi ở ${stageLabel}`;
 
-    // Nếu file ghi âm bị lỗi định dạng / rỗng khiến Gemini báo 400 nhưng vẫn có transcript trình duyệt,
-    // tự động chấm tiếp bằng transcript để không bị kẹt 20/20 lần thử.
-    const hitAudioBadRequest =
-      !geminiRes && Boolean(audioBase64) && wordCount >= 3 && modelErrors.some(e => e.status === 400);
-    if (hitAudioBadRequest && attemptDeadlineMs - Date.now() >= 10000) {
-      const retryTextOnly = await callGeminiWithParts(buildUserParts(false));
-      if (retryTextOnly.okRes) {
-        geminiRes = retryTextOnly.okRes;
-        usedAudio = false;
-        audioFallbackReason = "File ghi âm bị lỗi cấu trúc/định dạng nên AI chấm tạm theo transcript trình duyệt.";
-      } else if (retryTextOnly.errors.length > 0) {
-        modelErrors = retryTextOnly.errors;
-      }
-    }
-
-    const primaryError =
-      modelErrors.find(e => e.status !== 404) || modelErrors[0] || { model: geminiModel, status: 500, detail: "" };
-    const lastStatus = primaryError.status;
-    const triedSummary = modelErrors.map(e => `${e.model}:${e.status}`).join(", ");
-    const conciseErrDetail = primaryError.detail
-      ? `${primaryError.detail.slice(0, 160)} [${triedSummary}]`
-      : triedSummary;
-
-    if (!geminiRes) {
       if (hasExistingReadyReview) {
         await restoreAttemptOnPreservedReady();
         return {
           ok: false,
           status: 502,
           rateLimited: lastStatus === 429,
-          error: `AI tạm quá tải khi chấm lại (${lastStatus}) — đã giữ nguyên bài sửa cũ.`
+          error: `${reasonLabel} (${lastStatus}) — đã giữ nguyên bài sửa cũ.`
         };
       }
 
@@ -1211,30 +1361,33 @@ async function gradeSingleAttempt(
         };
       }
 
-      const isPermanentBadAudio = lastStatus === 400 && wordCount < 3;
       const rawNextRetry = prevRetry + 1;
       const nextRetry = isPermanentBadAudio && rawNextRetry >= 2 ? MAX_AUTO_RETRIES : rawNextRetry;
       const errNowIso = new Date().toISOString();
+      const errPayload: Record<string, unknown> = {
+        id: reviewId,
+        attempt_id: att.id,
+        user_id: att.user_id,
+        topic_id: att.topic_id || "",
+        topic_title: topicTitle,
+        question_id: att.question_id,
+        prompt_text: promptText,
+        target_level: targetLevel,
+        status: "error",
+        release_at: releaseAtIso,
+        error_message: `Gemini ${stageLabel} lỗi (${lastStatus}): ${conciseDetail.slice(0, 210)}`,
+        grade_count: prevCount,
+        retry_count: nextRetry,
+        updated_at: errNowIso
+      };
+      // Nếu Bước 1 đã nghe xong, giữ nguyên stage1_cache để lần tự chấm lại sau nhảy thẳng vào Bước 2!
+      if (stage1Result) {
+        errPayload.review_json = {
+          stage1_cache: { ...stage1Result, attempt_id: att.id }
+        };
+      }
 
-      await admin.from("speaking_ai_reviews").upsert(
-        {
-          id: reviewId,
-          attempt_id: att.id,
-          user_id: att.user_id,
-          topic_id: att.topic_id || "",
-          topic_title: topicTitle,
-          question_id: att.question_id,
-          prompt_text: promptText,
-          target_level: targetLevel,
-          status: "error",
-          release_at: releaseAtIso,
-          error_message: `Gemini API lỗi (${lastStatus}): ${conciseErrDetail.slice(0, 220)}`,
-          grade_count: prevCount,
-          retry_count: nextRetry,
-          updated_at: errNowIso
-        },
-        { onConflict: "id" }
-      );
+      await admin.from("speaking_ai_reviews").upsert(errPayload, { onConflict: "id" });
       await admin
         .from("speaking_attempts")
         .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
@@ -1244,85 +1397,142 @@ async function gradeSingleAttempt(
         ok: false,
         status: 502,
         rateLimited: lastStatus === 429,
-        error: `AI tạm quá tải (${lastStatus}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
+        error: `${reasonLabel} (${lastStatus}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
       };
+    };
+
+    // ========================================================================
+    // BƯỚC 1: CHỈ NGHE AUDIO & CHÉP NGUYÊN VĂN + GHI NHẬN PHÁT ÂM / TRÔI CHẢY
+    // (temperature = 0.0, thinkingBudget = 0 -> cực nhanh & chính xác cho bài dài)
+    // ========================================================================
+    let stage1ModelUsed = "";
+    if (!stage1Result && audioBase64) {
+      const stage1Prompt = buildAudioTranscribePrompt({
+        topicTitle,
+        promptText,
+        durationSec: Number(att.duration_sec) || 0
+      });
+      const stage1Parts: Array<Record<string, unknown>> = [
+        { inlineData: { mimeType: audioMimeType, data: audioBase64 } },
+        { text: stage1Prompt }
+      ];
+
+      const s1Call = await callGeminiStage({
+        models: transcribeModels,
+        parts: stage1Parts,
+        temperature: 0.0,
+        maxOutputTokens: 4096,
+        thinkingBudget: 0,
+        perReqTimeoutMs: GEMINI_TRANSCRIBE_TIMEOUT_MS
+      });
+
+      if (!s1Call.okRes) {
+        const hitAudioBadRequest = wordCount >= 3 && s1Call.errors.some(e => e.status === 400);
+        if (hitAudioBadRequest) {
+          usedAudio = false;
+          audioFallbackReason = "File ghi âm bị lỗi cấu trúc/định dạng nên AI chấm tạm theo transcript trình duyệt.";
+        } else {
+          const pErr =
+            s1Call.errors.find(e => e.status !== 404) || s1Call.errors[0] || { model: geminiModel, status: 500, detail: "" };
+          const tried = s1Call.errors.map(e => `${e.model}:${e.status}`).join(", ");
+          const detail = pErr.detail ? `${pErr.detail.slice(0, 150)} [${tried}]` : tried;
+          return await failWithRetryOrPreserve("Bước 1 (nghe audio)", pErr.status, detail, pErr.status === 400 && wordCount < 3);
+        }
+      } else {
+        stage1ModelUsed = s1Call.usedModel;
+        try {
+          const s1Json = (await s1Call.okRes.json()) as Record<string, unknown>;
+          const s1RawText = extractGeminiCandidateText(s1Json);
+          stage1Result = {
+            ...parseStage1AudioJson(s1RawText),
+            attempt_id: att.id
+          };
+          usedAudio = true;
+
+          // Lưu checkpoint ngay sau Bước 1: cập nhật transcript chuẩn & cache phân tích âm thanh
+          try {
+            await admin
+              .from("speaking_attempts")
+              .update({ transcript: stage1Result.recognized_transcript })
+              .eq("id", att.id);
+            if (!hasExistingReadyReview) {
+              await admin.from("speaking_ai_reviews").upsert(
+                {
+                  id: reviewId,
+                  attempt_id: att.id,
+                  user_id: att.user_id,
+                  topic_id: att.topic_id || "",
+                  topic_title: topicTitle,
+                  question_id: att.question_id,
+                  prompt_text: promptText,
+                  target_level: targetLevel,
+                  status: "grading",
+                  release_at: releaseAtIso,
+                  review_json: { stage1_cache: { ...stage1Result, attempt_id: att.id } },
+                  error_message: "",
+                  grade_count: prevCount,
+                  retry_count: prevRetry,
+                  updated_at: new Date().toISOString()
+                },
+                { onConflict: "id" }
+              );
+            }
+          } catch (_ckptErr) {}
+        } catch (s1ParseErr) {
+          const parseMsg = s1ParseErr instanceof Error ? s1ParseErr.message : "JSON Bước 1 không hợp lệ";
+          return await failWithRetryOrPreserve("Bước 1 (đọc transcript)", 502, parseMsg);
+        }
+      }
+    }
+
+    // ========================================================================
+    // BƯỚC 2: CHẤM & SỬA BÀI THEO CHUẨN VSTEP (TEXT-ONLY — SIÊU NHANH & ỔN ĐỊNH)
+    // ========================================================================
+    const lockedTranscript =
+      usedAudio && stage1Result ? stage1Result.recognized_transcript : browserTranscript;
+
+    const stage2Prompt = buildSpeakingGradingPrompt({
+      topicId: att.topic_id || "",
+      questionId: att.question_id || "",
+      topicTitle,
+      promptText,
+      spokenTranscript: lockedTranscript,
+      durationSec: Number(att.duration_sec) || 0,
+      targetLevel,
+      hasAudio: Boolean(usedAudio && stage1Result),
+      audioAnalysis: usedAudio ? stage1Result : null,
+      correctionOnly: isCorrectionOnlyClass
+    });
+
+    const s2Call = await callGeminiStage({
+      models: gradeModels,
+      parts: [{ text: stage2Prompt }],
+      temperature: 0.25,
+      maxOutputTokens: 4096,
+      thinkingBudget: 1024,
+      perReqTimeoutMs: GEMINI_GRADE_TIMEOUT_MS
+    });
+
+    if (!s2Call.okRes) {
+      const pErr =
+        s2Call.errors.find(e => e.status !== 404) || s2Call.errors[0] || { model: geminiModel, status: 500, detail: "" };
+      const tried = s2Call.errors.map(e => `${e.model}:${e.status}`).join(", ");
+      const detail = pErr.detail ? `${pErr.detail.slice(0, 150)} [${tried}]` : tried;
+      return await failWithRetryOrPreserve("Bước 2 (chấm điểm)", pErr.status, detail);
     }
 
     let parsedReview: Record<string, unknown> | null = null;
     try {
-      const geminiJson = await geminiRes.json();
-      const firstCand = geminiJson?.candidates?.[0];
-      const finishReason = String(firstCand?.finishReason || "");
-      const candParts = Array.isArray(firstCand?.content?.parts) ? firstCand.content.parts : [];
-      const nonThoughtText = candParts
-        .filter((p: Record<string, unknown>) => !p?.thought && typeof p?.text === "string")
-        .map((p: Record<string, unknown>) => String(p.text))
-        .join("");
-      const rawCandidate = nonThoughtText || String(candParts[0]?.text || "");
-      if (!String(rawCandidate).trim()) {
-        throw new Error(`Phản hồi rỗng từ Gemini${finishReason ? ` (finishReason: ${finishReason})` : ""}`);
-      }
+      const geminiJson = (await s2Call.okRes.json()) as Record<string, unknown>;
+      const rawCandidate = extractGeminiCandidateText(geminiJson);
       parsedReview = parseModelJson(rawCandidate);
     } catch (parseErr) {
-      const parseMsg = parseErr instanceof Error ? parseErr.message : "JSON không hợp lệ";
-      if (hasExistingReadyReview) {
-        await restoreAttemptOnPreservedReady();
-        return {
-          ok: false,
-          status: 502,
-          error: `AI trả về dữ liệu chưa chuẩn khi chấm lại (${parseMsg.slice(0, 120)}) — đã giữ nguyên bài sửa cũ.`
-        };
-      }
-
-      if (!options.forceTeacher && (await isAttemptSuperseded(admin, att))) {
-        await admin.from("speaking_attempts").update({ ai_status: "" }).eq("id", att.id);
-        return {
-          ok: false,
-          status: 409,
-          error: "Đã có bản nộp mới hơn cho câu hỏi này."
-        };
-      }
-
-      const nextRetry = prevRetry + 1;
-      const parseNowIso = new Date().toISOString();
-      await admin.from("speaking_ai_reviews").upsert(
-        {
-          id: reviewId,
-          attempt_id: att.id,
-          user_id: att.user_id,
-          topic_id: att.topic_id || "",
-          topic_title: topicTitle,
-          question_id: att.question_id,
-          prompt_text: promptText,
-          target_level: targetLevel,
-          status: "error",
-          release_at: releaseAtIso,
-          error_message: `Lỗi đọc kết quả Gemini (${parseMsg.slice(0, 180)})`,
-          grade_count: prevCount,
-          retry_count: nextRetry,
-          updated_at: parseNowIso
-        },
-        { onConflict: "id" }
-      );
-      await admin
-        .from("speaking_attempts")
-        .update({ ai_status: "pending_retry", ai_release_at: releaseAtIso })
-        .eq("id", att.id);
-
-      return {
-        ok: false,
-        status: 502,
-        error: `AI trả về dữ liệu chưa chuẩn (${parseMsg.slice(0, 120)}) — đã xếp hàng đợi tự chấm lại (lần ${nextRetry}/${MAX_AUTO_RETRIES}).`
-      };
+      const parseMsg = parseErr instanceof Error ? parseErr.message : "JSON Bước 2 không hợp lệ";
+      return await failWithRetryOrPreserve("Bước 2 (đọc kết quả)", 502, parseMsg);
     }
 
-    const rawModelTranscript =
-      typeof parsedReview?.recognized_transcript === "string" ? parsedReview.recognized_transcript.trim() : null;
-    const recognizedTranscript = usedAudio
-      ? rawModelTranscript !== null
-        ? rawModelTranscript
-        : ""
-      : String(rawModelTranscript || browserTranscript || "").trim();
+    // Khóa chặt recognized_transcript đúng theo Bước 1 (Bước 2 không bao giờ được sửa/bịa transcript)
+    const recognizedTranscript = lockedTranscript;
 
     const rawCritScores = (
       parsedReview?.criterion_scores &&
@@ -1331,14 +1541,6 @@ async function gradeSingleAttempt(
         ? parsedReview.criterion_scores
         : {}
     ) as Record<string, unknown>;
-
-    const parseHalfStepScore = (val: unknown): number | null => {
-      if (val === null || val === undefined || val === "") return null;
-      const n = Number(val);
-      if (!Number.isFinite(n)) return null;
-      const clamped = Math.max(0, Math.min(10, n));
-      return Math.round(clamped * 2) / 2;
-    };
 
     const criterionScores = {
       grammar: parseHalfStepScore(rawCritScores.grammar),
@@ -1378,28 +1580,12 @@ async function gradeSingleAttempt(
             String(parsedReview?.level_assessment || "")
           );
 
-    // Deduplicate pronunciation fixes by unique word (sai 1 từ 3 lần vẫn chỉ tính 1 lỗi)
-    // và loại bỏ các mục phát âm thiếu đuôi -s/-es/-ed chia động từ
-    const seenPronWords = new Set<string>();
-    const dedupedPronFixes = Array.isArray(parsedReview?.pronunciation_fixes)
-      ? parsedReview.pronunciation_fixes
-          .map((rawItem: unknown) => {
-            const p = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
-            return {
-              word: String(p.word || "").trim(),
-              ipa: String(p.ipa || "").trim(),
-              issue_vi: String(p.issue_vi || "").trim()
-            };
-          })
-          .filter((p: { word: string; issue_vi: string }) => {
-            if (!p.word || !p.issue_vi) return false;
-            if (isIgnoredVerbInflectionPronFix(p.word, p.issue_vi)) return false;
-            const normKey = p.word.toLowerCase().replace(/[^a-z0-9']/g, "");
-            if (!normKey || seenPronWords.has(normKey)) return false;
-            seenPronWords.add(normKey);
-            return true;
-          })
-      : [];
+    // Ưu tiên lỗi phát âm nghe trực tiếp từ Bước 1 (audio) + bổ sung từ Bước 2 nếu còn chỗ (tối đa 6 từ)
+    const rawCombinedPron = [
+      ...(usedAudio && stage1Result ? stage1Result.pronunciation_fixes : []),
+      ...(Array.isArray(parsedReview?.pronunciation_fixes) ? parsedReview.pronunciation_fixes : [])
+    ];
+    const dedupedPronFixes = normalizePronFixesList(rawCombinedPron, 6);
 
     // Deduplicate language corrections by (category + normalized original)
     const normalizeLangCategory = (rawCat: string): string => {
@@ -1455,6 +1641,9 @@ async function gradeSingleAttempt(
 
     const normalizedReview = {
       recognized_transcript: recognizedTranscript,
+      grading_pipeline: "two_stage_v2",
+      transcribe_model: stage1ModelUsed || (stage1Result ? "cached_stage1" : ""),
+      grade_model: s2Call.usedModel || "",
       transcript_source: usedAudio ? "audio" : "browser_fallback",
       audio_fallback_reason: usedAudio ? "" : audioFallbackReason,
       correction_only: isCorrectionOnlyClass,
@@ -1539,7 +1728,7 @@ async function gradeSingleAttempt(
       ai_status: isAlreadyReleased ? "ready" : "scheduled",
       ai_release_at: releaseAtIso
     };
-    if (usedAudio && rawModelTranscript !== null) {
+    if (usedAudio && stage1Result) {
       attemptUpdatePayload.transcript = recognizedTranscript;
     } else if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
       attemptUpdatePayload.transcript = recognizedTranscript;
@@ -1622,7 +1811,9 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY") || "";
-    const geminiModel = Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest";
+    const geminiModel = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+    const geminiTranscribeModel = Deno.env.get("GEMINI_TRANSCRIBE_MODEL") || "";
+    const geminiGradeModel = Deno.env.get("GEMINI_GRADE_MODEL") || "";
     const cronSecretEnv = Deno.env.get("CRON_SECRET") || "";
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
@@ -1687,7 +1878,7 @@ Deno.serve(async (req: Request) => {
           .limit(500),
         admin
           .from("speaking_ai_reviews")
-          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, updated_at")
+          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, review_json, updated_at")
           .in("status", ["pending", "error", "grading"])
           .lt("retry_count", MAX_AUTO_RETRIES)
           .order("updated_at", { ascending: true })
@@ -1757,7 +1948,7 @@ Deno.serve(async (req: Request) => {
         const chunkUsers = missingUsers.slice(i, i + 50);
         const { data: matchedRevs } = await admin
           .from("speaking_ai_reviews")
-          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, updated_at")
+          .select("id, attempt_id, user_id, question_id, status, retry_count, grade_count, release_at, review_json, updated_at")
           .in("user_id", chunkUsers);
         (matchedRevs || []).forEach((r: ReviewRow) => {
           if (!r) return;
@@ -1866,7 +2057,13 @@ Deno.serve(async (req: Request) => {
             geminiModel,
             att,
             reviewByKey[key] || null,
-            { isTeacherOrCron: true, releaseNow: false, timeBudgetMs: 45_000 }
+            {
+              isTeacherOrCron: true,
+              releaseNow: false,
+              timeBudgetMs: 65_000,
+              transcribeModel: geminiTranscribeModel,
+              gradeModel: geminiGradeModel
+            }
           );
           results.push({ id: att.id, ok: res.ok, error: res.ok ? undefined : res.error });
           if ((res as { rateLimited?: boolean }).rateLimited) {
@@ -1933,7 +2130,9 @@ Deno.serve(async (req: Request) => {
       isTeacherOrCron: isTeacher,
       forceTeacher,
       releaseNow,
-      timeBudgetMs: 55_000,
+      timeBudgetMs: 115_000,
+      transcribeModel: geminiTranscribeModel,
+      gradeModel: geminiGradeModel,
       overridePromptText: body?.prompt_text ? String(body.prompt_text) : undefined,
       overrideTopicTitle: body?.topic_title ? String(body.topic_title) : undefined,
       overrideTargetLevel: body?.target_level ? String(body.target_level) : undefined

@@ -533,7 +533,7 @@
         force_teacher: Boolean(opts.forceTeacher),
         release_now: Boolean(opts.releaseNow)
       },
-      70000,
+      130000,
       "Lỗi kết nối hệ thống chấm bài."
     );
   }
@@ -544,7 +544,7 @@
         mode: "process_queue",
         batch_size: batchSize || 6
       },
-      130000,
+      135000,
       "Lỗi chạy hàng đợi chấm bài."
     );
   }
