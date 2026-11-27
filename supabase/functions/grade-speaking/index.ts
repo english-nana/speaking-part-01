@@ -285,11 +285,17 @@ function buildSpeakingGradingPrompt(params: {
 
   const audioContextNote = params.hasAudio
     ? `ĐÃ ĐÍNH KÈM FILE GHI ÂM THẬT CỦA HỌC VIÊN (thời lượng ~${params.durationSec || 0} giây).
-- Hãy NGHE KỸ file ghi âm đính kèm làm nguồn chính để:
-  1) Ghi lại ĐẦY ĐỦ, chính xác những gì học viên thực sự nói vào trường "recognized_transcript" (transcript trình duyệt bên dưới chỉ để tham khảo vì đôi khi bị thiếu hoặc nhận diện nhầm).
+- Nguồn sự thật DUY NHẤT là file ghi âm đính kèm (TUYỆT ĐỐI KHÔNG tự đoán, không tự bịa câu chữ theo đề bài).
+- Hãy NGHE KỸ từng giây của file ghi âm đính kèm để:
+  1) Ghi lại CHÍNH XÁC NGUYÊN VĂN những gì học viên thực sự nói vào trường "recognized_transcript" (giữ nguyên lỗi ngữ pháp/từ vựng/ngập ngừng thật của học viên; chỗ nào bị mất tiếng/không nghe rõ từ gì thì ghi "[inaudible]", TUYỆT ĐỐI không tự điền câu trả lời giả định cho khớp đề bài; nếu file chỉ có tiếng ồn/im lặng/tiếng Việt không có tiếng Anh thì đặt "recognized_transcript": "").
   2) Chấm trực tiếp PHÁT ÂM & ĐỘ TRÔI CHẢY (độ rõ chữ, dễ hiểu, trọng âm từ/câu, ngữ điệu lên xuống tự nhiên, nhịp nói và ngập ngừng thực tế). Lưu ý: giọng có âm sắc tiếng Việt nhẹ nhưng phát âm rõ ràng, dễ hiểu và tự nhiên vẫn hoàn toàn có thể đạt Band 7–9 theo VSTEP Speaking Scoring Guide.`
-    : `Không tải được file âm thanh gốc, chỉ có transcript văn bản (~${params.durationSec || 0} giây):
-- Dựa vào transcript và thời lượng nói để đánh giá công bằng độ trôi chảy (tốc độ/độ dài diễn đạt) và lưu ý phát âm/ngữ điệu những từ khóa quan trọng nếu cần.`;
+    : `CẢNH BÁO: Không đọc được file âm thanh gốc, hệ thống chỉ có transcript văn bản sơ bộ từ trình duyệt (~${params.durationSec || 0} giây):
+- Dựa vào transcript văn bản và thời lượng nói để đánh giá công bằng độ trôi chảy (tốc độ/độ dài diễn đạt) và lưu ý phát âm/ngữ điệu những từ khóa quan trọng nếu cần.
+- Đặt "recognized_transcript" bám sát đúng nội dung transcript văn bản đã cung cấp, TUYỆT ĐỐI không tự bịa thêm câu nói mới không có trong transcript.`;
+
+  const browserTranscriptLine = params.hasAudio
+    ? `- Nguồn chép lời: Nghe trực tiếp từ file âm thanh đính kèm (bỏ qua hoàn toàn nhận diện sơ bộ của trình duyệt để tránh sai lệch).`
+    : `- Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Không có transcript văn bản)"}"`;
 
   return `Bạn là giám khảo chấm thi VSTEP Speaking chính thức và là giáo viên hướng dẫn tận tâm, công tâm, giàu tính xây dựng (constructive) dành cho học viên Việt Nam.
 
@@ -299,7 +305,7 @@ THÔNG TIN BÀI NÓI:
 - Câu hỏi / Tình huống của giám khảo: "${params.promptText || "(Không có câu hỏi)"}"
 - Tab bài luyện học viên đang mở: Level ${practiceTabLevel} (CHỈ LÀ NGỮ CẢNH THAM KHẢO — TUYỆT ĐỐI KHÔNG DÙNG ĐỂ KHỐNG CHẾ HAY ÉP ĐIỂM)
 - Thời lượng ghi âm: ${params.durationSec || 0} giây
-- Transcript nhận diện sơ bộ từ trình duyệt: "${params.browserTranscript || "(Trình duyệt chưa nhận diện được văn bản - hãy nghe trực tiếp file âm thanh)"}"
+${browserTranscriptLine}
 - Tình trạng âm thanh: ${audioContextNote}
 
 ${
@@ -380,12 +386,13 @@ PHONG CÁCH NHẬN XÉT MANG TÍNH XÂY DỰNG (CONSTRUCTIVE COACHING):
 - "idea_expansions": Tối đa 2 gợi ý mang tính mở rộng chiều sâu (chi tiết, ví dụ, so sánh hoặc kết nối ý) nếu ý còn hơi mỏng; nếu bài nói đã phát triển ý đầy đủ, mạch lạc ở mức hiện tại thì trả về [].
 - "natural_spoken_version" & "suggested_level": Đặt "suggested_level" là "B1", "B2" hoặc "C1" tương ứng với năng lực thực tế của bài nói (hoặc nhỉnh hơn 1 nấc nhẹ để học viên học hỏi), rồi viết lại phiên bản hoàn chỉnh dựa trên CHÍNH Ý TƯỞNG CỦA HỌC VIÊN ở đúng "suggested_level" đó — giữ nguyên phong thái tự nhiên, KHÔNG hạ cấp câu B2/C1 xuống B1.
 
-NẾU FILE GHI ÂM IM LẶNG HOẶC KHÔNG CÓ TIẾNG ANH:
+NẾU FILE GHI ÂM IM LẶNG, CHỈ CÓ TIẾNG ỒN, HOẶC KHÔNG CÓ TIẾNG ANH:
+- TUYỆT ĐỐI KHÔNG tự nghĩ ra hay bịa đặt nội dung bài nói trong "recognized_transcript" — hãy đặt "recognized_transcript": "".
 - Trả về JSON hợp lệ với các điểm "criterion_scores" = 0, "internal_score": 0, "estimated_band": "Chưa đạt B1", nhắc nhẹ nhàng để học viên kiểm tra micro và ghi âm lại, kèm gợi ý trong "idea_expansions" và "natural_spoken_version".
 
 TRẢ VỀ DUY NHẤT MỘT JSON HỢP LỆ (không bọc markdown ngoài JSON) theo đúng cấu trúc sau:
 {
-  "recognized_transcript": "Lời nói tiếng Anh thực tế của học viên nghe được từ file âm thanh",
+  "recognized_transcript": "Chép nguyên văn chính xác từng từ tiếng Anh thực tế nghe được từ file âm thanh (tuyệt đối không sửa ngữ pháp, không thêm bớt hay bịa lời; trả về \"\" nếu không nghe thấy tiếng Anh)",
   "criterion_scores": {
     "grammar": "<số 0.0-10.0 bước 0.5>",
     "vocabulary": "<số 0.0-10.0 bước 0.5>",
@@ -763,7 +770,10 @@ async function gradeSingleAttempt(
       status: 200,
       ai_status: isAlreadyRel ? "ready" : "scheduled",
       release_at: cachedReleaseAt,
-      recognized_transcript: String((existingReview?.review_json as Record<string, unknown>)?.recognized_transcript || att.transcript || "").trim(),
+      transcript_source: String((existingReview?.review_json as Record<string, unknown>)?.transcript_source || "audio"),
+      recognized_transcript: String(
+        (existingReview?.review_json as Record<string, unknown>)?.recognized_transcript ?? att.transcript ?? ""
+      ).trim(),
       review_json: existingReview?.review_json || undefined
     };
   }
@@ -883,6 +893,7 @@ async function gradeSingleAttempt(
     let audioBase64 = "";
     let audioMimeType = "audio/webm";
     let audioTooLarge = false;
+    let audioDownloadErrorMsg = "";
 
     if (att.audio_path) {
       for (let dlTry = 0; dlTry < 2; dlTry++) {
@@ -912,11 +923,29 @@ async function gradeSingleAttempt(
             audioMimeType = cleaned.mimeType;
             break;
           }
-        } catch (_e) {
+          if (dlErr) {
+            audioDownloadErrorMsg = dlErr.message || "Storage download error";
+          }
+        } catch (dlCatchErr) {
+          audioDownloadErrorMsg = dlCatchErr instanceof Error ? dlCatchErr.message : "Storage download timeout";
           if (dlTry === 0) {
             await new Promise(r => setTimeout(r, 600));
           }
         }
+      }
+    }
+
+    let usedAudio = Boolean(audioBase64);
+    let audioFallbackReason = "";
+    if (!usedAudio) {
+      if (audioTooLarge) {
+        audioFallbackReason = "File ghi âm quá lớn (> 14 MB) nên AI chấm tạm theo transcript trình duyệt.";
+      } else if (att.audio_path) {
+        audioFallbackReason = audioDownloadErrorMsg
+          ? `Không tải được file ghi âm (${audioDownloadErrorMsg.slice(0, 80)}) nên AI chấm tạm theo transcript trình duyệt.`
+          : "File ghi âm rỗng hoặc không đọc được nên AI chấm tạm theo transcript trình duyệt.";
+      } else {
+        audioFallbackReason = "Bài nộp không có tệp ghi âm nên AI chấm theo transcript trình duyệt.";
       }
     }
 
@@ -1134,6 +1163,8 @@ async function gradeSingleAttempt(
       const retryTextOnly = await callGeminiWithParts(buildUserParts(false));
       if (retryTextOnly.okRes) {
         geminiRes = retryTextOnly.okRes;
+        usedAudio = false;
+        audioFallbackReason = "File ghi âm bị lỗi cấu trúc/định dạng nên AI chấm tạm theo transcript trình duyệt.";
       } else if (retryTextOnly.errors.length > 0) {
         modelErrors = retryTextOnly.errors;
       }
@@ -1272,7 +1303,13 @@ async function gradeSingleAttempt(
       };
     }
 
-    const recognizedTranscript = String(parsedReview?.recognized_transcript || browserTranscript || "").trim();
+    const rawModelTranscript =
+      typeof parsedReview?.recognized_transcript === "string" ? parsedReview.recognized_transcript.trim() : null;
+    const recognizedTranscript = usedAudio
+      ? rawModelTranscript !== null
+        ? rawModelTranscript
+        : ""
+      : String(rawModelTranscript || browserTranscript || "").trim();
 
     const rawCritScores = (
       parsedReview?.criterion_scores &&
@@ -1405,6 +1442,8 @@ async function gradeSingleAttempt(
 
     const normalizedReview = {
       recognized_transcript: recognizedTranscript,
+      transcript_source: usedAudio ? "audio" : "browser_fallback",
+      audio_fallback_reason: usedAudio ? "" : audioFallbackReason,
       correction_only: isCorrectionOnlyClass,
       criterion_scores: isCorrectionOnlyClass ? null : criterionScores,
       internal_score: isCorrectionOnlyClass ? null : roundedScore,
@@ -1487,7 +1526,9 @@ async function gradeSingleAttempt(
       ai_status: isAlreadyReleased ? "ready" : "scheduled",
       ai_release_at: releaseAtIso
     };
-    if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
+    if (usedAudio && rawModelTranscript !== null) {
+      attemptUpdatePayload.transcript = recognizedTranscript;
+    } else if (recognizedTranscript && recognizedTranscript.length > browserTranscript.length) {
       attemptUpdatePayload.transcript = recognizedTranscript;
     }
 
@@ -1509,6 +1550,8 @@ async function gradeSingleAttempt(
       status: 200,
       ai_status: isAlreadyReleased ? "ready" : "scheduled",
       release_at: releaseAtIso,
+      transcript_source: usedAudio ? "audio" : "browser_fallback",
+      audio_fallback_reason: usedAudio ? "" : audioFallbackReason,
       recognized_transcript: recognizedTranscript,
       review_json: normalizedReview
     };
@@ -1891,6 +1934,8 @@ Deno.serve(async (req: Request) => {
       ok: true,
       status: gradeRes.ai_status,
       release_at: gradeRes.release_at,
+      transcript_source: (gradeRes as { transcript_source?: string }).transcript_source || "audio",
+      audio_fallback_reason: (gradeRes as { audio_fallback_reason?: string }).audio_fallback_reason || "",
       recognized_transcript: gradeRes.recognized_transcript,
       review_json: isTeacher ? gradeRes.review_json : undefined
     });

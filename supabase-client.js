@@ -731,7 +731,13 @@
       isCorrectionOnlyClass(info.studentClass) ||
       Boolean(reviewJson.correction_only);
     const targetLevel = String(info.targetLevel || "B1").toUpperCase();
-    const spokenText = String(reviewJson.recognized_transcript || originalTranscript || "").trim();
+    const transcriptSource = String(reviewJson.transcript_source || "").trim();
+    const audioFallbackReason = String(reviewJson.audio_fallback_reason || "").trim();
+    const spokenText = String(
+      typeof reviewJson.recognized_transcript === "string"
+        ? reviewJson.recognized_transcript
+        : originalTranscript || ""
+    ).trim();
     const pronFixes = Array.isArray(reviewJson.pronunciation_fixes) ? reviewJson.pronunciation_fixes : [];
     const corrections = Array.isArray(reviewJson.language_corrections)
       ? reviewJson.language_corrections
@@ -874,6 +880,11 @@
 
         <div class="ai-review-block">
           <div class="ai-block-title">1. Lời nói nhận diện từ bản ghi âm &amp; đánh dấu chỗ cần chỉnh</div>
+          ${
+            transcriptSource === "browser_fallback"
+              ? `<div style="font-size:12px;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;margin-bottom:8px;line-height:1.45;">⚠️ ${escapeHtml(audioFallbackReason || "Không đọc được file âm thanh gốc nên AI chấm tạm theo transcript trình duyệt.")}</div>`
+              : ""
+          }
           <div class="ai-inline-essay">${buildInlineHighlightedTranscript(spokenText, corrections)}</div>
         </div>
 

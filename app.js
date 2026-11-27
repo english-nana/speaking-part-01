@@ -64,6 +64,7 @@
   let activeMicMonitorStop = null;
   let isStartingRecording = false;
   let recordingSessionSeq = 0;
+  let activeSpeechSessionSeq = 0;
   let finalizedSessionSeq = 0;
   let recordingTimer = null;
   let speechRecognizer = null;
@@ -630,8 +631,13 @@
           }
           const attObj = (qd.attempts || []).find(a => a.id === row.id);
           if (attObj) {
-            if (row.transcript && row.transcript.trim().length > (attObj.transcript || "").trim().length) {
-              attObj.transcript = row.transcript;
+            const serverTranscript = typeof row.transcript === "string" ? row.transcript.trim() : "";
+            const isGradedStatus = row.ai_status === "scheduled" || row.ai_status === "ready";
+            if (
+              serverTranscript !== (attObj.transcript || "").trim() &&
+              (isGradedStatus || serverTranscript.length > (attObj.transcript || "").trim().length)
+            ) {
+              attObj.transcript = serverTranscript;
               changed = true;
             }
             if (
@@ -970,10 +976,12 @@
                 if (gradeRes.release_at) qd.aiReleaseAt = gradeRes.release_at;
               }
               if (
-                gradeRes.recognized_transcript &&
-                gradeRes.recognized_transcript.trim().length > (takeObj.transcript || "").trim().length
+                typeof gradeRes.recognized_transcript === "string" &&
+                (gradeRes.transcript_source === "audio" ||
+                  gradeRes.recognized_transcript.trim().length > (takeObj.transcript || "").trim().length) &&
+                gradeRes.recognized_transcript.trim() !== (takeObj.transcript || "").trim()
               ) {
-                takeObj.transcript = gradeRes.recognized_transcript;
+                takeObj.transcript = gradeRes.recognized_transcript.trim();
                 updateTakeTranscriptInPlace(takeObj);
               }
               if (state.isTeacher) {
@@ -1148,7 +1156,7 @@
       .trim();
   }
 
-  function initSpeechRecognitionForSession() {
+  function initSpeechRecognitionForSession(sessionSeq) {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
       speechRecognizer = null;
@@ -1163,6 +1171,7 @@
       let recRestartCount = 0;
 
       rec.onresult = event => {
+        if (sessionSeq !== activeSpeechSessionSeq) return;
         let sFinal = "";
         let sInterim = "";
         for (let i = 0; i < event.results.length; i++) {
@@ -1189,6 +1198,7 @@
         if (
           !state.isRecording &&
           latestCreatedTake &&
+          latestCreatedTake._sessionSeq === sessionSeq &&
           !latestCreatedTake._deleted &&
           !latestCreatedTake._submittingOrSubmitted &&
           fullText.length > (latestCreatedTake.transcript || "").length
@@ -1209,12 +1219,14 @@
       };
 
       rec.onerror = event => {
+        if (sessionSeq !== activeSpeechSessionSeq) return;
         const errCode = String((event && event.error) || "");
         if (errCode === "not-allowed" || errCode === "service-not-allowed" || errCode === "audio-capture") {
           recFatalError = true;
         }
       };
       rec.onend = () => {
+        if (sessionSeq !== activeSpeechSessionSeq) return;
         const uncommitted = [sessionFinalText, sessionInterimText].filter(Boolean).join(" ").trim();
         if (uncommitted) {
           persistedTranscript = [persistedTranscript, uncommitted].filter(Boolean).join(" ").trim();
@@ -1223,10 +1235,21 @@
         sessionInterimText = "";
         state.liveTranscript = persistedTranscript;
 
-        if (!recFatalError && state.isRecording && speechRecognizer === rec && recRestartCount < 8) {
+        if (
+          !recFatalError &&
+          sessionSeq === activeSpeechSessionSeq &&
+          state.isRecording &&
+          speechRecognizer === rec &&
+          recRestartCount < 8
+        ) {
           recRestartCount++;
           setTimeout(() => {
-            if (!recFatalError && state.isRecording && speechRecognizer === rec) {
+            if (
+              !recFatalError &&
+              sessionSeq === activeSpeechSessionSeq &&
+              state.isRecording &&
+              speechRecognizer === rec
+            ) {
               try {
                 rec.start();
               } catch (e) {}
@@ -1415,6 +1438,7 @@
 
   function forceCleanupActiveRecordingResources() {
     recordingSessionSeq++;
+    activeSpeechSessionSeq++;
     isStartingRecording = false;
     state.isPreparingMic = false;
     state.isRecording = false;
@@ -1637,7 +1661,8 @@
           /Android|iPhone|iPad|iPod/i.test(ua) ||
           (navigator.platform === "MacIntel" && (navigator.maxTouchPoints || 0) > 1);
         if (!isMobileAudioDevice) {
-          initSpeechRecognitionForSession();
+          activeSpeechSessionSeq = mySessionSeq;
+          initSpeechRecognitionForSession(mySessionSeq);
         }
         renderApp();
       })
@@ -1727,6 +1752,7 @@
 
     const newTake = {
       id: takeId,
+      _sessionSeq: sessionSeq || 0,
       num: nextNum,
       createdAt: CLOUD.formatDateTime(new Date().toISOString()),
       durationSec: dur,
