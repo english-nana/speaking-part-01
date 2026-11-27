@@ -135,10 +135,17 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
       blocks.push({ relTc, bytes: u8.slice(q, blockEnd) });
       q = blockEnd;
     }
-    return { tc, headerBytes, blocks };
+    const lastRel = blocks.length > 0 ? Math.max(0, blocks[blocks.length - 1].relTc) : 0;
+    return { start, tc, endTc: tc + lastRel, headerBytes, blocks };
   };
 
-  const clusters: Array<{ tc: number; headerBytes: Uint8Array; blocks: Array<{ relTc: number; bytes: Uint8Array }> }> = [];
+  const clusters: Array<{
+    start: number;
+    tc: number;
+    endTc: number;
+    headerBytes: Uint8Array;
+    blocks: Array<{ relTc: number; bytes: Uint8Array }>;
+  }> = [];
   for (let i = 0; i < clusterOffsets.length; i++) {
     const end = i + 1 < clusterOffsets.length ? clusterOffsets[i + 1] : u8.length;
     const c = parseCluster(clusterOffsets[i], end);
@@ -150,8 +157,9 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
 
   let hasInterleaving = false;
   for (let i = 1; i < clusters.length; i++) {
-    const diff = clusters[i].tc - clusters[i - 1].tc;
-    if (diff < 0 || diff > 10000) {
+    const prev = clusters[i - 1];
+    const curr = clusters[i];
+    if (curr.tc < prev.tc || curr.tc < prev.endTc - 500 || curr.tc - prev.endTc > 10000) {
       hasInterleaving = true;
       break;
     }
@@ -160,11 +168,14 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
     return ebmlOff > 0 ? u8.slice(ebmlOff) : null;
   }
 
-  const outParts: Uint8Array[] = [u8.slice(ebmlOff, clusterOffsets[0])];
-  let expectedTc = clusters[0].tc;
+  const outParts: Uint8Array[] = [u8.slice(ebmlOff, clusters[0].start)];
+  let expectedMinTc = clusters[0].tc;
+  let expectedEndTc = clusters[0].tc;
   for (let i = 0; i < clusters.length; i++) {
     const c = clusters[i];
-    if (c.tc >= expectedTc && c.tc - expectedTc <= 5000) {
+    const isSequential =
+      i === 0 || (c.tc >= expectedMinTc && c.tc >= expectedEndTc - 500 && c.tc - expectedEndTc <= 10000);
+    if (isSequential) {
       outParts.push(c.headerBytes);
       let lastRel = -1;
       for (const blk of c.blocks) {
@@ -177,7 +188,8 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
       }
       if (i + 1 < clusters.length) {
         const nextC = clusters[i + 1];
-        const nextIsForeign = nextC.tc < c.tc || nextC.tc - c.tc > 10000;
+        const nextIsForeign =
+          nextC.tc < c.tc || nextC.tc < c.endTc - 500 || nextC.tc - c.endTc > 10000;
         if (nextIsForeign && nextC.blocks.length > 0) {
           for (const fBlk of nextC.blocks) {
             if (fBlk.relTc >= lastRel + 40 && fBlk.relTc <= lastRel + 90) {
@@ -187,7 +199,8 @@ function repairInterleavedWebmBytes(u8: Uint8Array, ebmlOff: number): Uint8Array
           }
         }
       }
-      expectedTc = c.tc + 1;
+      expectedMinTc = c.tc + 1;
+      expectedEndTc = c.tc + Math.max(0, lastRel);
     }
   }
 
